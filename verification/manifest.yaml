@@ -1,0 +1,1226 @@
+# MCP Swift SDK Cross-Reference Manifest (v2)
+#
+# Maps MCP specification modules and types to Swift SDK implementations.
+# Designed for agent-driven verification - each item has status and notes.
+#
+# Structure:
+#   modules: Logical groupings with methods, notifications, and type references
+#   types: Type definitions with Swift mappings (single source of truth)
+#   enums: Enum types with case mappings
+#   error_codes: JSON-RPC and MCP-specific error codes
+#   capabilities: ClientCapabilities and ServerCapabilities properties
+#
+# Naming convention:
+#   Swift nested types (e.g., Resource.Template) -> spec flat names (ResourceTemplate)
+#   Default: flatten by removing dots. Use spec_name only for exceptions.
+#
+# Cross-reference hints:
+#   TypeScript and Python mappings are provided as hints for debugging/reference.
+#   These may drift and should be verified by agents when needed.
+#
+#   Defaults (omit ts_file/py_file when using these):
+#     - TypeScript: packages/core/src/types/types.ts
+#     - Python: src/mcp/types.py
+#
+#   Only add ts_file/py_file for exceptions or non-standard locations.
+#
+# Verification workflow:
+#   1. Agent picks a module
+#   2. Verifies each method, notification, and type
+#   3. Updates status and adds notes
+#   4. Module status reflects overall state
+
+schema_version: 1
+target_protocol_version: "2025-11-25"
+
+repos:
+  spec: https://github.com/modelcontextprotocol/modelcontextprotocol
+  typescript_sdk: https://github.com/modelcontextprotocol/typescript-sdk
+  python_sdk: https://github.com/modelcontextprotocol/python-sdk
+
+# =============================================================================
+# MODULES
+# =============================================================================
+
+modules:
+  # ---------------------------------------------------------------------------
+  # Core / Lifecycle
+  # ---------------------------------------------------------------------------
+  - id: json-rpc
+    category: core
+    description: JSON-RPC 2.0 message types
+    swift_file: Sources/MCP/Base/Messages.swift
+    types:
+      - JSONRPCMessage
+      - JSONRPCRequest
+      - JSONRPCNotification
+      - JSONRPCResponse
+      - RequestId
+
+    verification:
+      status: pending
+      notes: ''
+  - id: initialize
+    category: lifecycle
+    description: Connection initialization and capability negotiation
+    swift_file: Sources/MCP/Base/Lifecycle.swift
+    types:
+      - Implementation
+      - ClientCapabilities
+      - ServerCapabilities
+    methods:
+      - name: initialize
+        swift: Initialize
+        verification:
+          status: pending
+          notes: ''
+        client_method: initialize
+    notifications:
+      - name: notifications/initialized
+        swift: InitializedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: client
+        client_send: notify
+    verification:
+      status: pending
+      notes: ''
+  - id: ping
+    category: lifecycle
+    description: Connection health check
+    swift_file: Sources/MCP/Base/Utilities/Ping.swift
+    types:
+      - EmptyResult
+    methods:
+      - name: ping
+        swift: Ping
+        verification:
+          status: pending
+          notes: ''
+        client_method: ping
+        # Server auto-handles ping at protocol layer, no explicit method needed
+    verification:
+      status: pending
+      notes: ''
+  - id: progress
+    category: lifecycle
+    description: Progress notifications for long-running operations
+    swift_file: Sources/MCP/Base/Progress.swift
+    types:
+      - ProgressToken
+    notifications:
+      - name: notifications/progress
+        swift: ProgressNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: both
+        server_send: sendProgress
+        client_send: notify
+    verification:
+      status: pending
+      notes: ''
+  - id: cancellation
+    category: lifecycle
+    description: Request cancellation
+    swift_file: Sources/MCP/Base/Lifecycle.swift
+    notifications:
+      - name: notifications/cancelled
+        swift: CancelledNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: both
+        server_send: sendCancelled
+        client_send: notify
+    verification:
+      status: pending
+      notes: ''
+  - id: authorization
+    category: lifecycle
+    description: OAuth 2.0 authorization framework for MCP
+    swift_file: Sources/MCP/Base/Auth.swift
+    types:
+      - OAuthMetadata
+      - OAuthTokens
+      - OAuthClientMetadata
+      - OAuthClientInformation
+    implementation: todo
+
+  # ---------------------------------------------------------------------------
+  # Server Features
+  # ---------------------------------------------------------------------------
+  - id: resources
+    category: server
+    description: Server-provided resources (files, data, etc.)
+    swift_file: Sources/MCP/Server/Resources.swift
+    types:
+      - Resource
+      - ResourceTemplate
+      - ResourceContents
+      - ResourceLink
+      - EmbeddedResource
+    methods:
+      - name: resources/list
+        swift: ListResources
+        verification:
+          status: pending
+          notes: ''
+        client_method: listResources
+      - name: resources/templates/list
+        swift: ListResourceTemplates
+        verification:
+          status: pending
+          notes: ''
+        client_method: listResourceTemplates
+      - name: resources/read
+        swift: ReadResource
+        verification:
+          status: pending
+          notes: ''
+        client_method: readResource
+      - name: resources/subscribe
+        swift: ResourceSubscribe
+        verification:
+          status: pending
+          notes: ''
+        client_method: subscribeToResource
+      - name: resources/unsubscribe
+        swift: ResourceUnsubscribe
+        verification:
+          status: pending
+          notes: ''
+        client_method: unsubscribeFromResource
+    notifications:
+      - name: notifications/resources/list_changed
+        swift: ResourceListChangedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        server_send: sendResourceListChanged
+      - name: notifications/resources/updated
+        swift: ResourceUpdatedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        server_send: sendResourceUpdated
+    verification:
+      status: pending
+      notes: ''
+  - id: prompts
+    category: server
+    description: Server-provided prompt templates
+    swift_file: Sources/MCP/Server/Prompts.swift
+    types:
+      - Prompt
+      - PromptArgument
+      - PromptMessage
+      - ContentBlock
+    methods:
+      - name: prompts/list
+        swift: ListPrompts
+        verification:
+          status: pending
+          notes: ''
+        client_method: listPrompts
+      - name: prompts/get
+        swift: GetPrompt
+        verification:
+          status: pending
+          notes: ''
+        client_method: getPrompt
+    notifications:
+      - name: notifications/prompts/list_changed
+        swift: PromptListChangedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        server_send: sendPromptListChanged
+    verification:
+      status: pending
+      notes: ''
+  - id: tools
+    category: server
+    description: Server-provided callable tools
+    swift_file: Sources/MCP/Server/Tools.swift
+    types:
+      - Tool
+      - ToolAnnotations
+      - ToolExecution
+      - ContentBlock
+    methods:
+      - name: tools/list
+        swift: ListTools
+        verification:
+          status: pending
+          notes: ''
+        client_method: listTools
+      - name: tools/call
+        swift: CallTool
+        verification:
+          status: pending
+          notes: ''
+        client_method: callTool
+    notifications:
+      - name: notifications/tools/list_changed
+        swift: ToolListChangedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        server_send: sendToolListChanged
+    verification:
+      status: pending
+      notes: ''
+  - id: completion
+    category: server
+    description: Argument completion for prompts and resources
+    swift_file: Sources/MCP/Server/Completions.swift
+    types:
+      - PromptReference
+      - ResourceTemplateReference
+    methods:
+      - name: completion/complete
+        swift: Complete
+        verification:
+          status: pending
+          notes: ''
+        client_method: complete
+    verification:
+      status: pending
+      notes: ''
+  - id: logging
+    category: server
+    description: Server logging level control
+    swift_file: Sources/MCP/Server/Logging.swift
+    types:
+      - LoggingLevel
+    methods:
+      - name: logging/setLevel
+        swift: SetLoggingLevel
+        verification:
+          status: pending
+          notes: ''
+        client_method: setLoggingLevel
+    notifications:
+      - name: notifications/message
+        swift: LogMessageNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        # Note: Swift uses 'sendLogMessage' not 'sendLoggingMessage' (derived from LoggingMessageNotification)
+        server_send: sendLogMessage
+    verification:
+      status: pending
+      notes: ''
+  - id: sampling
+    category: client
+    description: LLM sampling requests from server to client
+    swift_file: Sources/MCP/Client/Sampling.swift
+    types:
+      - SamplingMessage
+      - SamplingMessageContentBlock
+      - ModelPreferences
+      - ModelHint
+      - StopReason
+      - ToolChoice
+      - ToolUseContent
+      - ToolResultContent
+      - Role
+    methods:
+      - name: sampling/createMessage
+        swift: CreateSamplingMessage
+        verification:
+          status: pending
+          notes: ''
+        server_method: createMessage
+        client_handler: withSamplingHandler
+    verification:
+      status: pending
+      notes: ''
+  - id: elicitation
+    category: client
+    description: User input requests from server to client
+    swift_file: Sources/MCP/Client/Elicitation.swift
+    types:
+      - ElicitationSchema
+      - PrimitiveSchemaDefinition
+      - StringSchema
+      - NumberSchema
+      - BooleanSchema
+      - EnumSchema
+      - SingleSelectEnumSchema
+      - MultiSelectEnumSchema
+      - TitledSingleSelectEnumSchema
+      - UntitledSingleSelectEnumSchema
+      - TitledMultiSelectEnumSchema
+      - UntitledMultiSelectEnumSchema
+    methods:
+      - name: elicitation/create
+        swift: Elicit
+        verification:
+          status: pending
+          notes: ''
+        server_method: elicit
+        client_handler: withElicitationHandler
+    notifications:
+      - name: notifications/elicitation/complete
+        swift: ElicitationCompleteNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: server
+        server_send: sendElicitationComplete
+    verification:
+      status: pending
+      notes: ''
+  - id: roots
+    category: client
+    description: Client-provided filesystem roots
+    swift_file: Sources/MCP/Client/Roots.swift
+    types:
+      - Root
+    methods:
+      - name: roots/list
+        swift: ListRoots
+        verification:
+          status: pending
+          notes: ''
+        server_method: listRoots
+        client_handler: withRootsHandler
+    notifications:
+      - name: notifications/roots/list_changed
+        swift: RootsListChangedNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: client
+        client_send: notify
+    verification:
+      status: pending
+      notes: ''
+  - id: tasks
+    category: experimental
+    description: Long-running task management
+    swift_file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    types:
+      - Task
+      - TaskStatus
+      - TaskMetadata
+      - RelatedTaskMetadata
+      - CreateTaskResult
+    # Note: Server handlers are registered via Server.enableTaskSupport() using withRequestHandler()
+    # They don't appear as direct methods on Server, so we use handler_registration instead
+    methods:
+      - name: tasks/get
+        swift: GetTask
+        verification:
+          status: pending
+          notes: ''
+        client_method: getTask
+        handler_registration:
+          file: Sources/MCP/Server/Experimental/Tasks/TaskSupport.swift
+          pattern: withRequestHandler(GetTask.self)
+      - name: tasks/list
+        swift: ListTasks
+        verification:
+          status: pending
+          notes: ''
+        client_method: listTasks
+        handler_registration:
+          file: Sources/MCP/Server/Experimental/Tasks/TaskSupport.swift
+          pattern: withRequestHandler(ListTasks.self)
+      - name: tasks/cancel
+        swift: CancelTask
+        verification:
+          status: pending
+          notes: ''
+        client_method: cancelTask
+        handler_registration:
+          file: Sources/MCP/Server/Experimental/Tasks/TaskSupport.swift
+          pattern: withRequestHandler(CancelTask.self)
+      - name: tasks/result
+        swift: GetTaskPayload
+        verification:
+          status: pending
+          notes: ''
+        client_method: getTaskResult
+        handler_registration:
+          file: Sources/MCP/Server/Experimental/Tasks/TaskSupport.swift
+          pattern: withRequestHandler(GetTaskPayload.self)
+    notifications:
+      - name: notifications/tasks/status
+        swift: TaskStatusNotification
+        verification:
+          status: pending
+          notes: ''
+        sender: both
+        server_send: sendTaskStatus
+        client_send: notify
+    verification:
+      status: pending
+      notes: ''
+types:
+  # ---------------------------------------------------------------------------
+  # JSON-RPC Types
+  # ---------------------------------------------------------------------------
+  # Swift uses generic structs: Message<N>, Request<M>, Response<M>
+  JSONRPCMessage:
+    swift: Message
+    file: Sources/MCP/Base/Messages.swift
+    spec_name: JSONRPCMessage
+    verification:
+      status: pending
+      notes: ''
+  JSONRPCRequest:
+    swift: Request
+    file: Sources/MCP/Base/Messages.swift
+    spec_name: JSONRPCRequest
+    verification:
+      status: pending
+      notes: ''
+  JSONRPCNotification:
+    swift: Notification
+    file: Sources/MCP/Base/Messages.swift
+    spec_name: JSONRPCNotification
+    verification:
+      status: pending
+      notes: ''
+  JSONRPCResponse:
+    swift: Response
+    file: Sources/MCP/Base/Messages.swift
+    spec_name: JSONRPCResponse
+    verification:
+      status: pending
+      notes: ''
+  RequestId:
+    swift: RequestId
+    file: Sources/MCP/Base/ID.swift
+    verification:
+      status: pending
+      notes: ''
+  Implementation:
+    swift: [Client.Info, Server.Info]
+    file: [Sources/MCP/Client/Client.swift, Sources/MCP/Server/Server.swift]
+    verification:
+      status: pending
+      notes: ''
+  ClientCapabilities:
+    swift: Client.Capabilities
+    file: Sources/MCP/Client/Client.swift
+    verification:
+      status: pending
+      notes: ''
+  ServerCapabilities:
+    swift: Server.Capabilities
+    file: Sources/MCP/Server/Server.swift
+    verification:
+      status: pending
+      notes: ''
+  EmptyResult:
+    swift: Empty
+    file: Sources/MCP/Base/Messages.swift
+    spec_name: EmptyResult
+    verification:
+      status: pending
+      notes: ''
+  ProgressToken:
+    swift: ProgressToken
+    file: Sources/MCP/Base/Progress.swift
+    verification:
+      status: pending
+      notes: ''
+  OAuthMetadata:
+    swift: OAuthMetadata
+    file: Sources/MCP/Base/Auth.swift
+    implementation: todo
+  OAuthTokens:
+    swift: OAuthTokens
+    file: Sources/MCP/Base/Auth.swift
+    implementation: todo
+  OAuthClientMetadata:
+    swift: OAuthClientMetadata
+    file: Sources/MCP/Base/Auth.swift
+    implementation: todo
+  OAuthClientInformation:
+    swift: OAuthClientInformation
+    file: Sources/MCP/Base/Auth.swift
+    implementation: todo
+  Error:
+    swift: MCPError
+    file: Sources/MCP/Base/Error.swift
+    spec_name: Error
+    verification:
+      status: pending
+      notes: ''
+  Annotations:
+    swift: Annotations
+    file: Sources/MCP/Base/Annotations.swift
+    verification:
+      status: pending
+      notes: ''
+  Role:
+    swift: Role
+    file: Sources/MCP/Base/Annotations.swift
+    verification:
+      status: pending
+      notes: ''
+  Icon:
+    swift: Icon
+    file: Sources/MCP/Base/Icon.swift
+    verification:
+      status: pending
+      notes: ''
+  ContentBlock:
+    swift: [Tool.Content, Prompt.Message.Content]
+    file: [Sources/MCP/Server/Tools.swift, Sources/MCP/Server/Prompts.swift]
+    verification:
+      status: pending
+      notes: ''
+  Resource:
+    swift: Resource
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  ResourceTemplate:
+    swift: Resource.Template
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  ResourceContents:
+    swift: Resource.Contents
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  ResourceLink:
+    swift: ResourceLink
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  EmbeddedResource:
+    swift: Resource.Contents
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  Prompt:
+    swift: Prompt
+    file: Sources/MCP/Server/Prompts.swift
+    verification:
+      status: pending
+      notes: ''
+  PromptArgument:
+    swift: Prompt.Argument
+    file: Sources/MCP/Server/Prompts.swift
+    verification:
+      status: pending
+      notes: ''
+  PromptMessage:
+    swift: Prompt.Message
+    file: Sources/MCP/Server/Prompts.swift
+    verification:
+      status: pending
+      notes: ''
+  Tool:
+    swift: Tool
+    file: Sources/MCP/Server/Tools.swift
+    verification:
+      status: pending
+      notes: ''
+  ToolAnnotations:
+    swift: Tool.Annotations
+    file: Sources/MCP/Server/Tools.swift
+    verification:
+      status: pending
+      notes: ''
+  ToolExecution:
+    swift: Tool.Execution
+    file: Sources/MCP/Server/Tools.swift
+    verification:
+      status: pending
+      notes: ''
+  LoggingLevel:
+    swift: LoggingLevel
+    file: Sources/MCP/Server/Logging.swift
+    verification:
+      status: pending
+      notes: ''
+  SamplingMessage:
+    swift: Sampling.Message
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  ModelPreferences:
+    swift: ModelPreferences
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  StopReason:
+    swift: StopReason
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  ToolChoice:
+    swift: ToolChoice
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  ToolUseContent:
+    swift: ToolUseContent
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  ToolResultContent:
+    swift: ToolResultContent
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  ElicitationSchema:
+    swift: ElicitationSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  PrimitiveSchemaDefinition:
+    swift: PrimitiveSchemaDefinition
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  StringSchema:
+    swift: StringSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  NumberSchema:
+    swift: NumberSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  BooleanSchema:
+    swift: BooleanSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  EnumSchema:
+    swift: [UntitledEnumSchema, TitledEnumSchema]
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  Root:
+    swift: Root
+    file: Sources/MCP/Client/Roots.swift
+    verification:
+      status: pending
+      notes: ''
+  Task:
+    swift: MCPTask
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    spec_name: Task
+    verification:
+      status: pending
+      notes: ''
+  TaskStatus:
+    swift: TaskStatus
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    verification:
+      status: pending
+      notes: ''
+  TaskMetadata:
+    swift: TaskMetadata
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    verification:
+      status: pending
+      notes: ''
+  RelatedTaskMetadata:
+    swift: RelatedTaskMetadata
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    verification:
+      status: pending
+      notes: ''
+  CreateTaskResult:
+    swift: MCPTask
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    spec_name: CreateTaskResult
+    verification:
+      status: pending
+      notes: ''
+  TextContent:
+    swift: Tool.Content.text
+    file: Sources/MCP/Server/Tools.swift
+    kind: case
+    verification:
+      status: pending
+      notes: ''
+  ImageContent:
+    swift: Tool.Content.image
+    file: Sources/MCP/Server/Tools.swift
+    kind: case
+    verification:
+      status: pending
+      notes: ''
+  AudioContent:
+    swift: Tool.Content.audio
+    file: Sources/MCP/Server/Tools.swift
+    kind: case
+    verification:
+      status: pending
+      notes: ''
+  TextResourceContents:
+    swift: Resource.Contents
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  BlobResourceContents:
+    swift: Resource.Contents
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  Cursor:
+    swift: String
+    file: Sources/MCP/Server/Resources.swift
+    kind: builtin
+    verification:
+      status: pending
+      notes: ''
+  PaginatedResult:
+    swift: Method.Result
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  JSONRPCErrorResponse:
+    swift: Response
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  JSONRPCResultResponse:
+    swift: Response
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  Request:
+    swift: Request
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  Notification:
+    swift: Notification
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  Result:
+    swift: Method.Result
+    file: Sources/MCP/Base/Messages.swift
+    kind: associatedtype
+    verification:
+      status: pending
+      notes: ''
+  RequestParams:
+    swift: Method.Parameters
+    file: Sources/MCP/Base/Messages.swift
+    kind: associatedtype
+    verification:
+      status: pending
+      notes: ''
+  NotificationParams:
+    swift: Notification.Parameters
+    file: Sources/MCP/Base/Messages.swift
+    kind: associatedtype
+    verification:
+      status: pending
+      notes: ''
+  PaginatedRequest:
+    swift: Method
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  PaginatedRequestParams:
+    swift: Method.Parameters
+    file: Sources/MCP/Base/Messages.swift
+    verification:
+      status: pending
+      notes: ''
+  ResourceRequestParams:
+    swift: ReadResource.Parameters
+    file: Sources/MCP/Server/Resources.swift
+    verification:
+      status: pending
+      notes: ''
+  TaskAugmentedRequestParams:
+    swift: Method.Parameters
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    verification:
+      status: pending
+      notes: ''
+  BaseMetadata:
+    swift: Value
+    file: Sources/MCP/Base/Value.swift
+    verification:
+      status: pending
+      notes: ''
+  ClientRequest:
+    swift: Method
+    file: Sources/MCP/Client/Client.swift
+    verification:
+      status: pending
+      notes: ''
+  ClientNotification:
+    swift: Notification
+    file: Sources/MCP/Client/Client.swift
+    verification:
+      status: pending
+      notes: ''
+  ClientResult:
+    swift: Method.Result
+    file: Sources/MCP/Client/Client.swift
+    verification:
+      status: pending
+      notes: ''
+  ServerRequest:
+    swift: Method
+    file: Sources/MCP/Server/Server.swift
+    verification:
+      status: pending
+      notes: ''
+  ServerNotification:
+    swift: Notification
+    file: Sources/MCP/Server/Server.swift
+    verification:
+      status: pending
+      notes: ''
+  ServerResult:
+    swift: Method.Result
+    file: Sources/MCP/Server/Server.swift
+    verification:
+      status: pending
+      notes: ''
+  Icons:
+    swift: "[Icon]"
+    file: Sources/MCP/Base/Icon.swift
+    kind: builtin
+    verification:
+      status: pending
+      notes: ''
+  URLElicitationRequiredError:
+    swift: MCPError
+    file: Sources/MCP/Base/Error.swift
+    verification:
+      status: pending
+      notes: ''
+
+  # ---------------------------------------------------------------------------
+  # Reference Types
+  # ---------------------------------------------------------------------------
+  PromptReference:
+    swift: PromptReference
+    file: Sources/MCP/Server/Completions.swift
+    verification:
+      status: pending
+      notes: ''
+  ResourceTemplateReference:
+    swift: ResourceTemplateReference
+    file: Sources/MCP/Server/Completions.swift
+    verification:
+      status: pending
+      notes: ''
+
+  # ---------------------------------------------------------------------------
+  # Sampling Types
+  # ---------------------------------------------------------------------------
+  ModelHint:
+    swift: ModelPreferences.Hint
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+  SamplingMessageContentBlock:
+    swift: [Tool.Content, ToolUseContent, ToolResultContent]
+    file: Sources/MCP/Client/Sampling.swift
+    verification:
+      status: pending
+      notes: ''
+
+  # ---------------------------------------------------------------------------
+  # Elicitation Enum Schema Types
+  # ---------------------------------------------------------------------------
+  SingleSelectEnumSchema:
+    swift: [UntitledEnumSchema, TitledEnumSchema]
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  MultiSelectEnumSchema:
+    swift: [UntitledMultiSelectEnumSchema, TitledMultiSelectEnumSchema]
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  TitledSingleSelectEnumSchema:
+    swift: TitledEnumSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  UntitledSingleSelectEnumSchema:
+    swift: UntitledEnumSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  TitledMultiSelectEnumSchema:
+    swift: TitledMultiSelectEnumSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+  UntitledMultiSelectEnumSchema:
+    swift: UntitledMultiSelectEnumSchema
+    file: Sources/MCP/Client/Elicitation.swift
+    verification:
+      status: pending
+      notes: ''
+
+# =============================================================================
+# ENUMS
+# =============================================================================
+# Enum types with their case values. Swift case names may differ from spec values
+# when using raw values (e.g., case inputRequired = "input_required").
+
+enums:
+  - name: LoggingLevel
+    swift: LoggingLevel
+    file: Sources/MCP/Server/Logging.swift
+    cases:
+      - spec: alert
+        swift: alert
+      - spec: critical
+        swift: critical
+      - spec: debug
+        swift: debug
+      - spec: emergency
+        swift: emergency
+      - spec: error
+        swift: error
+      - spec: info
+        swift: info
+      - spec: notice
+        swift: notice
+      - spec: warning
+        swift: warning
+    verification:
+      status: pending
+      notes: ''
+
+  - name: Role
+    swift: Role
+    file: Sources/MCP/Base/Annotations.swift
+    cases:
+      - spec: assistant
+        swift: assistant
+      - spec: user
+        swift: user
+    verification:
+      status: pending
+      notes: ''
+
+  - name: TaskStatus
+    swift: TaskStatus
+    file: Sources/MCP/Server/Experimental/Tasks/Tasks.swift
+    cases:
+      - spec: cancelled
+        swift: cancelled
+      - spec: completed
+        swift: completed
+      - spec: failed
+        swift: failed
+      - spec: input_required
+        swift: inputRequired
+        raw_value: input_required
+      - spec: working
+        swift: working
+    verification:
+      status: pending
+      notes: ''
+
+# =============================================================================
+# ERROR CODES
+# =============================================================================
+# JSON-RPC 2.0 standard error codes and MCP-specific codes.
+# Standard codes have dedicated Swift enum cases; MCP-specific codes use
+# the generic serverError(code:message:) case.
+
+error_codes:
+  # Standard JSON-RPC 2.0 errors
+  - name: PARSE_ERROR
+    code: -32700
+    swift: parseError
+    category: jsonrpc
+    verification:
+      status: pending
+      notes: ''
+
+  - name: INVALID_REQUEST
+    code: -32600
+    swift: invalidRequest
+    category: jsonrpc
+    verification:
+      status: pending
+      notes: ''
+
+  - name: METHOD_NOT_FOUND
+    code: -32601
+    swift: methodNotFound
+    category: jsonrpc
+    verification:
+      status: pending
+      notes: ''
+
+  - name: INVALID_PARAMS
+    code: -32602
+    swift: invalidParams
+    category: jsonrpc
+    verification:
+      status: pending
+      notes: ''
+
+  - name: INTERNAL_ERROR
+    code: -32603
+    swift: internalError
+    category: jsonrpc
+    verification:
+      status: pending
+      notes: ''
+
+  # MCP-specific errors (in -32000 to -32099 range)
+  - name: URL_ELICITATION_REQUIRED
+    code: -32042
+    swift: null
+    swift_handling: serverError(code:message:)
+    category: mcp
+    verification:
+      status: pending
+      notes: 'No dedicated case; handled via generic serverError'
+
+# =============================================================================
+# CAPABILITIES
+# =============================================================================
+# ClientCapabilities and ServerCapabilities properties.
+# Tracks top-level properties and their nested boolean fields.
+
+capabilities:
+  # Swift name defaults to property name when omitted
+  client:
+    - property: elicitation
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: experimental
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: roots
+      nested:
+        - name: listChanged
+      verification:
+        status: pending
+        notes: ''
+
+    - property: sampling
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: tasks
+      nested: []
+      verification:
+        status: pending
+        notes: 'Defined in Tasks.swift as Client.Capabilities.Tasks'
+
+  server:
+    - property: completions
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: experimental
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: logging
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: prompts
+      nested:
+        - name: listChanged
+      verification:
+        status: pending
+        notes: ''
+
+    - property: resources
+      nested:
+        - name: listChanged
+        - name: subscribe
+      verification:
+        status: pending
+        notes: ''
+
+    - property: tasks
+      nested: []
+      verification:
+        status: pending
+        notes: ''
+
+    - property: tools
+      nested:
+        - name: listChanged
+      verification:
+        status: pending
+        notes: ''
+
+# =============================================================================
+# DEPRECATED
+# =============================================================================
+# Types marked deprecated in the spec. Tracked for visibility.
+
+deprecated:
+  - name: LegacyTitledEnumSchema
+    replacement: TitledSingleSelectEnumSchema
+    notes: 'Filtered from verification'

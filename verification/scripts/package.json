@@ -1,0 +1,12 @@
+{
+  "name": "mcp-verification-scripts",
+  "version": "1.0.0",
+  "description": "AST-based type extraction for MCP SDK verification",
+  "private": true,
+  "scripts": {
+    "extract-ts": "node extract-ts-types.js"
+  },
+  "dependencies": {
+    "typescript": "^5.0.0"
+  }
+}
