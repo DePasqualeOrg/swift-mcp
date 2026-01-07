@@ -1,5 +1,8 @@
 # MCP Swift SDK
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDePasqualeOrg%2Fmcp-swift-sdk%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDePasqualeOrg%2Fmcp-swift-sdk%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk)
+
 [**Installation**](#installation) | [**Documentation**](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp) | [**Examples**](Examples/)
 
 Swift SDK for the [Model Context Protocol][mcp] (MCP).
