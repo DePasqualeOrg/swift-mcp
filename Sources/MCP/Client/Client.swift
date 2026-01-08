@@ -257,12 +257,14 @@ public actor Client {
             total: Double? = nil,
             message: String? = nil
         ) async throws {
-            try await sendNotification(ProgressNotification.message(.init(
-                progressToken: token,
-                progress: progress,
-                total: total,
-                message: message
-            )))
+            try await sendNotification(
+                ProgressNotification.message(
+                    .init(
+                        progressToken: token,
+                        progress: progress,
+                        total: total,
+                        message: message
+                    )))
         }
 
         // MARK: - Cancellation Checking
@@ -352,7 +354,7 @@ public actor Client {
     /// let status = try await client.experimental.tasks.getTask(result.task.taskId)
     /// ```
     ///
-    /// - Warning: These APIs are experimental and may change without notice.
+    /// - Note: These APIs are experimental and may change without notice.
     public var experimental: ExperimentalClientFeatures {
         ExperimentalClientFeatures(client: self)
     }
@@ -371,7 +373,8 @@ public actor Client {
     /// Task-augmented sampling handler (called when request has `task` field)
     var taskAugmentedSamplingHandler: ExperimentalClientTaskHandlers.TaskAugmentedSamplingHandler?
     /// Task-augmented elicitation handler (called when request has `task` field)
-    var taskAugmentedElicitationHandler: ExperimentalClientTaskHandlers.TaskAugmentedElicitationHandler?
+    var taskAugmentedElicitationHandler:
+        ExperimentalClientTaskHandlers.TaskAugmentedElicitationHandler?
     /// The task for the message handling loop
     var task: Task<Void, Never>?
 
@@ -548,7 +551,7 @@ public actor Client {
                         group.cancelAll()
                     }
                 } catch is CancellationError {
-                    return // Task was cancelled, exit gracefully
+                    return  // Task was cancelled, exit gracefully
                 }
 
                 // If we get here after a progress signal, loop to recalculate deadline
@@ -833,8 +836,8 @@ public actor Client {
         guard Version.supported.contains(result.protocolVersion) else {
             await disconnect()
             throw MCPError.invalidRequest(
-                "Server responded with unsupported protocol version: \(result.protocolVersion). " +
-                "Supported versions: \(Version.supported.sorted().joined(separator: ", "))"
+                "Server responded with unsupported protocol version: \(result.protocolVersion). "
+                    + "Supported versions: \(Version.supported.sorted().joined(separator: ", "))"
             )
         }
 

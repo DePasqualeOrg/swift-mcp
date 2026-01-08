@@ -136,7 +136,7 @@ public actor TaskContext {
     ///
     /// This is a convenience method that encodes the result and stores it.
     ///
-    /// - Parameter result: The tool result
+    /// - Parameter toolResult: The tool result
     /// - Throws: Error if encoding fails or the task cannot be completed
     public func complete(toolResult: CallTool.Result) async throws {
         let encoder = JSONEncoder()

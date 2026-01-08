@@ -235,7 +235,7 @@ public final class ServerTaskContext: Sendable {
     /// Fail the task with an Error.
     ///
     /// For security, non-MCP errors are sanitized to avoid leaking internal details.
-    /// Use ``fail(error:notify:)-6k8lh`` with a string message if you need to send
+    /// Use ``fail(error:notify:)-(String,_)`` with a string message if you need to send
     /// specific error information to clients.
     ///
     /// - Parameters:

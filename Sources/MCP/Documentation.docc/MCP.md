@@ -12,16 +12,15 @@ The Model Context Protocol defines a standardized way for applications to commun
 
 ## Topics
 
-### Guides
+### Overview
 
-- <doc:GettingStarted>
-- <doc:ClientGuide>
-- <doc:ServerGuide>
-- <doc:Transports>
-- <doc:Debugging>
-- <doc:Experimental>
+- <doc:getting-started>
+- <doc:client-guide>
+- <doc:server-guide>
+- <doc:transports>
+- <doc:debugging>
 
-### Core
+### Core Types
 
 - ``Client``
 - ``Server``

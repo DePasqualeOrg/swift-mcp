@@ -1,6 +1,6 @@
 # Debugging
 
-Configure logging and handle errors in MCP applications.
+Configure logging and handle errors in MCP applications
 
 ## Overview
 
@@ -122,7 +122,7 @@ struct VerboseLogHandler: LogHandler {
 
 ## See Also
 
-- <doc:ClientGuide>
-- <doc:ServerGuide>
+- <doc:client-setup>
+- <doc:server-setup>
 - ``MCPError``
 - ``ErrorCode``

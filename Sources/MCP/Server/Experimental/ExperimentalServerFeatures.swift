@@ -12,7 +12,7 @@ import Foundation
 /// await server.experimental.tasks.enable(taskSupport)
 /// ```
 ///
-/// - Warning: These APIs are experimental and may change without notice.
+/// - Note: These APIs are experimental and may change without notice.
 public struct ExperimentalServerFeatures: Sendable {
     private let server: Server
 
@@ -28,7 +28,7 @@ public struct ExperimentalServerFeatures: Sendable {
 
 /// Experimental task APIs for MCP servers.
 ///
-/// - Warning: These APIs are experimental and may change without notice.
+/// - Note: These APIs are experimental and may change without notice.
 public struct ExperimentalServerTasks: Sendable {
     private let server: Server
 

@@ -6,7 +6,7 @@ extension Client {
     /// A batch of requests.
     ///
     /// Objects of this type are passed as an argument to the closure
-    /// of the ``Client/withBatch(_:)`` method.
+    /// of the ``Client/withBatch(body:)`` method.
     public actor Batch {
         unowned let client: Client
         var requests: [AnyRequest] = []

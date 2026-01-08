@@ -85,9 +85,7 @@ public func validateToolName(_ name: String) -> ToolNameValidationResult {
 
 /// Validates a tool name and logs any warnings.
 ///
-/// - Parameters:
-///   - name: The tool name to validate
-///   - logger: Optional logger for warnings
+/// - Parameter name: The tool name to validate
 /// - Returns: Whether the tool name is valid
 @discardableResult
 public func validateAndWarnToolName(_ name: String) -> Bool {

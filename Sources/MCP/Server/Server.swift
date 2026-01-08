@@ -464,12 +464,14 @@ public actor Server {
             total: Double? = nil,
             message: String? = nil
         ) async throws {
-            try await sendMessage(ProgressNotification.message(.init(
-                progressToken: token,
-                progress: progress,
-                total: total,
-                message: message
-            )))
+            try await sendMessage(
+                ProgressNotification.message(
+                    .init(
+                        progressToken: token,
+                        progress: progress,
+                        total: total,
+                        message: message
+                    )))
         }
 
         /// Send a log message notification to the client.
@@ -490,11 +492,13 @@ public actor Server {
             // Check if this message should be sent based on the current log level
             guard await shouldSendLogMessage(level) else { return }
 
-            try await sendMessage(LogMessageNotification.message(.init(
-                level: level,
-                logger: logger,
-                data: data
-            )))
+            try await sendMessage(
+                LogMessageNotification.message(
+                    .init(
+                        level: level,
+                        logger: logger,
+                        data: data
+                    )))
         }
 
         /// Send a resource list changed notification to the client.
@@ -533,10 +537,12 @@ public actor Server {
         ///   - requestId: The ID of the request being cancelled (optional in protocol 2025-11-25+)
         ///   - reason: An optional reason for the cancellation
         public func sendCancelled(requestId: RequestId? = nil, reason: String? = nil) async throws {
-            try await sendMessage(CancelledNotification.message(.init(
-                requestId: requestId,
-                reason: reason
-            )))
+            try await sendMessage(
+                CancelledNotification.message(
+                    .init(
+                        requestId: requestId,
+                        reason: reason
+                    )))
         }
 
         /// Send an elicitation complete notification to the client.
@@ -546,9 +552,11 @@ public actor Server {
         ///
         /// - Parameter elicitationId: The ID of the elicitation that completed.
         public func sendElicitationComplete(elicitationId: String) async throws {
-            try await sendMessage(ElicitationCompleteNotification.message(.init(
-                elicitationId: elicitationId
-            )))
+            try await sendMessage(
+                ElicitationCompleteNotification.message(
+                    .init(
+                        elicitationId: elicitationId
+                    )))
         }
 
         /// Send a task status notification to the client.
@@ -725,7 +733,8 @@ public actor Server {
                         continuation.yield(decoded)
                         continuation.finish()
                     } else {
-                        continuation.finish(throwing: MCPError.internalError("Type mismatch in response"))
+                        continuation.finish(
+                            throwing: MCPError.internalError("Type mismatch in response"))
                     }
                 case .failure(let error):
                     continuation.finish(throwing: error)
@@ -766,9 +775,9 @@ public actor Server {
     public nonisolated var version: String { serverInfo.version }
     /// Instructions describing how to use the server and its features
     ///
-    /// This can be used by clients to improve the LLM's understanding of 
-    /// available tools, resources, etc. 
-    /// It can be thought of like a "hint" to the model. 
+    /// This can be used by clients to improve the LLM's understanding of
+    /// available tools, resources, etc.
+    /// It can be thought of like a "hint" to the model.
     /// For example, this information MAY be added to the system prompt.
     public nonisolated let instructions: String?
     /// The server capabilities
@@ -788,7 +797,7 @@ public actor Server {
     /// await server.experimental.tasks.enable(taskSupport)
     /// ```
     ///
-    /// - Warning: These APIs are experimental and may change without notice.
+    /// - Note: These APIs are experimental and may change without notice.
     public var experimental: ExperimentalServerFeatures {
         ExperimentalServerFeatures(server: self)
     }
@@ -891,7 +900,8 @@ public actor Server {
                             Task { [weak self] in
                                 guard let self else { return }
                                 do {
-                                    try await self.handleBatch(batch, messageContext: messageContext)
+                                    try await self.handleBatch(
+                                        batch, messageContext: messageContext)
                                 } catch {
                                     await self.logger?.error(
                                         "Error handling batch",
@@ -915,13 +925,16 @@ public actor Server {
                                     Task { await self.removeInFlightRequest(requestId) }
                                 }
                                 do {
-                                    _ = try await self.handleRequest(request, sendResponse: true, messageContext: messageContext)
+                                    _ = try await self.handleRequest(
+                                        request, sendResponse: true, messageContext: messageContext)
                                 } catch {
                                     // handleRequest already sends error responses, so this
                                     // only catches errors from send() itself
                                     await self.logger?.error(
                                         "Error sending response",
-                                        metadata: ["error": "\(error)", "requestId": "\(request.id)"]
+                                        metadata: [
+                                            "error": "\(error)", "requestId": "\(request.id)",
+                                        ]
                                     )
                                 }
                             }
@@ -1004,7 +1017,8 @@ public actor Server {
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
     ) -> Self {
-        methodHandlers[M.name] = TypedRequestHandler { (request: Request<M>, context: RequestHandlerContext) -> Response<M> in
+        methodHandlers[M.name] = TypedRequestHandler {
+            (request: Request<M>, context: RequestHandlerContext) -> Response<M> in
             let result = try await handler(request.params, context)
             return Response(id: request.id, result: result)
         }
@@ -1017,7 +1031,11 @@ public actor Server {
     ///   - type: The method type to handle
     ///   - handler: The handler function receiving only parameters
     /// - Returns: Self for chaining
-    @available(*, deprecated, message: "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing")
+    @available(
+        *, deprecated,
+        message:
+            "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
+    )
     @discardableResult
     public func withRequestHandler<M: Method>(
         _ type: M.Type,

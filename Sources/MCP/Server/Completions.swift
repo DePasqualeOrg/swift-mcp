@@ -196,7 +196,7 @@ public struct CompletionSuggestions: Hashable, Codable, Sendable {
     ///   - hasMore: Whether there are additional options beyond those provided.
     ///
     /// - Note: This initializer does not automatically set `total` or `hasMore` based on
-    ///         the values array. Use ``init(from:)`` for automatic handling of these fields.
+    ///         the values array. Use ``init(from:)-([String])`` for automatic handling of these fields.
     public init(values: [String], total: Int? = nil, hasMore: Bool? = nil) {
         // Enforce the 100-item limit per MCP specification
         self.values = Array(values.prefix(Self.maxValues))

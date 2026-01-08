@@ -1,6 +1,6 @@
 # Transports
 
-Choose and configure the right transport for your MCP client or server.
+Choose and configure the right transport for your MCP client or server
 
 ## Overview
 
@@ -229,5 +229,5 @@ public actor MyCustomTransport: Transport {
 
 ## See Also
 
-- <doc:ClientGuide>
-- <doc:ServerGuide>
+- <doc:client-setup>
+- <doc:server-setup>

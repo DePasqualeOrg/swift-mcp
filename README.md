@@ -7,19 +7,16 @@
 
 This repository, which builds on the [official](https://github.com/modelcontextprotocol/swift-sdk) but incomplete Swift SDK for MCP, includes functionality that has not yet been fully vetted. Feedback on anything that can be improved is welcome.
 
-All of the functionality included in protocol version 2025-11-25 has been implemented here, except for the following:
+All of the functionality from protocol version 2025-11-25 has been implemented here, except for:
 
 - JSON schema validation
 - OAuth
 
 ## Guides
 
-- [Getting Started](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/gettingstarted)
-- [Client Guide](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/clientguide)
-- [Server Guide](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/serverguide)
-- [Transports](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/transports)
-- [Debugging](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/debugging)
-- [Experimental](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/experimental)
+- [Getting Started](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/getting-started)
+- [Client Guide](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/client-guide)
+- [Server Guide](https://swiftpackageindex.com/DePasqualeOrg/mcp-swift-sdk/main/documentation/mcp/server-guide)
 
 ## HTTP Server Examples
 
