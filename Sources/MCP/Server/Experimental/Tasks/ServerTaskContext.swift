@@ -1,5 +1,10 @@
 import Foundation
+
+#if canImport(os)
 import os
+#else
+import Synchronization
+#endif
 
 // MARK: - Server Task Context
 
@@ -52,7 +57,11 @@ public final class ServerTaskContext: Sendable {
     }
 
     /// Lock-protected mutable state.
+    #if canImport(os)
     private let state: OSAllocatedUnfairLock<State>
+    #else
+    private let state: Mutex<State>
+    #endif
 
     /// The task store for persistence.
     private let store: any TaskStore
@@ -96,7 +105,11 @@ public final class ServerTaskContext: Sendable {
         clientCapabilities: Client.Capabilities? = nil,
         server: Server? = nil
     ) {
+        #if canImport(os)
         self.state = OSAllocatedUnfairLock(initialState: State(task: task))
+        #else
+        self.state = Mutex(State(task: task))
+        #endif
         self.store = store
         self.queue = queue
         self.clientCapabilities = clientCapabilities
