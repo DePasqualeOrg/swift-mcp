@@ -11,10 +11,8 @@ var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/mattt/eventsource.git", from: "1.1.0"),
     .package(url: "https://github.com/ajevans99/swift-json-schema", from: "0.2.1"),
     .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
-    // TODO: Remove after https://github.com/swiftlang/swift-docc/pull/1417 is merged
-    .package(url: "https://github.com/DePasqualeOrg/swift-docc", branch: "live-reload"),
-//    .package(url: "https://github.com/DePasqualeOrg/swift-docc", branch: "fix-orphaned-process"),
-    .package(url: "https://github.com/DePasqualeOrg/swift-docc-plugin", branch: "fix-orphaned-process"),
+    .package(url: "https://github.com/swiftlang/swift-docc", branch: "main"),
+    .package(url: "https://github.com/swiftlang/swift-docc-plugin", branch: "main"),
     // Test-only dependency for real HTTP testing
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
 ]

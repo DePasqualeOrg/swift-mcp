@@ -1,5 +1,5 @@
 {
-  "originHash" : "b0f1a56e8f4bc59a447592212b47da7f18d722dfeeb9191685d4dfbf907ce3ff",
+  "originHash" : "1caebd944f34776e9d2c41dcec389fb4290e2e9ba9dd0725a31964a54e984d30",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -130,19 +130,19 @@
     {
       "identity" : "swift-docc",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/DePasqualeOrg/swift-docc",
+      "location" : "https://github.com/swiftlang/swift-docc",
       "state" : {
-        "branch" : "live-reload",
-        "revision" : "bb7486a10a08785108f8a04a1b5e241dffd8a1f2"
+        "branch" : "main",
+        "revision" : "f9fd60955292107457eb31feb22913f0900b8827"
       }
     },
     {
       "identity" : "swift-docc-plugin",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/DePasqualeOrg/swift-docc-plugin",
+      "location" : "https://github.com/swiftlang/swift-docc-plugin",
       "state" : {
-        "branch" : "fix-orphaned-process",
-        "revision" : "51410f22521ff97068f93d82ff1a8b4cb2f3cd7f"
+        "branch" : "main",
+        "revision" : "7935a77059e00713a088edf37e2a3485f87398ad"
       }
     },
     {
@@ -292,7 +292,7 @@
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
         "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
         "version" : "602.0.0"
