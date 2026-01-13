@@ -445,7 +445,7 @@ public actor Server {
         ///     return CallTool.Result(content: [.text("Done")])
         /// }
         /// ```
-        let sendRequest: @Sendable (Data) async throws -> Value
+        let sendRequest: @Sendable (Data) async throws -> Data
 
         // MARK: - Convenience Methods
 
@@ -616,10 +616,8 @@ public actor Server {
             encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
             let requestData = try encoder.encode(request)
 
-            let responseValue = try await sendRequest(requestData)
-            let decoder = JSONDecoder()
-            let responseData = try encoder.encode(responseValue)
-            return try decoder.decode(ElicitResult.self, from: responseData)
+            let responseData = try await sendRequest(requestData)
+            return try JSONDecoder().decode(ElicitResult.self, from: responseData)
         }
 
         /// Request user interaction via URL-mode elicitation from the client.
@@ -648,10 +646,8 @@ public actor Server {
             encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
             let requestData = try encoder.encode(request)
 
-            let responseValue = try await sendRequest(requestData)
-            let decoder = JSONDecoder()
-            let responseData = try encoder.encode(responseValue)
-            return try decoder.decode(ElicitResult.self, from: responseData)
+            let responseData = try await sendRequest(requestData)
+            return try JSONDecoder().decode(ElicitResult.self, from: responseData)
         }
 
         // MARK: - Cancellation Checking
@@ -758,6 +754,48 @@ public actor Server {
         }
     }
 
+    /// A pending request that yields raw Data for callers to decode directly.
+    /// This avoids double-encoding when the caller already knows the target type.
+    struct DataServerPendingRequest {
+        private let _yield: (Result<Data, Swift.Error>) -> Void
+        private let _finish: () -> Void
+
+        init(continuation: AsyncThrowingStream<Data, Swift.Error>.Continuation) {
+            _yield = { result in
+                switch result {
+                case .success(let data):
+                    continuation.yield(data)
+                    continuation.finish()
+                case .failure(let error):
+                    continuation.finish(throwing: error)
+                }
+            }
+            _finish = {
+                continuation.finish()
+            }
+        }
+
+        func resume(returning value: Value) {
+            // Encode Value to Data for the caller to decode
+            do {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+                let data = try encoder.encode(value)
+                _yield(.success(data))
+            } catch {
+                _yield(.failure(MCPError.internalError("Failed to encode response: \(error)")))
+            }
+        }
+
+        func resume(throwing error: Swift.Error) {
+            _yield(.failure(error))
+        }
+
+        func finish() {
+            _finish()
+        }
+    }
+
     /// Server information
     let serverInfo: Server.Info
     /// The server connection
@@ -809,6 +847,8 @@ public actor Server {
 
     /// Pending requests sent from server to client (for bidirectional communication)
     var pendingRequests: [RequestId: AnyServerPendingRequest] = [:]
+    /// Pending context requests that return raw Data (for RequestHandlerContext.sendRequest)
+    var pendingContextRequests: [RequestId: DataServerPendingRequest] = [:]
     /// Counter for generating unique request IDs
     var nextRequestId = 0
     /// Response routers for intercepting responses before normal handling

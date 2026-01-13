@@ -1,3 +1,5 @@
+import Foundation
+
 /// Context provided to all high-level API handlers.
 ///
 /// Provides access to:
@@ -197,6 +199,64 @@ public struct HandlerContext: Sendable {
         elicitationId: String
     ) async throws -> ElicitResult {
         try await requestContext.elicitUrl(message: message, url: url, elicitationId: elicitationId)
+    }
+
+    // MARK: - Sampling
+
+    /// Request a sampling completion from the client.
+    ///
+    /// This enables tools to request LLM completions during execution.
+    /// The client will generate a completion using its LLM and return the result.
+    ///
+    /// Example:
+    /// ```swift
+    /// func perform(context: HandlerContext) async throws -> String {
+    ///     let result = try await context.createMessage(
+    ///         messages: [.init(role: .user, content: .text("What is 2+2?"))],
+    ///         maxTokens: 100
+    ///     )
+    ///     return "LLM said: \(result.content)"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - messages: The conversation history to use for completion.
+    ///   - maxTokens: The maximum number of tokens to generate.
+    ///   - modelPreferences: Optional model preferences.
+    ///   - systemPrompt: Optional system prompt.
+    ///   - includeContext: How to include context from the server.
+    ///   - temperature: Optional temperature for generation.
+    ///   - stopSequences: Optional stop sequences.
+    ///   - metadata: Optional metadata for the request.
+    /// - Returns: The sampling result from the client.
+    /// - Throws: `MCPError` if the request fails.
+    public func createMessage(
+        messages: [Sampling.Message],
+        maxTokens: Int,
+        modelPreferences: ModelPreferences? = nil,
+        systemPrompt: String? = nil,
+        includeContext: Sampling.ContextInclusion? = nil,
+        temperature: Double? = nil,
+        stopSequences: [String]? = nil,
+        metadata: [String: Value]? = nil
+    ) async throws -> CreateSamplingMessage.Result {
+        let params = SamplingParameters(
+            messages: messages,
+            modelPreferences: modelPreferences,
+            systemPrompt: systemPrompt,
+            includeContext: includeContext,
+            temperature: temperature,
+            maxTokens: maxTokens,
+            stopSequences: stopSequences,
+            metadata: metadata
+        )
+        let request = CreateSamplingMessage.request(id: .random, params)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let requestData = try encoder.encode(request)
+
+        let responseData = try await requestContext.sendRequest(requestData)
+        return try JSONDecoder().decode(CreateSamplingMessage.Result.self, from: responseData)
     }
 }
 

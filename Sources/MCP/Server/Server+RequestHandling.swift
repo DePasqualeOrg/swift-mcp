@@ -350,7 +350,7 @@ extension Server {
                 }
 
                 // Create stream for receiving the response
-                let (stream, continuation) = AsyncThrowingStream<Value, Swift.Error>.makeStream()
+                let (stream, continuation) = AsyncThrowingStream<Data, Swift.Error>.makeStream()
 
                 continuation.onTermination = { @Sendable [weak self] _ in
                     Task { await self?.cleanUpPendingRequest(id: typedRequestId) }
@@ -491,6 +491,14 @@ extension Server {
                     pendingRequest.resume(returning: value)
                 case .failure(let error):
                     pendingRequest.resume(throwing: error)
+            }
+        } else if let pendingContextRequest = pendingContextRequests.removeValue(forKey: response.id) {
+            // Handle context requests that return raw Data
+            switch response.result {
+                case .success(let value):
+                    pendingContextRequest.resume(returning: value)
+                case .failure(let error):
+                    pendingContextRequest.resume(throwing: error)
             }
         } else {
             await logger?.warning(

@@ -10,3 +10,5 @@ DerivedData/
 
 # Docs
 .docc-build
+
+Examples/ConformanceTests/results

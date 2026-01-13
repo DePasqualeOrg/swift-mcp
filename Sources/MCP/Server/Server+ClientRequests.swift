@@ -50,6 +50,7 @@ extension Server {
 
     func cleanUpPendingRequest(id: RequestId) {
         pendingRequests.removeValue(forKey: id)
+        pendingContextRequests.removeValue(forKey: id)
     }
 
     /// Register a pending request from a context's sendRequest call.
@@ -58,9 +59,9 @@ extension Server {
     /// requests that will be fulfilled when the client responds.
     func registerContextRequest(
         id: RequestId,
-        continuation: AsyncThrowingStream<Value, Swift.Error>.Continuation
+        continuation: AsyncThrowingStream<Data, Swift.Error>.Continuation
     ) {
-        pendingRequests[id] = AnyServerPendingRequest(continuation: continuation)
+        pendingContextRequests[id] = DataServerPendingRequest(continuation: continuation)
     }
 
     // MARK: - In-Flight Request Tracking (Protocol-Level Cancellation)
