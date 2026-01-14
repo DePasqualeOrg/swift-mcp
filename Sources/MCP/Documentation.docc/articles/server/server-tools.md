@@ -119,6 +119,8 @@ struct CreateEvent {
 }
 ```
 
+For validation beyond these constraints—such as cross-field validation, pattern matching, or business logic—validate in your `perform` method and throw `MCPError.invalidParams` with a descriptive message.
+
 ### Custom JSON Keys
 
 Use `key` to specify a different name in the JSON schema:
@@ -451,21 +453,35 @@ CallTool.Result(content: [.audio(data: base64Data, mimeType: "audio/mp3")])
 
 ## Error Handling
 
-MCP distinguishes between two types of errors:
+Errors during tool execution are returned with `isError: true`, providing actionable feedback that language models can use to self-correct and retry.
 
-### Protocol Errors
+### Simple Errors
 
-Throw ``MCPError`` for issues with the request itself (unknown tool, malformed request). The SDK handles this automatically for registered tools.
+For simple error messages, just throw from your `perform` method:
 
-### Tool Execution Errors
+```swift
+func perform() async throws -> String {
+    guard isValidDate(date) else {
+        throw MCPError.invalidParams("Invalid date: must be in the future")
+    }
+    return "Event created"
+}
+```
 
-Return `isError: true` for errors during execution that the model might recover from:
+Thrown errors are caught and returned as `CallTool.Result(content: [.text(errorMessage)], isError: true)`.
+
+### Custom Error Content
+
+When you need richer error responses (multiple content items, images, specific formatting), return `CallTool.Result` explicitly:
 
 ```swift
 func perform() async throws -> CallTool.Result {
     guard isValidDate(date) else {
         return CallTool.Result(
-            content: [.text("Invalid date: must be in the future")],
+            content: [
+                .text("Invalid date: must be in the future"),
+                .text("Current time: \(ISO8601DateFormatter().string(from: Date()))")
+            ],
             isError: true
         )
     }
@@ -473,7 +489,9 @@ func perform() async throws -> CallTool.Result {
 }
 ```
 
-Tool execution errors provide actionable feedback that language models can use to self-correct and retry.
+### Protocol Errors
+
+Protocol-level errors (unknown tool, disabled tool, malformed request) are handled automatically by the SDK before your tool executes. You don't need to handle these cases in your `perform` method.
 
 ## Output Schema and Structured Content
 

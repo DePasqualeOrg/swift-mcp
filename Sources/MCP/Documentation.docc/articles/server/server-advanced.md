@@ -71,6 +71,33 @@ await server.withRequestHandler(CallTool.self) { params, _ in
 }
 ```
 
+### Error Handling with Low-Level API
+
+With the low-level `Server` API, thrown errors become JSON-RPC error responses (protocol errors). For recoverable tool execution errors that models can self-correct from, you must explicitly return `CallTool.Result` with `isError: true`:
+
+```swift
+await server.withRequestHandler(CallTool.self) { params, _ in
+    switch params.name {
+    case "weather":
+        guard let location = params.arguments?["location"]?.stringValue else {
+            // Recoverable error - model can retry with correct arguments
+            return CallTool.Result(
+                content: [.text("Missing required parameter: location")],
+                isError: true
+            )
+        }
+        let weather = await getWeather(location: location)
+        return CallTool.Result(content: [.text("Weather in \(location): \(weather)")])
+
+    default:
+        // Protocol error - unknown tool
+        throw MCPError.invalidParams("Unknown tool: \(params.name)")
+    }
+}
+```
+
+This differs from ``MCPServer``, which automatically converts thrown errors to `isError: true` responses.
+
 ## Manual Resource Registration
 
 ```swift
