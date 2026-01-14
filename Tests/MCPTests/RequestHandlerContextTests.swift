@@ -175,7 +175,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "test_tool", arguments: [:])
 
@@ -223,7 +223,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Make multiple requests
         _ = try await client.send(ListTools.request())
@@ -275,7 +275,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool WITH _meta containing progressToken
         _ = try await client.send(
@@ -328,7 +328,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool WITHOUT _meta
         _ = try await client.callTool(name: "test_tool", arguments: [:])
@@ -384,7 +384,7 @@ struct ServerRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool with progressToken in _meta
         _ = try await client.send(
@@ -457,7 +457,7 @@ struct ServerRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "askName", arguments: [:])
 
@@ -513,7 +513,7 @@ struct ServerRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
@@ -572,7 +572,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "test_tool", arguments: [:])
 
@@ -623,7 +623,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "test_tool", arguments: [:])
 
@@ -674,7 +674,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool with related task metadata in _meta
         _ = try await client.send(
@@ -730,7 +730,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool WITHOUT related task metadata
         _ = try await client.callTool(name: "test_tool", arguments: [:])
@@ -785,7 +785,7 @@ struct ServerRequestHandlerContextTests {
         let client = Client(name: "TestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "test_tool", arguments: [:])
 
@@ -846,7 +846,7 @@ struct ClientRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "elicitTool", arguments: [:])
 
@@ -908,7 +908,7 @@ struct ClientRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "elicitTool", arguments: [:])
 
@@ -967,7 +967,7 @@ struct ClientRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "elicitTool", arguments: [:])
 
@@ -1023,7 +1023,7 @@ struct ClientRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "elicitTool", arguments: [:])
 
@@ -1094,7 +1094,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
@@ -1149,7 +1149,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
@@ -1207,7 +1207,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
@@ -1314,7 +1314,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "wizard", arguments: [:])
 
@@ -1380,7 +1380,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "askLLM", arguments: [:])
 
@@ -1438,7 +1438,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         _ = try await client.callTool(name: "askLLM", arguments: [:])
 
@@ -1491,7 +1491,7 @@ struct AdditionalRequestHandlerContextTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "getRoots", arguments: [:])
 

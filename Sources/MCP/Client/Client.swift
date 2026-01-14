@@ -554,7 +554,7 @@ public actor Client {
                         }
 
                         // Wait for whichever completes first
-                        _ = try await group.next()
+                        try await group.next()
                         group.cancelAll()
                     }
                 } catch is CancellationError {
@@ -758,7 +758,7 @@ public actor Client {
         }
 
         // Await the task completion *after* transport disconnect
-        _ = await taskToCancel?.value
+        await taskToCancel?.value
         await logger?.debug("Client message loop task finished.")
 
         await logger?.debug("Client disconnect complete.")

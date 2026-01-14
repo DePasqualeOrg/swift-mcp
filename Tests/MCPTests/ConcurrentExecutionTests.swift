@@ -109,7 +109,7 @@ struct ConcurrentExecutionTests {
         let client = Client(name: "ConcurrentTestClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Start the sleep tool (will wait on event)
         let sleepTask = Task {
@@ -193,7 +193,7 @@ struct ConcurrentExecutionTests {
         let client = Client(name: "ConcurrentMixedClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Start the sleep tool (will wait on event)
         let sleepTask = Task {
@@ -252,7 +252,7 @@ struct ConcurrentExecutionTests {
         let client = Client(name: "ParallelTestClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Start multiple tool calls concurrently
         let tasks = (0..<expectedConcurrency).map { _ in

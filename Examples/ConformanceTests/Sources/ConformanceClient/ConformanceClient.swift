@@ -133,7 +133,7 @@ struct ConformanceClient {
 
         // Set up elicitation handler before connecting
         // When applyDefaults: true, client must fill in default values from schema
-        _ = await client.withElicitationHandler { params, _ in
+        await client.withElicitationHandler { params, _ in
             switch params {
             case .form(let formParams):
                 logger.info("Received elicitation request: \(formParams.message)")

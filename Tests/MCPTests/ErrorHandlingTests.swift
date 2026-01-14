@@ -157,7 +157,7 @@ struct MalformedInputHandlingTests {
         let client = Client(name: "RecoveryClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First, verify normal operation works
         let tools1 = try await client.send(ListTools.request(.init()))
@@ -298,7 +298,7 @@ struct ServerResilienceTests {
         let client = Client(name: "ExceptionClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call the failing tool - should get an error response, not a crash
         do {
@@ -370,7 +370,7 @@ struct ServerResilienceTests {
         let client = Client(name: "NormalClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call good tool - should succeed
         let result1 = try await client.send(
@@ -461,7 +461,7 @@ struct ServerResilienceTests {
         let client = Client(name: "MultipleExceptionsClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Test each error type
         let errorTools = [
@@ -564,7 +564,7 @@ struct TimeoutServerResponsivenessTests {
         let client = Client(name: "TimeoutClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First call should work (fast operation, no timeout)
         let result1 = try await client.send(
@@ -651,7 +651,7 @@ struct TimeoutServerResponsivenessTests {
         let client = Client(name: "MultipleClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First, trigger a timeout
         do {
@@ -725,7 +725,7 @@ struct TimeoutServerResponsivenessTests {
         let client = Client(name: "ConcurrentClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Start a slow request that will timeout (using a very short timeout)
         let slowTask = Task {

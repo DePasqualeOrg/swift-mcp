@@ -199,12 +199,12 @@ public actor MCPServer {
     /// Handlers are always wired to support dynamic registration after session creation.
     private func setUpSessionHandlers(_ session: Server) async {
         // Tools
-        _ = await session.withRequestHandler(ListTools.self) { [toolRegistry] _, _ in
+        await session.withRequestHandler(ListTools.self) { [toolRegistry] _, _ in
             let tools = await toolRegistry.definitions
             return ListTools.Result(tools: tools)
         }
 
-        _ = await session.withRequestHandler(CallTool.self) { [toolRegistry, validator] request, handlerContext in
+        await session.withRequestHandler(CallTool.self) { [toolRegistry, validator] request, handlerContext in
             let name = request.name
 
             // Helper to extract error message
@@ -281,29 +281,29 @@ public actor MCPServer {
         }
 
         // Resources
-        _ = await session.withRequestHandler(ListResources.self) { [resourceRegistry] _, _ in
+        await session.withRequestHandler(ListResources.self) { [resourceRegistry] _, _ in
             let resources = await resourceRegistry.listResources()
             let templateResources = try await resourceRegistry.listTemplateResources()
             return ListResources.Result(resources: resources + templateResources)
         }
 
-        _ = await session.withRequestHandler(ListResourceTemplates.self) { [resourceRegistry] _, _ in
+        await session.withRequestHandler(ListResourceTemplates.self) { [resourceRegistry] _, _ in
             let templates = await resourceRegistry.listTemplates()
             return ListResourceTemplates.Result(templates: templates)
         }
 
-        _ = await session.withRequestHandler(ReadResource.self) { [resourceRegistry] request, _ in
+        await session.withRequestHandler(ReadResource.self) { [resourceRegistry] request, _ in
             let contents = try await resourceRegistry.read(uri: request.uri)
             return ReadResource.Result(contents: [contents])
         }
 
         // Prompts
-        _ = await session.withRequestHandler(ListPrompts.self) { [promptRegistry] _, _ in
+        await session.withRequestHandler(ListPrompts.self) { [promptRegistry] _, _ in
             let prompts = await promptRegistry.listPrompts()
             return ListPrompts.Result(prompts: prompts)
         }
 
-        _ = await session.withRequestHandler(GetPrompt.self) { [promptRegistry] request, handlerContext in
+        await session.withRequestHandler(GetPrompt.self) { [promptRegistry] request, handlerContext in
             let context = HandlerContext(
                 handlerContext: handlerContext,
                 progressToken: request._meta?.progressToken

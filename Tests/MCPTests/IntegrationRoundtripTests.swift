@@ -167,7 +167,7 @@ struct IntegrationRoundtripTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "ToolTestClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call unknown tool
         let result = try await client.callTool(
@@ -485,7 +485,7 @@ struct IntegrationRoundtripTests {
             )
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool
         let result = try await client.callTool(
@@ -600,7 +600,7 @@ struct IntegrationRoundtripTests {
             )
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call the tool that triggers sampling
         let result = try await client.callTool(
@@ -743,7 +743,7 @@ struct IntegrationRoundtripTests {
             return ElicitResult(action: .decline)
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Test booking with unavailable date (triggers elicitation)
         let result1 = try await client.callTool(
@@ -867,7 +867,7 @@ struct IntegrationRoundtripTests {
             await logCollector.append(message.params)
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool that generates log messages
         let result = try await client.callTool(
@@ -947,7 +947,7 @@ struct IntegrationRoundtripTests {
             await notificationReceived.recordNotification()
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Call tool that triggers notification
         _ = try await client.callTool(name: "create_resource", arguments: nil)
@@ -1031,7 +1031,7 @@ struct IntegrationRoundtripTests {
             await notificationReceived.recordNotification()
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Initial list should have 2 tools
         let initialToolsResult = try await client.listTools()
@@ -1123,7 +1123,7 @@ struct IntegrationRoundtripTests {
             await notificationReceived.recordNotification()
         }
 
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Initial list should have 1 prompt
         let initialPrompts = try await client.listPrompts()

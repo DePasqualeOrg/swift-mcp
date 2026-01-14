@@ -600,7 +600,7 @@ struct PromptPaginationTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "PromptPaginationClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First page (no cursor)
         let page1 = try await client.listPrompts()
@@ -647,7 +647,7 @@ struct PromptPaginationTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "EmptyPromptClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Verify empty list is handled correctly
         let result = try await client.listPrompts()

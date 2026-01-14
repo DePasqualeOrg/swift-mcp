@@ -508,7 +508,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "askName", arguments: [:])
 
@@ -561,7 +561,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
@@ -613,7 +613,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "getData", arguments: [:])
 
@@ -686,7 +686,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "survey", arguments: [:])
 
@@ -748,7 +748,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
@@ -801,7 +801,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "formTool", arguments: [:])
 
@@ -851,7 +851,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "urlTool", arguments: [:])
 
@@ -892,7 +892,7 @@ struct ElicitationIntegrationTests {
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "elicitTool", arguments: [:])
 
@@ -977,7 +977,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "wizard", arguments: [:])
 
@@ -1052,7 +1052,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "pickColor", arguments: [:])
 
@@ -1114,7 +1114,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "selectTags", arguments: [:])
 
@@ -1171,7 +1171,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
@@ -1225,7 +1225,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
@@ -1278,7 +1278,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "checkContent", arguments: [:])
 
@@ -1353,7 +1353,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "pickColor", arguments: [:])
 
@@ -1435,7 +1435,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "userInfo", arguments: [:])
 
@@ -1500,7 +1500,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "userInfo", arguments: [:])
 
@@ -1615,7 +1615,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "preferences", arguments: [:])
 
@@ -1700,7 +1700,7 @@ struct ElicitationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "userProfile", arguments: [:])
 
@@ -2091,7 +2091,7 @@ struct URLElicitationRequiredErrorTests {
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         do {
             _ = try await client.callTool(name: "requiresAuth", arguments: [:])
@@ -2148,7 +2148,7 @@ struct URLElicitationRequiredErrorTests {
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         do {
             _ = try await client.callTool(name: "multiAuth", arguments: [:])
@@ -2224,7 +2224,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "completeAuth", arguments: [:])
 
@@ -2300,7 +2300,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 

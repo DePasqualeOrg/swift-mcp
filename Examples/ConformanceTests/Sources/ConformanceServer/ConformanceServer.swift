@@ -531,17 +531,17 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
 /// automatically set up by MCPServer.
 func registerConformanceHandlers(_ server: MCP.Server) async {
     // Completion handler - returns empty completions for conformance testing
-    _ = await server.withRequestHandler(Complete.self) { _, _ in
+    await server.withRequestHandler(Complete.self) { _, _ in
         Complete.Result(completion: CompletionSuggestions(values: [], total: 0, hasMore: false))
     }
 
     // Resource subscription handler
-    _ = await server.withRequestHandler(ResourceSubscribe.self) { _, _ in
+    await server.withRequestHandler(ResourceSubscribe.self) { _, _ in
         ResourceSubscribe.Result()
     }
 
     // Resource unsubscription handler
-    _ = await server.withRequestHandler(ResourceUnsubscribe.self) { _, _ in
+    await server.withRequestHandler(ResourceUnsubscribe.self) { _, _ in
         ResourceUnsubscribe.Result()
     }
 }

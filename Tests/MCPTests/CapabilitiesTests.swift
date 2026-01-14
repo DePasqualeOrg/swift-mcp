@@ -589,7 +589,7 @@ struct CapabilityNegotiationTests {
 
         // Attempting to use completions should fail
         do {
-            let _ = try await client.complete(
+            _ = try await client.complete(
                 ref: .prompt(PromptReference(name: "test")),
                 argument: CompletionArgument(name: "arg", value: "val")
             )

@@ -59,7 +59,7 @@ struct ResourceSubscriptionTests {
         let client = Client(name: "SubscriptionClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Subscribe to a resource
         try await client.subscribeToResource(uri: "file:///test.txt")
@@ -114,7 +114,7 @@ struct ResourceSubscriptionTests {
         let client = Client(name: "UnsubscriptionClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Unsubscribe from a resource
         try await client.unsubscribeFromResource(uri: "file:///test.txt")
@@ -173,7 +173,7 @@ struct ResourceSubscriptionTests {
         let client = Client(name: "CycleClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Subscribe to multiple resources
         try await client.subscribeToResource(uri: "file:///doc1.txt")
@@ -236,7 +236,7 @@ struct ResourceSubscriptionTests {
         )
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Attempt to subscribe should throw
         await #expect(throws: MCPError.self) {
@@ -285,7 +285,7 @@ struct ResourceSubscriptionTests {
         )
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Attempt to unsubscribe should throw
         await #expect(throws: MCPError.self) {
@@ -332,7 +332,7 @@ struct ResourceSubscriptionTests {
         )
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Attempt to subscribe should throw because resources capability is nil
         await #expect(throws: MCPError.self) {
@@ -402,7 +402,7 @@ struct ResourceSubscriptionTests {
         }
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Subscribe first
         try await client.subscribeToResource(uri: "file:///watched.txt")

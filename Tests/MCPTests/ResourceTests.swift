@@ -650,7 +650,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "PaginationClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First page (no cursor)
         let page1 = try await client.listResources()
@@ -734,7 +734,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "TemplateClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // List templates
         let templates = try await client.listResourceTemplates()
@@ -798,7 +798,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "MimeTypeClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // List resources and verify MIME types are preserved
         let resources = try await client.listResources()
@@ -852,7 +852,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "PaginatedTemplateClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First page
         let page1 = try await client.listResourceTemplates()
@@ -886,7 +886,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "EmptyResourceClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Verify empty list is handled correctly
         let result = try await client.listResources()
@@ -919,7 +919,7 @@ struct ResourceTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "EmptyTemplateClient", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Verify empty list is handled correctly
         let result = try await client.listResourceTemplates()

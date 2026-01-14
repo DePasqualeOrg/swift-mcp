@@ -1,5 +1,5 @@
 {
-  "originHash" : "29678bc9d195b460f66df105afc47a0406e1335e3e6e89302738221f074fcf9d",
+  "originHash" : "3fd7db8a552c24a5bec4f889103edd811388c26a92543c84be5aac0688d61cbe",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -40,7 +40,7 @@
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
         "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
         "version" : "1.7.0"
@@ -83,6 +83,15 @@
       }
     },
     {
+      "identity" : "swift-cmark",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-cmark.git",
+      "state" : {
+        "branch" : "gfm",
+        "revision" : "924936d0427cb25a61169739a7660230bffa6ea6"
+      }
+    },
+    {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
@@ -105,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "6f70fa9eab24c1fd982af18c281c4525d05e3095",
-        "version" : "4.2.0"
+        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
+        "version" : "3.15.1"
       }
     },
     {
@@ -116,6 +125,33 @@
       "state" : {
         "revision" : "baa932c1336f7894145cbaafcd34ce2dd0b77c97",
         "version" : "1.3.1"
+      }
+    },
+    {
+      "identity" : "swift-docc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-docc",
+      "state" : {
+        "branch" : "main",
+        "revision" : "94d33b58101e1ff2cff21646e188344833f0defb"
+      }
+    },
+    {
+      "identity" : "swift-docc-plugin",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-docc-plugin",
+      "state" : {
+        "branch" : "main",
+        "revision" : "7935a77059e00713a088edf37e2a3485f87398ad"
+      }
+    },
+    {
+      "identity" : "swift-docc-symbolkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-docc-symbolkit.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "6c96b743cb993ad9af4d2cd1d95165fd28475bed"
       }
     },
     {
@@ -146,12 +182,30 @@
       }
     },
     {
+      "identity" : "swift-lmdb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-lmdb.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "1ad9a2d80b6fcde498c2242f509bd1be7d667ff8"
+      }
+    },
+    {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
         "revision" : "7ee16e465622412764b0ff0c1301801dc71b8f61",
         "version" : "1.9.0"
+      }
+    },
+    {
+      "identity" : "swift-markdown",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-markdown.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b2135f426fca19029430fbf26564e953b2d0f3d3"
       }
     },
     {

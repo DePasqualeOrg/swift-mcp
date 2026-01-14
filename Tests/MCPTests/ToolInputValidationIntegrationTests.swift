@@ -16,7 +16,7 @@ struct ToolInputValidationIntegrationTests {
     func validToolCallSucceeds() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
-        _ = try await mcpServer.register(
+        try await mcpServer.register(
             name: "add",
             description: "Add two numbers",
             inputSchema: [
@@ -36,7 +36,7 @@ struct ToolInputValidationIntegrationTests {
         try await session.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         let result = try await client.callTool(
             name: "add",
@@ -51,7 +51,7 @@ struct ToolInputValidationIntegrationTests {
     func missingRequiredArgumentFails() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
-        _ = try await mcpServer.register(
+        try await mcpServer.register(
             name: "add",
             description: "Add two numbers",
             inputSchema: [
@@ -71,7 +71,7 @@ struct ToolInputValidationIntegrationTests {
         try await session.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Per MCP spec, input validation errors are tool execution errors (isError: true),
         // not protocol errors. This allows LLMs to receive actionable feedback.
@@ -92,7 +92,7 @@ struct ToolInputValidationIntegrationTests {
     func wrongArgumentTypeFails() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
-        _ = try await mcpServer.register(
+        try await mcpServer.register(
             name: "add",
             description: "Add two numbers",
             inputSchema: [
@@ -112,7 +112,7 @@ struct ToolInputValidationIntegrationTests {
         try await session.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Per MCP spec, input validation errors are tool execution errors (isError: true),
         // not protocol errors. This allows LLMs to receive actionable feedback.
@@ -135,7 +135,7 @@ struct ToolInputValidationIntegrationTests {
 
         let handlerCalled = AtomicFlag()
 
-        _ = try await mcpServer.register(
+        try await mcpServer.register(
             name: "guarded_tool",
             description: "Tool that tracks if handler was called",
             inputSchema: [
@@ -155,7 +155,7 @@ struct ToolInputValidationIntegrationTests {
         try await session.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Per MCP spec, input validation errors return isError: true (not thrown).
         // The key assertion here is that the handler is NOT called.

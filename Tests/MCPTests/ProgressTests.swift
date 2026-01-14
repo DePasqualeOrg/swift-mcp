@@ -498,7 +498,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call the tool WITH progressToken in _meta (matching TS/Python pattern)
             let result = try await client.send(
@@ -613,7 +613,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Client sends request with progressToken = 0 (the edge case)
             _ = try await client.send(
@@ -706,7 +706,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call tool WITH progressToken in _meta
             let result = try await client.send(
@@ -797,7 +797,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call tool with INTEGER progressToken in _meta
             _ = try await client.send(
@@ -881,7 +881,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "message_test", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -961,7 +961,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "log_test", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1044,7 +1044,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Set minimum log level to warning - only warning and above should be received
             try await client.setLoggingLevel(.warning)
@@ -1111,7 +1111,7 @@ struct ProgressTests {
             let client = Client(name: "LogTestClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Should throw because server doesn't support logging
             await #expect(throws: MCPError.self) {
@@ -1185,7 +1185,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Set level to debug to receive all messages
             try await client.setLoggingLevel(.debug)
@@ -1273,7 +1273,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Do NOT set logging level - test default behavior
             _ = try await client.callTool(name: "log_without_level_set", arguments: [:])
@@ -1347,7 +1347,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Use server-level sendLogMessage (not context-level)
             try await server.sendLogMessage(
@@ -1432,7 +1432,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "try_log", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1494,7 +1494,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "notify_test", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1558,7 +1558,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "notify_test", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1622,7 +1622,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "notify_test", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1683,7 +1683,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
             _ = try await client.callTool(name: "update_resource", arguments: [:])
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1756,7 +1756,7 @@ struct ProgressTests {
             let client = Client(name: "BidirectionalProgressClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Client sends progress notifications to server (like Python test)
             try await client.notify(ProgressNotification.message(.init(
@@ -1888,7 +1888,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Client sends progress notifications to server
             try await client.notify(ProgressNotification.message(.init(
@@ -2005,7 +2005,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call tool with progress token - the progress handler will throw
             let result = try await client.send(
@@ -2082,7 +2082,7 @@ struct ProgressTests {
             let client = Client(name: "ZeroTokenClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Client sends progress with token 0 (edge case)
             try await client.notify(ProgressNotification.message(.init(
@@ -2174,7 +2174,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             _ = try await client.send(
                 CallTool.request(.init(
@@ -2267,7 +2267,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             _ = try await client.send(
                 CallTool.request(.init(
@@ -2357,7 +2357,7 @@ struct ProgressTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             _ = try await client.send(
                 CallTool.request(.init(
@@ -2450,7 +2450,7 @@ struct ProgressTests {
             let client = Client(name: "CallbackTestClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Use send with onProgress callback - no need to manually set progressToken
             let result = try await client.send(
@@ -2538,7 +2538,7 @@ struct ProgressTests {
             let client = Client(name: "AutoInjectClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send request WITHOUT manually setting _meta.progressToken
             // The send(_:onProgress:) should auto-inject it

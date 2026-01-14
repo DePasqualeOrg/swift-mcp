@@ -177,7 +177,7 @@ struct SessionLifecycleTests {
             let client = Client(name: "LenientModeClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Make a request - should succeed in lenient mode
             let tools = try await client.send(ListTools.request(.init()))
@@ -233,7 +233,7 @@ struct SessionLifecycleTests {
             try await server.start(transport: serverTransport) { clientInfo, _ in
                 await receivedClientInfo.set(clientInfo)
             }
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Give time for hook to be called
             try await Task.sleep(for: .milliseconds(100))
@@ -285,7 +285,7 @@ struct SessionLifecycleTests {
             try await server.start(transport: serverTransport) { clientInfo, _ in
                 await receivedClientInfo.set(clientInfo)
             }
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Give time for hook to be called
             try await Task.sleep(for: .milliseconds(100))
@@ -436,7 +436,7 @@ struct SessionLifecycleTests {
             let client = Client(name: "InFlightTestClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send multiple requests and verify they complete
             for i in 1...5 {
@@ -496,7 +496,7 @@ struct SessionLifecycleTests {
             let client = Client(name: "ConcurrentInFlightClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send multiple concurrent requests
             await withTaskGroup(of: Void.self) { group in

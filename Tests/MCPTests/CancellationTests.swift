@@ -310,7 +310,7 @@ struct CancellationTests {
             let client = Client(name: "CancellationTestClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send a cancellation notification
             let cancelParams = CancelledNotification.Parameters(
@@ -392,7 +392,7 @@ struct CancellationTests {
             let client = Client(name: "RecoveryTestClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // First tool call - should succeed
             let result1 = try await client.send(
@@ -493,7 +493,7 @@ struct CancellationTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call the tool that triggers a cancellation notification
             let result = try await client.send(
@@ -558,7 +558,7 @@ struct CancellationTests {
             let client = Client(name: "MultipleCancelClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send multiple cancellation notifications
             for i in 1...5 {
@@ -630,7 +630,7 @@ struct CancellationTests {
             let client = Client(name: "NoRequestIdCancelClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Send cancellation without requestId (general cancellation)
             let cancelParams = CancelledNotification.Parameters(
@@ -716,7 +716,7 @@ struct CancellationTests {
             }
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Call the tool
             let result = try await client.send(
@@ -818,7 +818,7 @@ struct CancellationTests {
             let client = Client(name: "TaskCancelClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Start a tool call in a separate Task that we can cancel
             let callTask = Task {
@@ -905,7 +905,7 @@ struct CancellationTests {
             let client = Client(name: "ConcurrentCancelClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Start two concurrent requests
             let fastTask = Task {
@@ -1002,7 +1002,7 @@ struct CancellationTests {
             let client = Client(name: "ClientCancellationNotificationClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Create a request with a known ID
             let knownRequestId = RequestId.string("client-will-cancel-this")
@@ -1199,7 +1199,7 @@ struct CancellationTests {
             let client = Client(name: "SuppressResponseClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Create a request with a known ID so we can cancel it
             let knownRequestId = RequestId.string("suppress-response-request")
@@ -1286,7 +1286,7 @@ struct CancellationTests {
             let client = Client(name: "ShutdownCancelClient", version: "1.0")
 
             try await server.start(transport: serverTransport)
-            _ = try await client.connect(transport: clientTransport)
+            try await client.connect(transport: clientTransport)
 
             // Start a very slow tool call
             let callTask = Task {
@@ -1364,7 +1364,7 @@ struct RequestTimeoutTests {
         let client = Client(name: "TimeoutClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Send request with a short timeout
         do {
@@ -1436,7 +1436,7 @@ struct RequestTimeoutTests {
         let client = Client(name: "NoTimeoutClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Send request without timeout - should complete normally
         let result = try await client.send(
@@ -1506,7 +1506,7 @@ struct RequestTimeoutTests {
         let client = Client(name: "CancellationClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Send request with timeout
         do {
@@ -1673,7 +1673,7 @@ struct ClientCancelRequestAPITests {
         let client = Client(name: "CancelRequestAPIClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Create a request with a known ID
         let knownRequestId = RequestId.string("api-cancel-test-\(UUID().uuidString)")
@@ -1769,7 +1769,7 @@ struct ClientCancelRequestAPITests {
         let client = Client(name: "CancelUnknownClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Cancel a request that doesn't exist
         let unknownId = RequestId.string("non-existent-request")
@@ -1827,7 +1827,7 @@ struct ClientCancelRequestAPITests {
         let client = Client(name: "CancelNoReasonClient", version: "1.0")
 
         try await server.start(transport: serverTransport)
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Cancel with no reason
         let requestId = RequestId.string("some-request")

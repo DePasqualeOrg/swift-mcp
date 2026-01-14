@@ -505,7 +505,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Request completion with context
         let result = try await client.complete(
@@ -561,7 +561,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Request completion without context
         let result = try await client.complete(
@@ -629,7 +629,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // First, complete database
         let dbResult = try await client.complete(
@@ -697,7 +697,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Try to complete table without database context - should fail
         do {
@@ -755,7 +755,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Request completion with "py" prefix
         let result = try await client.complete(
@@ -846,7 +846,7 @@ struct CompletionTests {
             version: "1.0.0",
             configuration: .init(strict: true)
         )
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Attempt to complete should throw
         do {
@@ -913,7 +913,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Test with modelcontextprotocol owner
         let result1 = try await client.complete(
@@ -995,7 +995,7 @@ struct CompletionTests {
         try await server.start(transport: serverTransport)
 
         let client = Client(name: "test-client", version: "1.0.0")
-        _ = try await client.connect(transport: clientTransport)
+        try await client.connect(transport: clientTransport)
 
         // Test with engineering department
         let result1 = try await client.complete(
