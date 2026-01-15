@@ -62,6 +62,12 @@ public actor HTTPServerTransport: Transport {
     /// The session ID for this transport (nil in stateless mode)
     public private(set) var sessionId: String?
 
+    /// Whether this transport supports server-to-client requests.
+    /// Returns `false` in stateless mode since there's no persistent connection.
+    public var supportsServerToClientRequests: Bool {
+        options.sessionIdGenerator != nil
+    }
+
     /// Whether this transport has been initialized
     private var initialized = false
 

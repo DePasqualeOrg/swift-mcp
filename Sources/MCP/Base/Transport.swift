@@ -145,6 +145,16 @@ public protocol Transport: Actor {
     /// For simple transports (stdio, single-connection), this returns `nil`.
     var sessionId: String? { get }
 
+    /// Whether this transport supports server-to-client requests.
+    ///
+    /// Server-to-client requests (sampling, elicitation, roots) require a persistent
+    /// bidirectional connection. Stateless HTTP transports do not support this because
+    /// each request is independent with no way to send requests back to the client.
+    ///
+    /// Most transports (stdio, stateful HTTP) support this and return `true`.
+    /// Stateless HTTP transports return `false`.
+    var supportsServerToClientRequests: Bool { get }
+
     /// Establishes connection with the transport
     func connect() async throws
 
@@ -184,6 +194,10 @@ extension Transport {
     ///
     /// HTTP transports override this to return their session identifier.
     public var sessionId: String? { nil }
+
+    /// Default implementation returns `true` since most transports support
+    /// bidirectional communication. Stateless HTTP transports override this.
+    public var supportsServerToClientRequests: Bool { true }
 
     /// Default implementation that ignores the request ID.
     ///

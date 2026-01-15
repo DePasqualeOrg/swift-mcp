@@ -15,6 +15,13 @@ extension Server {
             throw MCPError.internalError("Server connection not initialized")
         }
 
+        guard await connection.supportsServerToClientRequests else {
+            throw MCPError.invalidRequest(
+                "Server-to-client requests are not supported in stateless HTTP mode. " +
+                "Stateless mode has no persistent connection for bidirectional communication."
+            )
+        }
+
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let requestData = try encoder.encode(request)

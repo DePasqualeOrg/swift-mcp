@@ -16,6 +16,10 @@ actor MockTransport: Transport {
 
     var isConnected = false
 
+    /// Whether this transport supports server-to-client requests.
+    /// Defaults to `true`. Set to `false` to simulate stateless mode.
+    var supportsServerToClientRequests: Bool = true
+
     private(set) var sentData: [Data] = []
     var sentMessages: [String] {
         return sentData.compactMap { data in
@@ -78,6 +82,10 @@ actor MockTransport: Transport {
 
     func setFailSend(_ shouldFail: Bool) {
         shouldFailSend = shouldFail
+    }
+
+    func setSupportsServerToClientRequests(_ supports: Bool) {
+        supportsServerToClientRequests = supports
     }
 
     func queue(data: Data) {

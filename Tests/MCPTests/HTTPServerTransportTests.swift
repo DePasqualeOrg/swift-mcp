@@ -51,6 +51,22 @@ struct HTTPServerTransportTests {
         #expect(sessionId == nil)
     }
 
+    @Test("Stateless mode does not support server-to-client requests")
+    func statelessModeDoesNotSupportServerToClientRequests() async throws {
+        let transport = testTransport()
+
+        let supportsRequests = await transport.supportsServerToClientRequests
+        #expect(supportsRequests == false)
+    }
+
+    @Test("Stateful mode supports server-to-client requests")
+    func statefulModeSupportServerToClientRequests() async throws {
+        let transport = testTransport(sessionIdGenerator: { UUID().uuidString })
+
+        let supportsRequests = await transport.supportsServerToClientRequests
+        #expect(supportsRequests == true)
+    }
+
     // MARK: - POST Request Handling
 
     @Test("POST requires correct Accept header")
