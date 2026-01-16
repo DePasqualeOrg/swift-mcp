@@ -48,10 +48,7 @@ public struct ExperimentalServerTasks: Sendable {
     /// This method:
     /// 1. Sets the tasks capability with full support (list, cancel, task-augmented tools/call)
     /// 2. Registers default handlers for `tasks/get`, `tasks/list`, `tasks/cancel`, and `tasks/result`
-    ///
-    /// - Returns: Self for chaining
-    @discardableResult
-    public func enable() async -> Server {
+    public func enable() async {
         await server.enableTaskSupport(.inMemory())
     }
 
@@ -66,9 +63,7 @@ public struct ExperimentalServerTasks: Sendable {
     /// 3. Registers default handlers for `tasks/get`, `tasks/list`, `tasks/cancel`, and `tasks/result`
     ///
     /// - Parameter taskSupport: The task support configuration
-    /// - Returns: Self for chaining
-    @discardableResult
-    public func enable(_ taskSupport: TaskSupport) async -> Server {
+    public func enable(_ taskSupport: TaskSupport) async {
         await server.enableTaskSupport(taskSupport)
     }
 

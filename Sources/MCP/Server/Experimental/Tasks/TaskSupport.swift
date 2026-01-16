@@ -219,8 +219,7 @@ public final class TaskSupport: Sendable {
 
 extension Server {
     // Note: This method is internal. Access via server.experimental.enableTasks()
-    @discardableResult
-    func enableTaskSupport(_ taskSupport: TaskSupport) -> Self {
+    func enableTaskSupport(_ taskSupport: TaskSupport) {
         // Set the tasks capability with full support
         capabilities.tasks = .full()
 
@@ -230,8 +229,6 @@ extension Server {
 
         // Register default task handlers
         registerDefaultTaskHandlers(taskSupport)
-
-        return self
     }
 
     /// Register default handlers for task operations.

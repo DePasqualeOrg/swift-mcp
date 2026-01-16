@@ -1056,18 +1056,15 @@ public actor Server {
     /// - Parameters:
     ///   - type: The method type to handle
     ///   - handler: The handler function receiving parameters and context
-    /// - Returns: Self for chaining
-    @discardableResult
     public func withRequestHandler<M: Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
-    ) -> Self {
+    ) {
         methodHandlers[M.name] = TypedRequestHandler {
             (request: Request<M>, context: RequestHandlerContext) -> Response<M> in
             let result = try await handler(request.params, context)
             return Response(id: request.id, result: result)
         }
-        return self
     }
 
     /// Register a method handler without context.
@@ -1075,17 +1072,15 @@ public actor Server {
     /// - Parameters:
     ///   - type: The method type to handle
     ///   - handler: The handler function receiving only parameters
-    /// - Returns: Self for chaining
     @available(
         *, deprecated,
         message:
             "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
     )
-    @discardableResult
     public func withRequestHandler<M: Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters) async throws -> M.Result
-    ) -> Self {
+    ) {
         withRequestHandler(type) { params, _ in
             try await handler(params)
         }
@@ -1095,32 +1090,28 @@ public actor Server {
 
     /// Register a request handler for a method (deprecated, use withRequestHandler instead)
     @available(*, deprecated, renamed: "withRequestHandler")
-    @discardableResult
     public func withMethodHandler<M: Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
-    ) -> Self {
+    ) {
         withRequestHandler(type, handler: handler)
     }
 
     /// Register a request handler for a method (deprecated, use withRequestHandler instead)
     @available(*, deprecated, renamed: "withRequestHandler")
-    @discardableResult
     public func withMethodHandler<M: Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters) async throws -> M.Result
-    ) -> Self {
+    ) {
         withRequestHandler(type, handler: handler)
     }
 
-    /// Register a notification handler
-    @discardableResult
+    /// Register a notification handler.
     public func onNotification<N: Notification>(
         _ type: N.Type,
         handler: @escaping @Sendable (Message<N>) async throws -> Void
-    ) -> Self {
+    ) {
         notificationHandlers[N.name, default: []].append(TypedNotificationHandler(handler))
-        return self
     }
 
     /// Register a response router to intercept responses before normal handling.
@@ -1132,11 +1123,8 @@ public actor Server {
     /// - Important: This is an experimental API that may change without notice.
     ///
     /// - Parameter router: The response router to add
-    /// - Returns: Self for chaining
-    @discardableResult
-    public func addResponseRouter(_ router: any ResponseRouter) -> Self {
+    public func addResponseRouter(_ router: any ResponseRouter) {
         responseRouters.append(router)
-        return self
     }
 
     func registerDefaultHandlers(
