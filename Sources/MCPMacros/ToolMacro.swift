@@ -552,8 +552,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         let schemaLiteral = schemaEntries.joined(separator: ",\n                    ")
 
         return """
-            public static var toolDefinition: Tool {
-                Tool(
+            public static var toolDefinition: MCP.Tool {
+                MCP.Tool(
                     name: name,
                     description: description,
                     inputSchema: .object([
@@ -616,6 +616,45 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     // MARK: - Type Mapping Helpers
 
+    /// Checks if a type string represents a dictionary type `[Key: Value]` at the top level.
+    /// This properly handles nested types like `[[String: String]]` (array of dictionaries).
+    private static func isDictionaryType(_ inner: String) -> Bool {
+        // Find colon that's at the top level (not inside nested brackets)
+        var bracketDepth = 0
+        for char in inner {
+            switch char {
+            case "[": bracketDepth += 1
+            case "]": bracketDepth -= 1
+            case ":":
+                // Only count as dictionary if colon is at top level
+                if bracketDepth == 0 {
+                    return true
+                }
+            default: break
+            }
+        }
+        return false
+    }
+
+    /// Extracts the value type from a dictionary type string `[Key: Value]`.
+    /// Returns nil if not a valid dictionary type.
+    private static func extractDictionaryValueType(_ inner: String) -> String? {
+        var bracketDepth = 0
+        for (index, char) in inner.enumerated() {
+            switch char {
+            case "[": bracketDepth += 1
+            case "]": bracketDepth -= 1
+            case ":":
+                if bracketDepth == 0 {
+                    let afterColon = inner.index(inner.startIndex, offsetBy: index + 1)
+                    return String(inner[afterColon...]).trimmingCharacters(in: .whitespaces)
+                }
+            default: break
+            }
+        }
+        return nil
+    }
+
     private static func getJSONSchemaType(for swiftType: String) -> String {
         switch swiftType {
         case "String": return "string"
@@ -628,11 +667,11 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             // Check for collection types [T] or [K: V]
             if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
                 let inner = String(swiftType.dropFirst().dropLast())
-                // Dictionary type [String: T]
-                if inner.contains(":") {
+                // Dictionary type [String: T] - check for top-level colon only
+                if isDictionaryType(inner) {
                     return "object"
                 }
-                // Array type [T]
+                // Array type [T] (including nested arrays like [[String: String]])
                 return "array"
             }
             // Could be an enum or other type - default to string
@@ -650,9 +689,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             // Check for collection types [T] or [K: V]
             if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
                 let inner = String(swiftType.dropFirst().dropLast())
-                // Dictionary type [String: T]
-                if let colonIndex = inner.firstIndex(of: ":") {
-                    let valueType = String(inner[inner.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
+                // Dictionary type [String: T] - check for top-level colon only
+                if let valueType = extractDictionaryValueType(inner) {
                     let valueSchema = generateSchemaObject(for: valueType)
                     return [("additionalProperties", valueSchema)]
                 }
@@ -678,13 +716,12 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         default:
             if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
                 let inner = String(swiftType.dropFirst().dropLast())
-                if let colonIndex = inner.firstIndex(of: ":") {
-                    // Dictionary [String: T]
-                    let valueType = String(inner[inner.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
+                // Dictionary type [String: T] - check for top-level colon only
+                if let valueType = extractDictionaryValueType(inner) {
                     let valueSchema = generateSchemaObject(for: valueType)
                     parts.append("\"additionalProperties\": \(valueSchema)")
                 } else {
-                    // Array [T]
+                    // Array [T] (including nested arrays)
                     let elementSchema = generateSchemaObject(for: inner)
                     parts.append("\"items\": \(elementSchema)")
                 }
