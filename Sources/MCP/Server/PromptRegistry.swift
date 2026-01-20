@@ -26,7 +26,7 @@ extension Prompt.Message: PromptOutput {
     }
 }
 
-extension Array: PromptOutput where Element == Prompt.Message {
+extension [Prompt.Message]: PromptOutput {
     public func toGetPromptResult(description: String?) -> GetPrompt.Result {
         GetPrompt.Result(description: description, messages: self)
     }
@@ -189,14 +189,14 @@ public actor PromptRegistry {
         }
 
         switch entry.kind {
-        case .dsl(let promptType):
-            let instance = try promptType.parse(from: arguments)
-            let output = try await instance.render(context: context)
-            return output.toGetPromptResult(description: entry.definition.description)
+            case let .dsl(promptType):
+                let instance = try promptType.parse(from: arguments)
+                let output = try await instance.render(context: context)
+                return output.toGetPromptResult(description: entry.definition.description)
 
-        case .closure(let handler):
-            let messages = try await handler(arguments, context)
-            return GetPrompt.Result(description: entry.definition.description, messages: messages)
+            case let .closure(handler):
+                let messages = try await handler(arguments, context)
+                return GetPrompt.Result(description: entry.definition.description, messages: messages)
         }
     }
 
@@ -207,23 +207,23 @@ public actor PromptRegistry {
 
     // MARK: - Management (Internal)
 
-    internal func isPromptEnabled(_ name: String) -> Bool {
+    func isPromptEnabled(_ name: String) -> Bool {
         prompts[name]?.isEnabled ?? false
     }
 
-    internal func promptDefinition(for name: String) -> Prompt? {
+    func promptDefinition(for name: String) -> Prompt? {
         prompts[name]?.definition
     }
 
-    internal func enablePrompt(_ name: String) {
+    func enablePrompt(_ name: String) {
         prompts[name]?.isEnabled = true
     }
 
-    internal func disablePrompt(_ name: String) {
+    func disablePrompt(_ name: String) {
         prompts[name]?.isEnabled = false
     }
 
-    internal func removePrompt(_ name: String) {
+    func removePrompt(_ name: String) {
         prompts.removeValue(forKey: name)
     }
 }
@@ -244,7 +244,7 @@ public struct RegisteredPrompt: Sendable {
     /// Optional callback to notify when the prompt list changes.
     private let onListChanged: (@Sendable () async -> Void)?
 
-    internal init(name: String, registry: PromptRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
+    init(name: String, registry: PromptRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
         self.name = name
         self.registry = registry
         self.onListChanged = onListChanged

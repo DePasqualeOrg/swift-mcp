@@ -3,16 +3,15 @@ import Logging
 import Testing
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @testable import MCP
 
 @Suite("Resource Subscription Tests")
 struct ResourceSubscriptionTests {
-
     // MARK: - End-to-End Subscribe Tests
 
     @Test("Client can subscribe to a resource when server supports subscriptions")
@@ -52,7 +51,7 @@ struct ResourceSubscriptionTests {
         // Handle list resources (required for resources capability)
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "test", uri: "file:///test.txt")
+                Resource(name: "test", uri: "file:///test.txt"),
             ])
         }
 
@@ -107,7 +106,7 @@ struct ResourceSubscriptionTests {
         // Handle list resources (required for resources capability)
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "test", uri: "file:///test.txt")
+                Resource(name: "test", uri: "file:///test.txt"),
             ])
         }
 
@@ -224,7 +223,7 @@ struct ResourceSubscriptionTests {
 
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "test", uri: "file:///test.txt")
+                Resource(name: "test", uri: "file:///test.txt"),
             ])
         }
 
@@ -273,7 +272,7 @@ struct ResourceSubscriptionTests {
 
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "test", uri: "file:///test.txt")
+                Resource(name: "test", uri: "file:///test.txt"),
             ])
         }
 
@@ -317,7 +316,7 @@ struct ResourceSubscriptionTests {
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())  // Only tools, no resources
+            capabilities: .init(tools: .init()) // Only tools, no resources
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -376,13 +375,13 @@ struct ResourceSubscriptionTests {
 
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "watched", uri: "file:///watched.txt")
+                Resource(name: "watched", uri: "file:///watched.txt"),
             ])
         }
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "trigger_update", inputSchema: ["type": "object"])
+                Tool(name: "trigger_update", inputSchema: ["type": "object"]),
             ])
         }
 

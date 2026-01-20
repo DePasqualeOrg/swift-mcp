@@ -2,7 +2,7 @@ import Foundation
 import Logging
 
 #if canImport(FoundationNetworking)
-    import FoundationNetworking
+import FoundationNetworking
 #endif
 
 /// Internal stream state for managing SSE connections
@@ -111,15 +111,15 @@ public actor HTTPServerTransport: Transport {
         self.options = options
         self.logger =
             logger
-            ?? Logger(
-                label: "mcp.transport.http.server",
-                factory: { _ in SwiftLogNoOpLogHandler() }
-            )
+                ?? Logger(
+                    label: "mcp.transport.http.server",
+                    factory: { _ in SwiftLogNoOpLogHandler() }
+                )
 
         // Create server receive stream
         let (stream, continuation) = AsyncThrowingStream<TransportMessage, Swift.Error>.makeStream()
-        self.serverStream = stream
-        self.serverContinuation = continuation
+        serverStream = stream
+        serverContinuation = continuation
     }
 
     // MARK: - Transport Protocol
@@ -213,7 +213,7 @@ public actor HTTPServerTransport: Transport {
 
     /// Returns the stream of messages from HTTP clients.
     public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
-        return serverStream
+        serverStream
     }
 
     // MARK: - HTTP Request Handling
@@ -246,19 +246,19 @@ public actor HTTPServerTransport: Transport {
         }
 
         switch request.method.uppercased() {
-        case "POST":
-            return await handlePostRequest(request, authInfo: authInfo)
-        case "GET":
-            return await handleGetRequest(request)
-        case "DELETE":
-            return await handleDeleteRequest(request)
-        default:
-            return createJsonErrorResponse(
-                status: 405,
-                code: ErrorCode.connectionClosed,
-                message: "Method not allowed",
-                extraHeaders: [HTTPHeader.allow: "GET, POST, DELETE"]
-            )
+            case "POST":
+                return await handlePostRequest(request, authInfo: authInfo)
+            case "GET":
+                return await handleGetRequest(request)
+            case "DELETE":
+                return await handleDeleteRequest(request)
+            default:
+                return createJsonErrorResponse(
+                    status: 405,
+                    code: ErrorCode.connectionClosed,
+                    message: "Method not allowed",
+                    extraHeaders: [HTTPHeader.allow: "GET, POST, DELETE"]
+                )
         }
     }
 
@@ -280,7 +280,7 @@ public actor HTTPServerTransport: Transport {
             }
         } else {
             // SSE mode requires both content types
-            guard acceptHeader.contains("application/json") && acceptHeader.contains("text/event-stream") else {
+            guard acceptHeader.contains("application/json"), acceptHeader.contains("text/event-stream") else {
                 return createJsonErrorResponse(
                     status: 406,
                     code: ErrorCode.connectionClosed,
@@ -349,7 +349,7 @@ public actor HTTPServerTransport: Transport {
 
         if isInitializationRequest {
             // Check if already initialized in stateful mode
-            if initialized && sessionId != nil {
+            if initialized, sessionId != nil {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.invalidRequest,
@@ -461,7 +461,7 @@ public actor HTTPServerTransport: Transport {
 
     private func handleJsonResponseMode(
         streamId: String,
-        requestIds: [RequestId],
+        requestIds _: [RequestId],
         body: Data,
         request: HTTPRequest,
         authInfo: AuthInfo?
@@ -587,7 +587,7 @@ public actor HTTPServerTransport: Transport {
 
         // Handle resumability
         if let eventStore = options.eventStore,
-            let lastEventId = request.header(HTTPHeader.lastEventId)
+           let lastEventId = request.header(HTTPHeader.lastEventId)
         {
             return await replayEvents(lastEventId: lastEventId, eventStore: eventStore, request: request)
         }
@@ -803,7 +803,7 @@ public actor HTTPServerTransport: Transport {
     /// Patterns like "localhost:*" match "localhost:8080", "localhost:3000", etc.
     private func matchesHostPattern(_ host: String, pattern: String) -> Bool {
         if pattern.hasSuffix(":*") {
-            let patternHost = String(pattern.dropLast(2))  // Remove ":*"
+            let patternHost = String(pattern.dropLast(2)) // Remove ":*"
             // Host must start with pattern host and have a port
             if host.hasPrefix(patternHost + ":") {
                 let portPart = host.dropFirst(patternHost.count + 1)
@@ -821,7 +821,7 @@ public actor HTTPServerTransport: Transport {
     /// Patterns like "http://localhost:*" match "http://localhost:8080", etc.
     private func matchesOriginPattern(_ origin: String, pattern: String) -> Bool {
         if pattern.hasSuffix(":*") {
-            let patternPrefix = String(pattern.dropLast(2))  // Remove ":*"
+            let patternPrefix = String(pattern.dropLast(2)) // Remove ":*"
             // Origin must start with pattern prefix and have a port
             if origin.hasPrefix(patternPrefix + ":") {
                 let portPart = origin.dropFirst(patternPrefix.count + 1)
@@ -905,7 +905,7 @@ public actor HTTPServerTransport: Transport {
                     status: 400,
                     code: ErrorCode.connectionClosed,
                     message:
-                        "Bad Request: Unsupported protocol version: \(version) (supported: \(Self.supportedProtocolVersions.joined(separator: ", ")))"
+                    "Bad Request: Unsupported protocol version: \(version) (supported: \(Self.supportedProtocolVersions.joined(separator: ", ")))"
                 )
             }
         }
@@ -934,16 +934,16 @@ public actor HTTPServerTransport: Transport {
     private func extractProtocolVersionFromInitialize(_ messages: [[String: Any]]) -> String {
         for message in messages where isInitializeRequest(message) {
             if let params = message["params"] as? [String: Any],
-                let version = params["protocolVersion"] as? String
+               let version = params["protocolVersion"] as? String
             {
                 return version
             }
         }
-        return Version.defaultNegotiated  // Default per spec
+        return Version.defaultNegotiated // Default per spec
     }
 
     private func isJSONRPCRequest(_ message: [String: Any]) -> Bool {
-        return message["method"] != nil && message["id"] != nil
+        message["method"] != nil && message["id"] != nil
     }
 
     private func isJSONRPCResponse(_ data: Data) -> Bool {
@@ -988,7 +988,7 @@ public actor HTTPServerTransport: Transport {
         // For initialize requests, get from request params
         for message in messages where isInitializeRequest(message) {
             if let params = message["params"] as? [String: Any],
-                let version = params["protocolVersion"] as? String
+               let version = params["protocolVersion"] as? String
             {
                 return version
             }

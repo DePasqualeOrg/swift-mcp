@@ -28,7 +28,7 @@ struct UnitIntervalTests {
         let values = [0.0, 0.5, 1.0, 0.25]
 
         for value in values {
-            let computed = value * 1.0  // Force runtime computation
+            let computed = value * 1.0 // Force runtime computation
             let interval = UnitInterval(computed)
             #expect(interval != nil)
             #expect(interval!.doubleValue == value)
@@ -41,7 +41,7 @@ struct UnitIntervalTests {
         let invalidValues = [-0.1, 1.1, 100.0, -100.0]
 
         for value in invalidValues {
-            let computed = value * 1.0  // Force runtime computation
+            let computed = value * 1.0 // Force runtime computation
             let interval = UnitInterval(computed)
             #expect(interval == nil)
         }
@@ -208,7 +208,7 @@ struct UnitIntervalTests {
         let values = [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
 
         for value in values {
-            let computed = value * 1.0  // Force runtime computation
+            let computed = value * 1.0 // Force runtime computation
             if let interval = UnitInterval(computed) {
                 #expect(interval.doubleValue == value)
             } else {

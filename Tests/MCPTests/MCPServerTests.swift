@@ -5,7 +5,6 @@ import Testing
 
 @Suite("MCPServer Tests")
 struct MCPServerTests {
-
     // MARK: - Tool Registration Tests
 
     @Test("Register closure-based tool and list it")
@@ -19,9 +18,9 @@ struct MCPServerTests {
         let inputSchema: Value = .object([
             "type": .string("object"),
             "properties": .object([
-                "message": .object(["type": .string("string")])
+                "message": .object(["type": .string("string")]),
             ]),
-            "required": .array([.string("message")])
+            "required": .array([.string("message")]),
         ])
 
         let tool = try await server.register(
@@ -424,7 +423,7 @@ struct MCPServerTests {
             name: "personal_greeting",
             description: "A personalized greeting",
             arguments: [
-                Prompt.Argument(name: "name", description: "Person's name", required: true)
+                Prompt.Argument(name: "name", description: "Person's name", required: true),
             ]
         ) { args, _ in
             let name = args?["name"] ?? "Guest"
@@ -591,13 +590,12 @@ struct MCPServerTests {
 
 @Suite("Resource Template Matching Tests")
 struct ResourceTemplateMatchingTests {
-
     @Test("Match simple template")
     func matchSimpleTemplate() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
             name: "file"
-        ) { uri, variables in
+        ) { uri, _ in
             .text("content", uri: uri)
         }
 
@@ -610,7 +608,7 @@ struct ResourceTemplateMatchingTests {
         let template = ManagedResourceTemplate(
             uriTemplate: "user://{userId}/posts/{postId}",
             name: "user_post"
-        ) { uri, variables in
+        ) { uri, _ in
             .text("content", uri: uri)
         }
 
@@ -624,7 +622,7 @@ struct ResourceTemplateMatchingTests {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
             name: "file"
-        ) { uri, variables in
+        ) { uri, _ in
             .text("content", uri: uri)
         }
 

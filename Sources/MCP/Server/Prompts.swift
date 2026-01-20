@@ -92,12 +92,12 @@ public struct Prompt: Hashable, Codable, Sendable {
 
         /// Creates a user message with the specified content
         public static func user(_ content: Content) -> Message {
-            return Message(_role: .user, _content: content)
+            Message(_role: .user, _content: content)
         }
 
         /// Creates an assistant message with the specified content
         public static func assistant(_ content: Content) -> Message {
-            return Message(_role: .assistant, _content: content)
+            Message(_role: .assistant, _content: content)
         }
 
         // TODO: Consider consolidating with Tool.Content into a shared ContentBlock type
@@ -191,30 +191,30 @@ extension Prompt.Message.Content: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         switch self {
-        case .text(let text, let annotations, let meta):
-            try container.encode("text", forKey: .type)
-            try container.encode(text, forKey: .text)
-            try container.encodeIfPresent(annotations, forKey: .annotations)
-            try container.encodeIfPresent(meta, forKey: ._meta)
-        case .image(let data, let mimeType, let annotations, let meta):
-            try container.encode("image", forKey: .type)
-            try container.encode(data, forKey: .data)
-            try container.encode(mimeType, forKey: .mimeType)
-            try container.encodeIfPresent(annotations, forKey: .annotations)
-            try container.encodeIfPresent(meta, forKey: ._meta)
-        case .audio(let data, let mimeType, let annotations, let meta):
-            try container.encode("audio", forKey: .type)
-            try container.encode(data, forKey: .data)
-            try container.encode(mimeType, forKey: .mimeType)
-            try container.encodeIfPresent(annotations, forKey: .annotations)
-            try container.encodeIfPresent(meta, forKey: ._meta)
-        case .resource(let resourceContent, let annotations, let meta):
-            try container.encode("resource", forKey: .type)
-            try container.encode(resourceContent, forKey: .resource)
-            try container.encodeIfPresent(annotations, forKey: .annotations)
-            try container.encodeIfPresent(meta, forKey: ._meta)
-        case .resourceLink(let link):
-            try link.encode(to: encoder)
+            case let .text(text, annotations, meta):
+                try container.encode("text", forKey: .type)
+                try container.encode(text, forKey: .text)
+                try container.encodeIfPresent(annotations, forKey: .annotations)
+                try container.encodeIfPresent(meta, forKey: ._meta)
+            case let .image(data, mimeType, annotations, meta):
+                try container.encode("image", forKey: .type)
+                try container.encode(data, forKey: .data)
+                try container.encode(mimeType, forKey: .mimeType)
+                try container.encodeIfPresent(annotations, forKey: .annotations)
+                try container.encodeIfPresent(meta, forKey: ._meta)
+            case let .audio(data, mimeType, annotations, meta):
+                try container.encode("audio", forKey: .type)
+                try container.encode(data, forKey: .data)
+                try container.encode(mimeType, forKey: .mimeType)
+                try container.encodeIfPresent(annotations, forKey: .annotations)
+                try container.encodeIfPresent(meta, forKey: ._meta)
+            case let .resource(resourceContent, annotations, meta):
+                try container.encode("resource", forKey: .type)
+                try container.encode(resourceContent, forKey: .resource)
+                try container.encodeIfPresent(annotations, forKey: .annotations)
+                try container.encodeIfPresent(meta, forKey: ._meta)
+            case let .resourceLink(link):
+                try link.encode(to: encoder)
         }
     }
 
@@ -223,36 +223,37 @@ extension Prompt.Message.Content: Codable {
         let type = try container.decode(String.self, forKey: .type)
 
         switch type {
-        case "text":
-            let text = try container.decode(String.self, forKey: .text)
-            let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-            let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-            self = .text(text: text, annotations: annotations, _meta: meta)
-        case "image":
-            let data = try container.decode(String.self, forKey: .data)
-            let mimeType = try container.decode(String.self, forKey: .mimeType)
-            let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-            let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-            self = .image(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-        case "audio":
-            let data = try container.decode(String.self, forKey: .data)
-            let mimeType = try container.decode(String.self, forKey: .mimeType)
-            let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-            let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-            self = .audio(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-        case "resource":
-            let resourceContent = try container.decode(Resource.Content.self, forKey: .resource)
-            let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-            let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-            self = .resource(resource: resourceContent, annotations: annotations, _meta: meta)
-        case "resource_link":
-            let link = try ResourceLink(from: decoder)
-            self = .resourceLink(link)
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Unknown content type")
+            case "text":
+                let text = try container.decode(String.self, forKey: .text)
+                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
+                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                self = .text(text: text, annotations: annotations, _meta: meta)
+            case "image":
+                let data = try container.decode(String.self, forKey: .data)
+                let mimeType = try container.decode(String.self, forKey: .mimeType)
+                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
+                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                self = .image(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
+            case "audio":
+                let data = try container.decode(String.self, forKey: .data)
+                let mimeType = try container.decode(String.self, forKey: .mimeType)
+                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
+                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                self = .audio(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
+            case "resource":
+                let resourceContent = try container.decode(Resource.Content.self, forKey: .resource)
+                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
+                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                self = .resource(resource: resourceContent, annotations: annotations, _meta: meta)
+            case "resource_link":
+                let link = try ResourceLink(from: decoder)
+                self = .resourceLink(link)
+            default:
+                throw DecodingError.dataCorruptedError(
+                    forKey: .type,
+                    in: container,
+                    debugDescription: "Unknown content type"
+                )
         }
     }
 }
@@ -286,8 +287,8 @@ public enum ListPrompts: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self.cursor = nil
-            self._meta = nil
+            cursor = nil
+            _meta = nil
         }
 
         public init(cursor: String? = nil, _meta: RequestMeta? = nil) {

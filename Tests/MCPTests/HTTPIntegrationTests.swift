@@ -16,7 +16,6 @@ import Testing
 /// This ensures Host headers are set correctly and DNS rebinding protection works.
 @Suite("HTTP Integration Tests", .serialized)
 struct HTTPIntegrationTests {
-
     // MARK: - Test Message Templates
 
     static let initializeMessage = TestPayloads.initializeRequest(id: "init-1", clientName: "test-client")
@@ -84,7 +83,7 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize first
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Try without session ID - should fail
         let (_, response) = try await server.post(body: Self.toolsListMessage)
@@ -100,7 +99,7 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize first
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Try with invalid session ID
         let (_, response) = try await server.post(body: Self.toolsListMessage, sessionId: "invalid-session-id")
@@ -122,12 +121,12 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // GET with wrong Accept header
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")  // Wrong Accept
+        request.setValue("application/json", forHTTPHeaderField: "Accept") // Wrong Accept
         request.setValue("test-session", forHTTPHeaderField: HTTPHeader.sessionId)
         request.setValue(Version.v2024_11_05, forHTTPHeaderField: HTTPHeader.protocolVersion)
 
@@ -145,12 +144,12 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // POST without text/event-stream in Accept
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")  // Missing text/event-stream
+        request.setValue("application/json", forHTTPHeaderField: "Accept") // Missing text/event-stream
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("test-session", forHTTPHeaderField: HTTPHeader.sessionId)
         request.setValue(Version.v2024_11_05, forHTTPHeaderField: HTTPHeader.protocolVersion)
@@ -168,13 +167,13 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // POST with wrong Content-Type
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "POST"
         request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
-        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")  // Wrong Content-Type
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type") // Wrong Content-Type
         request.setValue("test-session", forHTTPHeaderField: HTTPHeader.sessionId)
         request.setValue(Version.v2024_11_05, forHTTPHeaderField: HTTPHeader.protocolVersion)
         request.httpBody = "This is plain text".data(using: .utf8)
@@ -193,12 +192,12 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Send batch of notifications (no IDs)
         let batchNotifications = """
-            [{"jsonrpc":"2.0","method":"someNotification1","params":{}},{"jsonrpc":"2.0","method":"someNotification2","params":{}}]
-            """
+        [{"jsonrpc":"2.0","method":"someNotification1","params":{}},{"jsonrpc":"2.0","method":"someNotification2","params":{}}]
+        """
         let (_, response) = try await server.post(body: batchNotifications, sessionId: "test-session")
 
         #expect(response.statusCode == 202)
@@ -214,10 +213,10 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Send invalid JSON
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "POST"
         request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -247,7 +246,7 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // DELETE
         let (_, response) = try await server.delete(sessionId: "test-session")
@@ -265,7 +264,7 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // DELETE with invalid session ID
         let (_, response) = try await server.delete(sessionId: "invalid-session-id")
@@ -283,7 +282,7 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Request with valid protocol version
         let (_, response) = try await server.post(body: Self.toolsListMessage, sessionId: "test-session")
@@ -299,15 +298,15 @@ struct HTTPIntegrationTests {
         defer { Task { await server.stop() } }
 
         // Initialize
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         // Request with unsupported protocol version
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "POST"
         request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("test-session", forHTTPHeaderField: HTTPHeader.sessionId)
-        request.setValue("1999-01-01", forHTTPHeaderField: HTTPHeader.protocolVersion)  // Unsupported
+        request.setValue("1999-01-01", forHTTPHeaderField: HTTPHeader.protocolVersion) // Unsupported
         request.httpBody = Self.toolsListMessage.data(using: .utf8)
 
         let (_, response) = try await server.request(request)
@@ -333,7 +332,7 @@ struct HTTPIntegrationTests {
         )
         defer { Task { await server.stop() } }
 
-        let (_, _) = try await server.post(body: Self.initializeMessage)
+        _ = try await server.post(body: Self.initializeMessage)
 
         let trackedSessionId = await tracker.get()
         #expect(trackedSessionId == "callback-test-session")
@@ -409,7 +408,7 @@ struct HTTPIntegrationTests {
         #expect(initResponse.statusCode == 200)
 
         // Make a request WITHOUT the protocol version header
-        var request = URLRequest(url: await server.baseURL)
+        var request = await URLRequest(url: server.baseURL)
         request.httpMethod = "POST"
         request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -462,16 +461,16 @@ struct HTTPIntegrationTests {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
         process.arguments = [
-            "-s",                                    // Silent mode
-            "-o", "/dev/null",                       // Discard body
-            "-w", "%{http_code}",                    // Output only status code
+            "-s", // Silent mode
+            "-o", "/dev/null", // Discard body
+            "-w", "%{http_code}", // Output only status code
             "-X", "POST",
-            "-H", "Host: evil.attacker.com",         // Spoofed Host header (attack)
+            "-H", "Host: evil.attacker.com", // Spoofed Host header (attack)
             "-H", "Content-Type: application/json",
             "-H", "Accept: application/json, text/event-stream",
             "-H", "\(HTTPHeader.protocolVersion): \(Version.v2024_11_05)",
             "-d", Self.initializeMessage,
-            "http://127.0.0.1:\(port)/"
+            "http://127.0.0.1:\(port)/",
         ]
 
         let pipe = Pipe()
@@ -507,13 +506,13 @@ struct HTTPIntegrationTests {
             "-o", "/dev/null",
             "-w", "%{http_code}",
             "-X", "POST",
-            "--http1.0",                             // HTTP/1.0 doesn't require Host
-            "-H", "Host:",                           // Empty Host header
+            "--http1.0", // HTTP/1.0 doesn't require Host
+            "-H", "Host:", // Empty Host header
             "-H", "Content-Type: application/json",
             "-H", "Accept: application/json, text/event-stream",
             "-H", "\(HTTPHeader.protocolVersion): \(Version.v2024_11_05)",
             "-d", Self.initializeMessage,
-            "http://127.0.0.1:\(port)/"
+            "http://127.0.0.1:\(port)/",
         ]
 
         let pipe = Pipe()

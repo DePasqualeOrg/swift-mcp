@@ -11,6 +11,7 @@ struct NotificationTests {
         struct Parameters: Codable, Hashable, Sendable {
             let event: String
         }
+
         static let name = "test.notification"
     }
 
@@ -77,8 +78,8 @@ struct NotificationTests {
     func testInitializedNotificationDecoding() throws {
         // Create a minimal JSON string
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/initialized"}
-            """
+        {"jsonrpc":"2.0","method":"notifications/initialized"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -117,8 +118,8 @@ struct NotificationTests {
     func testAnyNotificationDecodingWithoutParams() throws {
         // Test decoding when params field is missing
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/initialized"}
-            """
+        {"jsonrpc":"2.0","method":"notifications/initialized"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -131,8 +132,8 @@ struct NotificationTests {
     func testAnyNotificationDecodingWithNullParams() throws {
         // Test decoding when params field is null
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/initialized","params":null}
-            """
+        {"jsonrpc":"2.0","method":"notifications/initialized","params":null}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -145,8 +146,8 @@ struct NotificationTests {
     func testAnyNotificationDecodingWithEmptyParams() throws {
         // Test decoding when params field is empty
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -159,8 +160,8 @@ struct NotificationTests {
     func testAnyNotificationDecodingWithNonEmptyParams() throws {
         // Test decoding when params field has values
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"uri":"test://resource"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"uri":"test://resource"}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -220,8 +221,8 @@ struct NotificationTests {
     @Test("LogMessageNotification decoding")
     func testLogMessageNotificationDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"error","logger":"app","data":"Error occurred"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"error","logger":"app","data":"Error occurred"}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -253,7 +254,7 @@ struct NotificationTests {
     @Test("LogMessageNotification all log levels")
     func testLogMessageNotificationAllLogLevels() throws {
         let levels: [LoggingLevel] = [
-            .debug, .info, .notice, .warning, .error, .critical, .alert, .emergency
+            .debug, .info, .notice, .warning, .error, .critical, .alert, .emergency,
         ]
 
         for level in levels {
@@ -292,8 +293,8 @@ struct NotificationTests {
     @Test("ToolListChangedNotification decoding")
     func testToolListChangedNotificationDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/tools/list_changed"}
-            """
+        {"jsonrpc":"2.0","method":"notifications/tools/list_changed"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -305,8 +306,8 @@ struct NotificationTests {
     @Test("ToolListChangedNotification decoding with empty params")
     func testToolListChangedNotificationDecodingWithEmptyParams() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/tools/list_changed","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/tools/list_changed","params":{}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -339,8 +340,8 @@ struct NotificationTests {
     @Test("PromptListChangedNotification decoding")
     func testPromptListChangedNotificationDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/prompts/list_changed"}
-            """
+        {"jsonrpc":"2.0","method":"notifications/prompts/list_changed"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -352,8 +353,8 @@ struct NotificationTests {
     @Test("PromptListChangedNotification decoding with empty params")
     func testPromptListChangedNotificationDecodingWithEmptyParams() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/prompts/list_changed","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/prompts/list_changed","params":{}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -386,8 +387,8 @@ struct NotificationTests {
     @Test("ResourceListChangedNotification decoding")
     func testResourceListChangedNotificationDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/resources/list_changed"}
-            """
+        {"jsonrpc":"2.0","method":"notifications/resources/list_changed"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -399,8 +400,8 @@ struct NotificationTests {
     @Test("ResourceListChangedNotification decoding with empty params")
     func testResourceListChangedNotificationDecodingWithEmptyParams() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","method":"notifications/resources/list_changed","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/resources/list_changed","params":{}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()

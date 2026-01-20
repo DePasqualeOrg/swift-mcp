@@ -31,7 +31,6 @@ import Testing
 /// resumption token is tested in HTTPClientTransportTests and ClientReconnectionTests.
 @Suite("Resumability Tests")
 struct ResumabilityTests {
-
     // MARK: - Test Helpers
 
     static let initializeMessage = TestPayloads.initializeRequest(id: "init-1", clientName: "test-client")
@@ -51,7 +50,7 @@ struct ResumabilityTests {
             } else if line.hasPrefix("data: ") || line.hasPrefix("data:") {
                 let dataValue = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : String(line.dropFirst(5))
                 currentData.append(dataValue)
-            } else if line.isEmpty && !currentData.isEmpty {
+            } else if line.isEmpty, !currentData.isEmpty {
                 // End of event
                 events.append((id: currentId, data: currentData.joined(separator: "\n")))
                 currentId = nil
@@ -93,7 +92,7 @@ struct ResumabilityTests {
             // Timeout task
             group.addTask {
                 try await Task.sleep(for: timeout)
-                return nil  // Return nil on timeout
+                return nil // Return nil on timeout
             }
 
             // Wait for first to complete
@@ -144,8 +143,8 @@ struct ResumabilityTests {
         // Send a notification through the transport (in a concurrent task)
         // and read from the stream simultaneously
         let notification = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification with event ID"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification with event ID"}}
+        """
 
         // Start reading task first
         let readTask = Task {
@@ -213,8 +212,8 @@ struct ResumabilityTests {
         try await Task.sleep(for: .milliseconds(50))
 
         let notification1 = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"First notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"First notification"}}
+        """
         try await transport.send(notification1.data(using: .utf8)!)
 
         let receivedData1 = try await readTask1.value
@@ -231,8 +230,8 @@ struct ResumabilityTests {
 
         // Send second notification while "disconnected"
         let notification2 = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
+        """
         try await transport.send(notification2.data(using: .utf8)!)
 
         // Reconnect with Last-Event-ID to get missed messages
@@ -295,8 +294,8 @@ struct ResumabilityTests {
         try await Task.sleep(for: .milliseconds(50))
 
         let initialNotification = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Initial notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Initial notification"}}
+        """
         try await transport.send(initialNotification.data(using: .utf8)!)
 
         let receivedData1 = try await readTask1.value
@@ -311,10 +310,10 @@ struct ResumabilityTests {
         await transport.closeStandaloneSSEStream()
 
         // Send MULTIPLE notifications while the client is disconnected
-        for i in 1...3 {
+        for i in 1 ... 3 {
             let notification = """
-                {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Missed notification \(i)"}}
-                """
+            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Missed notification \(i)"}}
+            """
             try await transport.send(notification.data(using: .utf8)!)
         }
 
@@ -378,8 +377,8 @@ struct ResumabilityTests {
 
         // Send a notification
         let notification = """
-            {"jsonrpc":"2.0","method":"test/notification","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"test/notification","params":{}}
+        """
         try await transport.send(notification.data(using: .utf8)!)
 
         // Wait for read to complete
@@ -396,13 +395,13 @@ struct ResumabilityTests {
 
         // Store some test events directly
         let message1 = """
-            {"jsonrpc":"2.0","method":"test","params":{"msg":"first"}}
-            """.data(using: .utf8)!
+        {"jsonrpc":"2.0","method":"test","params":{"msg":"first"}}
+        """.data(using: .utf8)!
         let eventId1 = try await eventStore.storeEvent(streamId: "stream-A", message: message1)
 
         let message2 = """
-            {"jsonrpc":"2.0","method":"test","params":{"msg":"second"}}
-            """.data(using: .utf8)!
+        {"jsonrpc":"2.0","method":"test","params":{"msg":"second"}}
+        """.data(using: .utf8)!
         _ = try await eventStore.storeEvent(streamId: "stream-A", message: message2)
 
         // Replay events after the first one
@@ -486,8 +485,8 @@ struct ResumabilityTests {
 
         // Send a notification
         let notification = """
-            {"jsonrpc":"2.0","method":"test/notification","params":{}}
-            """
+        {"jsonrpc":"2.0","method":"test/notification","params":{}}
+        """
         try await transport.send(notification.data(using: .utf8)!)
 
         let receivedData = try await readTask.value
@@ -512,7 +511,7 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                retryInterval: 5000,  // Include retry to make priming event more visible
+                retryInterval: 5000, // Include retry to make priming event more visible
                 dnsRebindingProtection: .none
             )
         )
@@ -543,8 +542,8 @@ struct ResumabilityTests {
 
         // Send a notification
         let notification = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
+        """
         try await transport.send(notification.data(using: .utf8)!)
 
         let receivedData1 = try await readTask1.value
@@ -572,8 +571,8 @@ struct ResumabilityTests {
 
         // Send another notification while disconnected
         let notification2 = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
+        """
         try await transport.send(notification2.data(using: .utf8)!)
 
         // Reconnect with Last-Event-ID pointing to the notification
@@ -616,16 +615,16 @@ struct ResumabilityTests {
         // This simulates an edge case where multiple priming events might exist
         let primingEvent1 = try await eventStore.storeEvent(streamId: "stream-A", message: Data())
         let message1 = """
-            {"jsonrpc":"2.0","method":"test","params":{"msg":"first"}}
-            """.data(using: .utf8)!
+        {"jsonrpc":"2.0","method":"test","params":{"msg":"first"}}
+        """.data(using: .utf8)!
         _ = try await eventStore.storeEvent(streamId: "stream-A", message: message1)
 
         // Hypothetical second priming event (shouldn't happen in practice, but test the safeguard)
         _ = try await eventStore.storeEvent(streamId: "stream-A", message: Data())
 
         let message2 = """
-            {"jsonrpc":"2.0","method":"test","params":{"msg":"second"}}
-            """.data(using: .utf8)!
+        {"jsonrpc":"2.0","method":"test","params":{"msg":"second"}}
+        """.data(using: .utf8)!
         _ = try await eventStore.storeEvent(streamId: "stream-A", message: message2)
 
         // Replay events after the first priming event
@@ -676,12 +675,12 @@ struct ResumabilityTests {
         _ = try await eventStore.storeEvent(
             streamId: "_GET_stream",
             message: """
-                {"jsonrpc":"2.0","method":"old/notification","params":{}}
-                """.data(using: .utf8)!
+            {"jsonrpc":"2.0","method":"old/notification","params":{}}
+            """.data(using: .utf8)!
         )
 
         // Open SSE stream WITHOUT Last-Event-ID
-        let getRequest = TestPayloads.getRequest(sessionId: sessionId)  // No lastEventId
+        let getRequest = TestPayloads.getRequest(sessionId: sessionId) // No lastEventId
         let getResponse = await transport.handleRequest(getRequest)
 
         #expect(getResponse.statusCode == 200)

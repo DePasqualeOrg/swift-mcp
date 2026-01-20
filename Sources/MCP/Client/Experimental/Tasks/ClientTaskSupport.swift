@@ -167,7 +167,7 @@ public final class ClientTaskSupport: Sendable {
 
 // MARK: - Client Extension
 
-extension Client {
+public extension Client {
     /// Enable task handlers on this client.
     ///
     /// This registers handlers for task requests from the server, enabling
@@ -180,7 +180,7 @@ extension Client {
     /// - Important: This is an experimental API that may change without notice.
     ///
     /// - Parameter taskSupport: The client task support configuration
-    public func enableTaskHandlers(_ taskSupport: ClientTaskSupport) {
+    func enableTaskHandlers(_ taskSupport: ClientTaskSupport) {
         let handlers = taskSupport.handlers
 
         // Update capabilities based on handlers

@@ -462,21 +462,21 @@ public actor Client {
         ) {
             _yield = { result in
                 switch result {
-                case .success(let value):
-                    if let typedValue = value as? T {
-                        continuation.yield(typedValue)
-                        continuation.finish()
-                    } else if let value = value as? Value,
-                        let data = try? JSONEncoder().encode(value),
-                        let decoded = try? JSONDecoder().decode(T.self, from: data)
-                    {
-                        continuation.yield(decoded)
-                        continuation.finish()
-                    } else {
-                        continuation.finish(throwing: TypeMismatchError())
-                    }
-                case .failure(let error):
-                    continuation.finish(throwing: error)
+                    case let .success(value):
+                        if let typedValue = value as? T {
+                            continuation.yield(typedValue)
+                            continuation.finish()
+                        } else if let value = value as? Value,
+                                  let data = try? JSONEncoder().encode(value),
+                                  let decoded = try? JSONDecoder().decode(T.self, from: data)
+                        {
+                            continuation.yield(decoded)
+                            continuation.finish()
+                        } else {
+                            continuation.finish(throwing: TypeMismatchError())
+                        }
+                    case let .failure(error):
+                        continuation.finish(throwing: error)
                 }
             }
             _finish = {
@@ -549,8 +549,8 @@ public actor Client {
             self.timeout = timeout
             self.resetOnProgress = resetOnProgress
             self.maxTotalTimeout = maxTotalTimeout
-            self.startTime = ContinuousClock.now
-            self.deadline = ContinuousClock.now.advanced(by: timeout)
+            startTime = ContinuousClock.now
+            deadline = ContinuousClock.now.advanced(by: timeout)
         }
 
         /// Signal that progress was received, resetting the timeout.
@@ -577,7 +577,7 @@ public actor Client {
 
             // Create a stream for progress signals
             let (progressStream, continuation) = AsyncStream<Void>.makeStream()
-            self.progressContinuation = continuation
+            progressContinuation = continuation
 
             while !isCancelled {
                 // Check maxTotalTimeout
@@ -625,7 +625,7 @@ public actor Client {
                         group.cancelAll()
                     }
                 } catch is CancellationError {
-                    return  // Task was cancelled, exit gracefully
+                    return // Task was cancelled, exit gracefully
                 }
 
                 // If we get here after a progress signal, loop to recalculate deadline
@@ -659,7 +659,7 @@ public actor Client {
         configuration: Configuration = .default,
         validator: (any JSONSchemaValidator)? = nil
     ) {
-        self.clientInfo = Client.Info(
+        clientInfo = Client.Info(
             name: name,
             version: version,
             title: title,
@@ -667,8 +667,8 @@ public actor Client {
             icons: icons,
             websiteUrl: websiteUrl
         )
-        self.explicitCapabilities = capabilities
-        self.capabilities = Capabilities()  // Will be built at connect time
+        explicitCapabilities = capabilities
+        self.capabilities = Capabilities() // Will be built at connect time
         self.configuration = configuration
         self.validator = validator ?? DefaultJSONSchemaValidator()
     }
@@ -689,17 +689,18 @@ public actor Client {
     @discardableResult
     public func connect(transport: any Transport) async throws -> Initialize.Result {
         // Build capabilities from handlers and explicit overrides
-        self.capabilities = buildCapabilities()
+        capabilities = buildCapabilities()
         await validateCapabilities(capabilities)
 
         // Mark as connected to prevent further handler registration
-        self.isConnected = true
+        isConnected = true
 
-        self.connection = transport
-        try await self.connection?.connect()
+        connection = transport
+        try await connection?.connect()
 
         await logger?.debug(
-            "Client connected", metadata: ["name": "\(name)", "version": "\(version)"])
+            "Client connected", metadata: ["name": "\(name)", "version": "\(version)"]
+        )
 
         // Start message handling loop
         //
@@ -746,7 +747,7 @@ public actor Client {
                             defer {
                                 Task { await self.removeInFlightServerRequest(requestId) }
                             }
-                            await self.handleIncomingRequest(request)
+                            await handleIncomingRequest(request)
                         }
                         trackInFlightServerRequest(requestId, task: handlerTask)
                     } else if let message = try? decoder.decode(AnyMessage.self, from: data) {
@@ -765,7 +766,8 @@ public actor Client {
                 await logger?.debug("Client receive stream ended")
             } catch {
                 await logger?.error(
-                    "Error in message handling loop", metadata: ["error": "\(error)"])
+                    "Error in message handling loop", metadata: ["error": "\(error)"]
+                )
             }
             await self.logger?.debug("Client message handling loop task is terminating.")
         }
@@ -778,7 +780,7 @@ public actor Client {
                 // If not provided, we cannot cancel a specific request.
                 return
             }
-            await self.cancelInFlightServerRequest(requestId, reason: message.params.reason)
+            await cancelInFlightServerRequest(requestId, reason: message.params.reason)
         }
 
         // Automatically initialize after connecting
@@ -800,13 +802,13 @@ public actor Client {
         inFlightServerRequestTasks.removeAll()
 
         // Part 1: Inside actor - Grab state and clear internal references
-        let taskToCancel = self.task
-        let connectionToDisconnect = self.connection
-        let pendingRequestsToCancel = self.pendingRequests
+        let taskToCancel = task
+        let connectionToDisconnect = connection
+        let pendingRequestsToCancel = pendingRequests
 
-        self.task = nil
-        self.connection = nil
-        self.pendingRequests = [:]  // Use empty dictionary literal
+        task = nil
+        connection = nil
+        pendingRequests = [:] // Use empty dictionary literal
 
         // Clear all progress-related state
         progressCallbacks.removeAll()
@@ -852,7 +854,8 @@ public actor Client {
 
         await logger?.debug(
             "Cleaning up pending requests after unexpected disconnect",
-            metadata: ["count": "\(pendingRequests.count)"])
+            metadata: ["count": "\(pendingRequests.count)"]
+        )
 
         for (_, request) in pendingRequests {
             request.resume(throwing: MCPError.connectionClosed)
@@ -920,8 +923,8 @@ public actor Client {
             capabilities.elicitation = .init(
                 form: config.formMode.map { mode in
                     switch mode {
-                    case .enabled(let applyDefaults):
-                        return .init(applyDefaults: applyDefaults ? true : nil)
+                        case let .enabled(applyDefaults):
+                            .init(applyDefaults: applyDefaults ? true : nil)
                     }
                 },
                 url: config.urlMode.map { _ in .init() }
@@ -956,17 +959,17 @@ public actor Client {
     /// - Gradual migration: configure capabilities before handlers are fully implemented
     private func validateCapabilities(_ capabilities: Capabilities) async {
         // Check for capabilities advertised without handlers
-        if capabilities.sampling != nil && requestHandlers[ClientSamplingRequest.name] == nil {
+        if capabilities.sampling != nil, requestHandlers[ClientSamplingRequest.name] == nil {
             await logger?.warning(
                 "Sampling capability will be advertised but no handler is registered"
             )
         }
-        if capabilities.elicitation != nil && requestHandlers[Elicit.name] == nil {
+        if capabilities.elicitation != nil, requestHandlers[Elicit.name] == nil {
             await logger?.warning(
                 "Elicitation capability will be advertised but no handler is registered"
             )
         }
-        if capabilities.roots != nil && requestHandlers[ListRoots.name] == nil {
+        if capabilities.roots != nil, requestHandlers[ListRoots.name] == nil {
             await logger?.warning(
                 "Roots capability will be advertised but no handler is registered"
             )
@@ -984,10 +987,10 @@ public actor Client {
     @available(
         *, deprecated,
         message:
-            "Initialization now happens automatically during connect. Use connect(transport:) instead."
+        "Initialization now happens automatically during connect. Use connect(transport:) instead."
     )
     public func initialize() async throws -> Initialize.Result {
-        return try await _initialize()
+        try await _initialize()
     }
 
     /// Internal initialization implementation
@@ -1011,10 +1014,10 @@ public actor Client {
             )
         }
 
-        self.serverCapabilities = result.capabilities
-        self.serverInfo = result.serverInfo
-        self.protocolVersion = result.protocolVersion
-        self.instructions = result.instructions
+        serverCapabilities = result.capabilities
+        serverInfo = result.serverInfo
+        protocolVersion = result.protocolVersion
+        instructions = result.instructions
 
         // HTTP transports must set the protocol version in headers after initialization
         if let httpTransport = connection as? HTTPClientTransport {

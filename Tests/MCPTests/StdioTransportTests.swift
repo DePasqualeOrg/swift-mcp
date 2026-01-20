@@ -4,9 +4,9 @@ import Testing
 @testable import MCP
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 // MARK: - Basic Tests
@@ -94,7 +94,7 @@ struct StdioTransportTests {
         let (input, _) = try FileDescriptor.pipe()
         let transport = StdioTransport(
             input: input,
-            output: FileDescriptor(rawValue: -1),  // Invalid fd
+            output: FileDescriptor(rawValue: -1), // Invalid fd
             logger: nil
         )
 
@@ -112,7 +112,7 @@ struct StdioTransportTests {
     func testStdioTransportReceiveError() async throws {
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(
-            input: FileDescriptor(rawValue: -1),  // Invalid fd
+            input: FileDescriptor(rawValue: -1), // Invalid fd
             output: output,
             logger: nil
         )
@@ -326,7 +326,8 @@ struct StdioTransportBidirectionalTests {
         let (clientReader, transportOutput) = try FileDescriptor.pipe()
 
         let transport = StdioTransport(
-            input: transportInput, output: transportOutput, logger: nil)
+            input: transportInput, output: transportOutput, logger: nil
+        )
         try await transport.connect()
 
         // Client sends a request
@@ -349,7 +350,8 @@ struct StdioTransportBidirectionalTests {
             try clientReader.read(into: UnsafeMutableRawBufferPointer(pointer))
         }
         let receivedResponse = String(
-            data: Data(buffer[..<bytesRead]), encoding: .utf8)!
+            data: Data(buffer[..<bytesRead]), encoding: .utf8
+        )!
             .trimmingCharacters(in: .newlines)
         #expect(receivedResponse == response)
 
@@ -397,11 +399,11 @@ struct StdioTransportEOFHandlingTests {
 
         // Write a complete message, then an incomplete one (no trailing newline)
         let completeMessage = #"{"id":1}"#
-        let incompleteMessage = #"{"id":2"#  // Missing closing brace and newline
+        let incompleteMessage = #"{"id":2"# // Missing closing brace and newline
 
         try writer.writeAll((completeMessage + "\n").data(using: .utf8)!)
         try writer.writeAll(incompleteMessage.data(using: .utf8)!)
-        try writer.close()  // EOF while incomplete message in buffer
+        try writer.close() // EOF while incomplete message in buffer
 
         let stream = await transport.receive()
         var messages: [Data] = []

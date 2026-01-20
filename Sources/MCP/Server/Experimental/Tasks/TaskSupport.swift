@@ -20,17 +20,17 @@ public func validateTaskMode(
     let mode = taskSupport ?? .forbidden
 
     switch mode {
-    case .required:
-        if !isTaskRequest {
-            throw MCPError.methodNotFound("This tool requires task-augmented invocation")
-        }
-    case .forbidden:
-        if isTaskRequest {
-            throw MCPError.methodNotFound("This tool does not support task-augmented invocation")
-        }
-    case .optional:
-        // Both task and non-task requests are acceptable
-        break
+        case .required:
+            if !isTaskRequest {
+                throw MCPError.methodNotFound("This tool requires task-augmented invocation")
+            }
+        case .forbidden:
+            if isTaskRequest {
+                throw MCPError.methodNotFound("This tool does not support task-augmented invocation")
+            }
+        case .optional:
+            // Both task and non-task requests are acceptable
+            break
     }
 }
 
@@ -57,10 +57,10 @@ public func canUseToolWithTaskMode(
 ) -> Bool {
     let mode = taskSupport ?? .forbidden
     switch mode {
-    case .required:
-        return clientSupportsTask
-    case .forbidden, .optional:
-        return true
+        case .required:
+            return clientSupportsTask
+        case .forbidden, .optional:
+            return true
     }
 }
 
@@ -101,7 +101,7 @@ public final class TaskSupport: Sendable {
     public init(store: any TaskStore, queue: any TaskMessageQueue) {
         self.store = store
         self.queue = queue
-        self.resultHandler = TaskResultHandler(store: store, queue: queue)
+        resultHandler = TaskResultHandler(store: store, queue: queue)
     }
 
     /// Create in-memory task support.

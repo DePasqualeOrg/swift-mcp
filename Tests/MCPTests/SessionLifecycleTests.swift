@@ -3,9 +3,9 @@ import Logging
 import Testing
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @testable import MCP
@@ -26,12 +26,10 @@ import Testing
 /// - tests/server/test_session_race_condition.py
 @Suite("Session Lifecycle Tests")
 struct SessionLifecycleTests {
-
     // MARK: - Request Immediately After Initialize Response Tests
 
     @Suite("Request immediately after initialize response (race condition)")
     struct InitializeRaceConditionTests {
-
         /// Test that requests are accepted immediately after initialize response.
         ///
         /// This reproduces the race condition in stateful HTTP mode where:
@@ -75,7 +73,7 @@ struct SessionLifecycleTests {
                         name: "example_tool",
                         description: "An example tool",
                         inputSchema: ["type": "object"]
-                    )
+                    ),
                 ])
             }
 
@@ -169,8 +167,8 @@ struct SessionLifecycleTests {
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
-                return ListTools.Result(tools: [
-                    Tool(name: "test_tool", inputSchema: ["type": "object"])
+                ListTools.Result(tools: [
+                    Tool(name: "test_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -193,7 +191,6 @@ struct SessionLifecycleTests {
 
     @Suite("Client info handling")
     struct ClientInfoTests {
-
         /// Test that custom client info is properly sent during initialization.
         ///
         /// Based on Python SDK: test_client_session_custom_client_info
@@ -305,7 +302,6 @@ struct SessionLifecycleTests {
 
     @Suite("Server capabilities")
     struct ServerCapabilitiesTests {
-
         /// Test that serverCapabilities returns nil before init and capabilities after.
         ///
         /// Based on Python SDK: test_get_server_capabilities
@@ -342,13 +338,13 @@ struct SessionLifecycleTests {
 
             // Register minimal handlers so capabilities are advertised
             await server.withRequestHandler(ListPrompts.self) { _, _ in
-                return ListPrompts.Result(prompts: [])
+                ListPrompts.Result(prompts: [])
             }
             await server.withRequestHandler(ListResources.self) { _, _ in
-                return ListResources.Result(resources: [])
+                ListResources.Result(resources: [])
             }
             await server.withRequestHandler(ListTools.self) { _, _ in
-                return ListTools.Result(tools: [])
+                ListTools.Result(tools: [])
             }
 
             let client = Client(name: "CapabilitiesTestClient", version: "1.0")
@@ -395,7 +391,6 @@ struct SessionLifecycleTests {
 
     @Suite("In-flight request tracking")
     struct InFlightRequestTrackingTests {
-
         /// Test that in-flight request tracking is cleared after request completes.
         ///
         /// This verifies that the internal tracking of pending requests is properly
@@ -428,8 +423,8 @@ struct SessionLifecycleTests {
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
-                return ListTools.Result(tools: [
-                    Tool(name: "test_tool", inputSchema: ["type": "object"])
+                ListTools.Result(tools: [
+                    Tool(name: "test_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -439,7 +434,7 @@ struct SessionLifecycleTests {
             try await client.connect(transport: clientTransport)
 
             // Send multiple requests and verify they complete
-            for i in 1...5 {
+            for i in 1 ... 5 {
                 let tools = try await client.send(ListTools.request(.init()))
                 #expect(tools.tools.count == 1, "Request \(i) should succeed")
             }
@@ -482,7 +477,7 @@ struct SessionLifecycleTests {
             let callCount = CallCountTracker()
 
             await server.withRequestHandler(ListTools.self) { _, _ in
-                return ListTools.Result(tools: [])
+                ListTools.Result(tools: [])
             }
 
             await server.withRequestHandler(CallTool.self) { request, _ in
@@ -500,7 +495,7 @@ struct SessionLifecycleTests {
 
             // Send multiple concurrent requests
             await withTaskGroup(of: Void.self) { group in
-                for i in 0..<10 {
+                for i in 0 ..< 10 {
                     group.addTask {
                         let delay = Double(i % 3) * 0.01 + 0.01
                         _ = try? await client.send(

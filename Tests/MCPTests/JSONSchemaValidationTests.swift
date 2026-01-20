@@ -32,7 +32,7 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "string",
             "minLength": 3,
-            "maxLength": 10
+            "maxLength": 10,
         ]
 
         // Valid
@@ -54,7 +54,7 @@ struct JSONSchemaValidationTests {
     func stringPattern() throws {
         let schema: Value = [
             "type": "string",
-            "pattern": "^[A-Z]{3}$"
+            "pattern": "^[A-Z]{3}$",
         ]
 
         // Valid
@@ -105,7 +105,7 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "number",
             "minimum": 0,
-            "maximum": 100
+            "maximum": 100,
         ]
 
         // Valid
@@ -150,7 +150,7 @@ struct JSONSchemaValidationTests {
     @Test("Validates enum values")
     func enumValues() throws {
         let schema: Value = [
-            "enum": ["red", "green", "blue"]
+            "enum": ["red", "green", "blue"],
         ]
 
         // Valid
@@ -167,7 +167,7 @@ struct JSONSchemaValidationTests {
     @Test("Validates enum with mixed types")
     func enumMixedTypes() throws {
         let schema: Value = [
-            "enum": ["option1", 42, true, .null]
+            "enum": ["option1", 42, true, .null],
         ]
 
         // Valid
@@ -190,9 +190,9 @@ struct JSONSchemaValidationTests {
             "type": "object",
             "properties": [
                 "name": ["type": "string"],
-                "age": ["type": "number"]
+                "age": ["type": "number"],
             ],
-            "required": ["name"]
+            "required": ["name"],
         ]
 
         // Valid - all fields
@@ -230,12 +230,12 @@ struct JSONSchemaValidationTests {
                     "type": "object",
                     "properties": [
                         "name": ["type": "string"],
-                        "email": ["type": "string"]
+                        "email": ["type": "string"],
                     ],
-                    "required": ["name"]
-                ]
+                    "required": ["name"],
+                ],
             ],
-            "required": ["user"]
+            "required": ["user"],
         ]
 
         // Valid
@@ -243,8 +243,8 @@ struct JSONSchemaValidationTests {
             .object([
                 "user": .object([
                     "name": .string("John"),
-                    "email": .string("john@example.com")
-                ])
+                    "email": .string("john@example.com"),
+                ]),
             ]),
             against: schema
         )
@@ -254,8 +254,8 @@ struct JSONSchemaValidationTests {
             try validator.validate(
                 .object([
                     "user": .object([
-                        "email": .string("john@example.com")
-                    ])
+                        "email": .string("john@example.com"),
+                    ]),
                 ]),
                 against: schema
             )
@@ -267,9 +267,9 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "object",
             "properties": [
-                "name": ["type": "string"]
+                "name": ["type": "string"],
             ],
-            "additionalProperties": false
+            "additionalProperties": false,
         ]
 
         // Valid
@@ -293,7 +293,7 @@ struct JSONSchemaValidationTests {
     func arrayOfStrings() throws {
         let schema: Value = [
             "type": "array",
-            "items": ["type": "string"]
+            "items": ["type": "string"],
         ]
 
         // Valid
@@ -312,7 +312,7 @@ struct JSONSchemaValidationTests {
             "type": "array",
             "items": ["type": "number"],
             "minItems": 1,
-            "maxItems": 3
+            "maxItems": 3,
         ]
 
         // Valid
@@ -335,7 +335,7 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "array",
             "items": ["type": "number"],
-            "uniqueItems": true
+            "uniqueItems": true,
         ]
 
         // Valid
@@ -354,8 +354,8 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "allOf": [
                 ["type": "object", "properties": ["name": ["type": "string"]]],
-                ["type": "object", "properties": ["age": ["type": "number"]]]
-            ]
+                ["type": "object", "properties": ["age": ["type": "number"]]],
+            ],
         ]
 
         // Valid
@@ -382,8 +382,8 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "anyOf": [
                 ["type": "string"],
-                ["type": "number"]
-            ]
+                ["type": "number"],
+            ],
         ]
 
         // Valid
@@ -401,8 +401,8 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "oneOf": [
                 ["type": "string", "minLength": 5],
-                ["type": "string", "maxLength": 3]
-            ]
+                ["type": "string", "maxLength": 3],
+            ],
         ]
 
         // Valid - matches second only
@@ -420,7 +420,7 @@ struct JSONSchemaValidationTests {
     @Test("Validates with not")
     func notConstraint() throws {
         let schema: Value = [
-            "not": ["type": "null"]
+            "not": ["type": "null"],
         ]
 
         // Valid
@@ -436,7 +436,7 @@ struct JSONSchemaValidationTests {
     @Test("Validates with const")
     func constValue() throws {
         let schema: Value = [
-            "const": "specific-value"
+            "const": "specific-value",
         ]
 
         // Valid
@@ -459,21 +459,21 @@ struct JSONSchemaValidationTests {
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 20,
-                    "pattern": "^[a-zA-Z0-9_]+$"
+                    "pattern": "^[a-zA-Z0-9_]+$",
                 ],
                 "email": [
-                    "type": "string"
+                    "type": "string",
                 ],
                 "age": [
                     "type": "integer",
                     "minimum": 18,
-                    "maximum": 120
+                    "maximum": 120,
                 ],
                 "newsletter": [
-                    "type": "boolean"
-                ]
+                    "type": "boolean",
+                ],
             ],
-            "required": ["username", "email"]
+            "required": ["username", "email"],
         ]
 
         // Valid - all fields
@@ -482,7 +482,7 @@ struct JSONSchemaValidationTests {
                 "username": .string("john_doe"),
                 "email": .string("john@example.com"),
                 "age": .int(25),
-                "newsletter": .bool(true)
+                "newsletter": .bool(true),
             ]),
             against: schema
         )
@@ -491,7 +491,7 @@ struct JSONSchemaValidationTests {
         try validator.validate(
             .object([
                 "username": .string("john_doe"),
-                "email": .string("john@example.com")
+                "email": .string("john@example.com"),
             ]),
             against: schema
         )
@@ -501,7 +501,7 @@ struct JSONSchemaValidationTests {
             try validator.validate(
                 .object([
                     "username": .string("ab"),
-                    "email": .string("john@example.com")
+                    "email": .string("john@example.com"),
                 ]),
                 against: schema
             )
@@ -513,7 +513,7 @@ struct JSONSchemaValidationTests {
                 .object([
                     "username": .string("john_doe"),
                     "email": .string("john@example.com"),
-                    "age": .int(15)
+                    "age": .int(15),
                 ]),
                 against: schema
             )
@@ -527,7 +527,7 @@ struct JSONSchemaValidationTests {
             "properties": [
                 "status": [
                     "type": "string",
-                    "enum": ["success", "error", "pending"]
+                    "enum": ["success", "error", "pending"],
                 ],
                 "data": [
                     "type": "object",
@@ -539,16 +539,16 @@ struct JSONSchemaValidationTests {
                                 "type": "object",
                                 "properties": [
                                     "name": ["type": "string"],
-                                    "quantity": ["type": "integer", "minimum": 1]
+                                    "quantity": ["type": "integer", "minimum": 1],
                                 ],
-                                "required": ["name", "quantity"]
-                            ]
-                        ]
+                                "required": ["name", "quantity"],
+                            ],
+                        ],
                     ],
-                    "required": ["id", "items"]
-                ]
+                    "required": ["id", "items"],
+                ],
             ],
-            "required": ["status", "data"]
+            "required": ["status", "data"],
         ]
 
         // Valid
@@ -559,9 +559,9 @@ struct JSONSchemaValidationTests {
                     "id": .string("123"),
                     "items": .array([
                         .object(["name": .string("Item 1"), "quantity": .int(5)]),
-                        .object(["name": .string("Item 2"), "quantity": .int(3)])
-                    ])
-                ])
+                        .object(["name": .string("Item 2"), "quantity": .int(3)]),
+                    ]),
+                ]),
             ]),
             against: schema
         )
@@ -573,8 +573,8 @@ struct JSONSchemaValidationTests {
                     "status": .string("invalid-status"),
                     "data": .object([
                         "id": .string("123"),
-                        "items": .array([])
-                    ])
+                        "items": .array([]),
+                    ]),
                 ]),
                 against: schema
             )
@@ -588,9 +588,9 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "object",
             "properties": [
-                "name": ["type": "string"]
+                "name": ["type": "string"],
             ],
-            "required": ["name"]
+            "required": ["name"],
         ]
 
         do {
@@ -610,9 +610,9 @@ struct JSONSchemaValidationTests {
         let schema: Value = [
             "type": "object",
             "properties": [
-                "name": ["type": "string"]
+                "name": ["type": "string"],
             ],
-            "required": ["name"]
+            "required": ["name"],
         ]
 
         // First validation - compiles schema
@@ -632,7 +632,6 @@ struct JSONSchemaValidationTests {
 
 @Suite("Tool Input Validation Tests")
 struct ToolInputValidationTests {
-
     @Test("Valid tool call passes input validation")
     func validToolCall() throws {
         let validator = DefaultJSONSchemaValidator()
@@ -640,15 +639,15 @@ struct ToolInputValidationTests {
             "type": "object",
             "properties": [
                 "a": ["type": "number"],
-                "b": ["type": "number"]
+                "b": ["type": "number"],
             ],
             "required": ["a", "b"],
-            "additionalProperties": false
+            "additionalProperties": false,
         ]
 
         let arguments: Value = .object([
             "a": .int(5),
-            "b": .int(3)
+            "b": .int(3),
         ])
 
         // Should not throw
@@ -662,13 +661,13 @@ struct ToolInputValidationTests {
             "type": "object",
             "properties": [
                 "a": ["type": "number"],
-                "b": ["type": "number"]
+                "b": ["type": "number"],
             ],
-            "required": ["a", "b"]
+            "required": ["a", "b"],
         ]
 
         let arguments: Value = .object([
-            "a": .int(5)
+            "a": .int(5),
             // Missing 'b'
         ])
 
@@ -684,14 +683,14 @@ struct ToolInputValidationTests {
             "type": "object",
             "properties": [
                 "a": ["type": "number"],
-                "b": ["type": "number"]
+                "b": ["type": "number"],
             ],
-            "required": ["a", "b"]
+            "required": ["a", "b"],
         ]
 
         let arguments: Value = .object([
-            "a": .string("five"),  // Should be number
-            "b": .int(3)
+            "a": .string("five"), // Should be number
+            "b": .int(3),
         ])
 
         #expect(throws: MCPError.self) {
@@ -706,14 +705,14 @@ struct ToolInputValidationTests {
             "type": "object",
             "properties": [
                 "name": ["type": "string"],
-                "title": ["type": "string", "enum": ["Mr", "Ms", "Dr"]]
+                "title": ["type": "string", "enum": ["Mr", "Ms", "Dr"]],
             ],
-            "required": ["name"]
+            "required": ["name"],
         ]
 
         let arguments: Value = .object([
             "name": .string("Smith"),
-            "title": .string("Prof")  // Not in enum
+            "title": .string("Prof"), // Not in enum
         ])
 
         #expect(throws: MCPError.self) {
@@ -728,16 +727,16 @@ struct ToolInputValidationTests {
             "type": "object",
             "properties": [
                 "a": ["type": "number"],
-                "b": ["type": "number"]
+                "b": ["type": "number"],
             ],
             "required": ["a", "b"],
-            "additionalProperties": false
+            "additionalProperties": false,
         ]
 
         let arguments: Value = .object([
             "a": .int(5),
             "b": .int(3),
-            "c": .int(10)  // Extra property not allowed
+            "c": .int(10), // Extra property not allowed
         ])
 
         #expect(throws: MCPError.self) {
@@ -750,7 +749,6 @@ struct ToolInputValidationTests {
 
 @Suite("Tool Output Validation Tests")
 struct ToolOutputValidationTests {
-
     @Test("Valid structured output passes validation")
     func validStructuredOutput() throws {
         let validator = DefaultJSONSchemaValidator()
@@ -758,14 +756,14 @@ struct ToolOutputValidationTests {
             "type": "object",
             "properties": [
                 "sum": ["type": "number"],
-                "product": ["type": "number"]
+                "product": ["type": "number"],
             ],
-            "required": ["sum", "product"]
+            "required": ["sum", "product"],
         ]
 
         let structuredContent: Value = .object([
             "sum": .int(7),
-            "product": .int(12)
+            "product": .int(12),
         ])
 
         try validator.validate(structuredContent, against: outputSchema)
@@ -778,13 +776,13 @@ struct ToolOutputValidationTests {
             "type": "object",
             "properties": [
                 "name": ["type": "string"],
-                "age": ["type": "integer"]
+                "age": ["type": "integer"],
             ],
-            "required": ["name", "age"]
+            "required": ["name", "age"],
         ]
 
         let structuredContent: Value = .object([
-            "name": .string("Alice")
+            "name": .string("Alice"),
             // Missing required 'age'
         ])
 
@@ -801,15 +799,15 @@ struct ToolOutputValidationTests {
             "properties": [
                 "count": ["type": "integer"],
                 "average": ["type": "number"],
-                "items": ["type": "array", "items": ["type": "string"]]
+                "items": ["type": "array", "items": ["type": "string"]],
             ],
-            "required": ["count", "average", "items"]
+            "required": ["count", "average", "items"],
         ]
 
         let structuredContent: Value = .object([
-            "count": .string("five"),  // Should be integer
+            "count": .string("five"), // Should be integer
             "average": .double(2.5),
-            "items": .array([.string("a"), .string("b")])
+            "items": .array([.string("a"), .string("b")]),
         ])
 
         #expect(throws: MCPError.self) {
@@ -824,16 +822,16 @@ struct ToolOutputValidationTests {
             "type": "object",
             "properties": [
                 "sentiment": ["type": "string", "enum": ["positive", "negative", "neutral"]],
-                "confidence": ["type": "number", "minimum": 0, "maximum": 1]
+                "confidence": ["type": "number", "minimum": 0, "maximum": 1],
             ],
-            "required": ["sentiment", "confidence"]
+            "required": ["sentiment", "confidence"],
         ]
 
         // Valid
         try validator.validate(
             .object([
                 "sentiment": .string("positive"),
-                "confidence": .double(0.95)
+                "confidence": .double(0.95),
             ]),
             against: outputSchema
         )
@@ -843,7 +841,7 @@ struct ToolOutputValidationTests {
             try validator.validate(
                 .object([
                     "sentiment": .string("positive"),
-                    "confidence": .double(1.5)
+                    "confidence": .double(1.5),
                 ]),
                 against: outputSchema
             )
@@ -854,7 +852,7 @@ struct ToolOutputValidationTests {
             try validator.validate(
                 .object([
                     "sentiment": .string("happy"),
-                    "confidence": .double(0.8)
+                    "confidence": .double(0.8),
                 ]),
                 against: outputSchema
             )
@@ -866,16 +864,15 @@ struct ToolOutputValidationTests {
 
 @Suite("Elicitation Schema Validation Tests")
 struct ElicitationValidationTests {
-
     @Test("Simple string field validation")
     func simpleStringField() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
             "properties": [
-                "name": ["type": "string", "minLength": 1]
+                "name": ["type": "string", "minLength": 1],
             ],
-            "required": ["name"]
+            "required": ["name"],
         ]
 
         // Valid
@@ -893,9 +890,9 @@ struct ElicitationValidationTests {
         let schema: Value = [
             "type": "object",
             "properties": [
-                "age": ["type": "integer", "minimum": 0, "maximum": 150]
+                "age": ["type": "integer", "minimum": 0, "maximum": 150],
             ],
-            "required": ["age"]
+            "required": ["age"],
         ]
 
         // Valid
@@ -913,9 +910,9 @@ struct ElicitationValidationTests {
         let schema: Value = [
             "type": "object",
             "properties": [
-                "agree": ["type": "boolean"]
+                "agree": ["type": "boolean"],
             ],
-            "required": ["agree"]
+            "required": ["agree"],
         ]
 
         // Valid
@@ -937,9 +934,9 @@ struct ElicitationValidationTests {
                 "name": ["type": "string", "minLength": 1],
                 "email": ["type": "string"],
                 "age": ["type": "integer", "minimum": 0, "maximum": 150],
-                "newsletter": ["type": "boolean"]
+                "newsletter": ["type": "boolean"],
             ],
-            "required": ["name", "email", "age"]
+            "required": ["name", "email", "age"],
         ]
 
         // Valid - all fields
@@ -948,7 +945,7 @@ struct ElicitationValidationTests {
                 "name": .string("Jane Smith"),
                 "email": .string("jane@example.com"),
                 "age": .int(28),
-                "newsletter": .bool(true)
+                "newsletter": .bool(true),
             ]),
             against: schema
         )
@@ -958,7 +955,7 @@ struct ElicitationValidationTests {
             .object([
                 "name": .string("Jane Smith"),
                 "email": .string("jane@example.com"),
-                "age": .int(28)
+                "age": .int(28),
             ]),
             against: schema
         )
@@ -971,9 +968,9 @@ struct ElicitationValidationTests {
             "type": "object",
             "properties": [
                 "name": ["type": "string"],
-                "email": ["type": "string"]
+                "email": ["type": "string"],
             ],
-            "required": ["name", "email"]
+            "required": ["name", "email"],
         ]
 
         // Missing 'name'
@@ -992,9 +989,9 @@ struct ElicitationValidationTests {
             "type": "object",
             "properties": [
                 "name": ["type": "string"],
-                "age": ["type": "integer"]
+                "age": ["type": "integer"],
             ],
-            "required": ["name", "age"]
+            "required": ["name", "age"],
         ]
 
         // age is string instead of integer
@@ -1002,7 +999,7 @@ struct ElicitationValidationTests {
             try validator.validate(
                 .object([
                     "name": .string("John Doe"),
-                    "age": .string("thirty")
+                    "age": .string("thirty"),
                 ]),
                 against: schema
             )
@@ -1017,10 +1014,10 @@ struct ElicitationValidationTests {
             "properties": [
                 "color": [
                     "type": "string",
-                    "enum": ["Red", "Green", "Blue"]
-                ]
+                    "enum": ["Red", "Green", "Blue"],
+                ],
             ],
-            "required": ["color"]
+            "required": ["color"],
         ]
 
         // Valid
@@ -1044,11 +1041,11 @@ struct ElicitationValidationTests {
                     "maxItems": 3,
                     "items": [
                         "type": "string",
-                        "enum": ["Red", "Green", "Blue"]
-                    ]
-                ]
+                        "enum": ["Red", "Green", "Blue"],
+                    ],
+                ],
             ],
-            "required": ["colors"]
+            "required": ["colors"],
         ]
 
         // Valid
@@ -1077,11 +1074,11 @@ struct ElicitationValidationTests {
                     "oneOf": [
                         ["const": "#FF0000", "title": "Red"],
                         ["const": "#00FF00", "title": "Green"],
-                        ["const": "#0000FF", "title": "Blue"]
-                    ]
-                ]
+                        ["const": "#0000FF", "title": "Blue"],
+                    ],
+                ],
             ],
-            "required": ["color"]
+            "required": ["color"],
         ]
 
         // Valid - using const value
@@ -1098,7 +1095,6 @@ struct ElicitationValidationTests {
 
 @Suite("Value to JSONValue Conversion Tests")
 struct ValueToJSONValueTests {
-
     @Test("Converts null value")
     func nullValue() throws {
         let value: Value = .null
@@ -1137,7 +1133,7 @@ struct ValueToJSONValueTests {
         let value: Value = .array([.int(1), .string("two"), .bool(true)])
         let jsonValue = value.toJSONValue()
 
-        if case .array(let elements) = jsonValue {
+        if case let .array(elements) = jsonValue {
             #expect(elements.count == 3)
             #expect(elements[0] == .integer(1))
             #expect(elements[1] == .string("two"))
@@ -1152,11 +1148,11 @@ struct ValueToJSONValueTests {
         let value: Value = .object([
             "name": .string("John"),
             "age": .int(30),
-            "active": .bool(true)
+            "active": .bool(true),
         ])
         let jsonValue = value.toJSONValue()
 
-        if case .object(let dict) = jsonValue {
+        if case let .object(dict) = jsonValue {
             #expect(dict["name"] == .string("John"))
             #expect(dict["age"] == .integer(30))
             #expect(dict["active"] == .boolean(true))
@@ -1170,15 +1166,16 @@ struct ValueToJSONValueTests {
         let value: Value = .object([
             "user": .object([
                 "name": .string("Alice"),
-                "tags": .array([.string("admin"), .string("user")])
+                "tags": .array([.string("admin"), .string("user")]),
             ]),
-            "count": .int(5)
+            "count": .int(5),
         ])
         let jsonValue = value.toJSONValue()
 
-        if case .object(let dict) = jsonValue,
-           case .object(let user) = dict["user"],
-           case .array(let tags) = user["tags"] {
+        if case let .object(dict) = jsonValue,
+           case let .object(user) = dict["user"],
+           case let .array(tags) = user["tags"]
+        {
             #expect(user["name"] == .string("Alice"))
             #expect(tags.count == 2)
             #expect(tags[0] == .string("admin"))

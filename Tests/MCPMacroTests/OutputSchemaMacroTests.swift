@@ -6,7 +6,6 @@ import XCTest
 import MCPMacros
 
 final class OutputSchemaMacroTests: XCTestCase {
-
     let testMacros: [String: Macro.Type] = [
         "OutputSchema": OutputSchemaMacro.self,
     ]
@@ -123,7 +122,7 @@ final class OutputSchemaMacroTests: XCTestCase {
             }
             """,
             diagnostics: [
-                DiagnosticSpec(message: "@OutputSchema can only be applied to structs", line: 1, column: 1)
+                DiagnosticSpec(message: "@OutputSchema can only be applied to structs", line: 1, column: 1),
             ],
             macros: testMacros
         )

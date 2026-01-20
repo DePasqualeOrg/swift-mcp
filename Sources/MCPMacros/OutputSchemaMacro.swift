@@ -6,14 +6,13 @@ import SwiftSyntaxMacros
 /// It inspects the struct to find stored properties and generates:
 /// - `static var schema: Value` - The JSON Schema for the output type
 public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
-
     // MARK: - MemberMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
+        conformingTo _: [TypeSyntax],
+        in _: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         // Ensure we're applied to a struct
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -32,11 +31,11 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
     // MARK: - ExtensionMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
+        conformingTo _: [TypeSyntax],
+        in _: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         // Validate it's a struct
         guard declaration.as(StructDeclSyntax.self) != nil else {
@@ -45,8 +44,8 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
 
         // Add StructuredOutput conformance
         let extensionDecl: DeclSyntax = """
-            extension \(type): StructuredOutput {}
-            """
+        extension \(type): StructuredOutput {}
+        """
 
         guard let ext = extensionDecl.as(ExtensionDeclSyntax.self) else {
             return []
@@ -68,13 +67,15 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
 
         for member in structDecl.memberBlock.members {
             guard let varDecl = member.decl.as(VariableDeclSyntax.self),
-                  !varDecl.modifiers.contains(where: { $0.name.text == "static" }) else {
+                  !varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            else {
                 continue
             }
 
             for binding in varDecl.bindings {
                 guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self),
-                      let typeAnnotation = binding.typeAnnotation else {
+                      let typeAnnotation = binding.typeAnnotation
+                else {
                     continue
                 }
 
@@ -111,7 +112,7 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
 
         for prop in properties {
             let schemaType = getJSONSchemaType(for: prop.typeName)
-            var propEntries: [String] = ["\"type\": .string(\"\(schemaType)\")"]
+            var propEntries = ["\"type\": .string(\"\(schemaType)\")"]
 
             // Add items for arrays
             let additionalProps = getJSONSchemaProperties(for: prop.typeName)
@@ -132,52 +133,52 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
         let requiredStr = requiredFields.joined(separator: ", ")
 
         return """
-            public static var schema: Value {
-                .object([
-                    "type": .string("object"),
-                    "properties": .object([
-                        \(raw: propertiesStr)
-                    ]),
-                    "required": .array([\(raw: requiredStr)])
-                ])
-            }
-            """
+        public static var schema: Value {
+            .object([
+                "type": .string("object"),
+                "properties": .object([
+                    \(raw: propertiesStr)
+                ]),
+                "required": .array([\(raw: requiredStr)])
+            ])
+        }
+        """
     }
 
     // MARK: - Type Mapping
 
     private static func getJSONSchemaType(for swiftType: String) -> String {
         switch swiftType {
-        case "String": return "string"
-        case "Int": return "integer"
-        case "Double": return "number"
-        case "Bool": return "boolean"
-        case "Date": return "string"
-        case "Data": return "string"
-        default:
-            // Array types
-            if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
-                return "array"
-            }
-            // Default to object for custom types
-            return "object"
+            case "String": return "string"
+            case "Int": return "integer"
+            case "Double": return "number"
+            case "Bool": return "boolean"
+            case "Date": return "string"
+            case "Data": return "string"
+            default:
+                // Array types
+                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
+                    return "array"
+                }
+                // Default to object for custom types
+                return "object"
         }
     }
 
     private static func getJSONSchemaProperties(for swiftType: String) -> [(String, String)] {
         switch swiftType {
-        case "Date":
-            return [("format", ".string(\"date-time\")")]
-        case "Data":
-            return [("contentEncoding", ".string(\"base64\")")]
-        default:
-            // Check for array types
-            if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
-                let elementType = String(swiftType.dropFirst().dropLast())
-                let itemSchemaType = getJSONSchemaType(for: elementType)
-                return [("items", ".object([\"type\": .string(\"\(itemSchemaType)\")])")]
-            }
-            return []
+            case "Date":
+                return [("format", ".string(\"date-time\")")]
+            case "Data":
+                return [("contentEncoding", ".string(\"base64\")")]
+            default:
+                // Check for array types
+                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
+                    let elementType = String(swiftType.dropFirst().dropLast())
+                    let itemSchemaType = getJSONSchemaType(for: elementType)
+                    return [("items", ".object([\"type\": .string(\"\(itemSchemaType)\")])")]
+                }
+                return []
         }
     }
 }
@@ -189,8 +190,8 @@ enum OutputSchemaMacroError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .notAStruct:
-            return "@OutputSchema can only be applied to structs"
+            case .notAStruct:
+                "@OutputSchema can only be applied to structs"
         }
     }
 }

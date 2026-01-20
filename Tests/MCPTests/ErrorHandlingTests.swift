@@ -3,14 +3,15 @@ import Logging
 import Testing
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @testable import MCP
 
 // MARK: - Malformed Input Handling Tests
+
 // Based on Python SDK: tests/issues/test_malformed_input.py
 // HackerOne vulnerability report #3156202
 
@@ -20,7 +21,6 @@ import Testing
 /// and remains functional after receiving invalid messages.
 @Suite("Malformed Input Handling")
 struct MalformedInputHandlingTests {
-
     /// Test that a request with missing required method returns an error response.
     ///
     /// Based on Python SDK's test_malformed_initialize_request_does_not_crash_server.
@@ -39,8 +39,8 @@ struct MalformedInputHandlingTests {
         // Send a malformed request (missing required method field)
         // Per JSON-RPC spec, this should return INVALID_REQUEST error
         let malformedRequest = """
-            {"jsonrpc":"2.0","id":"malformed-1","params":{}}
-            """
+        {"jsonrpc":"2.0","id":"malformed-1","params":{}}
+        """
         await transport.queueRaw(malformedRequest)
 
         // Wait for error response
@@ -61,8 +61,8 @@ struct MalformedInputHandlingTests {
         await transport.clearMessages()
 
         let validPingRequest = """
-            {"jsonrpc":"2.0","id":"ping-1","method":"ping","params":{}}
-            """
+        {"jsonrpc":"2.0","id":"ping-1","method":"ping","params":{}}
+        """
         await transport.queueRaw(validPingRequest)
 
         // Wait for ping response
@@ -96,10 +96,10 @@ struct MalformedInputHandlingTests {
         try await server.start(transport: transport)
 
         // Send multiple malformed requests
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             let malformedRequest = """
-                {"jsonrpc":"2.0","id":"malformed-\(i)","method":"initialize"}
-                """
+            {"jsonrpc":"2.0","id":"malformed-\(i)","method":"initialize"}
+            """
             await transport.queueRaw(malformedRequest)
         }
 
@@ -150,7 +150,7 @@ struct MalformedInputHandlingTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", inputSchema: ["type": "object"])
+                Tool(name: "test_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -183,8 +183,8 @@ struct MalformedInputHandlingTests {
 
         // Send message missing required "jsonrpc" field
         let invalidMessage = """
-            {"method":"ping","id":"parse-test"}
-            """
+        {"method":"ping","id":"parse-test"}
+        """
         await transport.queueRaw(invalidMessage)
 
         // Wait for response
@@ -243,6 +243,7 @@ struct MalformedInputHandlingTests {
 }
 
 // MARK: - Server Resilience Tests
+
 // Based on Python SDK: tests/server/test_lowlevel_exception_handling.py
 
 /// Tests for server exception handling and resilience.
@@ -251,7 +252,6 @@ struct MalformedInputHandlingTests {
 /// without crashing, and can continue processing subsequent requests.
 @Suite("Server Resilience")
 struct ServerResilienceTests {
-
     /// Test that exceptions in request handlers are properly converted to error responses.
     ///
     /// Based on Python SDK's test_exception_handling_with_raise_exceptions_true.
@@ -282,7 +282,7 @@ struct ServerResilienceTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "failing_tool", inputSchema: ["type": "object"])
+                Tool(name: "failing_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -308,7 +308,7 @@ struct ServerResilienceTests {
             Issue.record("Expected tool call to throw an error")
         } catch let error as MCPError {
             // Should receive the internal error
-            if case .internalError(let message) = error {
+            if case let .internalError(message) = error {
                 #expect(message?.contains("Simulated handler failure") == true)
             } else {
                 // Other error types are also acceptable
@@ -354,7 +354,7 @@ struct ServerResilienceTests {
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
                 Tool(name: "good_tool", inputSchema: ["type": "object"]),
-                Tool(name: "bad_tool", inputSchema: ["type": "object"])
+                Tool(name: "bad_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -376,7 +376,7 @@ struct ServerResilienceTests {
         let result1 = try await client.send(
             CallTool.request(.init(name: "good_tool", arguments: [:]))
         )
-        if case .text(let text, _, _) = result1.content.first {
+        if case let .text(text, _, _) = result1.content.first {
             #expect(text == "Success!")
         }
 
@@ -393,7 +393,7 @@ struct ServerResilienceTests {
         let result2 = try await client.send(
             CallTool.request(.init(name: "good_tool", arguments: [:]))
         )
-        if case .text(let text, _, _) = result2.content.first {
+        if case let .text(text, _, _) = result2.content.first {
             #expect(text == "Success!")
         }
 
@@ -437,24 +437,24 @@ struct ServerResilienceTests {
                 Tool(name: "internal_error_tool", inputSchema: ["type": "object"]),
                 Tool(name: "resource_not_found_tool", inputSchema: ["type": "object"]),
                 Tool(name: "method_not_found_tool", inputSchema: ["type": "object"]),
-                Tool(name: "good_tool", inputSchema: ["type": "object"])
+                Tool(name: "good_tool", inputSchema: ["type": "object"]),
             ])
         }
 
         await server.withRequestHandler(CallTool.self) { request, _ in
             switch request.name {
-            case "invalid_params_tool":
-                throw MCPError.invalidParams("Missing required parameter")
-            case "internal_error_tool":
-                throw MCPError.internalError("Something went wrong internally")
-            case "resource_not_found_tool":
-                throw MCPError.resourceNotFound(uri: "file:///missing.txt")
-            case "method_not_found_tool":
-                throw MCPError.methodNotFound("Unknown method")
-            case "good_tool":
-                return CallTool.Result(content: [.text("Works!")])
-            default:
-                return CallTool.Result(content: [.text("Unknown")], isError: true)
+                case "invalid_params_tool":
+                    throw MCPError.invalidParams("Missing required parameter")
+                case "internal_error_tool":
+                    throw MCPError.internalError("Something went wrong internally")
+                case "resource_not_found_tool":
+                    throw MCPError.resourceNotFound(uri: "file:///missing.txt")
+                case "method_not_found_tool":
+                    throw MCPError.methodNotFound("Unknown method")
+                case "good_tool":
+                    return CallTool.Result(content: [.text("Works!")])
+                default:
+                    return CallTool.Result(content: [.text("Unknown")], isError: true)
             }
         }
 
@@ -468,7 +468,7 @@ struct ServerResilienceTests {
             ("invalid_params_tool", ErrorCode.invalidParams),
             ("internal_error_tool", ErrorCode.internalError),
             ("resource_not_found_tool", ErrorCode.resourceNotFound),
-            ("method_not_found_tool", ErrorCode.methodNotFound)
+            ("method_not_found_tool", ErrorCode.methodNotFound),
         ]
 
         for (toolName, expectedCode) in errorTools {
@@ -486,7 +486,7 @@ struct ServerResilienceTests {
         let result = try await client.send(
             CallTool.request(.init(name: "good_tool", arguments: [:]))
         )
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Works!")
         }
 
@@ -497,6 +497,7 @@ struct ServerResilienceTests {
 }
 
 // MARK: - Timeout and Server Responsiveness Tests
+
 // Based on Python SDK: tests/issues/test_88_random_error.py
 
 /// Tests for timeout handling and server responsiveness after timeouts.
@@ -508,7 +509,6 @@ struct ServerResilienceTests {
 /// 4. No resources are leaked
 @Suite("Timeout and Server Responsiveness")
 struct TimeoutServerResponsivenessTests {
-
     /// Test that server remains responsive after a client request times out.
     ///
     /// Based on Python SDK's test_notification_validation_error.
@@ -544,7 +544,7 @@ struct TimeoutServerResponsivenessTests {
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
                 Tool(name: "slow", description: "A slow tool", inputSchema: ["type": "object"]),
-                Tool(name: "fast", description: "A fast tool", inputSchema: ["type": "object"])
+                Tool(name: "fast", description: "A fast tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -570,7 +570,7 @@ struct TimeoutServerResponsivenessTests {
         let result1 = try await client.send(
             CallTool.request(.init(name: "fast", arguments: [:]))
         )
-        if case .text(let text, _, _) = result1.content.first {
+        if case let .text(text, _, _) = result1.content.first {
             #expect(text == "fast 1")
         }
 
@@ -597,7 +597,7 @@ struct TimeoutServerResponsivenessTests {
         let result3 = try await client.send(
             CallTool.request(.init(name: "fast", arguments: [:]))
         )
-        if case .text(let text, _, _) = result3.content.first {
+        if case let .text(text, _, _) = result3.content.first {
             #expect(text == "fast 3", "Third call should succeed after timeout")
         }
 
@@ -636,7 +636,7 @@ struct TimeoutServerResponsivenessTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "configurable", inputSchema: ["type": "object"])
+                Tool(name: "configurable", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -664,11 +664,11 @@ struct TimeoutServerResponsivenessTests {
         }
 
         // Now send multiple sequential requests - all should succeed
-        for i in 1...5 {
+        for i in 1 ... 5 {
             let result = try await client.send(
                 CallTool.request(.init(name: "configurable", arguments: ["delay": .double(0.0)]))
             )
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Completed after 0.0s", "Request \(i) should succeed")
             }
         }
@@ -707,7 +707,7 @@ struct TimeoutServerResponsivenessTests {
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
                 Tool(name: "slow_tool", inputSchema: ["type": "object"]),
-                Tool(name: "fast_tool", inputSchema: ["type": "object"])
+                Tool(name: "fast_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -747,7 +747,7 @@ struct TimeoutServerResponsivenessTests {
 
         // Fast request should succeed
         let fastResult = try await fastTask.value
-        if case .text(let text, _, _) = fastResult.content.first {
+        if case let .text(text, _, _) = fastResult.content.first {
             #expect(text == "fast completed")
         }
 

@@ -2,6 +2,7 @@ import Foundation
 
 extension Client {
     // MARK: - Tasks (Experimental)
+
     // Note: These methods are internal. Access via client.experimental.*
 
     func getTask(taskId: String) async throws -> GetTask.Result {
@@ -12,11 +13,10 @@ extension Client {
 
     func listTasks(cursor: String? = nil) async throws -> ListTasks.Result {
         try validateServerCapability(\.tasks, "Tasks")
-        let request: Request<ListTasks>
-        if let cursor {
-            request = ListTasks.request(.init(cursor: cursor))
+        let request: Request<ListTasks> = if let cursor {
+            ListTasks.request(.init(cursor: cursor))
         } else {
-            request = ListTasks.request(.init())
+            ListTasks.request(.init())
         }
         return try await send(request)
     }
@@ -37,7 +37,7 @@ extension Client {
     ///
     /// This method retrieves the task result and decodes the `extraFields` as the specified type.
     /// The `extraFields` contain the actual result payload (e.g., CallTool.Result fields).
-    func getTaskResultAs<T: Decodable & Sendable>(taskId: String, type: T.Type) async throws -> T {
+    func getTaskResultAs<T: Decodable & Sendable>(taskId: String, type _: T.Type) async throws -> T {
         let result = try await getTaskResult(taskId: taskId)
 
         // The result's extraFields contain the actual result payload

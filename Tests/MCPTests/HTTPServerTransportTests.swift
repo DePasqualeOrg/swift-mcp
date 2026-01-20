@@ -30,7 +30,6 @@ private func testTransport(
 
 @Suite("HTTP Server Transport Tests")
 struct HTTPServerTransportTests {
-
     // MARK: - Basic Initialization
 
     @Test("Stateless mode initialization")
@@ -96,7 +95,7 @@ struct HTTPServerTransportTests {
         let request = HTTPRequest(
             method: "POST",
             headers: [
-                HTTPHeader.accept: "application/json, text/event-stream"
+                HTTPHeader.accept: "application/json, text/event-stream",
             ],
             body: #"{"jsonrpc":"2.0","method":"initialize","id":"1"}"#.data(using: .utf8)
         )
@@ -141,7 +140,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -173,7 +172,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -186,7 +185,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                #"[{"jsonrpc":"2.0","method":"notifications/someNotification1","params":{}},{"jsonrpc":"2.0","method":"notifications/someNotification2","params":{}}]"#
+            #"[{"jsonrpc":"2.0","method":"notifications/someNotification1","params":{}},{"jsonrpc":"2.0","method":"notifications/someNotification2","params":{}}]"#
                 .data(using: .utf8)
         )
 
@@ -207,7 +206,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -244,7 +243,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -290,7 +289,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -319,7 +318,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -333,7 +332,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.sessionId: "wrong-session",
             ],
             body:
-                #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
+            #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
         )
 
         let response = await transport.handleRequest(badRequest)
@@ -353,7 +352,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -366,7 +365,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
+            #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
         )
 
         let response = await transport.handleRequest(noSessionRequest)
@@ -399,7 +398,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -425,7 +424,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -466,7 +465,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -497,7 +496,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -528,7 +527,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -595,7 +594,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -609,7 +608,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.protocolVersion: "1999-01-01",
             ],
             body:
-                #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
+            #"{"jsonrpc":"2.0","method":"tools/list","id":"2"}"#.data(using: .utf8)
         )
 
         let response = await transport.handleRequest(badRequest)
@@ -627,11 +626,11 @@ struct HTTPServerTransportTests {
         let initRequest = HTTPRequest(
             method: "POST",
             headers: [
-                HTTPHeader.accept: "application/json",  // Only JSON, no SSE
+                HTTPHeader.accept: "application/json", // Only JSON, no SSE
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -640,7 +639,7 @@ struct HTTPServerTransportTests {
             try await Task.sleep(for: .milliseconds(50))
             let responseData =
                 TestPayloads.initializeResult()
-                .data(using: .utf8)!
+                    .data(using: .utf8)!
             try await transport.send(responseData, relatedRequestId: .string("1"))
         }
 
@@ -662,7 +661,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -672,18 +671,18 @@ struct HTTPServerTransportTests {
 
     @Test("SSE mode requires both Accept types")
     func sseModeRequiresBothAcceptTypes() async throws {
-        let transport = testTransport(enableJsonResponse: false)  // SSE mode (default)
+        let transport = testTransport(enableJsonResponse: false) // SSE mode (default)
         try await transport.connect()
 
         // Should fail with only application/json (missing text/event-stream)
         let request = HTTPRequest(
             method: "POST",
             headers: [
-                HTTPHeader.accept: "application/json",  // Missing text/event-stream
+                HTTPHeader.accept: "application/json", // Missing text/event-stream
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -706,7 +705,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -718,7 +717,7 @@ struct HTTPServerTransportTests {
             // Send a response
             let responseData =
                 TestPayloads.initializeResult()
-                .data(using: .utf8)!
+                    .data(using: .utf8)!
             try await transport.send(responseData, relatedRequestId: .string("1"))
         }
 
@@ -745,7 +744,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         let response1 = await transport.handleRequest(initRequest1)
@@ -762,7 +761,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.sessionId: sessionId,
             ],
             body:
-                TestPayloads.initializeRequest(id: "2")
+            TestPayloads.initializeRequest(id: "2")
                 .data(using: .utf8)
         )
         let response2 = await transport.handleRequest(initRequest2)
@@ -786,7 +785,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.host: "localhost:8080",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -809,7 +808,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.host: "evil.com:8080",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -833,7 +832,7 @@ struct HTTPServerTransportTests {
                 // No Host header
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -845,7 +844,7 @@ struct HTTPServerTransportTests {
     @Test("DNS rebinding protection allows wildcard port")
     func dnsRebindingProtectionAllowsWildcardPort() async throws {
         let transport = HTTPServerTransport(
-            options: .init(dnsRebindingProtection: .localhost())  // Wildcard port
+            options: .init(dnsRebindingProtection: .localhost()) // Wildcard port
         )
         try await transport.connect()
 
@@ -859,7 +858,7 @@ struct HTTPServerTransportTests {
                     HTTPHeader.host: "127.0.0.1:\(port)",
                 ],
                 body:
-                    TestPayloads.initializeRequest()
+                TestPayloads.initializeRequest()
                     .data(using: .utf8)
             )
 
@@ -885,7 +884,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.origin: "http://localhost:8080",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -909,7 +908,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.origin: "http://evil.com",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -934,7 +933,7 @@ struct HTTPServerTransportTests {
                 // No Origin header
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -945,7 +944,7 @@ struct HTTPServerTransportTests {
     @Test("DNS rebinding protection can be disabled with .none")
     func dnsRebindingProtectionCanBeDisabled() async throws {
         // With .none, any host should be allowed
-        let transport = testTransport()  // Uses dnsRebindingProtection: .none
+        let transport = testTransport() // Uses dnsRebindingProtection: .none
         try await transport.connect()
 
         let request = HTTPRequest(
@@ -956,7 +955,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.host: "any-host.com:8080",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -979,12 +978,12 @@ struct HTTPServerTransportTests {
                 // No Host header
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
         let response = await transport.handleRequest(request)
-        #expect(response.statusCode == 421)  // Misdirected Request
+        #expect(response.statusCode == 421) // Misdirected Request
     }
 
     @Test("forBindAddress returns appropriate protection for address")
@@ -1048,7 +1047,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.host: "localhost:8080",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1080,7 +1079,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1111,7 +1110,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1141,7 +1140,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1186,7 +1185,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1200,7 +1199,7 @@ struct HTTPServerTransportTests {
 
         #expect(response.statusCode == 404)
         let called = await state.wasCalled()
-        #expect(called == false)  // Callback should NOT be called for invalid session
+        #expect(called == false) // Callback should NOT be called for invalid session
     }
 
     @Test("DELETE without callback works")
@@ -1217,7 +1216,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1246,11 +1245,11 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.batchRequest([
-                    TestPayloads.initializeRequest(id: "1"),
-                    TestPayloads.initializeRequest(id: "2", clientName: "test2"),
-                ])
-                .data(using: .utf8)
+            TestPayloads.batchRequest([
+                TestPayloads.initializeRequest(id: "1"),
+                TestPayloads.initializeRequest(id: "2", clientName: "test2"),
+            ])
+            .data(using: .utf8)
         )
         let response = await transport.handleRequest(batchRequest)
         #expect(response.statusCode == 400)
@@ -1322,7 +1321,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         let initResponse = await transport.handleRequest(initRequest)
@@ -1363,7 +1362,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1442,7 +1441,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1477,7 +1476,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1512,7 +1511,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1548,7 +1547,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1583,7 +1582,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1615,8 +1614,8 @@ struct HTTPServerTransportTests {
             "test-session-id",
             "1234567890",
             "session!@#$%^&*()_+-=[]{}|;:,.<>?/",
-            "~",  // 0x7E
-            "!",  // 0x21
+            "~", // 0x7E
+            "!", // 0x21
             UUID().uuidString,
         ]
 
@@ -1631,7 +1630,7 @@ struct HTTPServerTransportTests {
                     HTTPHeader.contentType: "application/json",
                 ],
                 body:
-                    TestPayloads.initializeRequest()
+                TestPayloads.initializeRequest()
                     .data(using: .utf8)
             )
 
@@ -1653,18 +1652,18 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
         let response = await transport.handleRequest(initRequest)
-        #expect(response.statusCode == 500)  // Internal error for invalid generated ID
+        #expect(response.statusCode == 500) // Internal error for invalid generated ID
     }
 
     @Test("Invalid session IDs rejected - control characters")
     func invalidSessionIdWithControlCharsRejected() async throws {
         let invalidIds = [
-            "session\twith\ttab",    // Tab (0x09)
+            "session\twith\ttab", // Tab (0x09)
             "session\nwith\nnewline", // Newline (0x0A)
             "session\rwith\rcarriage", // Carriage return (0x0D)
             "session\u{7F}with\u{7F}del", // DEL (0x7F)
@@ -1682,7 +1681,7 @@ struct HTTPServerTransportTests {
                     HTTPHeader.contentType: "application/json",
                 ],
                 body:
-                    TestPayloads.initializeRequest()
+                TestPayloads.initializeRequest()
                     .data(using: .utf8)
             )
 
@@ -1703,12 +1702,12 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
         let response = await transport.handleRequest(initRequest)
-        #expect(response.statusCode == 500)  // Empty session ID is invalid
+        #expect(response.statusCode == 500) // Empty session ID is invalid
     }
 
     // MARK: - GET Priming Events Tests (per Python/TypeScript SDK patterns)
@@ -1730,7 +1729,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1751,7 +1750,7 @@ struct HTTPServerTransportTests {
 
         // Verify priming event was stored
         let eventCount = await eventStore.eventCount
-        #expect(eventCount >= 1)  // At least one priming event
+        #expect(eventCount >= 1) // At least one priming event
     }
 
     @Test("GET stream does not receive priming event for old protocol version")
@@ -1771,7 +1770,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1808,7 +1807,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -1833,7 +1832,7 @@ struct HTTPServerTransportTests {
         let transport = testTransport(
             sessionIdGenerator: { "test-session" },
             eventStore: eventStore,
-            retryInterval: 5000  // 5 seconds
+            retryInterval: 5000 // 5 seconds
         )
         try await transport.connect()
 
@@ -1845,7 +1844,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         let response = await transport.handleRequest(initRequest)
@@ -1858,7 +1857,7 @@ struct HTTPServerTransportTests {
             var receivedData = Data()
             for try await chunk in stream {
                 receivedData.append(chunk)
-                break  // Just get first chunk (priming event)
+                break // Just get first chunk (priming event)
             }
             let eventString = String(data: receivedData, encoding: .utf8) ?? ""
             #expect(eventString.contains("retry: 5000"))
@@ -1905,7 +1904,7 @@ struct HTTPServerTransportTests {
 
         let replayedMessages = await collector.getMessages()
         #expect(replayedStreamId == "stream-1")
-        #expect(replayedMessages.count == 2)  // msg2 and msg3, not msg1
+        #expect(replayedMessages.count == 2) // msg2 and msg3, not msg1
         #expect(replayedMessages.contains("msg2"))
         #expect(replayedMessages.contains("msg3"))
         #expect(!replayedMessages.contains("msg1"))
@@ -1955,7 +1954,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2001,7 +2000,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         let initResponse = await transport.handleRequest(initRequest)
@@ -2026,7 +2025,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -2048,7 +2047,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2089,7 +2088,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
 
@@ -2124,7 +2123,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2165,7 +2164,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2179,7 +2178,7 @@ struct HTTPServerTransportTests {
 
         #expect(response.statusCode == 404)
         let callCount = await counter.getCount()
-        #expect(callCount == 0)  // Callback should NOT be called
+        #expect(callCount == 0) // Callback should NOT be called
     }
 
     // MARK: - Terminated State Tests
@@ -2198,7 +2197,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2234,7 +2233,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(id: "3")
+            TestPayloads.initializeRequest(id: "3")
                 .data(using: .utf8)
         )
         let reInitResponse = await transport.handleRequest(reInitRequest)
@@ -2254,7 +2253,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2303,7 +2302,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest(id: "init", protocolVersion: Version.v2025_11_25)
+            TestPayloads.initializeRequest(id: "init", protocolVersion: Version.v2025_11_25)
                 .data(using: .utf8)
         )
         let initResponse = await transport.handleRequest(initRequest)
@@ -2417,7 +2416,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)
@@ -2455,7 +2454,7 @@ struct HTTPServerTransportTests {
                 HTTPHeader.contentType: "application/json",
             ],
             body:
-                TestPayloads.initializeRequest()
+            TestPayloads.initializeRequest()
                 .data(using: .utf8)
         )
         _ = await transport.handleRequest(initRequest)

@@ -99,15 +99,15 @@ public actor ToolRegistry {
     /// - Returns: A `RegisteredTool` for managing the tool.
     /// - Throws: `MCPError.invalidParams` if a tool with the same name already exists.
     @discardableResult
-    public func registerClosure<Input: Codable & Sendable, Output: ToolOutput>(
+    public func registerClosure<Input: Codable & Sendable>(
         name: String,
         description: String? = nil,
         inputSchema: Value,
-        inputType: Input.Type = Input.self,
+        inputType _: Input.Type = Input.self,
         outputSchema: Value? = nil,
         annotations: [AnnotationOption] = [],
         onListChanged: (@Sendable () async -> Void)? = nil,
-        handler: @escaping @Sendable (Input, HandlerContext) async throws -> Output
+        handler: @escaping @Sendable (Input, HandlerContext) async throws -> some ToolOutput
     ) throws -> RegisteredTool {
         guard !hasTool(name) else {
             throw MCPError.invalidParams("Tool '\(name)' is already registered")
@@ -142,12 +142,12 @@ public actor ToolRegistry {
     /// - Returns: A `RegisteredTool` for managing the tool.
     /// - Throws: `MCPError.invalidParams` if a tool with the same name already exists.
     @discardableResult
-    public func registerClosure<Output: ToolOutput>(
+    public func registerClosure(
         name: String,
         description: String? = nil,
         annotations: [AnnotationOption] = [],
         onListChanged: (@Sendable () async -> Void)? = nil,
-        handler: @escaping @Sendable (HandlerContext) async throws -> Output
+        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput
     ) throws -> RegisteredTool {
         guard !hasTool(name) else {
             throw MCPError.invalidParams("Tool '\(name)' is already registered")
@@ -215,41 +215,41 @@ public actor ToolRegistry {
         }
 
         switch entry.kind {
-        case .dsl(let toolType):
-            let instance = try toolType.parse(from: arguments)
-            let output = try await instance.perform(context: context)
-            return try output.toCallToolResult()
+            case let .dsl(toolType):
+                let instance = try toolType.parse(from: arguments)
+                let output = try await instance.perform(context: context)
+                return try output.toCallToolResult()
 
-        case .closure(_, let handler):
-            return try await handler(arguments, context)
+            case let .closure(_, handler):
+                return try await handler(arguments, context)
         }
     }
 
     // MARK: - Tool Management (Internal)
 
-    internal func isToolEnabled(_ name: String) -> Bool {
+    func isToolEnabled(_ name: String) -> Bool {
         tools[name]?.enabled ?? false
     }
 
-    internal func toolDefinition(for name: String) -> Tool? {
+    func toolDefinition(for name: String) -> Tool? {
         tools[name]?.definition
     }
 
-    internal func enableTool(_ name: String) {
+    func enableTool(_ name: String) {
         tools[name]?.enabled = true
     }
 
-    internal func disableTool(_ name: String) {
+    func disableTool(_ name: String) {
         tools[name]?.enabled = false
     }
 
-    internal func removeTool(_ name: String) {
+    func removeTool(_ name: String) {
         tools.removeValue(forKey: name)
     }
 
     // MARK: - Private Helpers
 
-    private static func decodeInput<T: Decodable>(_ arguments: [String: Value]?, as type: T.Type) throws -> T {
+    private static func decodeInput<T: Decodable>(_ arguments: [String: Value]?, as _: T.Type) throws -> T {
         guard let arguments else {
             // Try to decode from empty object
             return try JSONDecoder().decode(T.self, from: Data("{}".utf8))
@@ -282,10 +282,10 @@ struct ToolEntry: Sendable {
     /// The tool definition for listings.
     var definition: Tool {
         switch kind {
-        case .dsl(let toolType):
-            return toolType.toolDefinition
-        case .closure(let definition, _):
-            return definition
+            case let .dsl(toolType):
+                toolType.toolDefinition
+            case let .closure(definition, _):
+                definition
         }
     }
 }

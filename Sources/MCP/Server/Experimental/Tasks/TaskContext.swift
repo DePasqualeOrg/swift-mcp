@@ -232,12 +232,12 @@ public func withTaskExecution(
         try await work(context)
     } catch is CancellationError {
         // Task was cancelled externally
-        if !isTerminalStatus(await context.task.status) {
+        if await !isTerminalStatus(context.task.status) {
             try? await context.cancel(message: "Cancelled")
         }
     } catch {
         // Auto-fail the task if an exception occurs and task isn't already terminal
-        if !isTerminalStatus(await context.task.status) {
+        if await !isTerminalStatus(context.task.status) {
             try? await context.fail(error: error)
         }
         // Don't re-raise - the failure is recorded in task state

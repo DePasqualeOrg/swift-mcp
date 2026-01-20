@@ -5,7 +5,6 @@ import Testing
 
 @Suite("Base64 Data Tests")
 struct Base64DataTests {
-
     @Test("Check valid data URLs")
     func testIsDataURL() {
         // Basic valid data URL

@@ -7,7 +7,6 @@ import Testing
 
 @Suite("RequestInfo Tests")
 struct RequestInfoTests {
-
     @Test("RequestInfo stores headers")
     func testRequestInfoStoresHeaders() {
         let headers = ["Content-Type": "application/json", "X-Custom": "test"]
@@ -56,11 +55,10 @@ struct RequestInfoTests {
 
 @Suite("RequestMeta.relatedTaskId Tests")
 struct RequestMetaRelatedTaskIdTests {
-
     @Test("relatedTaskId extracts task ID from additionalFields")
     func testRelatedTaskIdExtractsTaskId() {
         let meta = RequestMeta(additionalFields: [
-            "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-abc123")])
+            "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-abc123")]),
         ])
 
         #expect(meta.relatedTaskId == "task-abc123")
@@ -83,7 +81,7 @@ struct RequestMetaRelatedTaskIdTests {
     @Test("relatedTaskId returns nil when key is missing")
     func testRelatedTaskIdNilWhenKeyMissing() {
         let meta = RequestMeta(additionalFields: [
-            "other-key": .object(["taskId": .string("task-123")])
+            "other-key": .object(["taskId": .string("task-123")]),
         ])
 
         #expect(meta.relatedTaskId == nil)
@@ -92,7 +90,7 @@ struct RequestMetaRelatedTaskIdTests {
     @Test("relatedTaskId returns nil when taskId is not a string")
     func testRelatedTaskIdNilWhenTaskIdNotString() {
         let meta = RequestMeta(additionalFields: [
-            "io.modelcontextprotocol/related-task": .object(["taskId": .double(123)])
+            "io.modelcontextprotocol/related-task": .object(["taskId": .double(123)]),
         ])
 
         #expect(meta.relatedTaskId == nil)
@@ -101,7 +99,7 @@ struct RequestMetaRelatedTaskIdTests {
     @Test("relatedTaskId returns nil when value is not an object")
     func testRelatedTaskIdNilWhenNotObject() {
         let meta = RequestMeta(additionalFields: [
-            "io.modelcontextprotocol/related-task": .string("not-an-object")
+            "io.modelcontextprotocol/related-task": .string("not-an-object"),
         ])
 
         #expect(meta.relatedTaskId == nil)
@@ -112,7 +110,7 @@ struct RequestMetaRelatedTaskIdTests {
         let meta = RequestMeta(
             progressToken: .string("progress-123"),
             additionalFields: [
-                "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-xyz")])
+                "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-xyz")]),
             ]
         )
 
@@ -138,7 +136,6 @@ struct RequestMetaRelatedTaskIdTests {
 
 @Suite("Server.RequestHandlerContext Tests")
 struct ServerRequestHandlerContextTests {
-
     // MARK: - requestId Tests
 
     /// Test that handlers can access context.requestId.
@@ -162,11 +159,11 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
-        await server.withRequestHandler(CallTool.self) { request, context in
+        await server.withRequestHandler(CallTool.self) { _, context in
             // Handler accesses context.requestId - this is what we're testing
             await tracker.set(context.requestId)
             return CallTool.Result(content: [.text("Request ID: \(context.requestId)")])
@@ -184,7 +181,7 @@ struct ServerRequestHandlerContextTests {
         #expect(receivedId != nil, "Handler should have access to requestId")
 
         // Verify the response mentions the request ID
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text.contains("Request ID:"), "Response should contain request ID")
         }
 
@@ -211,7 +208,7 @@ struct ServerRequestHandlerContextTests {
         await server.withRequestHandler(ListTools.self) { _, context in
             await tracker.add(context.requestId)
             return ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -262,7 +259,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -299,7 +296,7 @@ struct ServerRequestHandlerContextTests {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor MetaTracker {
-            var receivedMeta: RequestMeta? = RequestMeta()  // Initialize to non-nil
+            var receivedMeta: RequestMeta? = RequestMeta() // Initialize to non-nil
             var wasSet = false
             func set(_ meta: RequestMeta?) {
                 receivedMeta = meta
@@ -316,7 +313,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -363,7 +360,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "progress_tool", description: "Test", inputSchema: [:])
+                Tool(name: "progress_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -421,7 +418,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "askName", description: "Ask user for name", inputSchema: [:])
+                Tool(name: "askName", description: "Ask user for name", inputSchema: [:]),
             ])
         }
 
@@ -445,7 +442,7 @@ struct ServerRequestHandlerContextTests {
 
         let client = Client(name: "TestClient", version: "1.0.0")
         await client.withElicitationHandler { params, _ in
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
             #expect(formParams.message == "What is your name?")
@@ -458,7 +455,7 @@ struct ServerRequestHandlerContextTests {
         let result = try await client.callTool(name: "askName", arguments: [:])
 
         #expect(result.isError == nil)
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Hello, Bob!")
         } else {
             Issue.record("Expected text content")
@@ -480,7 +477,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "confirm", description: "Confirm", inputSchema: [:])
+                Tool(name: "confirm", description: "Confirm", inputSchema: [:]),
             ])
         }
 
@@ -493,15 +490,15 @@ struct ServerRequestHandlerContextTests {
             )
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Accepted")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Accepted")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "TestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(action: .decline)
+            ElicitResult(action: .decline)
         }
 
         try await server.start(transport: serverTransport)
@@ -509,7 +506,7 @@ struct ServerRequestHandlerContextTests {
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Declined")
         } else {
             Issue.record("Expected text content")
@@ -519,6 +516,7 @@ struct ServerRequestHandlerContextTests {
     }
 
     // MARK: - Sampling from Handlers
+
     // Note: For sampling from within request handlers, use server.createMessage() which is
     // thoroughly tested in SamplingTests.swift. The context provides elicit() and elicitUrl()
     // convenience methods (tested above), matching Python's ctx.elicit() pattern. Sampling
@@ -551,7 +549,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -602,7 +600,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -653,7 +651,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "task_tool", description: "Test", inputSchema: [:])
+                Tool(name: "task_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -674,7 +672,7 @@ struct ServerRequestHandlerContextTests {
                 name: "task_tool",
                 arguments: [:],
                 _meta: RequestMeta(additionalFields: [
-                    "io.modelcontextprotocol/related-task": .object(["taskId": .string("test-task-123")])
+                    "io.modelcontextprotocol/related-task": .object(["taskId": .string("test-task-123")]),
                 ])
             ))
         )
@@ -693,7 +691,7 @@ struct ServerRequestHandlerContextTests {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
-            var receivedTaskId: String? = "initial"  // Initialize to non-nil
+            var receivedTaskId: String? = "initial" // Initialize to non-nil
             var wasChecked = false
             func set(_ taskId: String?) {
                 receivedTaskId = taskId
@@ -710,7 +708,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -761,7 +759,7 @@ struct ServerRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "test_tool", description: "Test", inputSchema: [:])
+                Tool(name: "test_tool", description: "Test", inputSchema: [:]),
             ])
         }
 
@@ -794,7 +792,6 @@ struct ServerRequestHandlerContextTests {
 
 @Suite("Client.RequestHandlerContext Tests")
 struct ClientRequestHandlerContextTests {
-
     /// Test that client handlers can access context.requestId.
     @Test("Client handler can access context.requestId")
     func testClientHandlerCanAccessRequestId() async throws {
@@ -814,7 +811,7 @@ struct ClientRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:])
+                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:]),
             ])
         }
 
@@ -868,7 +865,7 @@ struct ClientRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:])
+                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:]),
             ])
         }
 
@@ -878,7 +875,7 @@ struct ClientRequestHandlerContextTests {
                 message: "Test",
                 requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())]),
                 _meta: RequestMeta(additionalFields: [
-                    "io.modelcontextprotocol/related-task": .object(["taskId": .string("client-task-456")])
+                    "io.modelcontextprotocol/related-task": .object(["taskId": .string("client-task-456")]),
                 ])
             )))
             return CallTool.Result(content: [.text("Action: \(result.action)")])
@@ -910,7 +907,7 @@ struct ClientRequestHandlerContextTests {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
-            var receivedTaskId: String? = "initial"  // Initialize to non-nil
+            var receivedTaskId: String? = "initial" // Initialize to non-nil
             var wasChecked = false
             func set(_ id: String?) {
                 receivedTaskId = id
@@ -927,7 +924,7 @@ struct ClientRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:])
+                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:]),
             ])
         }
 
@@ -979,7 +976,7 @@ struct ClientRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:])
+                Tool(name: "elicitTool", description: "Elicit", inputSchema: [:]),
             ])
         }
 
@@ -1019,7 +1016,6 @@ struct ClientRequestHandlerContextTests {
 /// These tests ensure feature parity across SDK implementations.
 @Suite("Additional RequestHandlerContext Tests")
 struct AdditionalRequestHandlerContextTests {
-
     // MARK: - context.elicitUrl() Tests
 
     /// Test that handlers can use context.elicitUrl() for URL elicitation.
@@ -1036,7 +1032,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize access", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize access", inputSchema: [:]),
             ])
         }
 
@@ -1050,16 +1046,16 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Authorized")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Authorized")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "TestClient", version: "1.0.0")
 
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { params, _ in
-            guard case .url(let urlParams) = params else {
+            guard case let .url(urlParams) = params else {
                 return ElicitResult(action: .decline)
             }
             #expect(urlParams.message == "Please authorize access to files")
@@ -1074,7 +1070,7 @@ struct AdditionalRequestHandlerContextTests {
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
         #expect(result.isError == nil)
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Authorized")
         } else {
             Issue.record("Expected text content")
@@ -1096,7 +1092,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize", inputSchema: [:]),
             ])
         }
 
@@ -1108,16 +1104,16 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Authorized")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Authorized")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "TestClient", version: "1.0.0")
 
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { _, _ in
-            return ElicitResult(action: .decline)
+            ElicitResult(action: .decline)
         }
 
         try await server.start(transport: serverTransport)
@@ -1125,7 +1121,7 @@ struct AdditionalRequestHandlerContextTests {
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Declined")
         } else {
             Issue.record("Expected text content")
@@ -1150,7 +1146,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "confirm", description: "Confirm action", inputSchema: [:])
+                Tool(name: "confirm", description: "Confirm action", inputSchema: [:]),
             ])
         }
 
@@ -1163,16 +1159,16 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Accepted")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Accepted")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "TestClient", version: "1.0.0")
 
         await client.withElicitationHandler(formMode: .enabled()) { _, _ in
-            return ElicitResult(action: .cancel)
+            ElicitResult(action: .cancel)
         }
 
         try await server.start(transport: serverTransport)
@@ -1180,7 +1176,7 @@ struct AdditionalRequestHandlerContextTests {
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Cancelled")
         } else {
             Issue.record("Expected text content")
@@ -1205,7 +1201,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "wizard", description: "Multi-step wizard", inputSchema: [:])
+                Tool(name: "wizard", description: "Multi-step wizard", inputSchema: [:]),
             ])
         }
 
@@ -1220,7 +1216,8 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             guard nameResult.action == .accept,
-                  let name = nameResult.content?["name"]?.stringValue else {
+                  let name = nameResult.content?["name"]?.stringValue
+            else {
                 return CallTool.Result(content: [.text("Name step failed")], isError: true)
             }
 
@@ -1234,7 +1231,8 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             guard ageResult.action == .accept,
-                  let age = ageResult.content?["age"]?.intValue else {
+                  let age = ageResult.content?["age"]?.intValue
+            else {
                 return CallTool.Result(content: [.text("Age step failed")], isError: true)
             }
 
@@ -1248,7 +1246,8 @@ struct AdditionalRequestHandlerContextTests {
             )
 
             guard cityResult.action == .accept,
-                  let city = cityResult.content?["city"]?.stringValue else {
+                  let city = cityResult.content?["city"]?.stringValue
+            else {
                 return CallTool.Result(content: [.text("City step failed")], isError: true)
             }
 
@@ -1265,7 +1264,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await client.withElicitationHandler(formMode: .enabled()) { params, _ in
             await counter.increment()
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
 
@@ -1287,7 +1286,7 @@ struct AdditionalRequestHandlerContextTests {
         let requestCount = await counter.count
         #expect(requestCount == 3, "Should have made 3 elicitation requests")
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Hello Alice, age 30, from New York!")
         } else {
             Issue.record("Expected text content")
@@ -1318,7 +1317,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "askLLM", description: "Ask LLM", inputSchema: [:])
+                Tool(name: "askLLM", description: "Ask LLM", inputSchema: [:]),
             ])
         }
 
@@ -1374,7 +1373,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "askLLM", description: "Ask LLM", inputSchema: [:])
+                Tool(name: "askLLM", description: "Ask LLM", inputSchema: [:]),
             ])
         }
 
@@ -1435,7 +1434,7 @@ struct AdditionalRequestHandlerContextTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "getRoots", description: "Get roots", inputSchema: [:])
+                Tool(name: "getRoots", description: "Get roots", inputSchema: [:]),
             ])
         }
 
@@ -1461,7 +1460,7 @@ struct AdditionalRequestHandlerContextTests {
         let receivedId = await tracker.receivedRequestId
         #expect(receivedId != nil, "Roots handler should have access to requestId")
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Found 1 roots")
         }
 

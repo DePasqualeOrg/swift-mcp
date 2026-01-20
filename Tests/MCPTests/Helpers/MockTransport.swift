@@ -22,7 +22,7 @@ actor MockTransport: Transport {
 
     private(set) var sentData: [Data] = []
     var sentMessages: [String] {
-        return sentData.compactMap { data in
+        sentData.compactMap { data in
             guard let string = String(data: data, encoding: .utf8) else {
                 logger.error("Failed to decode sent data as UTF-8")
                 return nil
@@ -64,7 +64,7 @@ actor MockTransport: Transport {
     }
 
     public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
-        return AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
+        AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
             dataStreamContinuation = continuation
             for message in dataToReceive {
                 continuation.yield(TransportMessage(data: message))
@@ -96,24 +96,24 @@ actor MockTransport: Transport {
         }
     }
 
-    func queue<M: Method>(request: Request<M>) throws {
-        queue(data: try encoder.encode(request))
+    func queue(request: Request<some Method>) throws {
+        try queue(data: encoder.encode(request))
     }
 
-    func queue<M: Method>(response: Response<M>) throws {
-        queue(data: try encoder.encode(response))
+    func queue(response: Response<some Method>) throws {
+        try queue(data: encoder.encode(response))
     }
 
-    func queue<N: Notification>(notification: Message<N>) throws {
-        queue(data: try encoder.encode(notification))
+    func queue(notification: Message<some Notification>) throws {
+        try queue(data: encoder.encode(notification))
     }
 
     func queue(batch requests: [AnyRequest]) throws {
-        queue(data: try encoder.encode(requests))
+        try queue(data: encoder.encode(requests))
     }
 
     func queue(batch responses: [AnyResponse]) throws {
-        queue(data: try encoder.encode(responses))
+        try queue(data: encoder.encode(responses))
     }
 
     func decodeLastSentMessage<T: Decodable>() -> T? {

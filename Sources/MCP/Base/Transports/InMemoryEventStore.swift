@@ -244,7 +244,7 @@ public actor InMemoryEventStore: EventStore {
     /// Format: `{streamId}_{timestamp}_{random}`
     private func generateEventId(streamId: String) -> String {
         let timestamp = Int(Date().timeIntervalSince1970 * 1000)
-        let random = String(format: "%08x", UInt32.random(in: 0...UInt32.max))
+        let random = String(format: "%08x", UInt32.random(in: 0 ... UInt32.max))
         return "\(streamId)_\(timestamp)_\(random)"
     }
 
@@ -272,8 +272,8 @@ public enum EventStoreError: Error, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case .eventNotFound(let eventId):
-            return "Event not found: \(eventId)"
+            case let .eventNotFound(eventId):
+                "Event not found: \(eventId)"
         }
     }
 }

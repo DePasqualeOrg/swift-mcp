@@ -96,7 +96,7 @@ public actor BasicHTTPSessionManager {
         logger: Logger? = nil
     ) {
         self.logger = logger ?? Logger(label: "mcp.session-manager")
-        self.mcpServer = server
+        mcpServer = server
         self.host = host
         self.port = port
         self.maxSessions = maxSessions
@@ -171,7 +171,7 @@ public actor BasicHTTPSessionManager {
             await transport.close()
             logger.error("Failed to start session", metadata: [
                 "sessionId": "\(newSessionId)",
-                "error": "\(error)"
+                "error": "\(error)",
             ])
             return HTTPResponse(
                 statusCode: 500,

@@ -4,7 +4,7 @@ import Testing
 @testable import MCP
 
 #if canImport(FoundationNetworking)
-    import FoundationNetworking
+import FoundationNetworking
 #endif
 
 /// Tests for HTTPClientTransport reconnection behavior.
@@ -35,7 +35,6 @@ import Testing
 /// - `should not schedule any reconnection attempts when maxRetries is 0`
 @Suite("Client Reconnection Tests")
 struct ClientReconnectionTests {
-
     // MARK: - Reconnection Options Tests
 
     @Test("Default reconnection options")
@@ -170,7 +169,7 @@ struct ClientReconnectionTests {
         // Attempt 4: 1.0 * 2^4 = 16.0
         // Attempt 5: 1.0 * 2^5 = 32.0 -> capped at 30.0
 
-        let delays = (0...5).map { attempt -> TimeInterval in
+        let delays = (0 ... 5).map { attempt -> TimeInterval in
             let delay = options.initialReconnectionDelay * pow(options.reconnectionDelayGrowFactor, Double(attempt))
             return min(delay, options.maxReconnectionDelay)
         }
@@ -180,7 +179,7 @@ struct ClientReconnectionTests {
         #expect(delays[2] == 4.0)
         #expect(delays[3] == 8.0)
         #expect(delays[4] == 16.0)
-        #expect(delays[5] == 30.0)  // Capped at max
+        #expect(delays[5] == 30.0) // Capped at max
     }
 
     // MARK: - Transport State Tests
@@ -233,6 +232,6 @@ struct ClientReconnectionTests {
 extension HTTPClientTransport {
     /// Sets the onResumptionToken callback
     func setOnResumptionToken(_ callback: @escaping (String) -> Void) async {
-        self.onResumptionToken = callback
+        onResumptionToken = callback
     }
 }

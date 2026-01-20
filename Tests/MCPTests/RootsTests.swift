@@ -7,9 +7,9 @@ import class Foundation.JSONEncoder
 @testable import MCP
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @Suite("Roots Tests")
@@ -336,7 +336,8 @@ struct RootsIntegrationTests {
 
         var logger = Logger(
             label: "mcp.test.roots",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
@@ -392,7 +393,8 @@ struct RootsIntegrationTests {
 
         var logger = Logger(
             label: "mcp.test.roots.list",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
@@ -455,7 +457,8 @@ struct RootsIntegrationTests {
 
         var logger = Logger(
             label: "mcp.test.roots.nocap",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
@@ -506,7 +509,8 @@ struct RootsIntegrationTests {
 
         var logger = Logger(
             label: "mcp.test.roots.changed",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
@@ -573,7 +577,8 @@ struct RootsIntegrationTests {
 
         var logger = Logger(
             label: "mcp.test.roots.changed.nocap",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(

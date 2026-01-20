@@ -3,9 +3,9 @@ import Logging
 import Testing
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @testable import MCP
@@ -24,12 +24,10 @@ import Testing
 /// - TypeScript SDK: packages/core/test/shared/protocol.test.ts
 @Suite("Cancellation Tests")
 struct CancellationTests {
-
     // MARK: - CancelledNotification Encoding/Decoding Tests
 
     @Suite("CancelledNotification encoding/decoding")
     struct CancelledNotificationEncodingTests {
-
         @Test("Encodes with requestId and reason")
         func encodesWithRequestIdAndReason() throws {
             let params = CancelledNotification.Parameters(
@@ -116,18 +114,19 @@ struct CancellationTests {
         @Test("Decodes with requestId and reason")
         func decodesWithRequestIdAndReason() throws {
             let jsonString = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/cancelled",
-                    "params": {
-                        "requestId": "req-789",
-                        "reason": "Operation timed out"
-                    }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/cancelled",
+                "params": {
+                    "requestId": "req-789",
+                    "reason": "Operation timed out"
                 }
-                """
+            }
+            """
             let data = jsonString.data(using: .utf8)!
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data)
+                Message<CancelledNotification>.self, from: data
+            )
 
             #expect(decoded.method == "notifications/cancelled")
             #expect(decoded.params.requestId == .string("req-789"))
@@ -137,18 +136,19 @@ struct CancellationTests {
         @Test("Decodes with integer requestId")
         func decodesWithIntegerRequestId() throws {
             let jsonString = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/cancelled",
-                    "params": {
-                        "requestId": 123,
-                        "reason": "Client disconnected"
-                    }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/cancelled",
+                "params": {
+                    "requestId": 123,
+                    "reason": "Client disconnected"
                 }
-                """
+            }
+            """
             let data = jsonString.data(using: .utf8)!
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data)
+                Message<CancelledNotification>.self, from: data
+            )
 
             #expect(decoded.params.requestId == .number(123))
             #expect(decoded.params.reason == "Client disconnected")
@@ -157,15 +157,16 @@ struct CancellationTests {
         @Test("Decodes with empty params")
         func decodesWithEmptyParams() throws {
             let jsonString = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/cancelled",
-                    "params": {}
-                }
-                """
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/cancelled",
+                "params": {}
+            }
+            """
             let data = jsonString.data(using: .utf8)!
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data)
+                Message<CancelledNotification>.self, from: data
+            )
 
             #expect(decoded.method == "notifications/cancelled")
             #expect(decoded.params.requestId == nil)
@@ -202,7 +203,6 @@ struct CancellationTests {
 
     @Suite("CancelledNotification JSON format")
     struct CancelledNotificationJSONFormatTests {
-
         @Test("Matches TypeScript SDK format with all fields")
         func matchesTypeScriptFormatAllFields() throws {
             // TypeScript SDK format for cancelled notification
@@ -253,7 +253,6 @@ struct CancellationTests {
 
     @Suite("Cancellation integration")
     struct CancellationIntegrationTests {
-
         /// Actor to track received cancellation notifications
         private actor CancellationTracker {
             private var cancellations: [CancelledNotification.Parameters] = []
@@ -303,7 +302,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "test_tool", inputSchema: ["type": "object"])
+                    Tool(name: "test_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -377,7 +376,7 @@ struct CancellationTests {
                         name: "test_tool",
                         description: "A tool for testing cancellation recovery",
                         inputSchema: ["type": "object"]
-                    )
+                    ),
                 ])
             }
 
@@ -398,7 +397,7 @@ struct CancellationTests {
             let result1 = try await client.send(
                 CallTool.request(.init(name: "test_tool", arguments: [:]))
             )
-            if case .text(let text, _, _) = result1.content.first {
+            if case let .text(text, _, _) = result1.content.first {
                 #expect(text == "Call number: 1")
             } else {
                 Issue.record("Expected text content for first call")
@@ -422,7 +421,7 @@ struct CancellationTests {
             let result2 = try await client.send(
                 CallTool.request(.init(name: "test_tool", arguments: [:]))
             )
-            if case .text(let text, _, _) = result2.content.first {
+            if case let .text(text, _, _) = result2.content.first {
                 #expect(text == "Call number: 2")
             } else {
                 Issue.record("Expected text content for second call")
@@ -466,7 +465,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "trigger_cancel", inputSchema: ["type": "object"])
+                    Tool(name: "trigger_cancel", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -501,7 +500,7 @@ struct CancellationTests {
             )
 
             // Verify tool completed
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Cancel notification sent")
             }
 
@@ -561,7 +560,7 @@ struct CancellationTests {
             try await client.connect(transport: clientTransport)
 
             // Send multiple cancellation notifications
-            for i in 1...5 {
+            for i in 1 ... 5 {
                 let cancelParams = CancelledNotification.Parameters(
                     requestId: .string("req-\(i)"),
                     reason: "Cancellation \(i)"
@@ -577,7 +576,7 @@ struct CancellationTests {
             #expect(count == 5, "Server should receive all 5 cancellation notifications")
 
             let cancellations = await cancellationTracker.all
-            for i in 1...5 {
+            for i in 1 ... 5 {
                 let expected = CancelledNotification.Parameters(
                     requestId: .string("req-\(i)"),
                     reason: "Cancellation \(i)"
@@ -657,7 +656,6 @@ struct CancellationTests {
 
     @Suite("Server.Context cancellation")
     struct ServerContextCancellationTests {
-
         /// Test that Server.Context.sendCancelled works correctly.
         ///
         /// The Server.Context has a sendCancelled convenience method for sending
@@ -691,7 +689,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "cancel_via_context", inputSchema: ["type": "object"])
+                    Tool(name: "cancel_via_context", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -723,7 +721,7 @@ struct CancellationTests {
                 CallTool.request(.init(name: "cancel_via_context", arguments: [:]))
             )
 
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Cancellation sent via context")
             }
 
@@ -746,7 +744,6 @@ struct CancellationTests {
 
     @Suite("Client Swift Task cancellation")
     struct ClientTaskCancellationTests {
-
         /// Actor to track received cancellation notifications
         private actor CancellationTracker {
             private var cancellations: [CancelledNotification.Parameters] = []
@@ -793,7 +790,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                    Tool(name: "slow_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -846,8 +843,8 @@ struct CancellationTests {
                 let errorDescription = String(describing: error)
                 #expect(
                     error == .connectionClosed ||
-                    errorDescription.contains("cancel") ||
-                    errorDescription.contains("No response received"),
+                        errorDescription.contains("cancel") ||
+                        errorDescription.contains("No response received"),
                     "Error should be related to cancellation or no response: \(error)"
                 )
             }
@@ -887,7 +884,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "variable_tool", inputSchema: ["type": "object"])
+                    Tool(name: "variable_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -928,7 +925,7 @@ struct CancellationTests {
 
             // Fast task should complete successfully
             let fastResult = try await fastTask.value
-            if case .text(let text, _, _) = fastResult.content.first {
+            if case let .text(text, _, _) = fastResult.content.first {
                 #expect(text.contains("0.1"))
             }
 
@@ -983,7 +980,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                    Tool(name: "slow_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1040,7 +1037,6 @@ struct CancellationTests {
 
     @Suite("Protocol-level cancellation (CancelledNotification aborts in-flight handlers)")
     struct ProtocolLevelCancellationTests {
-
         /// Test that when a CancelledNotification is received, the in-flight request handler
         /// is cancelled and no response is sent.
         ///
@@ -1075,7 +1071,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                    Tool(name: "slow_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1177,7 +1173,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "quick_tool", inputSchema: ["type": "object"])
+                    Tool(name: "quick_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1262,7 +1258,7 @@ struct CancellationTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "very_slow_tool", inputSchema: ["type": "object"])
+                    Tool(name: "very_slow_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1318,7 +1314,6 @@ struct CancellationTests {
 
 @Suite("Request timeout")
 struct RequestTimeoutTests {
-
     /// Test that request timeout triggers cancellation and throws the correct error.
     @Test(.timeLimit(.minutes(1)))
     func requestTimeoutTriggersError() async throws {
@@ -1347,7 +1342,7 @@ struct RequestTimeoutTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                Tool(name: "slow_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -1375,7 +1370,7 @@ struct RequestTimeoutTests {
             Issue.record("Expected request to timeout")
         } catch let error as MCPError {
             // Verify we get a requestTimeout error
-            if case .requestTimeout(let timeout, let message) = error {
+            if case let .requestTimeout(timeout, message) = error {
                 #expect(timeout == .milliseconds(100))
                 #expect(message?.contains("timed out") == true)
             } else {
@@ -1419,7 +1414,7 @@ struct RequestTimeoutTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "fast_tool", inputSchema: ["type": "object"])
+                Tool(name: "fast_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -1444,7 +1439,7 @@ struct RequestTimeoutTests {
             options: nil
         )
 
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text == "Completed")
         } else {
             Issue.record("Expected text content")
@@ -1489,7 +1484,7 @@ struct RequestTimeoutTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                Tool(name: "slow_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -1534,7 +1529,6 @@ struct RequestTimeoutTests {
         await client.disconnect()
         await server.stop()
     }
-
 }
 
 // MARK: - Helper Types
@@ -1615,7 +1609,6 @@ private actor ClientCancellationTracker {
 /// similar to TypeScript SDK's AbortController pattern.
 @Suite("Client.cancelRequest() API")
 struct ClientCancelRequestAPITests {
-
     /// Test that cancelRequest properly cancels an in-flight request and sends CancelledNotification.
     ///
     /// Based on Python SDK's test pattern where cancellation is sent for a specific request ID.
@@ -1654,7 +1647,7 @@ struct ClientCancelRequestAPITests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "slow_tool", inputSchema: ["type": "object"])
+                Tool(name: "slow_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -1703,7 +1696,7 @@ struct ClientCancelRequestAPITests {
             Issue.record("Expected request to throw MCPError.requestCancelled")
         } catch let error as MCPError {
             // Should be requestCancelled error
-            if case .requestCancelled(let reason) = error {
+            if case let .requestCancelled(reason) = error {
                 #expect(reason == "Cancelled via cancelRequest API")
             } else {
                 // May also be connectionClosed or similar if timing is different
@@ -1831,7 +1824,7 @@ struct ClientCancelRequestAPITests {
 
         // Cancel with no reason
         let requestId = RequestId.string("some-request")
-        await client.cancelRequest(requestId)  // No reason provided
+        await client.cancelRequest(requestId) // No reason provided
 
         try await Task.sleep(for: .milliseconds(100))
 

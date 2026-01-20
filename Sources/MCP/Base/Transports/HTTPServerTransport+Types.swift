@@ -311,44 +311,44 @@ public enum DNSRebindingProtection: Sendable, Equatable {
     /// Whether protection is enabled for this setting.
     public var isEnabled: Bool {
         switch self {
-        case .none:
-            return false
-        case .localhost, .custom:
-            return true
+            case .none:
+                false
+            case .localhost, .custom:
+                true
         }
     }
 
     /// The allowed Host header values for this setting.
     public var allowedHosts: [String] {
         switch self {
-        case .none:
-            return []
-        case .localhost(let port):
-            let portPattern = port.map { String($0) } ?? "*"
-            return [
-                "127.0.0.1:\(portPattern)",
-                "localhost:\(portPattern)",
-                "[::1]:\(portPattern)",
-            ]
-        case .custom(let hosts, _):
-            return hosts
+            case .none:
+                return []
+            case let .localhost(port):
+                let portPattern = port.map { String($0) } ?? "*"
+                return [
+                    "127.0.0.1:\(portPattern)",
+                    "localhost:\(portPattern)",
+                    "[::1]:\(portPattern)",
+                ]
+            case let .custom(hosts, _):
+                return hosts
         }
     }
 
     /// The allowed Origin header values for this setting.
     public var allowedOrigins: [String] {
         switch self {
-        case .none:
-            return []
-        case .localhost(let port):
-            let portPattern = port.map { String($0) } ?? "*"
-            return [
-                "http://127.0.0.1:\(portPattern)",
-                "http://localhost:\(portPattern)",
-                "http://[::1]:\(portPattern)",
-            ]
-        case .custom(_, let origins):
-            return origins
+            case .none:
+                return []
+            case let .localhost(port):
+                let portPattern = port.map { String($0) } ?? "*"
+                return [
+                    "http://127.0.0.1:\(portPattern)",
+                    "http://localhost:\(portPattern)",
+                    "http://[::1]:\(portPattern)",
+                ]
+            case let .custom(_, origins):
+                return origins
         }
     }
 

@@ -3,21 +3,19 @@ import Logging
 import Testing
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @testable import MCP
 
 @Suite("Progress Tests")
 struct ProgressTests {
-
     // MARK: - ProgressToken Tests
 
     @Suite("ProgressToken encoding/decoding")
     struct ProgressTokenTests {
-
         @Test("String token encodes as JSON string")
         func stringTokenEncoding() throws {
             let token: ProgressToken = .string("abc-123")
@@ -107,7 +105,7 @@ struct ProgressTests {
 
         @Test("Invalid token type throws error")
         func invalidTokenType() throws {
-            let json = "true"  // Boolean is not a valid progress token
+            let json = "true" // Boolean is not a valid progress token
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             #expect(throws: DecodingError.self) {
@@ -120,7 +118,6 @@ struct ProgressTests {
 
     @Suite("ProgressNotification encoding/decoding")
     struct ProgressNotificationTests {
-
         @Test("Notification with string token encodes correctly")
         func notificationWithStringToken() throws {
             let params = ProgressNotification.Parameters(
@@ -188,17 +185,17 @@ struct ProgressTests {
         @Test("Notification decodes from JSON with string token")
         func decodeNotificationWithStringToken() throws {
             let json = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/progress",
-                    "params": {
-                        "progressToken": "token-abc",
-                        "progress": 75.0,
-                        "total": 100.0,
-                        "message": "Almost done"
-                    }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/progress",
+                "params": {
+                    "progressToken": "token-abc",
+                    "progress": 75.0,
+                    "total": 100.0,
+                    "message": "Almost done"
                 }
-                """
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
@@ -213,16 +210,16 @@ struct ProgressTests {
         @Test("Notification decodes from JSON with integer token")
         func decodeNotificationWithIntegerToken() throws {
             let json = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/progress",
-                    "params": {
-                        "progressToken": 123,
-                        "progress": 50.0,
-                        "total": 200.0
-                    }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/progress",
+                "params": {
+                    "progressToken": 123,
+                    "progress": 50.0,
+                    "total": 200.0
                 }
-                """
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
@@ -236,15 +233,15 @@ struct ProgressTests {
         @Test("Notification without optional fields decodes correctly")
         func decodeNotificationMinimalFields() throws {
             let json = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/progress",
-                    "params": {
-                        "progressToken": "min-token",
-                        "progress": 10.0
-                    }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/progress",
+                "params": {
+                    "progressToken": "min-token",
+                    "progress": 10.0
                 }
-                """
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
@@ -258,18 +255,18 @@ struct ProgressTests {
         @Test("Notification with _meta field decodes correctly")
         func decodeNotificationWithMeta() throws {
             let json = """
-                {
-                    "jsonrpc": "2.0",
-                    "method": "notifications/progress",
-                    "params": {
-                        "progressToken": "meta-token",
-                        "progress": 50.0,
-                        "_meta": {
-                            "customField": "customValue"
-                        }
+            {
+                "jsonrpc": "2.0",
+                "method": "notifications/progress",
+                "params": {
+                    "progressToken": "meta-token",
+                    "progress": 50.0,
+                    "_meta": {
+                        "customField": "customValue"
                     }
                 }
-                """
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
@@ -305,7 +302,6 @@ struct ProgressTests {
 
     @Suite("RequestMeta encoding/decoding")
     struct RequestMetaTests {
-
         @Test("RequestMeta with progressToken encodes correctly")
         func requestMetaWithProgressToken() throws {
             let meta = RequestMeta(progressToken: .string("request-token"))
@@ -332,7 +328,7 @@ struct ProgressTests {
                 progressToken: .string("token"),
                 additionalFields: [
                     "customField": .string("customValue"),
-                    "numericField": .int(123)
+                    "numericField": .int(123),
                 ]
             )
             let encoder = JSONEncoder()
@@ -347,11 +343,11 @@ struct ProgressTests {
         @Test("RequestMeta decodes from JSON")
         func requestMetaDecoding() throws {
             let json = """
-                {
-                    "progressToken": "decoded-token",
-                    "extraField": "extraValue"
-                }
-                """
+            {
+                "progressToken": "decoded-token",
+                "extraField": "extraValue"
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
@@ -363,10 +359,10 @@ struct ProgressTests {
         @Test("RequestMeta decodes integer progressToken from JSON")
         func requestMetaIntegerTokenDecoding() throws {
             let json = """
-                {
-                    "progressToken": 999
-                }
-                """
+            {
+                "progressToken": 999
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
@@ -377,10 +373,10 @@ struct ProgressTests {
         @Test("RequestMeta without progressToken decodes correctly")
         func requestMetaWithoutToken() throws {
             let json = """
-                {
-                    "customField": "value"
-                }
-                """
+            {
+                "customField": "value"
+            }
+            """
             let data = json.data(using: .utf8)!
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
@@ -412,7 +408,6 @@ struct ProgressTests {
     /// Based on Python SDK's test_progress_notifications.py tests.
     @Suite("Progress notification integration")
     struct ProgressIntegrationTests {
-
         /// Test that server can send progress notifications to client during tool execution.
         /// Based on TypeScript SDK's "should send progress notifications with message field" test.
         ///
@@ -456,7 +451,7 @@ struct ProgressTests {
                         name: "slow_operation",
                         description: "A tool that reports progress",
                         inputSchema: ["type": "object", "properties": ["steps": ["type": "integer"]]]
-                    )
+                    ),
                 ])
             }
 
@@ -473,7 +468,7 @@ struct ProgressTests {
                 let steps = request.arguments?["steps"]?.intValue ?? 3
 
                 // Send progress notifications for each step (like TS SDK test)
-                for step in 1...steps {
+                for step in 1 ... steps {
                     try await context.sendProgress(
                         token: progressToken,
                         progress: Double(step),
@@ -513,7 +508,7 @@ struct ProgressTests {
             try await Task.sleep(for: .milliseconds(100))
 
             // Verify tool result
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Operation completed with 3 steps")
             } else {
                 Issue.record("Expected text content")
@@ -578,7 +573,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "zero_token_tool", inputSchema: ["type": "object"])
+                    Tool(name: "zero_token_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -672,7 +667,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "meta_test", inputSchema: ["type": "object"])
+                    Tool(name: "meta_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -763,7 +758,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "int_token_test", inputSchema: ["type": "object"])
+                    Tool(name: "int_token_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -849,7 +844,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "message_test", inputSchema: ["type": "object"])
+                    Tool(name: "message_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -926,7 +921,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "log_test", inputSchema: ["type": "object"])
+                    Tool(name: "log_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1013,7 +1008,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "log_all_levels", inputSchema: ["type": "object"])
+                    Tool(name: "log_all_levels", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1101,7 +1096,7 @@ struct ProgressTests {
             let server = Server(
                 name: "NoLoggingServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())  // No logging capability
+                capabilities: .init(tools: .init()) // No logging capability
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1152,7 +1147,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "log_all_eight", inputSchema: ["type": "object"])
+                    Tool(name: "log_all_eight", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1199,7 +1194,7 @@ struct ProgressTests {
 
             // Verify each level in order
             let expectedLevels: [LoggingLevel] = [
-                .debug, .info, .notice, .warning, .error, .critical, .alert, .emergency
+                .debug, .info, .notice, .warning, .error, .critical, .alert, .emergency,
             ]
             let expectedMessages = ["Debug", "Info", "Notice", "Warning", "Error", "Critical", "Alert", "Emergency"]
 
@@ -1245,7 +1240,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "log_without_level_set", inputSchema: ["type": "object"])
+                    Tool(name: "log_without_level_set", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1324,7 +1319,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "trigger", inputSchema: ["type": "object"])
+                    Tool(name: "trigger", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1398,12 +1393,12 @@ struct ProgressTests {
             let server = Server(
                 name: "NoLogCapServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())  // No logging capability!
+                capabilities: .init(tools: .init()) // No logging capability!
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "try_log", inputSchema: ["type": "object"])
+                    Tool(name: "try_log", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1472,7 +1467,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "notify_test", inputSchema: ["type": "object"])
+                    Tool(name: "notify_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1536,7 +1531,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "notify_test", inputSchema: ["type": "object"])
+                    Tool(name: "notify_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1600,7 +1595,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "notify_test", inputSchema: ["type": "object"])
+                    Tool(name: "notify_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1661,7 +1656,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "update_resource", inputSchema: ["type": "object"])
+                    Tool(name: "update_resource", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1742,7 +1737,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "simple_tool", inputSchema: ["type": "object"])
+                    Tool(name: "simple_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1847,7 +1842,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "progress_tool", inputSchema: ["type": "object"])
+                    Tool(name: "progress_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -1972,7 +1967,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "progress_tool", inputSchema: ["type": "object"])
+                    Tool(name: "progress_tool", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -2021,7 +2016,7 @@ struct ProgressTests {
 
             // Verify the request completed successfully despite the callback failure
             #expect(result.content.count == 1)
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "progress_result")
             } else {
                 Issue.record("Expected text content")
@@ -2108,7 +2103,6 @@ struct ProgressTests {
 
     @Suite("ProgressTracker actor (server-side cumulative progress)")
     struct ProgressTrackerTests {
-
         /// Test that ProgressTracker accumulates progress correctly with advance(by:).
         @Test(.timeLimit(.minutes(1)))
         func progressTrackerAdvanceAccumulatesProgress() async throws {
@@ -2139,7 +2133,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "tracker_advance_test", inputSchema: ["type": "object"])
+                    Tool(name: "tracker_advance_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -2232,7 +2226,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "tracker_set_test", inputSchema: ["type": "object"])
+                    Tool(name: "tracker_set_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -2319,7 +2313,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "tracker_update_test", inputSchema: ["type": "object"])
+                    Tool(name: "tracker_update_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -2394,7 +2388,6 @@ struct ProgressTests {
 
     @Suite("Client send with onProgress callback")
     struct ClientOnProgressTests {
-
         /// Test that send(_:onProgress:) receives progress updates via callback.
         @Test(.timeLimit(.minutes(1)))
         func clientReceivesProgressViaCallback() async throws {
@@ -2425,7 +2418,7 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "callback_test", inputSchema: ["type": "object"])
+                    Tool(name: "callback_test", inputSchema: ["type": "object"]),
                 ])
             }
 
@@ -2471,7 +2464,7 @@ struct ProgressTests {
             try await Task.sleep(for: .milliseconds(100))
 
             // Verify result
-            if case .text(let text, _, _) = result.content.first {
+            if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Done")
             }
 
@@ -2518,11 +2511,11 @@ struct ProgressTests {
 
             await server.withRequestHandler(ListTools.self) { _, _ in
                 ListTools.Result(tools: [
-                    Tool(name: "token_check", inputSchema: ["type": "object"])
+                    Tool(name: "token_check", inputSchema: ["type": "object"]),
                 ])
             }
 
-            await server.withRequestHandler(CallTool.self) { request, context in
+            await server.withRequestHandler(CallTool.self) { request, _ in
                 guard request.name == "token_check" else {
                     return CallTool.Result(content: [.text("Unknown")], isError: true)
                 }
@@ -2557,7 +2550,6 @@ struct ProgressTests {
 
     @Suite("Task-augmented progress (progress continues after CreateTaskResult)")
     struct TaskAugmentedProgressTests {
-
         /// Test that TaskStatus.isTerminal correctly identifies terminal statuses.
         @Test("TaskStatus.isTerminal identifies terminal states")
         func taskStatusIsTerminal() {
@@ -2590,15 +2582,16 @@ struct ProgressTests {
                     "status": .string("working"),
                     "ttl": .null,
                     "createdAt": .string("2024-01-01T00:00:00Z"),
-                    "lastUpdatedAt": .string("2024-01-01T00:00:00Z")
-                ])
+                    "lastUpdatedAt": .string("2024-01-01T00:00:00Z"),
+                ]),
             ]
 
             // Verify the structure can be parsed
             guard let taskValue = taskResponse["task"],
-                  case .object(let taskObject) = taskValue,
+                  case let .object(taskObject) = taskValue,
                   let taskIdValue = taskObject["taskId"],
-                  case .string(let taskId) = taskIdValue else {
+                  case let .string(taskId) = taskIdValue
+            else {
                 Issue.record("Failed to parse task response structure")
                 return
             }
@@ -2614,9 +2607,9 @@ struct ProgressTests {
                 "content": .array([
                     .object([
                         "type": .string("text"),
-                        "text": .string("Hello")
-                    ])
-                ])
+                        "text": .string("Hello"),
+                    ]),
+                ]),
             ]
 
             // Verify the task field is not present

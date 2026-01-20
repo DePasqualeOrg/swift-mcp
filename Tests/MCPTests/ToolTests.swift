@@ -13,8 +13,8 @@ struct ToolTests {
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([
-                    "param1": .string("Test parameter")
-                ])
+                    "param1": .string("Test parameter"),
+                ]),
             ])
         )
 
@@ -105,8 +105,8 @@ struct ToolTests {
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([
-                    "expression": .string("Mathematical expression to evaluate")
-                ])
+                    "expression": .string("Mathematical expression to evaluate"),
+                ]),
             ]),
             annotations: annotations
         )
@@ -189,8 +189,8 @@ struct ToolTests {
                 "type": .string("object"),
                 "properties": .object([
                     "param1": .string("String parameter"),
-                    "param2": .int(42)
-                ])
+                    "param2": .int(42),
+                ]),
             ])
         )
 
@@ -214,7 +214,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .text(let text, _, _) = decoded {
+        if case let .text(text, _, _) = decoded {
             #expect(text == "Hello, world!")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -230,7 +230,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .image(let data, let mimeType, _, _) = decoded {
+        if case let .image(data, mimeType, _, _) = decoded {
             #expect(data == "base64data")
             #expect(mimeType == "image/png")
         } else {
@@ -251,7 +251,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .resource(let resourceContent, _, _) = decoded {
+        if case let .resource(resourceContent, _, _) = decoded {
             #expect(resourceContent.uri == "file://test.txt")
             #expect(resourceContent.mimeType == "text/plain")
             #expect(resourceContent.text == "Sample text")
@@ -272,7 +272,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .audio(let data, let mimeType, _, _) = decoded {
+        if case let .audio(data, mimeType, _, _) = decoded {
             #expect(data == "base64audiodata")
             #expect(mimeType == "audio/wav")
         } else {
@@ -293,8 +293,8 @@ struct ToolTests {
     func testListToolsRequestDecodingWithOmittedParams() throws {
         // Test decoding when params field is omitted
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"tools/list"}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"tools/list"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -308,8 +308,8 @@ struct ToolTests {
     func testListToolsRequestDecodingWithNullParams() throws {
         // Test decoding when params field is null
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"tools/list","params":null}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"tools/list","params":null}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -357,7 +357,7 @@ struct ToolTests {
         #expect(result.content.count == 2)
         #expect(result.isError == nil)
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Result 1")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -371,7 +371,7 @@ struct ToolTests {
         #expect(errorResult.content.count == 1)
         #expect(errorResult.isError == true)
 
-        if case .text(let text, _, _) = errorResult.content[0] {
+        if case let .text(text, _, _) = errorResult.content[0] {
             #expect(text == "Error message")
         } else {
             #expect(Bool(false), "Expected error text content")
@@ -386,8 +386,8 @@ struct ToolTests {
     @Test("ListTools handler invocation without params")
     func testListToolsHandlerWithoutParams() async throws {
         let jsonString = """
-            {"jsonrpc":"2.0","id":1,"method":"tools/list"}
-            """
+        {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+        """
         let jsonData = jsonString.data(using: .utf8)!
 
         let anyRequest = try JSONDecoder().decode(AnyRequest.self, from: jsonData)
@@ -422,7 +422,7 @@ struct ToolTests {
         )
         let response = try await handler(anyRequest, context: dummyContext)
 
-        if case .success(let value) = response.result {
+        if case let .success(value) = response.result {
             let encoder = JSONEncoder()
             let decoder = JSONDecoder()
             let data = try encoder.encode(value)
@@ -438,11 +438,11 @@ struct ToolTests {
     @Test("Tool with missing description")
     func testToolWithMissingDescription() throws {
         let jsonString = """
-            {
-                "name": "test_tool",
-                "inputSchema": {"type": "object"}
-            }
-            """
+        {
+            "name": "test_tool",
+            "inputSchema": {"type": "object"}
+        }
+        """
         let jsonData = jsonString.data(using: .utf8)!
 
         let tool = try JSONDecoder().decode(Tool.self, from: jsonData)
@@ -459,9 +459,9 @@ struct ToolTests {
         let outputSchema: Value = [
             "type": "object",
             "properties": [
-                "result": ["type": "integer"]
+                "result": ["type": "integer"],
             ],
-            "required": ["result"]
+            "required": ["result"],
         ]
 
         let tool = Tool(
@@ -490,7 +490,7 @@ struct ToolTests {
     func testCallToolResultWithStructuredContent() throws {
         let structuredContent: Value = [
             "name": "John",
-            "age": 30
+            "age": 30,
         ]
 
         let result = CallTool.Result(
@@ -558,7 +558,7 @@ struct ToolTests {
         arguments: [
             (Tool.Execution.TaskSupport.forbidden, "forbidden"),
             (Tool.Execution.TaskSupport.optional, "optional"),
-            (Tool.Execution.TaskSupport.required, "required")
+            (Tool.Execution.TaskSupport.required, "required"),
         ]
     )
     func testTaskSupportEnumValues(testCase: (value: Tool.Execution.TaskSupport, rawValue: String)) throws {
@@ -614,7 +614,7 @@ struct ToolTests {
     func testToolWithIcons() throws {
         let icons = [
             Icon(src: "https://example.com/icon.png", mimeType: "image/png", sizes: ["48x48"], theme: .light),
-            Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark)
+            Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark),
         ]
 
         let tool = Tool(
@@ -644,7 +644,7 @@ struct ToolTests {
         let meta: [String: Value] = [
             "vendor": .string("example"),
             "version": .int(1),
-            "experimental": .bool(true)
+            "experimental": .bool(true),
         ]
 
         let tool = Tool(
@@ -677,14 +677,14 @@ struct ToolTests {
             inputSchema: [
                 "type": "object",
                 "properties": [
-                    "input": ["type": "string"]
-                ]
+                    "input": ["type": "string"],
+                ],
             ],
             outputSchema: [
                 "type": "object",
                 "properties": [
-                    "result": ["type": "integer"]
-                ]
+                    "result": ["type": "integer"],
+                ],
             ],
             _meta: ["custom": .string("value")],
             icons: [Icon(src: "https://example.com/icon.svg", mimeType: "image/svg+xml")],
@@ -736,7 +736,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .resourceLink(let link) = decoded {
+        if case let .resourceLink(link) = decoded {
             #expect(link.name == "data.json")
             #expect(link.title == "Data File")
             #expect(link.uri == "file:///data/output.json")
@@ -769,7 +769,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .resourceLink(let link) = decoded {
+        if case let .resourceLink(link) = decoded {
             #expect(link.annotations?.audience == [.assistant])
             #expect(link.annotations?.priority == 0.8)
             #expect(link.icons?.count == 1)
@@ -793,7 +793,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .text(let text, let decodedAnnotations, let decodedMeta) = decoded {
+        if case let .text(text, decodedAnnotations, decodedMeta) = decoded {
             #expect(text == "Result: 42")
             #expect(decodedAnnotations?.audience == [.user, .assistant])
             #expect(decodedAnnotations?.priority == 0.9)
@@ -820,7 +820,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .image(_, _, let decodedAnnotations, _) = decoded {
+        if case let .image(_, _, decodedAnnotations, _) = decoded {
             #expect(decodedAnnotations?.audience == [.user])
         } else {
             #expect(Bool(false), "Expected image content")
@@ -840,7 +840,7 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Tool.Content.self, from: data)
 
-        if case .resource(_, let decodedAnnotations, _) = decoded {
+        if case let .resource(_, decodedAnnotations, _) = decoded {
             #expect(decodedAnnotations?.priority == 0.5)
         } else {
             #expect(Bool(false), "Expected resource content")
@@ -852,7 +852,6 @@ struct ToolTests {
 
 @Suite("Tool Name Validation Tests")
 struct ToolNameValidationTests {
-
     // MARK: - Valid Names
 
     @Test(
@@ -864,7 +863,7 @@ struct ToolNameValidationTests {
             "admin.tools.list",
             "DATA_EXPORT_v2.1",
             "a",
-            String(repeating: "a", count: 128)
+            String(repeating: "a", count: 128),
         ]
     )
     func acceptsValidNames(toolName: String) throws {
@@ -897,7 +896,7 @@ struct ToolNameValidationTests {
             ("get user profile", " "),
             ("get,user,profile", ","),
             ("user/profile/update", "/"),
-            ("user@domain.com", "@")
+            ("user@domain.com", "@"),
         ]
     )
     func rejectsInvalidCharacters(testCase: (toolName: String, invalidChar: String)) throws {
@@ -916,7 +915,7 @@ struct ToolNameValidationTests {
 
     @Test("Rejects unicode characters")
     func rejectsUnicodeCharacters() throws {
-        let result = validateToolName("user-ñame")  // n with tilde
+        let result = validateToolName("user-ñame") // n with tilde
         #expect(result.isValid == false)
     }
 
@@ -1000,7 +999,6 @@ struct ToolNameValidationTests {
 
 @Suite("Unicode Tool Tests")
 struct UnicodeToolTests {
-
     /// Test strings with various Unicode characters (matching Python SDK)
     static let unicodeTestStrings: [String: String] = [
         "cyrillic": "Слой хранилища, где располагаются",
@@ -1017,7 +1015,7 @@ struct UnicodeToolTests {
         "mixed": "Hello世界🌍Привет안녕مرحباשלום",
         "special": "Line\nbreak\ttab\r\nCRLF",
         "quotes": #"«French» „German" "English" 「Japanese」"#,
-        "currency": "€100 £50 ¥1000 ₹500 ₽200 ¢99"
+        "currency": "€100 £50 ¥1000 ₹500 ₽200 ¢99",
     ]
 
     @Test("Tool with Unicode description encodes and decodes correctly")
@@ -1073,7 +1071,7 @@ struct UnicodeToolTests {
             let data = try encoder.encode(result)
             let decoded = try decoder.decode(CallTool.Result.self, from: data)
 
-            if case .text(let text, _, _) = decoded.content[0] {
+            if case let .text(text, _, _) = decoded.content[0] {
                 #expect(text == "Echo: \(testString)", "Failed for \(testName)")
             } else {
                 Issue.record("Expected text content for \(testName)")
@@ -1089,13 +1087,13 @@ struct UnicodeToolTests {
         let result = CallTool.Result(
             content: [
                 .text(cyrillic),
-                .text(mixed)
+                .text(mixed),
             ],
             structuredContent: [
                 "message": .string(mixed),
                 "data": .object([
-                    "text": .string(cyrillic)
-                ])
+                    "text": .string(cyrillic),
+                ]),
             ]
         )
 
@@ -1107,11 +1105,11 @@ struct UnicodeToolTests {
 
         #expect(decoded.content.count == 2)
 
-        if case .text(let text1, _, _) = decoded.content[0] {
+        if case let .text(text1, _, _) = decoded.content[0] {
             #expect(text1 == cyrillic)
         }
 
-        if case .text(let text2, _, _) = decoded.content[1] {
+        if case let .text(text2, _, _) = decoded.content[1] {
             #expect(text2 == mixed)
         }
 
@@ -1123,7 +1121,6 @@ struct UnicodeToolTests {
 
 @Suite("Tool Pagination Tests")
 struct ToolPaginationTests {
-
     @Test("ListTools cursor parameter encodes correctly")
     func cursorParameterEncoding() throws {
         let testCursor = "test-cursor-123"
@@ -1140,7 +1137,7 @@ struct ToolPaginationTests {
     func resultWithNextCursor() throws {
         let tools = [
             Tool(name: "tool1", inputSchema: ["type": "object"]),
-            Tool(name: "tool2", inputSchema: ["type": "object"])
+            Tool(name: "tool2", inputSchema: ["type": "object"]),
         ]
         let result = ListTools.Result(tools: tools, nextCursor: "next-page-token")
 
@@ -1157,7 +1154,7 @@ struct ToolPaginationTests {
     @Test("ListTools result without nextCursor indicates end of pagination")
     func resultWithoutNextCursor() throws {
         let tools = [
-            Tool(name: "final_tool", inputSchema: ["type": "object"])
+            Tool(name: "final_tool", inputSchema: ["type": "object"]),
         ]
         let result = ListTools.Result(tools: tools, nextCursor: nil)
 
@@ -1177,8 +1174,8 @@ struct ToolPaginationTests {
     @Test("ListTools request with cursor decodes correctly")
     func requestWithCursorDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","id":"page-2","method":"tools/list","params":{"cursor":"page-1-token"}}
-            """
+        {"jsonrpc":"2.0","id":"page-2","method":"tools/list","params":{"cursor":"page-1-token"}}
+        """
         let jsonData = jsonString.data(using: .utf8)!
 
         let decoded = try JSONDecoder().decode(Request<ListTools>.self, from: jsonData)
@@ -1190,19 +1187,19 @@ struct ToolPaginationTests {
     @Test("Simulated multi-page tool listing")
     func simulatedMultiPageToolListing() throws {
         // Simulate a server that returns 100 tools across multiple pages
-        let allTools = (0..<100).map { i in
+        let allTools = (0 ..< 100).map { i in
             Tool(name: "tool_\(i)", inputSchema: ["type": "object"])
         }
 
         let pageSize = 10
         var collectedTools: [Tool] = []
-        var currentCursor: String? = nil
+        var currentCursor: String?
 
         // Simulate pagination
-        for pageIndex in 0..<10 {
+        for pageIndex in 0 ..< 10 {
             let startIndex = pageIndex * pageSize
             let endIndex = min(startIndex + pageSize, allTools.count)
-            let pageTools = Array(allTools[startIndex..<endIndex])
+            let pageTools = Array(allTools[startIndex ..< endIndex])
 
             let nextCursor = endIndex < allTools.count ? "page-\(pageIndex + 1)" : nil
             let result = ListTools.Result(tools: pageTools, nextCursor: nextCursor)
@@ -1228,7 +1225,7 @@ struct ToolPaginationTests {
         let toolNames = Set(collectedTools.map { $0.name })
         #expect(toolNames.count == 100)
 
-        let expectedNames = Set((0..<100).map { "tool_\($0)" })
+        let expectedNames = Set((0 ..< 100).map { "tool_\($0)" })
         #expect(toolNames == expectedNames)
     }
 }

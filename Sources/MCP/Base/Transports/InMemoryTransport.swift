@@ -32,15 +32,15 @@ public actor InMemoryTransport: Transport {
     public init(logger: Logger? = nil) {
         self.logger =
             logger
-            ?? Logger(
-                label: "mcp.transport.in-memory",
-                factory: { _ in SwiftLogNoOpLogHandler() }
-            )
+                ?? Logger(
+                    label: "mcp.transport.in-memory",
+                    factory: { _ in SwiftLogNoOpLogHandler() }
+                )
 
         // Create message stream
         let (stream, continuation) = AsyncThrowingStream<TransportMessage, Swift.Error>.makeStream()
-        self.messageStream = stream
-        self.messageContinuation = continuation
+        messageStream = stream
+        messageContinuation = continuation
     }
 
     /// Creates a connected pair of in-memory transports
@@ -89,7 +89,7 @@ public actor InMemoryTransport: Transport {
     /// - Important: This method should typically not be called directly.
     ///   Use `createConnectedPair()` instead.
     private func pair(with other: InMemoryTransport) {
-        self.pairedTransport = other
+        pairedTransport = other
     }
 
     /// Establishes connection with the transport
@@ -176,6 +176,6 @@ public actor InMemoryTransport: Transport {
     ///
     /// - Returns: An AsyncThrowingStream of TransportMessage objects representing messages
     public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
-        return messageStream
+        messageStream
     }
 }

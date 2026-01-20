@@ -29,7 +29,7 @@ public struct UnitInterval: Hashable, Sendable {
     ///   let boundary = UnitInterval(1.0) // Optional(1.0)
     ///   ```
     public init?(_ value: Double) {
-        guard (0...1).contains(value) else { return nil }
+        guard (0 ... 1).contains(value) else { return nil }
         self.value = value
     }
 
@@ -66,7 +66,8 @@ extension UnitInterval: Codable {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Value \(doubleValue) is not in range 0...1")
+                    debugDescription: "Value \(doubleValue) is not in range 0...1"
+                )
             )
         }
         self = interval

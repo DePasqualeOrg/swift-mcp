@@ -1,9 +1,9 @@
 import Foundation
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 // MARK: - Error Codes
@@ -107,19 +107,19 @@ public enum MCPError: Swift.Error, Sendable {
     /// The JSON-RPC 2.0 error code
     public var code: Int {
         switch self {
-        case .parseError: return ErrorCode.parseError
-        case .invalidRequest: return ErrorCode.invalidRequest
-        case .methodNotFound: return ErrorCode.methodNotFound
-        case .invalidParams: return ErrorCode.invalidParams
-        case .internalError: return ErrorCode.internalError
-        case .resourceNotFound: return ErrorCode.resourceNotFound
-        case .urlElicitationRequired: return ErrorCode.urlElicitationRequired
-        case .serverError(let code, _): return code
-        case .serverErrorWithData(let code, _, _): return code
-        case .connectionClosed: return ErrorCode.connectionClosed
-        case .transportError: return ErrorCode.transportError
-        case .requestTimeout: return ErrorCode.requestTimeout
-        case .requestCancelled: return ErrorCode.requestCancelled
+            case .parseError: ErrorCode.parseError
+            case .invalidRequest: ErrorCode.invalidRequest
+            case .methodNotFound: ErrorCode.methodNotFound
+            case .invalidParams: ErrorCode.invalidParams
+            case .internalError: ErrorCode.internalError
+            case .resourceNotFound: ErrorCode.resourceNotFound
+            case .urlElicitationRequired: ErrorCode.urlElicitationRequired
+            case let .serverError(code, _): code
+            case let .serverErrorWithData(code, _, _): code
+            case .connectionClosed: ErrorCode.connectionClosed
+            case .transportError: ErrorCode.transportError
+            case .requestTimeout: ErrorCode.requestTimeout
+            case .requestCancelled: ErrorCode.requestCancelled
         }
     }
 
@@ -150,7 +150,7 @@ public enum MCPError: Swift.Error, Sendable {
 
     /// Attempts to extract elicitations from an error if it's a URL elicitation required error.
     public var elicitations: [ElicitRequestURLParams]? {
-        if case .urlElicitationRequired(_, let elicitations) = self {
+        if case let .urlElicitationRequired(_, elicitations) = self {
             return elicitations
         }
         return nil
@@ -163,32 +163,32 @@ public enum MCPError: Swift.Error, Sendable {
     /// Use this for serialization; use `errorDescription` for human-readable display.
     public var message: String {
         switch self {
-        case .parseError(let detail):
-            return detail ?? "Invalid JSON"
-        case .invalidRequest(let detail):
-            return detail ?? "Invalid Request"
-        case .methodNotFound(let detail):
-            return detail ?? "Method not found"
-        case .invalidParams(let detail):
-            return detail ?? "Invalid params"
-        case .internalError(let detail):
-            return detail ?? "Internal error"
-        case .resourceNotFound(let uri):
-            return uri.map { "Resource not found: \($0)" } ?? "Resource not found"
-        case .urlElicitationRequired(let message, _):
-            return message
-        case .serverError(_, let message):
-            return message
-        case .serverErrorWithData(_, let message, _):
-            return message
-        case .connectionClosed:
-            return "Connection closed"
-        case .transportError(let error):
-            return error.localizedDescription
-        case .requestTimeout(let timeout, let message):
-            return message ?? "Request timed out after \(timeout)"
-        case .requestCancelled(let reason):
-            return reason ?? "Request cancelled"
+            case let .parseError(detail):
+                detail ?? "Invalid JSON"
+            case let .invalidRequest(detail):
+                detail ?? "Invalid Request"
+            case let .methodNotFound(detail):
+                detail ?? "Method not found"
+            case let .invalidParams(detail):
+                detail ?? "Invalid params"
+            case let .internalError(detail):
+                detail ?? "Internal error"
+            case let .resourceNotFound(uri):
+                uri.map { "Resource not found: \($0)" } ?? "Resource not found"
+            case let .urlElicitationRequired(message, _):
+                message
+            case let .serverError(_, message):
+                message
+            case let .serverErrorWithData(_, message, _):
+                message
+            case .connectionClosed:
+                "Connection closed"
+            case let .transportError(error):
+                error.localizedDescription
+            case let .requestTimeout(timeout, message):
+                message ?? "Request timed out after \(timeout)"
+            case let .requestCancelled(reason):
+                reason ?? "Request cancelled"
         }
     }
 
@@ -198,52 +198,52 @@ public enum MCPError: Swift.Error, Sendable {
     /// following MCP specification requirements for specific error types.
     public var data: Value? {
         switch self {
-        case .parseError, .invalidRequest, .methodNotFound, .invalidParams, .internalError:
-            // Standard JSON-RPC errors don't require data
-            return nil
-        case .resourceNotFound(let uri):
-            // Resource not found includes the URI in data per MCP spec
-            if let uri {
-                return .object(["uri": .string(uri)])
-            }
-            return nil
-        case .urlElicitationRequired(_, let elicitations):
-            // URL elicitation required includes elicitations in data per MCP spec
-            do {
-                let encoded = try JSONEncoder().encode(ElicitationRequiredErrorData(elicitations: elicitations))
-                return try JSONDecoder().decode(Value.self, from: encoded)
-            } catch {
+            case .parseError, .invalidRequest, .methodNotFound, .invalidParams, .internalError:
+                // Standard JSON-RPC errors don't require data
                 return nil
-            }
-        case .serverError:
-            return nil
-        case .serverErrorWithData(_, _, let data):
-            return data
-        case .connectionClosed:
-            return nil
-        case .transportError(let error):
-            return .object(["error": .string(error.localizedDescription)])
-        case .requestTimeout(let timeout, _):
-            let timeoutMs = Int(timeout.components.seconds * 1000 + timeout.components.attoseconds / 1_000_000_000_000_000)
-            return .object(["timeout": .int(timeoutMs)])
-        case .requestCancelled(let reason):
-            if let reason {
-                return .object(["reason": .string(reason)])
-            }
-            return nil
+            case let .resourceNotFound(uri):
+                // Resource not found includes the URI in data per MCP spec
+                if let uri {
+                    return .object(["uri": .string(uri)])
+                }
+                return nil
+            case let .urlElicitationRequired(_, elicitations):
+                // URL elicitation required includes elicitations in data per MCP spec
+                do {
+                    let encoded = try JSONEncoder().encode(ElicitationRequiredErrorData(elicitations: elicitations))
+                    return try JSONDecoder().decode(Value.self, from: encoded)
+                } catch {
+                    return nil
+                }
+            case .serverError:
+                return nil
+            case let .serverErrorWithData(_, _, data):
+                return data
+            case .connectionClosed:
+                return nil
+            case let .transportError(error):
+                return .object(["error": .string(error.localizedDescription)])
+            case let .requestTimeout(timeout, _):
+                let timeoutMs = Int(timeout.components.seconds * 1000 + timeout.components.attoseconds / 1_000_000_000_000_000)
+                return .object(["timeout": .int(timeoutMs)])
+            case let .requestCancelled(reason):
+                if let reason {
+                    return .object(["reason": .string(reason)])
+                }
+                return nil
         }
     }
 
     /// Check if an error represents a "resource temporarily unavailable" condition
     public static func isResourceTemporarilyUnavailable(_ error: Swift.Error) -> Bool {
         #if canImport(System)
-            if let errno = error as? System.Errno, errno == .resourceTemporarilyUnavailable {
-                return true
-            }
+        if let errno = error as? System.Errno, errno == .resourceTemporarilyUnavailable {
+            return true
+        }
         #else
-            if let errno = error as? SystemPackage.Errno, errno == .resourceTemporarilyUnavailable {
-                return true
-            }
+        if let errno = error as? SystemPackage.Errno, errno == .resourceTemporarilyUnavailable {
+            return true
+        }
         #endif
         return false
     }
@@ -254,90 +254,90 @@ public enum MCPError: Swift.Error, Sendable {
 extension MCPError: LocalizedError {
     public var errorDescription: String? {
         switch self {
-        case .parseError(let detail):
-            return "Parse error: Invalid JSON" + (detail.map { ": \($0)" } ?? "")
-        case .invalidRequest(let detail):
-            return "Invalid Request" + (detail.map { ": \($0)" } ?? "")
-        case .methodNotFound(let detail):
-            return "Method not found" + (detail.map { ": \($0)" } ?? "")
-        case .invalidParams(let detail):
-            return "Invalid params" + (detail.map { ": \($0)" } ?? "")
-        case .internalError(let detail):
-            return "Internal error" + (detail.map { ": \($0)" } ?? "")
-        case .resourceNotFound(let uri):
-            return "Resource not found" + (uri.map { ": \($0)" } ?? "")
-        case .urlElicitationRequired(let message, _):
-            return message
-        case .serverError(_, let message):
-            return "Server error: \(message)"
-        case .serverErrorWithData(_, let message, _):
-            return "Server error: \(message)"
-        case .connectionClosed:
-            return "Connection closed"
-        case .transportError(let error):
-            return "Transport error: \(error.localizedDescription)"
-        case .requestTimeout(let timeout, let message):
-            if let message {
-                return "Request timeout: \(message)"
-            } else {
-                return "Request timed out after \(timeout)"
-            }
-        case .requestCancelled(let reason):
-            return "Request cancelled" + (reason.map { ": \($0)" } ?? "")
+            case let .parseError(detail):
+                "Parse error: Invalid JSON" + (detail.map { ": \($0)" } ?? "")
+            case let .invalidRequest(detail):
+                "Invalid Request" + (detail.map { ": \($0)" } ?? "")
+            case let .methodNotFound(detail):
+                "Method not found" + (detail.map { ": \($0)" } ?? "")
+            case let .invalidParams(detail):
+                "Invalid params" + (detail.map { ": \($0)" } ?? "")
+            case let .internalError(detail):
+                "Internal error" + (detail.map { ": \($0)" } ?? "")
+            case let .resourceNotFound(uri):
+                "Resource not found" + (uri.map { ": \($0)" } ?? "")
+            case let .urlElicitationRequired(message, _):
+                message
+            case let .serverError(_, message):
+                "Server error: \(message)"
+            case let .serverErrorWithData(_, message, _):
+                "Server error: \(message)"
+            case .connectionClosed:
+                "Connection closed"
+            case let .transportError(error):
+                "Transport error: \(error.localizedDescription)"
+            case let .requestTimeout(timeout, message):
+                if let message {
+                    "Request timeout: \(message)"
+                } else {
+                    "Request timed out after \(timeout)"
+                }
+            case let .requestCancelled(reason):
+                "Request cancelled" + (reason.map { ": \($0)" } ?? "")
         }
     }
 
     public var failureReason: String? {
         switch self {
-        case .parseError:
-            return "The server received invalid JSON that could not be parsed"
-        case .invalidRequest:
-            return "The JSON sent is not a valid Request object"
-        case .methodNotFound:
-            return "The method does not exist or is not available"
-        case .invalidParams:
-            return "Invalid method parameter(s)"
-        case .internalError:
-            return "Internal JSON-RPC error"
-        case .resourceNotFound:
-            return "The requested resource does not exist"
-        case .urlElicitationRequired:
-            return "The request requires URL-mode elicitation(s) to be completed first"
-        case .serverError, .serverErrorWithData:
-            return "Server-defined error occurred"
-        case .connectionClosed:
-            return "The connection to the server was closed"
-        case .transportError(let error):
-            return (error as? LocalizedError)?.failureReason ?? error.localizedDescription
-        case .requestTimeout:
-            return "The server did not respond within the timeout period"
-        case .requestCancelled:
-            return "The request was cancelled before it could complete"
+            case .parseError:
+                "The server received invalid JSON that could not be parsed"
+            case .invalidRequest:
+                "The JSON sent is not a valid Request object"
+            case .methodNotFound:
+                "The method does not exist or is not available"
+            case .invalidParams:
+                "Invalid method parameter(s)"
+            case .internalError:
+                "Internal JSON-RPC error"
+            case .resourceNotFound:
+                "The requested resource does not exist"
+            case .urlElicitationRequired:
+                "The request requires URL-mode elicitation(s) to be completed first"
+            case .serverError, .serverErrorWithData:
+                "Server-defined error occurred"
+            case .connectionClosed:
+                "The connection to the server was closed"
+            case let .transportError(error):
+                (error as? LocalizedError)?.failureReason ?? error.localizedDescription
+            case .requestTimeout:
+                "The server did not respond within the timeout period"
+            case .requestCancelled:
+                "The request was cancelled before it could complete"
         }
     }
 
     public var recoverySuggestion: String? {
         switch self {
-        case .parseError:
-            return "Verify that the JSON being sent is valid and well-formed"
-        case .invalidRequest:
-            return "Ensure the request follows the JSON-RPC 2.0 specification format"
-        case .methodNotFound:
-            return "Check the method name and ensure it is supported by the server"
-        case .invalidParams:
-            return "Verify the parameters match the method's expected parameters"
-        case .resourceNotFound:
-            return "Verify the resource URI is correct and the resource exists"
-        case .urlElicitationRequired:
-            return "Complete the required URL elicitation(s) and retry the request"
-        case .connectionClosed:
-            return "Try reconnecting to the server"
-        case .requestTimeout:
-            return "Try increasing the timeout or check if the server is responding"
-        case .requestCancelled:
-            return "Retry the request if needed"
-        default:
-            return nil
+            case .parseError:
+                "Verify that the JSON being sent is valid and well-formed"
+            case .invalidRequest:
+                "Ensure the request follows the JSON-RPC 2.0 specification format"
+            case .methodNotFound:
+                "Check the method name and ensure it is supported by the server"
+            case .invalidParams:
+                "Verify the parameters match the method's expected parameters"
+            case .resourceNotFound:
+                "Verify the resource URI is correct and the resource exists"
+            case .urlElicitationRequired:
+                "Complete the required URL elicitation(s) and retry the request"
+            case .connectionClosed:
+                "Try reconnecting to the server"
+            case .requestTimeout:
+                "Try increasing the timeout or check if the server is responding"
+            case .requestCancelled:
+                "Retry the request if needed"
+            default:
+                nil
         }
     }
 }
@@ -347,14 +347,12 @@ extension MCPError: LocalizedError {
 extension MCPError: CustomDebugStringConvertible {
     public var debugDescription: String {
         switch self {
-        case .transportError(let error):
-            return
+            case let .transportError(error):
                 "[\(code)] \(errorDescription ?? "") (Underlying error: \(String(reflecting: error)))"
-        default:
-            return "[\(code)] \(errorDescription ?? "")"
+            default:
+                "[\(code)] \(errorDescription ?? "")"
         }
     }
-
 }
 
 // MARK: Codable
@@ -370,7 +368,7 @@ extension MCPError: Codable {
         try container.encode(message, forKey: .message)
 
         // Encode data if available
-        if let data = self.data {
+        if let data {
             try container.encode(data, forKey: .data)
         }
     }
@@ -390,74 +388,78 @@ extension MCPError: Codable {
         }
 
         switch code {
-        case ErrorCode.parseError:
-            self = .parseError(customDetailOrNil(ifNotDefault: "Invalid JSON"))
-        case ErrorCode.invalidRequest:
-            self = .invalidRequest(customDetailOrNil(ifNotDefault: "Invalid Request"))
-        case ErrorCode.methodNotFound:
-            self = .methodNotFound(customDetailOrNil(ifNotDefault: "Method not found"))
-        case ErrorCode.invalidParams:
-            self = .invalidParams(customDetailOrNil(ifNotDefault: "Invalid params"))
-        case ErrorCode.internalError:
-            self = .internalError(customDetailOrNil(ifNotDefault: "Internal error"))
-        case ErrorCode.resourceNotFound:
-            // Extract URI from data if present
-            var uri: String? = nil
-            if case .object(let dict) = dataValue,
-               case .string(let u) = dict["uri"] {
-                uri = u
-            }
-            self = .resourceNotFound(uri: uri)
-        case ErrorCode.urlElicitationRequired:
-            // Try to decode elicitations from data
-            if let errorData = try? container.decode(ElicitationRequiredErrorData.self, forKey: .data) {
-                self = .urlElicitationRequired(message: message, elicitations: errorData.elicitations)
-            } else {
-                // Fall back to server error if data doesn't match expected format
-                self = .serverError(code: code, message: message)
-            }
-        case ErrorCode.connectionClosed:
-            self = .connectionClosed
-        case ErrorCode.requestTimeout:
-            // Extract timeout from data if present
-            var timeoutMs = 60000  // Default 60 seconds
-            if case .object(let dict) = dataValue,
-               let timeoutValue = dict["timeout"],
-               case .int(let t) = timeoutValue {
-                timeoutMs = t
-            }
-            self = .requestTimeout(timeout: .milliseconds(timeoutMs), message: message)
-        case ErrorCode.transportError:
-            // Extract underlying error string if present
-            var underlyingErrorString = message
-            if case .object(let dict) = dataValue,
-               case .string(let str) = dict["error"] {
-                underlyingErrorString = str
-            }
-            self = .transportError(
-                NSError(
-                    domain: "org.jsonrpc.error",
-                    code: code,
-                    userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
+            case ErrorCode.parseError:
+                self = .parseError(customDetailOrNil(ifNotDefault: "Invalid JSON"))
+            case ErrorCode.invalidRequest:
+                self = .invalidRequest(customDetailOrNil(ifNotDefault: "Invalid Request"))
+            case ErrorCode.methodNotFound:
+                self = .methodNotFound(customDetailOrNil(ifNotDefault: "Method not found"))
+            case ErrorCode.invalidParams:
+                self = .invalidParams(customDetailOrNil(ifNotDefault: "Invalid params"))
+            case ErrorCode.internalError:
+                self = .internalError(customDetailOrNil(ifNotDefault: "Internal error"))
+            case ErrorCode.resourceNotFound:
+                // Extract URI from data if present
+                var uri: String? = nil
+                if case let .object(dict) = dataValue,
+                   case let .string(u) = dict["uri"]
+                {
+                    uri = u
+                }
+                self = .resourceNotFound(uri: uri)
+            case ErrorCode.urlElicitationRequired:
+                // Try to decode elicitations from data
+                if let errorData = try? container.decode(ElicitationRequiredErrorData.self, forKey: .data) {
+                    self = .urlElicitationRequired(message: message, elicitations: errorData.elicitations)
+                } else {
+                    // Fall back to server error if data doesn't match expected format
+                    self = .serverError(code: code, message: message)
+                }
+            case ErrorCode.connectionClosed:
+                self = .connectionClosed
+            case ErrorCode.requestTimeout:
+                // Extract timeout from data if present
+                var timeoutMs = 60000 // Default 60 seconds
+                if case let .object(dict) = dataValue,
+                   let timeoutValue = dict["timeout"],
+                   case let .int(t) = timeoutValue
+                {
+                    timeoutMs = t
+                }
+                self = .requestTimeout(timeout: .milliseconds(timeoutMs), message: message)
+            case ErrorCode.transportError:
+                // Extract underlying error string if present
+                var underlyingErrorString = message
+                if case let .object(dict) = dataValue,
+                   case let .string(str) = dict["error"]
+                {
+                    underlyingErrorString = str
+                }
+                self = .transportError(
+                    NSError(
+                        domain: "org.jsonrpc.error",
+                        code: code,
+                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
+                    )
                 )
-            )
-        case ErrorCode.requestCancelled:
-            // Extract reason from data if present
-            var reason: String? = nil
-            if case .object(let dict) = dataValue,
-               case .string(let r) = dict["reason"] {
-                reason = r
-            } else if message != "Request cancelled" {
-                reason = message
-            }
-            self = .requestCancelled(reason: reason)
-        default:
-            // Preserve data if present
-            if let dataValue {
-                self = .serverErrorWithData(code: code, message: message, data: dataValue)
-            } else {
-                self = .serverError(code: code, message: message)
-            }
+            case ErrorCode.requestCancelled:
+                // Extract reason from data if present
+                var reason: String? = nil
+                if case let .object(dict) = dataValue,
+                   case let .string(r) = dict["reason"]
+                {
+                    reason = r
+                } else if message != "Request cancelled" {
+                    reason = message
+                }
+                self = .requestCancelled(reason: reason)
+            default:
+                // Preserve data if present
+                if let dataValue {
+                    self = .serverErrorWithData(code: code, message: message, data: dataValue)
+                } else {
+                    self = .serverError(code: code, message: message)
+                }
         }
     }
 
@@ -479,85 +481,91 @@ extension MCPError: Codable {
         }
 
         switch code {
-        case ErrorCode.parseError:
-            return .parseError(customDetailOrNil(ifNotDefault: "Invalid JSON"))
-        case ErrorCode.invalidRequest:
-            return .invalidRequest(customDetailOrNil(ifNotDefault: "Invalid Request"))
-        case ErrorCode.methodNotFound:
-            return .methodNotFound(customDetailOrNil(ifNotDefault: "Method not found"))
-        case ErrorCode.invalidParams:
-            return .invalidParams(customDetailOrNil(ifNotDefault: "Invalid params"))
-        case ErrorCode.internalError:
-            return .internalError(customDetailOrNil(ifNotDefault: "Internal error"))
-        case ErrorCode.resourceNotFound:
-            // Extract URI from data if present
-            var uri: String? = nil
-            if case .object(let dict) = data,
-               case .string(let u) = dict["uri"] {
-                uri = u
-            }
-            return .resourceNotFound(uri: uri)
-        case ErrorCode.urlElicitationRequired:
-            // Try to extract elicitations from data
-            if case .object(let dict) = data,
-               case .array(let elicitationsArray) = dict["elicitations"] {
-                // Decode each elicitation
-                var elicitations: [ElicitRequestURLParams] = []
-                for item in elicitationsArray {
-                    if case .object = item {
-                        // Re-encode and decode to get proper type
-                        if let jsonData = try? JSONEncoder().encode(item),
-                           let params = try? JSONDecoder().decode(ElicitRequestURLParams.self, from: jsonData) {
-                            elicitations.append(params)
+            case ErrorCode.parseError:
+                return .parseError(customDetailOrNil(ifNotDefault: "Invalid JSON"))
+            case ErrorCode.invalidRequest:
+                return .invalidRequest(customDetailOrNil(ifNotDefault: "Invalid Request"))
+            case ErrorCode.methodNotFound:
+                return .methodNotFound(customDetailOrNil(ifNotDefault: "Method not found"))
+            case ErrorCode.invalidParams:
+                return .invalidParams(customDetailOrNil(ifNotDefault: "Invalid params"))
+            case ErrorCode.internalError:
+                return .internalError(customDetailOrNil(ifNotDefault: "Internal error"))
+            case ErrorCode.resourceNotFound:
+                // Extract URI from data if present
+                var uri: String? = nil
+                if case let .object(dict) = data,
+                   case let .string(u) = dict["uri"]
+                {
+                    uri = u
+                }
+                return .resourceNotFound(uri: uri)
+            case ErrorCode.urlElicitationRequired:
+                // Try to extract elicitations from data
+                if case let .object(dict) = data,
+                   case let .array(elicitationsArray) = dict["elicitations"]
+                {
+                    // Decode each elicitation
+                    var elicitations: [ElicitRequestURLParams] = []
+                    for item in elicitationsArray {
+                        if case .object = item {
+                            // Re-encode and decode to get proper type
+                            if let jsonData = try? JSONEncoder().encode(item),
+                               let params = try? JSONDecoder().decode(ElicitRequestURLParams.self, from: jsonData)
+                            {
+                                elicitations.append(params)
+                            }
                         }
                     }
+                    if !elicitations.isEmpty {
+                        return .urlElicitationRequired(message: message, elicitations: elicitations)
+                    }
                 }
-                if !elicitations.isEmpty {
-                    return .urlElicitationRequired(message: message, elicitations: elicitations)
+                // Fall back to server error if we can't parse elicitations
+                return .serverError(code: code, message: message)
+            case ErrorCode.connectionClosed:
+                return .connectionClosed
+            case ErrorCode.requestTimeout:
+                // Extract timeout from data if present
+                var timeoutMs = 60000 // Default 60 seconds
+                if case let .object(dict) = data,
+                   let timeoutValue = dict["timeout"],
+                   case let .int(t) = timeoutValue
+                {
+                    timeoutMs = t
                 }
-            }
-            // Fall back to server error if we can't parse elicitations
-            return .serverError(code: code, message: message)
-        case ErrorCode.connectionClosed:
-            return .connectionClosed
-        case ErrorCode.requestTimeout:
-            // Extract timeout from data if present
-            var timeoutMs = 60000  // Default 60 seconds
-            if case .object(let dict) = data,
-               let timeoutValue = dict["timeout"],
-               case .int(let t) = timeoutValue {
-                timeoutMs = t
-            }
-            return .requestTimeout(timeout: .milliseconds(timeoutMs), message: message)
-        case ErrorCode.transportError:
-            // Extract underlying error string if present
-            var underlyingErrorString = message
-            if case .object(let dict) = data,
-               case .string(let str) = dict["error"] {
-                underlyingErrorString = str
-            }
-            return .transportError(
-                NSError(
-                    domain: "org.jsonrpc.error",
-                    code: code,
-                    userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
+                return .requestTimeout(timeout: .milliseconds(timeoutMs), message: message)
+            case ErrorCode.transportError:
+                // Extract underlying error string if present
+                var underlyingErrorString = message
+                if case let .object(dict) = data,
+                   case let .string(str) = dict["error"]
+                {
+                    underlyingErrorString = str
+                }
+                return .transportError(
+                    NSError(
+                        domain: "org.jsonrpc.error",
+                        code: code,
+                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
+                    )
                 )
-            )
-        case ErrorCode.requestCancelled:
-            // Extract reason from data if present
-            var reason: String? = nil
-            if case .object(let dict) = data,
-               case .string(let r) = dict["reason"] {
-                reason = r
-            } else if message != "Request cancelled" {
-                reason = message
-            }
-            return .requestCancelled(reason: reason)
-        default:
-            if let data {
-                return .serverErrorWithData(code: code, message: message, data: data)
-            }
-            return .serverError(code: code, message: message)
+            case ErrorCode.requestCancelled:
+                // Extract reason from data if present
+                var reason: String? = nil
+                if case let .object(dict) = data,
+                   case let .string(r) = dict["reason"]
+                {
+                    reason = r
+                } else if message != "Request cancelled" {
+                    reason = message
+                }
+                return .requestCancelled(reason: reason)
+            default:
+                if let data {
+                    return .serverErrorWithData(code: code, message: message, data: data)
+                }
+                return .serverError(code: code, message: message)
         }
     }
 }
@@ -567,34 +575,34 @@ extension MCPError: Codable {
 extension MCPError: Equatable {
     public static func == (lhs: MCPError, rhs: MCPError) -> Bool {
         switch (lhs, rhs) {
-        case (.parseError(let l), .parseError(let r)):
-            return l == r
-        case (.invalidRequest(let l), .invalidRequest(let r)):
-            return l == r
-        case (.methodNotFound(let l), .methodNotFound(let r)):
-            return l == r
-        case (.invalidParams(let l), .invalidParams(let r)):
-            return l == r
-        case (.internalError(let l), .internalError(let r)):
-            return l == r
-        case (.resourceNotFound(let l), .resourceNotFound(let r)):
-            return l == r
-        case (.urlElicitationRequired(let lMsg, let lElicit), .urlElicitationRequired(let rMsg, let rElicit)):
-            return lMsg == rMsg && lElicit == rElicit
-        case (.serverError(let lCode, let lMsg), .serverError(let rCode, let rMsg)):
-            return lCode == rCode && lMsg == rMsg
-        case (.serverErrorWithData(let lCode, let lMsg, let lData), .serverErrorWithData(let rCode, let rMsg, let rData)):
-            return lCode == rCode && lMsg == rMsg && lData == rData
-        case (.connectionClosed, .connectionClosed):
-            return true
-        case (.transportError(let l), .transportError(let r)):
-            return l.localizedDescription == r.localizedDescription
-        case (.requestTimeout(let lTimeout, let lMsg), .requestTimeout(let rTimeout, let rMsg)):
-            return lTimeout == rTimeout && lMsg == rMsg
-        case (.requestCancelled(let lReason), .requestCancelled(let rReason)):
-            return lReason == rReason
-        default:
-            return false
+            case let (.parseError(l), .parseError(r)):
+                l == r
+            case let (.invalidRequest(l), .invalidRequest(r)):
+                l == r
+            case let (.methodNotFound(l), .methodNotFound(r)):
+                l == r
+            case let (.invalidParams(l), .invalidParams(r)):
+                l == r
+            case let (.internalError(l), .internalError(r)):
+                l == r
+            case let (.resourceNotFound(l), .resourceNotFound(r)):
+                l == r
+            case let (.urlElicitationRequired(lMsg, lElicit), .urlElicitationRequired(rMsg, rElicit)):
+                lMsg == rMsg && lElicit == rElicit
+            case let (.serverError(lCode, lMsg), .serverError(rCode, rMsg)):
+                lCode == rCode && lMsg == rMsg
+            case let (.serverErrorWithData(lCode, lMsg, lData), .serverErrorWithData(rCode, rMsg, rData)):
+                lCode == rCode && lMsg == rMsg && lData == rData
+            case (.connectionClosed, .connectionClosed):
+                true
+            case let (.transportError(l), .transportError(r)):
+                l.localizedDescription == r.localizedDescription
+            case let (.requestTimeout(lTimeout, lMsg), .requestTimeout(rTimeout, rMsg)):
+                lTimeout == rTimeout && lMsg == rMsg
+            case let (.requestCancelled(lReason), .requestCancelled(rReason)):
+                lReason == rReason
+            default:
+                false
         }
     }
 }
@@ -605,35 +613,35 @@ extension MCPError: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(code)
         switch self {
-        case .parseError(let detail):
-            hasher.combine(detail)
-        case .invalidRequest(let detail):
-            hasher.combine(detail)
-        case .methodNotFound(let detail):
-            hasher.combine(detail)
-        case .invalidParams(let detail):
-            hasher.combine(detail)
-        case .internalError(let detail):
-            hasher.combine(detail)
-        case .resourceNotFound(let uri):
-            hasher.combine(uri)
-        case .urlElicitationRequired(let message, let elicitations):
-            hasher.combine(message)
-            hasher.combine(elicitations)
-        case .serverError(_, let message):
-            hasher.combine(message)
-        case .serverErrorWithData(_, let message, let data):
-            hasher.combine(message)
-            hasher.combine(data)
-        case .connectionClosed:
-            break
-        case .transportError(let error):
-            hasher.combine(error.localizedDescription)
-        case .requestTimeout(let timeout, let message):
-            hasher.combine(timeout)
-            hasher.combine(message)
-        case .requestCancelled(let reason):
-            hasher.combine(reason)
+            case let .parseError(detail):
+                hasher.combine(detail)
+            case let .invalidRequest(detail):
+                hasher.combine(detail)
+            case let .methodNotFound(detail):
+                hasher.combine(detail)
+            case let .invalidParams(detail):
+                hasher.combine(detail)
+            case let .internalError(detail):
+                hasher.combine(detail)
+            case let .resourceNotFound(uri):
+                hasher.combine(uri)
+            case let .urlElicitationRequired(message, elicitations):
+                hasher.combine(message)
+                hasher.combine(elicitations)
+            case let .serverError(_, message):
+                hasher.combine(message)
+            case let .serverErrorWithData(_, message, data):
+                hasher.combine(message)
+                hasher.combine(data)
+            case .connectionClosed:
+                break
+            case let .transportError(error):
+                hasher.combine(error.localizedDescription)
+            case let .requestTimeout(timeout, message):
+                hasher.combine(timeout)
+                hasher.combine(message)
+            case let .requestCancelled(reason):
+                hasher.combine(reason)
         }
     }
 }

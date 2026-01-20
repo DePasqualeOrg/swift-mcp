@@ -6,7 +6,6 @@ import Testing
 
 @Suite("InMemory Transport Tests")
 struct InMemoryTransportTests {
-
     @Test("Create connected pair")
     func testCreateConnectedPair() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
@@ -29,7 +28,7 @@ struct InMemoryTransportTests {
             try await transport.connect()
             #expect(Bool(false), "Expected connect to throw an error")
         } catch let error as MCPError {
-            if case .internalError(let message) = error {
+            if case let .internalError(message) = error {
                 #expect(
                     message
                         == "Transport not paired. Use createConnectedPair() to create paired transports."
@@ -46,8 +45,8 @@ struct InMemoryTransportTests {
 
         // Connect multiple times should not throw
         try await clientTransport.connect()
-        try await clientTransport.connect()  // Should be safe
-        try await clientTransport.connect()  // Should be safe
+        try await clientTransport.connect() // Should be safe
+        try await clientTransport.connect() // Should be safe
 
         // Clean up
         await clientTransport.disconnect()
@@ -161,7 +160,7 @@ struct InMemoryTransportTests {
             try await clientTransport.send("test".data(using: .utf8)!)
             #expect(Bool(false), "Expected send to throw an error")
         } catch let error as MCPError {
-            if case .internalError(let message) = error {
+            if case let .internalError(message) = error {
                 #expect(message == "Transport not connected")
             } else {
                 #expect(Bool(false), "Expected MCPError.internalError")
@@ -231,7 +230,7 @@ struct InMemoryTransportTests {
 
         // Disconnect client (peer)
         await clientTransport.disconnect()
-        
+
         receiveTask.cancel()
     }
 
@@ -364,7 +363,7 @@ struct InMemoryTransportTests {
 
         // Send messages concurrently
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<10 {
+            for i in 0 ..< 10 {
                 group.addTask {
                     try? await clientTransport.send("Message \(i)".data(using: .utf8)!)
                 }
@@ -376,7 +375,7 @@ struct InMemoryTransportTests {
         #expect(receivedMessages.count == 10)
 
         // Check that all messages are present (order may vary due to concurrency)
-        let expectedMessages = Set((0..<10).map { "Message \($0)" })
+        let expectedMessages = Set((0 ..< 10).map { "Message \($0)" })
         let actualMessages = Set(receivedMessages)
         #expect(actualMessages == expectedMessages)
 

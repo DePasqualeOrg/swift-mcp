@@ -22,20 +22,20 @@ public enum LoggingLevel: String, Hashable, Codable, Sendable, CaseIterable {
     /// The severity index of this log level (0 = debug, 7 = emergency).
     public var severity: Int {
         switch self {
-        case .debug: return 0
-        case .info: return 1
-        case .notice: return 2
-        case .warning: return 3
-        case .error: return 4
-        case .critical: return 5
-        case .alert: return 6
-        case .emergency: return 7
+            case .debug: 0
+            case .info: 1
+            case .notice: 2
+            case .warning: 3
+            case .error: 4
+            case .critical: 5
+            case .alert: 6
+            case .emergency: 7
         }
     }
 
     /// Returns true if this level is at least as severe as the given level.
     public func isAtLeast(_ level: LoggingLevel) -> Bool {
-        self.severity >= level.severity
+        severity >= level.severity
     }
 }
 

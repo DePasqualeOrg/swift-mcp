@@ -40,7 +40,7 @@ struct IDTests {
         let id2 = RequestId.random
         #expect(id1 != id2, "Random IDs should be unique")
 
-        if case .string(let str) = id1 {
+        if case let .string(str) = id1 {
             #expect(!str.isEmpty)
             // Verify it's a valid UUID string
             #expect(UUID(uuidString: str) != nil)

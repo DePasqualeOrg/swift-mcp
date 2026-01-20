@@ -16,7 +16,7 @@ public enum Value: Hashable, Sendable {
     /// Create a `Value` from a `Codable` value.
     /// - Parameter value: The codable value
     /// - Returns: A value
-    public init<T: Codable>(_ value: T) throws {
+    public init(_ value: some Codable) throws {
         if let valueAsValue = value as? Value {
             self = valueAsValue
         } else {
@@ -27,7 +27,7 @@ public enum Value: Hashable, Sendable {
 
     /// Returns whether the value is `null`.
     public var isNull: Bool {
-        return self == .null
+        self == .null
     }
 
     /// Returns the `Bool` value if the value is a `bool`,
@@ -96,7 +96,7 @@ extension Value: Codable {
             self = .double(value)
         } else if let value = try? container.decode(String.self) {
             if Data.isDataURL(string: value),
-                case let (mimeType, data)? = Data.parseDataURL(value)
+               case let (mimeType, data)? = Data.parseDataURL(value)
             {
                 self = .data(mimeType: mimeType, data)
             } else {
@@ -108,7 +108,8 @@ extension Value: Codable {
             self = .object(value)
         } else {
             throw DecodingError.dataCorruptedError(
-                in: container, debugDescription: "Value type not found")
+                in: container, debugDescription: "Value type not found"
+            )
         }
     }
 
@@ -116,22 +117,22 @@ extension Value: Codable {
         var container = encoder.singleValueContainer()
 
         switch self {
-        case .null:
-            try container.encodeNil()
-        case .bool(let value):
-            try container.encode(value)
-        case .int(let value):
-            try container.encode(value)
-        case .double(let value):
-            try container.encode(value)
-        case .string(let value):
-            try container.encode(value)
-        case let .data(mimeType, value):
-            try container.encode(value.dataURLEncoded(mimeType: mimeType))
-        case .array(let value):
-            try container.encode(value)
-        case .object(let value):
-            try container.encode(value)
+            case .null:
+                try container.encodeNil()
+            case let .bool(value):
+                try container.encode(value)
+            case let .int(value):
+                try container.encode(value)
+            case let .double(value):
+                try container.encode(value)
+            case let .string(value):
+                try container.encode(value)
+            case let .data(mimeType, value):
+                try container.encode(value.dataURLEncoded(mimeType: mimeType))
+            case let .array(value):
+                try container.encode(value)
+            case let .object(value):
+                try container.encode(value)
         }
     }
 }
@@ -139,22 +140,22 @@ extension Value: Codable {
 extension Value: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .null:
-            return ""
-        case .bool(let value):
-            return value.description
-        case .int(let value):
-            return value.description
-        case .double(let value):
-            return value.description
-        case .string(let value):
-            return value.description
-        case let .data(mimeType, value):
-            return value.dataURLEncoded(mimeType: mimeType)
-        case .array(let value):
-            return value.description
-        case .object(let value):
-            return value.description
+            case .null:
+                ""
+            case let .bool(value):
+                value.description
+            case let .int(value):
+                value.description
+            case let .double(value):
+                value.description
+            case let .string(value):
+                value.description
+            case let .data(mimeType, value):
+                value.dataURLEncoded(mimeType: mimeType)
+            case let .array(value):
+                value.description
+            case let .object(value):
+                value.description
         }
     }
 }
@@ -162,7 +163,7 @@ extension Value: CustomStringConvertible {
 // MARK: - ExpressibleByNilLiteral
 
 extension Value: ExpressibleByNilLiteral {
-    public init(nilLiteral: ()) {
+    public init(nilLiteral _: ()) {
         self = .null
     }
 }
@@ -226,16 +227,16 @@ extension Value: ExpressibleByStringInterpolation {
         var stringValue: String
 
         public init(literalCapacity: Int, interpolationCount: Int) {
-            self.stringValue = ""
-            self.stringValue.reserveCapacity(literalCapacity + interpolationCount)
+            stringValue = ""
+            stringValue.reserveCapacity(literalCapacity + interpolationCount)
         }
 
         public mutating func appendLiteral(_ literal: String) {
-            self.stringValue.append(literal)
+            stringValue.append(literal)
         }
 
-        public mutating func appendInterpolation<T: CustomStringConvertible>(_ value: T) {
-            self.stringValue.append(value.description)
+        public mutating func appendInterpolation(_ value: some CustomStringConvertible) {
+            stringValue.append(value.description)
         }
     }
 
@@ -246,7 +247,7 @@ extension Value: ExpressibleByStringInterpolation {
 
 // MARK: - Standard Library Type Extensions
 
-extension Bool {
+public extension Bool {
     /// Creates a boolean value from a `Value` instance.
     ///
     /// In strict mode, only `.bool` values are converted. In non-strict mode, the following conversions are supported:
@@ -267,38 +268,38 @@ extension Bool {
     ///   Bool(Value.int(1), strict: false) // Returns true
     ///   Bool(Value.string("yes"), strict: false) // Returns true
     ///   ```
-    public init?(_ value: Value, strict: Bool = true) {
+    init?(_ value: Value, strict: Bool = true) {
         switch value {
-        case .bool(let b):
-            self = b
-        case .int(let i) where !strict:
-            switch i {
-            case 0: self = false
-            case 1: self = true
-            default: return nil
-            }
-        case .double(let d) where !strict:
-            switch d {
-            case 0.0: self = false
-            case 1.0: self = true
-            default: return nil
-            }
-        case .string(let s) where !strict:
-            switch s {
-            case "true", "t", "yes", "y", "on", "1":
-                self = true
-            case "false", "f", "no", "n", "off", "0":
-                self = false
+            case let .bool(b):
+                self = b
+            case let .int(i) where !strict:
+                switch i {
+                    case 0: self = false
+                    case 1: self = true
+                    default: return nil
+                }
+            case let .double(d) where !strict:
+                switch d {
+                    case 0.0: self = false
+                    case 1.0: self = true
+                    default: return nil
+                }
+            case let .string(s) where !strict:
+                switch s {
+                    case "true", "t", "yes", "y", "on", "1":
+                        self = true
+                    case "false", "f", "no", "n", "off", "0":
+                        self = false
+                    default:
+                        return nil
+                }
             default:
                 return nil
-            }
-        default:
-            return nil
         }
     }
 }
 
-extension Int {
+public extension Int {
     /// Creates an integer value from a `Value` instance.
     ///
     /// In strict mode, only `.int` values are converted. In non-strict mode, the following conversions are supported:
@@ -317,23 +318,23 @@ extension Int {
     ///   Int(Value.string("42"), strict: false) // Returns 42
     ///   Int(Value.double(42.5), strict: false) // Returns nil
     ///   ```
-    public init?(_ value: Value, strict: Bool = true) {
+    init?(_ value: Value, strict: Bool = true) {
         switch value {
-        case .int(let i):
-            self = i
-        case .double(let d) where !strict:
-            guard let intValue = Int(exactly: d) else { return nil }
-            self = intValue
-        case .string(let s) where !strict:
-            guard let intValue = Int(s) else { return nil }
-            self = intValue
-        default:
-            return nil
+            case let .int(i):
+                self = i
+            case let .double(d) where !strict:
+                guard let intValue = Int(exactly: d) else { return nil }
+                self = intValue
+            case let .string(s) where !strict:
+                guard let intValue = Int(s) else { return nil }
+                self = intValue
+            default:
+                return nil
         }
     }
 }
 
-extension Double {
+public extension Double {
     /// Creates a double value from a `Value` instance.
     ///
     /// In strict mode, converts from `.double` and `.int` values. In non-strict mode, the following conversions are supported:
@@ -351,22 +352,22 @@ extension Double {
     ///   Double(Value.int(42)) // Returns 42.0
     ///   Double(Value.string("42.5"), strict: false) // Returns 42.5
     ///   ```
-    public init?(_ value: Value, strict: Bool = true) {
+    init?(_ value: Value, strict: Bool = true) {
         switch value {
-        case .double(let d):
-            self = d
-        case .int(let i):
-            self = Double(i)
-        case .string(let s) where !strict:
-            guard let doubleValue = Double(s) else { return nil }
-            self = doubleValue
-        default:
-            return nil
+            case let .double(d):
+                self = d
+            case let .int(i):
+                self = Double(i)
+            case let .string(s) where !strict:
+                guard let doubleValue = Double(s) else { return nil }
+                self = doubleValue
+            default:
+                return nil
         }
     }
 }
 
-extension String {
+public extension String {
     /// Creates a string value from a `Value` instance.
     ///
     /// In strict mode, only `.string` values are converted. In non-strict mode, the following conversions are supported:
@@ -385,18 +386,18 @@ extension String {
     ///   String(Value.int(42), strict: false) // Returns "42"
     ///   String(Value.bool(true), strict: false) // Returns "true"
     ///   ```
-    public init?(_ value: Value, strict: Bool = true) {
+    init?(_ value: Value, strict: Bool = true) {
         switch value {
-        case .string(let s):
-            self = s
-        case .int(let i) where !strict:
-            self = String(i)
-        case .double(let d) where !strict:
-            self = String(d)
-        case .bool(let b) where !strict:
-            self = String(b)
-        default:
-            return nil
+            case let .string(s):
+                self = s
+            case let .int(i) where !strict:
+                self = String(i)
+            case let .double(d) where !strict:
+                self = String(d)
+            case let .bool(b) where !strict:
+                self = String(b)
+            default:
+                return nil
         }
     }
 }
@@ -405,30 +406,30 @@ extension String {
 
 import JSONSchema
 
-extension Value {
+public extension Value {
     /// Converts this `Value` to a `JSONValue` for JSON Schema validation.
     ///
     /// MCP's `Value` type has a `.data` case for binary content that `JSONValue`
     /// doesn't support. Data values are converted to data URL strings for validation.
-    public func toJSONValue() -> JSONValue {
+    func toJSONValue() -> JSONValue {
         switch self {
-        case .null:
-            return .null
-        case .bool(let b):
-            return .boolean(b)
-        case .int(let i):
-            return .integer(i)
-        case .double(let d):
-            return .number(d)
-        case .string(let s):
-            return .string(s)
-        case .data(let mimeType, let data):
-            // Data URLs are validated as strings
-            return .string(data.dataURLEncoded(mimeType: mimeType))
-        case .array(let arr):
-            return .array(arr.map { $0.toJSONValue() })
-        case .object(let obj):
-            return .object(obj.mapValues { $0.toJSONValue() })
+            case .null:
+                .null
+            case let .bool(b):
+                .boolean(b)
+            case let .int(i):
+                .integer(i)
+            case let .double(d):
+                .number(d)
+            case let .string(s):
+                .string(s)
+            case let .data(mimeType, data):
+                // Data URLs are validated as strings
+                .string(data.dataURLEncoded(mimeType: mimeType))
+            case let .array(arr):
+                .array(arr.map { $0.toJSONValue() })
+            case let .object(obj):
+                .object(obj.mapValues { $0.toJSONValue() })
         }
     }
 }

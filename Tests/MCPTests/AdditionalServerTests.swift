@@ -27,7 +27,6 @@ import Testing
 ///    If error handling is needed, Swift users should handle errors inside the callback itself.
 @Suite("Additional Server Tests")
 struct AdditionalServerTests {
-
     // MARK: - Test Helpers
 
     /// Creates a configured MCP Server with tools for testing
@@ -49,19 +48,19 @@ struct AdditionalServerTests {
                     description: "A simple greeting tool",
                     inputSchema: [
                         "type": "object",
-                        "properties": ["name": ["type": "string"]]
+                        "properties": ["name": ["type": "string"]],
                     ]
-                )
+                ),
             ])
         }
 
         await server.withRequestHandler(CallTool.self) { request, _ in
             switch request.name {
-            case "greet":
-                let name = request.arguments?["name"]?.stringValue ?? "World"
-                return CallTool.Result(content: [.text("Hello, \(name)!")])
-            default:
-                return CallTool.Result(content: [.text("Unknown tool")], isError: true)
+                case "greet":
+                    let name = request.arguments?["name"]?.stringValue ?? "World"
+                    return CallTool.Result(content: [.text("Hello, \(name)!")])
+                default:
+                    return CallTool.Result(content: [.text("Unknown tool")], isError: true)
             }
         }
     }
@@ -140,14 +139,14 @@ struct AdditionalServerTests {
         for (index, name) in names.enumerated() {
             let requestId = "req-\(index)"
             let request = """
-                {"jsonrpc":"2.0","method":"tools/call","id":"\(requestId)","params":{"name":"greet","arguments":{"name":"\(name)"}}}
-                """
+            {"jsonrpc":"2.0","method":"tools/call","id":"\(requestId)","params":{"name":"greet","arguments":{"name":"\(name)"}}}
+            """
             let response = await transport.handleRequest(TestPayloads.postRequest(body: request, sessionId: sessionId))
 
             #expect(response.statusCode == 200, "Request for \(name) should succeed")
 
             // Response can be in body or stream depending on implementation
-            var responseText: String? = nil
+            var responseText: String?
 
             if let body = response.body, let text = String(data: body, encoding: .utf8) {
                 responseText = text
@@ -158,7 +157,7 @@ struct AdditionalServerTests {
                 for try await chunk in stream {
                     data.append(chunk)
                     if Date() > deadline { break }
-                    if data.count > 0 { break }  // Got some data
+                    if data.count > 0 { break } // Got some data
                 }
                 responseText = String(data: data, encoding: .utf8)
             }
@@ -231,8 +230,8 @@ struct AdditionalServerTests {
         // Send invalid JSON-RPC (missing jsonrpc field)
         // Note: Swift SDK may process this and return error in body with 200 status
         let invalidJSONRPC = """
-            {"method":"tools/list","id":"test"}
-            """
+        {"method":"tools/list","id":"test"}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: invalidJSONRPC, sessionId: sessionId))
 
         // The Swift SDK may return 200 with error in body, or 400
@@ -259,8 +258,8 @@ struct AdditionalServerTests {
 
         // Don't initialize - send request directly with a session ID
         let listToolsRequest = """
-            {"jsonrpc":"2.0","method":"tools/list","id":"test"}
-            """
+        {"jsonrpc":"2.0","method":"tools/list","id":"test"}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: listToolsRequest, sessionId: "any-session-id"))
 
         // Should reject because session doesn't exist
@@ -313,11 +312,11 @@ struct AdditionalServerTests {
 
         // Send batch with notification (no id) and request
         let batchWithNotification = """
-            [
-                {"jsonrpc":"2.0","method":"notifications/initialized"},
-                {"jsonrpc":"2.0","method":"tools/list","id":"req-1"}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","method":"notifications/initialized"},
+            {"jsonrpc":"2.0","method":"tools/list","id":"req-1"}
+        ]
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: batchWithNotification, sessionId: sessionId))
 
         #expect(response.statusCode == 200, "Batch should succeed")
@@ -348,11 +347,11 @@ struct AdditionalServerTests {
         // Send batch of requests (both have IDs, so both need responses)
         // Batching is supported in protocol versions < 2025-06-18
         let batchRequests = """
-            [
-                {"jsonrpc":"2.0","method":"tools/list","id":"req-1"},
-                {"jsonrpc":"2.0","method":"tools/call","id":"req-2","params":{"name":"greet","arguments":{"name":"BatchUser"}}}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","method":"tools/list","id":"req-1"},
+            {"jsonrpc":"2.0","method":"tools/call","id":"req-2","params":{"name":"greet","arguments":{"name":"BatchUser"}}}
+        ]
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: batchRequests, sessionId: sessionId))
 
         #expect(response.statusCode == 200, "Batch requests should succeed for protocol version 2024-11-05")
@@ -388,11 +387,11 @@ struct AdditionalServerTests {
 
         // Send batch of requests - should be rejected per spec
         let batchRequests = """
-            [
-                {"jsonrpc":"2.0","method":"tools/list","id":"req-1"},
-                {"jsonrpc":"2.0","method":"tools/call","id":"req-2","params":{"name":"greet","arguments":{"name":"BatchUser"}}}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","method":"tools/list","id":"req-1"},
+            {"jsonrpc":"2.0","method":"tools/call","id":"req-2","params":{"name":"greet","arguments":{"name":"BatchUser"}}}
+        ]
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: batchRequests, sessionId: sessionId, protocolVersion: Version.v2025_06_18))
 
         // Batch requests should be rejected with 400 for protocol version >= 2025-06-18
@@ -437,15 +436,15 @@ struct AdditionalServerTests {
 
         // Send a notification through the transport
         let notification = """
-            {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
-            """
+        {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
+        """
         try await transport.send(notification.data(using: .utf8)!)
 
         // Stream should still be open (we just verify the transport is still functional)
         // We can't easily verify the stream is still open, but we can verify transport works
         let listToolsRequest = """
-            {"jsonrpc":"2.0","method":"tools/list","id":"test"}
-            """
+        {"jsonrpc":"2.0","method":"tools/list","id":"test"}
+        """
         let listResponse = await transport.handleRequest(TestPayloads.postRequest(body: listToolsRequest, sessionId: sessionId))
         #expect(listResponse.statusCode == 200, "Transport should still be functional after sending notifications")
     }

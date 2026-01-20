@@ -11,7 +11,6 @@ import Testing
 /// - TypeScript SDK: `test/integration/test/server/mcp.test.ts` (completion integration tests)
 @Suite("Completion Tests")
 struct CompletionTests {
-
     // MARK: - Type Encoding/Decoding Tests
 
     @Test("PromptReference encoding and decoding")
@@ -85,7 +84,7 @@ struct CompletionTests {
         let data = try encoder.encode(reference)
         let decoded = try decoder.decode(CompletionReference.self, from: data)
 
-        if case .prompt(let promptRef) = decoded {
+        if case let .prompt(promptRef) = decoded {
             #expect(promptRef.name == "test-prompt")
             #expect(promptRef.type == "ref/prompt")
         } else {
@@ -105,7 +104,7 @@ struct CompletionTests {
         let data = try encoder.encode(reference)
         let decoded = try decoder.decode(CompletionReference.self, from: data)
 
-        if case .resource(let resourceRef) = decoded {
+        if case let .resource(resourceRef) = decoded {
             #expect(resourceRef.uri == "file:///{path}")
             #expect(resourceRef.type == "ref/resource")
         } else {
@@ -116,8 +115,8 @@ struct CompletionTests {
     @Test("CompletionReference decoding unknown type throws error")
     func testCompletionReferenceUnknownTypeThrows() throws {
         let json = """
-            {"type":"ref/unknown","name":"test"}
-            """
+        {"type":"ref/unknown","name":"test"}
+        """
         let data = json.data(using: .utf8)!
         let decoder = JSONDecoder()
 
@@ -254,7 +253,7 @@ struct CompletionTests {
     @Test("CompletionSuggestions init truncates values over 100")
     func testInitTruncatesOverMaxValues() {
         // Create 150 values
-        let allValues = (1...150).map { "value\($0)" }
+        let allValues = (1 ... 150).map { "value\($0)" }
         let suggestions = CompletionSuggestions(values: allValues, total: 150, hasMore: true)
 
         // Should be truncated to 100
@@ -278,7 +277,7 @@ struct CompletionTests {
 
     @Test("CompletionSuggestions init(from:) with exactly 100 values")
     func testInitFromExactly100Values() {
-        let values = (1...100).map { "value\($0)" }
+        let values = (1 ... 100).map { "value\($0)" }
         let suggestions = CompletionSuggestions(from: values)
 
         #expect(suggestions.values.count == 100)
@@ -288,7 +287,7 @@ struct CompletionTests {
 
     @Test("CompletionSuggestions init(from:) with over 100 values")
     func testInitFromOver100Values() {
-        let values = (1...250).map { "value\($0)" }
+        let values = (1 ... 250).map { "value\($0)" }
         let suggestions = CompletionSuggestions(from: values)
 
         #expect(suggestions.values.count == 100)
@@ -331,7 +330,7 @@ struct CompletionTests {
 
     @Test("Complete.Result init(from:) with over 100 values")
     func testCompleteResultInitFromOver100() {
-        let values = (1...200).map { "item\($0)" }
+        let values = (1 ... 200).map { "item\($0)" }
         let result = Complete.Result(from: values)
 
         #expect(result.completion.values.count == 100)
@@ -354,7 +353,7 @@ struct CompletionTests {
         let data = try encoder.encode(params)
         let decoded = try decoder.decode(Complete.Parameters.self, from: data)
 
-        if case .prompt(let promptRef) = decoded.ref {
+        if case let .prompt(promptRef) = decoded.ref {
             #expect(promptRef.name == "greeting")
             #expect(promptRef.type == "ref/prompt")
         } else {
@@ -379,7 +378,7 @@ struct CompletionTests {
         let data = try encoder.encode(params)
         let decoded = try decoder.decode(Complete.Parameters.self, from: data)
 
-        if case .resource(let resourceRef) = decoded.ref {
+        if case let .resource(resourceRef) = decoded.ref {
             #expect(resourceRef.uri == "github://repos/{owner}/{repo}")
         } else {
             Issue.record("Expected resource reference")
@@ -449,7 +448,7 @@ struct CompletionTests {
         let decoded = try decoder.decode(Request<Complete>.self, from: data)
 
         #expect(decoded.method == "completion/complete")
-        if case .prompt(let promptRef) = decoded.params.ref {
+        if case let .prompt(promptRef) = decoded.params.ref {
             #expect(promptRef.name == "review_code")
         } else {
             Issue.record("Expected prompt reference")
@@ -469,7 +468,7 @@ struct CompletionTests {
             self.ref = ref
             self.argument = argument
             self.context = context
-            self.contextWasNil = context == nil
+            contextWasNil = context == nil
         }
 
         func getRef() -> CompletionReference? { ref }
@@ -522,7 +521,7 @@ struct CompletionTests {
 
         // Verify the ref and argument were received correctly
         let receivedRef = await received.getRef()
-        if case .resource(let resourceRef) = receivedRef {
+        if case let .resource(resourceRef) = receivedRef {
             #expect(resourceRef.uri == "test://resource/{param}")
         } else {
             Issue.record("Expected resource reference")
@@ -588,7 +587,7 @@ struct CompletionTests {
 
         // Handler that returns different completions based on context
         await server.withRequestHandler(Complete.self) { params, _ in
-            if case .resource(let resourceRef) = params.ref {
+            if case let .resource(resourceRef) = params.ref {
                 if resourceRef.uri == "db://{database}/{table}" {
                     if params.argument.name == "database" {
                         // Complete database names
@@ -602,14 +601,13 @@ struct CompletionTests {
                     } else if params.argument.name == "table" {
                         // Complete table names based on selected database
                         let db = params.context?.arguments?["database"]
-                        let tables: [String]
-                        switch db {
-                        case "users_db":
-                            tables = ["users", "sessions", "permissions"]
-                        case "products_db":
-                            tables = ["products", "categories", "inventory"]
-                        default:
-                            tables = []
+                        let tables: [String] = switch db {
+                            case "users_db":
+                                ["users", "sessions", "permissions"]
+                            case "products_db":
+                                ["products", "categories", "inventory"]
+                            default:
+                                []
                         }
                         return Complete.Result(
                             completion: CompletionSuggestions(
@@ -670,11 +668,11 @@ struct CompletionTests {
         )
 
         await server.withRequestHandler(Complete.self) { params, _ in
-            if case .resource(let resourceRef) = params.ref {
-                if resourceRef.uri == "db://{database}/{table}" && params.argument.name == "table" {
+            if case let .resource(resourceRef) = params.ref {
+                if resourceRef.uri == "db://{database}/{table}", params.argument.name == "table" {
                     // Check if database context is provided
                     guard let arguments = params.context?.arguments,
-                        arguments["database"] != nil
+                          arguments["database"] != nil
                     else {
                         throw MCPError.invalidParams(
                             "Please select a database first to see available tables")
@@ -734,8 +732,8 @@ struct CompletionTests {
         )
 
         await server.withRequestHandler(Complete.self) { params, _ in
-            if case .prompt(let promptRef) = params.ref {
-                if promptRef.name == "review_code" && params.argument.name == "language" {
+            if case let .prompt(promptRef) = params.ref {
+                if promptRef.name == "review_code", params.argument.name == "language" {
                     let allLanguages = ["python", "javascript", "typescript", "java", "go", "rust"]
                     let filtered = allLanguages.filter { $0.hasPrefix(params.argument.value) }
                     return Complete.Result(
@@ -814,7 +812,7 @@ struct CompletionTests {
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init())  // Only tools, no completions
+            capabilities: .init(tools: .init()) // Only tools, no completions
         )
 
         try await server.start(transport: serverTransport)
@@ -856,7 +854,7 @@ struct CompletionTests {
             )
             Issue.record("Expected error when server lacks completions capability")
         } catch let error as MCPError {
-            if case .methodNotFound(let message) = error {
+            if case let .methodNotFound(message) = error {
                 let msg = message ?? ""
                 #expect(msg.contains("Completions") || msg.contains("not supported"))
             } else {
@@ -882,20 +880,19 @@ struct CompletionTests {
 
         // Simulate GitHub repos completion based on owner
         await server.withRequestHandler(Complete.self) { params, _ in
-            if case .resource(let resourceRef) = params.ref,
-                resourceRef.uri == "github://repos/{owner}/{repo}"
+            if case let .resource(resourceRef) = params.ref,
+               resourceRef.uri == "github://repos/{owner}/{repo}"
             {
                 let owner = params.context?.arguments?["owner"]
-                let repos: [String]
-                switch owner {
-                case "modelcontextprotocol":
-                    repos = ["python-sdk", "typescript-sdk", "specification"]
-                case "microsoft":
-                    repos = ["vscode", "typescript", "playwright"]
-                case "facebook":
-                    repos = ["react", "react-native", "jest"]
-                default:
-                    repos = ["repo1", "repo2", "repo3"]
+                let repos: [String] = switch owner {
+                    case "modelcontextprotocol":
+                        ["python-sdk", "typescript-sdk", "specification"]
+                    case "microsoft":
+                        ["vscode", "typescript", "playwright"]
+                    case "facebook":
+                        ["react", "react-native", "jest"]
+                    default:
+                        ["repo1", "repo2", "repo3"]
                 }
                 return Complete.Result(
                     completion: CompletionSuggestions(
@@ -961,22 +958,21 @@ struct CompletionTests {
 
         // Simulate team member completion based on department
         await server.withRequestHandler(Complete.self) { params, _ in
-            if case .prompt(let promptRef) = params.ref,
-                promptRef.name == "team-greeting",
-                params.argument.name == "name"
+            if case let .prompt(promptRef) = params.ref,
+               promptRef.name == "team-greeting",
+               params.argument.name == "name"
             {
                 let department = params.context?.arguments?["department"]
                 let value = params.argument.value
-                let names: [String]
-                switch department {
-                case "engineering":
-                    names = ["Alice", "Bob", "Charlie"]
-                case "sales":
-                    names = ["David", "Eve", "Frank"]
-                case "marketing":
-                    names = ["Grace", "Henry", "Ivy"]
-                default:
-                    names = ["Unknown1", "Unknown2"]
+                let names: [String] = switch department {
+                    case "engineering":
+                        ["Alice", "Bob", "Charlie"]
+                    case "sales":
+                        ["David", "Eve", "Frank"]
+                    case "marketing":
+                        ["Grace", "Henry", "Ivy"]
+                    default:
+                        ["Unknown1", "Unknown2"]
                 }
                 let filtered = names.filter { $0.lowercased().hasPrefix(value.lowercased()) }
                 return Complete.Result(

@@ -18,7 +18,7 @@ extension Server {
         guard await connection.supportsServerToClientRequests else {
             throw MCPError.invalidRequest(
                 "Server-to-client requests are not supported in stateless HTTP mode. " +
-                "Stateless mode has no persistent connection for bidirectional communication."
+                    "Stateless mode has no persistent connection for bidirectional communication."
             )
         }
 
@@ -203,9 +203,10 @@ extension Server {
         var result = try await sendRequest(request)
 
         // Apply schema defaults and validate elicitation response (form mode only)
-        if case .form(let formParams) = params,
+        if case let .form(formParams) = params,
            result.action == .accept,
-           let content = result.content {
+           let content = result.content
+        {
             // Apply schema defaults to missing fields before validation
             var contentWithDefaults = content
             applyElicitationDefaults(from: formParams.requestedSchema, to: &contentWithDefaults)
@@ -244,16 +245,16 @@ extension Server {
         var dict: [String: Value] = [:]
         for (key, elicitValue) in content {
             switch elicitValue {
-            case .string(let s):
-                dict[key] = .string(s)
-            case .int(let i):
-                dict[key] = .int(i)
-            case .double(let d):
-                dict[key] = .double(d)
-            case .bool(let b):
-                dict[key] = .bool(b)
-            case .strings(let arr):
-                dict[key] = .array(arr.map { .string($0) })
+                case let .string(s):
+                    dict[key] = .string(s)
+                case let .int(i):
+                    dict[key] = .int(i)
+                case let .double(d):
+                    dict[key] = .double(d)
+                case let .bool(b):
+                    dict[key] = .bool(b)
+                case let .strings(arr):
+                    dict[key] = .array(arr.map { .string($0) })
             }
         }
         return .object(dict)
@@ -294,7 +295,7 @@ extension Server {
     /// Get the task result decoded as a specific type.
     ///
     /// Internal method used by experimental server task features.
-    func getClientTaskResultAs<T: Decodable & Sendable>(taskId: String, type: T.Type) async throws -> T {
+    func getClientTaskResultAs<T: Decodable & Sendable>(taskId: String, type _: T.Type) async throws -> T {
         let result = try await getClientTaskResult(taskId: taskId)
 
         // The result's extraFields contain the actual result payload

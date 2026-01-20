@@ -9,7 +9,6 @@ import Foundation
 /// - Ensure consistent use of version constants
 /// - Make version-specific testing easier
 enum TestPayloads {
-
     // MARK: - Default Values
 
     /// Default protocol version for tests (initial stable release).
@@ -67,8 +66,8 @@ enum TestPayloads {
     ) -> String {
         let argsJSON = arguments.isEmpty ? "{}" : serializeJSON(arguments)
         return """
-            {"jsonrpc":"2.0","method":"tools/call","id":"\(id)","params":{"name":"\(name)","arguments":\(argsJSON)}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"\(id)","params":{"name":"\(name)","arguments":\(argsJSON)}}
+        """
     }
 
     // MARK: - Resources
@@ -134,7 +133,6 @@ enum TestPayloads {
 // MARK: - HTTPRequest Helpers
 
 extension TestPayloads {
-
     /// Creates an HTTP POST request for MCP.
     static func postRequest(
         body: String,

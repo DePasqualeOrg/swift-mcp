@@ -7,7 +7,6 @@ import Testing
 
 @Suite("Task Type Tests")
 struct TaskTypeTests {
-
     // MARK: - TaskStatus Tests
 
     @Test(
@@ -104,14 +103,14 @@ struct TaskTypeTests {
     @Test("MCPTask decodes ttl as null correctly")
     func mcpTaskDecodesNullTtl() throws {
         let jsonString = """
-            {
-                "taskId": "task-123",
-                "status": "working",
-                "ttl": null,
-                "createdAt": "2024-01-15T10:30:00Z",
-                "lastUpdatedAt": "2024-01-15T10:30:05Z"
-            }
-            """
+        {
+            "taskId": "task-123",
+            "status": "working",
+            "ttl": null,
+            "createdAt": "2024-01-15T10:30:00Z",
+            "lastUpdatedAt": "2024-01-15T10:30:05Z"
+        }
+        """
 
         let data = jsonString.data(using: .utf8)!
         let task = try JSONDecoder().decode(MCPTask.self, from: data)
@@ -188,7 +187,6 @@ struct TaskTypeTests {
 
 @Suite("CreateTaskResult Tests")
 struct CreateTaskResultTests {
-
     @Test("CreateTaskResult encoding and decoding")
     func createTaskResultEncodingDecoding() throws {
         let task = MCPTask(
@@ -258,7 +256,6 @@ struct CreateTaskResultTests {
 
 @Suite("GetTask Method Tests")
 struct GetTaskMethodTests {
-
     @Test("GetTask.name is correct")
     func getTaskMethodName() {
         #expect(GetTask.name == "tasks/get")
@@ -335,7 +332,6 @@ struct GetTaskMethodTests {
 
 @Suite("GetTaskPayload Method Tests")
 struct GetTaskPayloadMethodTests {
-
     @Test("GetTaskPayload.name is correct")
     func getTaskPayloadMethodName() {
         #expect(GetTaskPayload.name == "tasks/result")
@@ -359,13 +355,13 @@ struct GetTaskPayloadMethodTests {
                 .object([
                     "type": .string("text"),
                     "text": .string("Hello, world!"),
-                ])
+                ]),
             ]),
             "isError": .bool(false),
         ]
 
         let meta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string("task-123")])
+            relatedTaskMetaKey: .object(["taskId": .string("task-123")]),
         ]
 
         let result = GetTaskPayload.Result(_meta: meta, extraFields: extraFields)
@@ -394,7 +390,6 @@ struct GetTaskPayloadMethodTests {
 
 @Suite("ListTasks Method Tests")
 struct ListTasksMethodTests {
-
     @Test("ListTasks.name is correct")
     func listTasksMethodName() {
         #expect(ListTasks.name == "tasks/list")
@@ -463,7 +458,6 @@ struct ListTasksMethodTests {
 
 @Suite("CancelTask Method Tests")
 struct CancelTaskMethodTests {
-
     @Test("CancelTask.name is correct")
     func cancelTaskMethodName() {
         #expect(CancelTask.name == "tasks/cancel")
@@ -519,7 +513,6 @@ struct CancelTaskMethodTests {
 
 @Suite("TaskStatusNotification Tests")
 struct TaskStatusNotificationTests {
-
     @Test("TaskStatusNotification.name is correct")
     func taskStatusNotificationName() {
         #expect(TaskStatusNotification.name == "notifications/tasks/status")
@@ -570,7 +563,6 @@ struct TaskStatusNotificationTests {
 
 @Suite("Server Tasks Capabilities Tests")
 struct ServerTasksCapabilitiesTests {
-
     @Test("Server.Capabilities.Tasks encoding and decoding")
     func serverTasksCapabilitiesEncodingDecoding() throws {
         let capabilities = Server.Capabilities.Tasks(
@@ -632,7 +624,6 @@ struct ServerTasksCapabilitiesTests {
 
 @Suite("Client Tasks Capabilities Tests")
 struct ClientTasksCapabilitiesTests {
-
     @Test("Client.Capabilities.Tasks encoding and decoding")
     func clientTasksCapabilitiesEncodingDecoding() throws {
         let capabilities = Client.Capabilities.Tasks(
@@ -712,7 +703,6 @@ struct ClientTasksCapabilitiesTests {
 
 @Suite("InMemoryTaskStore Tests")
 struct InMemoryTaskStoreTests {
-
     @Test("createTask creates task with working status")
     func createTaskCreatesWorkingTask() async throws {
         let store = InMemoryTaskStore()
@@ -841,7 +831,7 @@ struct InMemoryTaskStoreTests {
         let store = InMemoryTaskStore(pageSize: 2)
 
         // Create 5 tasks
-        for i in 1...5 {
+        for i in 1 ... 5 {
             _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-\(i)")
         }
 
@@ -909,13 +899,12 @@ struct InMemoryTaskStoreTests {
 
 @Suite("InMemoryTaskMessageQueue Tests")
 struct InMemoryTaskMessageQueueTests {
-
     @Test("enqueue and dequeue work correctly")
     func enqueueAndDequeue() async throws {
         let queue = InMemoryTaskMessageQueue()
 
-        let message = QueuedMessage.notification(
-            try JSONEncoder().encode(["test": "data"]),
+        let message = try QueuedMessage.notification(
+            JSONEncoder().encode(["test": "data"]),
             timestamp: Date()
         )
 
@@ -947,9 +936,9 @@ struct InMemoryTaskMessageQueueTests {
     func dequeueAllReturnsAllMessages() async throws {
         let queue = InMemoryTaskMessageQueue()
 
-        for i in 0..<3 {
-            let message = QueuedMessage.notification(
-                try JSONEncoder().encode(["index": i]),
+        for i in 0 ..< 3 {
+            let message = try QueuedMessage.notification(
+                JSONEncoder().encode(["index": i]),
                 timestamp: Date()
             )
             try await queue.enqueue(taskId: "task-123", message: message, maxSize: nil)
@@ -1025,7 +1014,6 @@ struct InMemoryTaskMessageQueueTests {
 
 @Suite("Resolver Tests")
 struct ResolverTests {
-
     @Test("setResult and wait work correctly")
     func setResultAndWait() async throws {
         let resolver = Resolver<Value>()
@@ -1069,7 +1057,7 @@ struct ResolverTests {
         let resolver = Resolver<Value>()
 
         await resolver.setResult(.string("first"))
-        await resolver.setResult(.string("second"))  // Should be ignored
+        await resolver.setResult(.string("second")) // Should be ignored
 
         let result = try await resolver.wait()
         #expect(result.stringValue == "first")
@@ -1080,7 +1068,6 @@ struct ResolverTests {
 
 @Suite("QueuedMessage Tests")
 struct QueuedMessageTests {
-
     @Test("QueuedMessage.request stores data and timestamp")
     func queuedMessageRequest() {
         let data = Data("test".utf8)
@@ -1126,7 +1113,6 @@ struct QueuedMessageTests {
 
 @Suite("Task JSON Round-Trip Tests")
 struct TaskJSONRoundTripTests {
-
     @Test("Complete task workflow JSON encoding")
     func completeTaskWorkflowJSON() throws {
         // 1. Create task with metadata
@@ -1168,7 +1154,8 @@ struct TaskJSONRoundTripTests {
 
         let notificationData = try JSONEncoder().encode(notification)
         let decodedNotification = try JSONDecoder().decode(
-            TaskStatusNotification.Parameters.self, from: notificationData)
+            TaskStatusNotification.Parameters.self, from: notificationData
+        )
         #expect(decodedNotification.status == .inputRequired)
 
         // 4. Get task result

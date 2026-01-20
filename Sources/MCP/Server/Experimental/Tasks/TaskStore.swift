@@ -85,10 +85,10 @@ public protocol TaskStore: Sendable {
 /// - Returns: True if the status is terminal (completed, failed, or cancelled)
 public func isTerminalStatus(_ status: TaskStatus) -> Bool {
     switch status {
-    case .completed, .failed, .cancelled:
-        return true
-    case .working, .inputRequired:
-        return false
+        case .completed, .failed, .cancelled:
+            true
+        case .working, .inputRequired:
+            false
     }
 }
 
@@ -177,7 +177,7 @@ public actor InMemoryTaskStore: TaskStore {
             ttl: metadata.ttl,
             createdAt: now,
             lastUpdatedAt: now,
-            pollInterval: 1000  // Default 1 second poll interval
+            pollInterval: 1000 // Default 1 second poll interval
         )
 
         tasks[id] = StoredTask(

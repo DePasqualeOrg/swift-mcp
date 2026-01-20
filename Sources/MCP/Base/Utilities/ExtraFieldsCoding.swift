@@ -12,12 +12,12 @@ public struct AnyCodingKey: CodingKey {
         self.stringValue = stringValue
     }
 
-    public init?(intValue: Int) {
+    public init?(intValue _: Int) {
         nil
     }
 
     public init(_ key: String) {
-        self.stringValue = key
+        stringValue = key
     }
 }
 
@@ -96,9 +96,9 @@ public protocol ResultWithExtraFields: Codable, Hashable, Sendable {
     var extraFields: [String: Value]? { get set }
 }
 
-extension ResultWithExtraFields {
+public extension ResultWithExtraFields {
     /// Decodes extra fields from the decoder (static, callable from init).
-    public static func decodeExtraFields(from decoder: Decoder) throws -> [String: Value]? {
+    static func decodeExtraFields(from decoder: Decoder) throws -> [String: Value]? {
         try ExtraFieldsDecoder.decode(
             from: decoder,
             knownKeys: Set(ResultCodingKeys.allCases.map { $0.rawValue })
@@ -106,7 +106,7 @@ extension ResultWithExtraFields {
     }
 
     /// Encodes extra fields to the encoder.
-    public func encodeExtraFields(to encoder: Encoder) throws {
+    func encodeExtraFields(to encoder: Encoder) throws {
         try ExtraFieldsEncoder.encode(extraFields, to: encoder)
     }
 }

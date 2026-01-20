@@ -7,7 +7,6 @@ import Testing
 /// These tests follow the TypeScript SDK's pattern for session management.
 @Suite("Session Manager Tests")
 struct SessionManagerTests {
-
     // MARK: - Basic Operations
 
     @Test("Initialization creates empty manager")
@@ -121,10 +120,10 @@ struct SessionManagerTests {
 
     @Test("Unlimited capacity")
     func unlimitedCapacity() async {
-        let manager = SessionManager()  // No maxSessions
+        let manager = SessionManager() // No maxSessions
 
         // Add many sessions
-        for i in 0..<100 {
+        for i in 0 ..< 100 {
             await manager.store(HTTPServerTransport(), forSessionId: "session-\(i)")
         }
 
@@ -177,7 +176,7 @@ struct SessionManagerTests {
         let manager = SessionManager()
 
         // Simulate 10 clients connecting sequentially
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             let transport = HTTPServerTransport()
             await manager.store(transport, forSessionId: "session-\(i)")
         }
@@ -195,7 +194,7 @@ struct SessionManagerTests {
 
         // Simulate 10 clients connecting concurrently
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<10 {
+            for i in 0 ..< 10 {
                 group.addTask {
                     let transport = HTTPServerTransport()
                     await manager.store(transport, forSessionId: "concurrent-session-\(i)")
@@ -212,21 +211,21 @@ struct SessionManagerTests {
         let manager = SessionManager()
 
         // Pre-populate with sessions
-        for i in 0..<20 {
+        for i in 0 ..< 20 {
             await manager.store(HTTPServerTransport(), forSessionId: "session-\(i)")
         }
 
         // Concurrently access and remove sessions
         await withTaskGroup(of: Void.self) { group in
             // Readers
-            for i in 0..<10 {
+            for i in 0 ..< 10 {
                 group.addTask {
                     _ = await manager.transport(forSessionId: "session-\(i)")
                 }
             }
 
             // Removers
-            for i in 10..<20 {
+            for i in 10 ..< 20 {
                 group.addTask {
                     await manager.remove("session-\(i)")
                 }
@@ -234,6 +233,6 @@ struct SessionManagerTests {
         }
 
         let count = await manager.activeSessionCount
-        #expect(count == 10)  // Only the first 10 should remain
+        #expect(count == 10) // Only the first 10 should remain
     }
 }

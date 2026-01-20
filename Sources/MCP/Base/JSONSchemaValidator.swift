@@ -108,18 +108,17 @@ public final class DefaultJSONSchemaValidator: JSONSchemaValidator, @unchecked S
             let keyword = error.keyword
 
             // Build a descriptive message
-            let message: String
-            if error.message.isEmpty {
+            let message: String = if error.message.isEmpty {
                 if path.isEmpty || path == "/" {
-                    message = "validation failed for '\(keyword)'"
+                    "validation failed for '\(keyword)'"
                 } else {
-                    message = "validation failed for '\(keyword)' at \(path)"
+                    "validation failed for '\(keyword)' at \(path)"
                 }
             } else {
                 if path.isEmpty || path == "/" {
-                    message = error.message
+                    error.message
                 } else {
-                    message = "\(error.message) at \(path)"
+                    "\(error.message) at \(path)"
                 }
             }
             messages.append(message)

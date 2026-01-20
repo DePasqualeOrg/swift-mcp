@@ -204,12 +204,12 @@ public enum SessionError: Error, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case .sessionNotFound(let sessionId):
-            return "Session not found: \(sessionId)"
-        case .missingSessionId:
-            return "Session ID required for non-initialization requests"
-        case .capacityReached(let max):
-            return "Maximum session capacity reached (\(max))"
+            case let .sessionNotFound(sessionId):
+                "Session not found: \(sessionId)"
+            case .missingSessionId:
+                "Session ID required for non-initialization requests"
+            case let .capacityReached(max):
+                "Maximum session capacity reached (\(max))"
         }
     }
 }
@@ -219,7 +219,7 @@ public enum SessionError: Error, CustomStringConvertible {
 extension Duration {
     /// Converts the duration to a TimeInterval (seconds).
     var timeInterval: TimeInterval {
-        let (seconds, attoseconds) = self.components
+        let (seconds, attoseconds) = components
         return TimeInterval(seconds) + TimeInterval(attoseconds) / 1e18
     }
 }

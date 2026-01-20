@@ -5,7 +5,6 @@ import Testing
 
 @Suite("Stateless Mode Tests")
 struct StatelessModeTests {
-
     // MARK: - Transport Property Tests
 
     @Test("MockTransport defaults to supporting server-to-client requests")

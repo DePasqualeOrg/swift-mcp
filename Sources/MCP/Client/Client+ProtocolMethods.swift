@@ -1,6 +1,6 @@
 import Foundation
 
-extension Client {
+public extension Client {
     // MARK: - Prompts
 
     /// Get a prompt by name.
@@ -9,7 +9,7 @@ extension Client {
     ///   - name: The name of the prompt to retrieve.
     ///   - arguments: Optional arguments to pass to the prompt.
     /// - Returns: The prompt result containing description and messages.
-    public func getPrompt(name: String, arguments: [String: String]? = nil) async throws
+    func getPrompt(name: String, arguments: [String: String]? = nil) async throws
         -> GetPrompt.Result
     {
         try validateServerCapability(\.prompts, "Prompts")
@@ -21,13 +21,12 @@ extension Client {
     ///
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing prompts and optional next cursor.
-    public func listPrompts(cursor: String? = nil) async throws -> ListPrompts.Result {
+    func listPrompts(cursor: String? = nil) async throws -> ListPrompts.Result {
         try validateServerCapability(\.prompts, "Prompts")
-        let request: Request<ListPrompts>
-        if let cursor {
-            request = ListPrompts.request(.init(cursor: cursor))
+        let request: Request<ListPrompts> = if let cursor {
+            ListPrompts.request(.init(cursor: cursor))
         } else {
-            request = ListPrompts.request(.init())
+            ListPrompts.request(.init())
         }
         return try await send(request)
     }
@@ -38,7 +37,7 @@ extension Client {
     ///
     /// - Parameter uri: The URI of the resource to read.
     /// - Returns: The read result containing resource contents.
-    public func readResource(uri: String) async throws -> ReadResource.Result {
+    func readResource(uri: String) async throws -> ReadResource.Result {
         try validateServerCapability(\.resources, "Resources")
         let request = ReadResource.request(.init(uri: uri))
         return try await send(request)
@@ -48,13 +47,12 @@ extension Client {
     ///
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing resources and optional next cursor.
-    public func listResources(cursor: String? = nil) async throws -> ListResources.Result {
+    func listResources(cursor: String? = nil) async throws -> ListResources.Result {
         try validateServerCapability(\.resources, "Resources")
-        let request: Request<ListResources>
-        if let cursor {
-            request = ListResources.request(.init(cursor: cursor))
+        let request: Request<ListResources> = if let cursor {
+            ListResources.request(.init(cursor: cursor))
         } else {
-            request = ListResources.request(.init())
+            ListResources.request(.init())
         }
         return try await send(request)
     }
@@ -62,7 +60,7 @@ extension Client {
     /// Subscribe to updates for a resource.
     ///
     /// - Parameter uri: The URI of the resource to subscribe to.
-    public func subscribeToResource(uri: String) async throws {
+    func subscribeToResource(uri: String) async throws {
         try validateServerCapability(\.resources?.subscribe, "Resource subscription")
         let request = ResourceSubscribe.request(.init(uri: uri))
         _ = try await send(request)
@@ -71,7 +69,7 @@ extension Client {
     /// Unsubscribe from updates for a resource.
     ///
     /// - Parameter uri: The URI of the resource to unsubscribe from.
-    public func unsubscribeFromResource(uri: String) async throws {
+    func unsubscribeFromResource(uri: String) async throws {
         try validateServerCapability(\.resources?.subscribe, "Resource subscription")
         let request = ResourceUnsubscribe.request(.init(uri: uri))
         _ = try await send(request)
@@ -81,15 +79,14 @@ extension Client {
     ///
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing templates and optional next cursor.
-    public func listResourceTemplates(cursor: String? = nil) async throws
+    func listResourceTemplates(cursor: String? = nil) async throws
         -> ListResourceTemplates.Result
     {
         try validateServerCapability(\.resources, "Resources")
-        let request: Request<ListResourceTemplates>
-        if let cursor {
-            request = ListResourceTemplates.request(.init(cursor: cursor))
+        let request: Request<ListResourceTemplates> = if let cursor {
+            ListResourceTemplates.request(.init(cursor: cursor))
         } else {
-            request = ListResourceTemplates.request(.init())
+            ListResourceTemplates.request(.init())
         }
         return try await send(request)
     }
@@ -104,13 +101,12 @@ extension Client {
     ///
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing tools and optional next cursor.
-    public func listTools(cursor: String? = nil) async throws -> ListTools.Result {
+    func listTools(cursor: String? = nil) async throws -> ListTools.Result {
         try validateServerCapability(\.tools, "Tools")
-        let request: Request<ListTools>
-        if let cursor {
-            request = ListTools.request(.init(cursor: cursor))
+        let request: Request<ListTools> = if let cursor {
+            ListTools.request(.init(cursor: cursor))
         } else {
-            request = ListTools.request(.init())
+            ListTools.request(.init())
         }
         let result = try await send(request)
 
@@ -135,7 +131,7 @@ extension Client {
     ///   - arguments: Optional arguments to pass to the tool.
     /// - Returns: The tool call result containing content, structured content, and error flag.
     /// - Throws: `MCPError.invalidParams` if output validation fails.
-    public func callTool(name: String, arguments: [String: Value]? = nil) async throws
+    func callTool(name: String, arguments: [String: Value]? = nil) async throws
         -> CallTool.Result
     {
         try validateServerCapability(\.tools, "Tools")
@@ -172,7 +168,7 @@ extension Client {
     ///   - argument: The argument being completed, including its name and partial value.
     ///   - context: Optional additional context with previously-resolved argument values.
     /// - Returns: The completion result from the server.
-    public func complete(
+    func complete(
         ref: CompletionReference,
         argument: CompletionArgument,
         context: CompletionContext? = nil
@@ -190,7 +186,7 @@ extension Client {
     /// at the specified level or higher (more severe).
     ///
     /// - Parameter level: The minimum log level to receive.
-    public func setLoggingLevel(_ level: LoggingLevel) async throws {
+    func setLoggingLevel(_ level: LoggingLevel) async throws {
         try validateServerCapability(\.logging, "Logging")
         let request = SetLoggingLevel.request(.init(level: level))
         _ = try await send(request)

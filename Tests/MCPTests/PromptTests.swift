@@ -38,7 +38,7 @@ struct PromptTests {
         let decoded = try decoder.decode(Prompt.Message.self, from: data)
 
         #expect(decoded.role == .user)
-        if case .text(let text, _, _) = decoded.content {
+        if case let .text(text, _, _) = decoded.content {
             #expect(text == "Hello, world!")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -54,7 +54,7 @@ struct PromptTests {
         let textContent = Prompt.Message.Content.text("Test text")
         let textData = try encoder.encode(textContent)
         let decodedText = try decoder.decode(Prompt.Message.Content.self, from: textData)
-        if case .text(let text, _, _) = decodedText {
+        if case let .text(text, _, _) = decodedText {
             #expect(text == "Test text")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -62,10 +62,11 @@ struct PromptTests {
 
         // Test audio content
         let audioContent = Prompt.Message.Content.audio(
-            data: "base64audiodata", mimeType: "audio/wav")
+            data: "base64audiodata", mimeType: "audio/wav"
+        )
         let audioData = try encoder.encode(audioContent)
         let decodedAudio = try decoder.decode(Prompt.Message.Content.self, from: audioData)
-        if case .audio(let data, let mimeType, _, _) = decodedAudio {
+        if case let .audio(data, mimeType, _, _) = decodedAudio {
             #expect(data == "base64audiodata")
             #expect(mimeType == "audio/wav")
         } else {
@@ -76,7 +77,7 @@ struct PromptTests {
         let imageContent = Prompt.Message.Content.image(data: "base64data", mimeType: "image/png")
         let imageData = try encoder.encode(imageContent)
         let decodedImage = try decoder.decode(Prompt.Message.Content.self, from: imageData)
-        if case .image(let data, let mimeType, _, _) = decodedImage {
+        if case let .image(data, mimeType, _, _) = decodedImage {
             #expect(data == "base64data")
             #expect(mimeType == "image/png")
         } else {
@@ -91,7 +92,7 @@ struct PromptTests {
         )
         let resourceData = try encoder.encode(resourceContent)
         let decodedResource = try decoder.decode(Prompt.Message.Content.self, from: resourceData)
-        if case .resource(let resourceData, _, _) = decodedResource {
+        if case let .resource(resourceData, _, _) = decodedResource {
             #expect(resourceData.uri == "file://test.txt")
             #expect(resourceData.mimeType == "text/plain")
             #expect(resourceData.text == "Sample text")
@@ -179,8 +180,8 @@ struct PromptTests {
     func testListPromptsRequestDecodingWithOmittedParams() throws {
         // Test decoding when params field is omitted
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"prompts/list"}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"prompts/list"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -194,8 +195,8 @@ struct PromptTests {
     func testListPromptsRequestDecodingWithNullParams() throws {
         // Test decoding when params field is null
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"prompts/list","params":null}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"prompts/list","params":null}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -229,7 +230,7 @@ struct PromptTests {
         // Test user message factory method
         let userMessage: Prompt.Message = .user("Hello, world!")
         #expect(userMessage.role == .user)
-        if case .text(let text, _, _) = userMessage.content {
+        if case let .text(text, _, _) = userMessage.content {
             #expect(text == "Hello, world!")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -238,7 +239,7 @@ struct PromptTests {
         // Test assistant message factory method
         let assistantMessage: Prompt.Message = .assistant("Hi there!")
         #expect(assistantMessage.role == .assistant)
-        if case .text(let text, _, _) = assistantMessage.content {
+        if case let .text(text, _, _) = assistantMessage.content {
             #expect(text == "Hi there!")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -247,7 +248,7 @@ struct PromptTests {
         // Test with image content
         let imageMessage: Prompt.Message = .user(.image(data: "base64data", mimeType: "image/png"))
         #expect(imageMessage.role == .user)
-        if case .image(let data, let mimeType, _, _) = imageMessage.content {
+        if case let .image(data, mimeType, _, _) = imageMessage.content {
             #expect(data == "base64data")
             #expect(mimeType == "image/png")
         } else {
@@ -258,7 +259,7 @@ struct PromptTests {
         let audioMessage: Prompt.Message = .assistant(
             .audio(data: "base64audio", mimeType: "audio/wav"))
         #expect(audioMessage.role == .assistant)
-        if case .audio(let data, let mimeType, _, _) = audioMessage.content {
+        if case let .audio(data, mimeType, _, _) = audioMessage.content {
             #expect(data == "base64audio")
             #expect(mimeType == "audio/wav")
         } else {
@@ -269,7 +270,7 @@ struct PromptTests {
         let resourceMessage: Prompt.Message = .user(
             .resource(uri: "file://test.txt", mimeType: "text/plain", text: "Sample text"))
         #expect(resourceMessage.role == .user)
-        if case .resource(let resourceContent, _, _) = resourceMessage.content {
+        if case let .resource(resourceContent, _, _) = resourceMessage.content {
             #expect(resourceContent.uri == "file://test.txt")
             #expect(resourceContent.mimeType == "text/plain")
             #expect(resourceContent.text == "Sample text")
@@ -283,7 +284,7 @@ struct PromptTests {
         // Test string literal assignment
         let content: Prompt.Message.Content = "Hello from string literal"
 
-        if case .text(let text, _, _) = content {
+        if case let .text(text, _, _) = content {
             #expect(text == "Hello from string literal")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -291,7 +292,7 @@ struct PromptTests {
 
         // Test in message creation
         let message: Prompt.Message = .user("Direct string literal")
-        if case .text(let text, _, _) = message.content {
+        if case let .text(text, _, _) = message.content {
             #expect(text == "Direct string literal")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -320,7 +321,7 @@ struct PromptTests {
         let content: Prompt.Message.Content =
             "Hello \(userName), welcome to your \(position) interview at \(company)"
 
-        if case .text(let text, _, _) = content {
+        if case let .text(text, _, _) = content {
             #expect(text == "Hello Alice, welcome to your Software Engineer interview at TechCorp")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -329,7 +330,7 @@ struct PromptTests {
         // Test in message creation with interpolation
         let message: Prompt.Message = .user(
             "Hi \(userName), I'm excited about the \(position) role at \(company)")
-        if case .text(let text, _, _) = message.content {
+        if case let .text(text, _, _) = message.content {
             #expect(text == "Hi Alice, I'm excited about the Software Engineer role at TechCorp")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -342,7 +343,7 @@ struct PromptTests {
             "I see you have \(experience) years of experience with \(skills.joined(separator: ", ")). That's impressive!"
         )
 
-        if case .text(let text, _, _) = interviewMessage.content {
+        if case let .text(text, _, _) = interviewMessage.content {
             #expect(
                 text
                     == "I see you have 5 years of experience with Swift, Python, JavaScript. That's impressive!"
@@ -363,7 +364,7 @@ struct PromptTests {
         let userMessage: Prompt.Message = .user(
             "Hello, I'm \(candidateName) and I'm interviewing for the \(position) position")
         #expect(userMessage.role == .user)
-        if case .text(let text, _, _) = userMessage.content {
+        if case let .text(text, _, _) = userMessage.content {
             #expect(text == "Hello, I'm Bob and I'm interviewing for the Data Scientist position")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -374,7 +375,7 @@ struct PromptTests {
             "Welcome \(candidateName)! Tell me about your \(experience) years of experience in data science"
         )
         #expect(assistantMessage.role == .assistant)
-        if case .text(let text, _, _) = assistantMessage.content {
+        if case let .text(text, _, _) = assistantMessage.content {
             #expect(text == "Welcome Bob! Tell me about your 3 years of experience in data science")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -393,7 +394,7 @@ struct PromptTests {
         #expect(conversation.count == 4)
 
         // Verify interpolated content
-        if case .text(let text, _, _) = conversation[2].content {
+        if case let .text(text, _, _) = conversation[2].content {
             #expect(text == "I have 3 years of experience in the field")
         } else {
             #expect(Bool(false), "Expected text content")
@@ -441,9 +442,9 @@ struct PromptTests {
 
         // Verify content types
         if case .text = mixedContent[0].content,
-            case .image = mixedContent[1].content,
-            case .text = mixedContent[2].content,
-            case .text = mixedContent[3].content
+           case .image = mixedContent[1].content,
+           case .text = mixedContent[2].content,
+           case .text = mixedContent[3].content
         {
             // All content types are correct
         } else {
@@ -469,7 +470,6 @@ struct PromptTests {
 
 @Suite("Prompt Pagination Tests")
 struct PromptPaginationTests {
-
     @Test("ListPrompts cursor parameter encodes correctly")
     func cursorParameterEncoding() throws {
         let testCursor = "test-cursor-123"
@@ -503,7 +503,7 @@ struct PromptPaginationTests {
     @Test("ListPrompts result without nextCursor indicates end of pagination")
     func resultWithoutNextCursor() throws {
         let prompts = [
-            Prompt(name: "final_prompt", description: "Final prompt")
+            Prompt(name: "final_prompt", description: "Final prompt"),
         ]
         let result = ListPrompts.Result(prompts: prompts, nextCursor: nil)
 
@@ -523,8 +523,8 @@ struct PromptPaginationTests {
     @Test("ListPrompts request with cursor decodes correctly")
     func requestWithCursorDecoding() throws {
         let jsonString = """
-            {"jsonrpc":"2.0","id":"page-2","method":"prompts/list","params":{"cursor":"page-1-token"}}
-            """
+        {"jsonrpc":"2.0","id":"page-2","method":"prompts/list","params":{"cursor":"page-1-token"}}
+        """
         let jsonData = jsonString.data(using: .utf8)!
 
         let decoded = try JSONDecoder().decode(Request<ListPrompts>.self, from: jsonData)
@@ -536,19 +536,19 @@ struct PromptPaginationTests {
     @Test("Simulated multi-page prompt listing")
     func simulatedMultiPagePromptListing() throws {
         // Simulate a server that returns 20 prompts across multiple pages
-        let allPrompts = (0..<20).map { i in
+        let allPrompts = (0 ..< 20).map { i in
             Prompt(name: "prompt_\(i)", description: "Prompt number \(i)")
         }
 
         let pageSize = 7
         var collectedPrompts: [Prompt] = []
-        var currentCursor: String? = nil
+        var currentCursor: String?
 
         // Simulate pagination
-        for pageIndex in 0..<3 {
+        for pageIndex in 0 ..< 3 {
             let startIndex = pageIndex * pageSize
             let endIndex = min(startIndex + pageSize, allPrompts.count)
-            let pagePrompts = Array(allPrompts[startIndex..<endIndex])
+            let pagePrompts = Array(allPrompts[startIndex ..< endIndex])
 
             let nextCursor = endIndex < allPrompts.count ? "page-\(pageIndex + 1)" : nil
             let result = ListPrompts.Result(prompts: pagePrompts, nextCursor: nextCursor)
@@ -574,7 +574,7 @@ struct PromptPaginationTests {
         let promptNames = Set(collectedPrompts.map { $0.name })
         #expect(promptNames.count == 20)
 
-        let expectedNames = Set((0..<20).map { "prompt_\($0)" })
+        let expectedNames = Set((0 ..< 20).map { "prompt_\($0)" })
         #expect(promptNames == expectedNames)
     }
 
@@ -663,7 +663,6 @@ struct PromptPaginationTests {
 
 @Suite("Prompt ResourceLink Tests")
 struct PromptResourceLinkTests {
-
     @Test("Prompt Message with ResourceLink content encoding and decoding")
     func testPromptMessageWithResourceLink() throws {
         let resourceLink = ResourceLink(
@@ -682,7 +681,7 @@ struct PromptResourceLinkTests {
         let decoded = try decoder.decode(Prompt.Message.self, from: data)
 
         #expect(decoded.role == .assistant)
-        if case .resourceLink(let decodedLink) = decoded.content {
+        if case let .resourceLink(decodedLink) = decoded.content {
             #expect(decodedLink.uri == "file:///project/src/main.rs")
             #expect(decodedLink.name == "main.rs")
             #expect(decodedLink.description == "Primary application entry point")
@@ -708,7 +707,7 @@ struct PromptResourceLinkTests {
         let decoded = try decoder.decode(Prompt.Message.self, from: data)
 
         #expect(decoded.role == .user)
-        if case .resourceLink(let decodedLink) = decoded.content {
+        if case let .resourceLink(decodedLink) = decoded.content {
             #expect(decodedLink.uri == "file:///path/to/file.txt")
             #expect(decodedLink.name == "file.txt")
             #expect(decodedLink.description == nil)
@@ -744,14 +743,14 @@ struct PromptResourceLinkTests {
         #expect(decoded.description == "File review prompt")
 
         // Verify first message is text
-        if case .text(let text, _, _) = decoded.messages[0].content {
+        if case let .text(text, _, _) = decoded.messages[0].content {
             #expect(text == "Please review this file:")
         } else {
             #expect(Bool(false), "Expected text content for first message")
         }
 
         // Verify second message is resourceLink
-        if case .resourceLink(let link) = decoded.messages[1].content {
+        if case let .resourceLink(link) = decoded.messages[1].content {
             #expect(link.uri == "file:///project/README.md")
             #expect(link.name == "README.md")
         } else {
@@ -759,7 +758,7 @@ struct PromptResourceLinkTests {
         }
 
         // Verify third message is text
-        if case .text(let text, _, _) = decoded.messages[2].content {
+        if case let .text(text, _, _) = decoded.messages[2].content {
             #expect(text == "I'll analyze the README file for you.")
         } else {
             #expect(Bool(false), "Expected text content for third message")
@@ -771,7 +770,6 @@ struct PromptResourceLinkTests {
 
 @Suite("Prompt Advanced Features Tests")
 struct PromptAdvancedFeaturesTests {
-
     @Test("Prompt with icons encoding and decoding")
     func testPromptWithIcons() throws {
         let icons = [
@@ -868,7 +866,7 @@ struct PromptAdvancedFeaturesTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
 
-        if case .text(let text, let decodedAnnotations, let meta) = decoded {
+        if case let .text(text, decodedAnnotations, meta) = decoded {
             #expect(text == "Important message")
             #expect(decodedAnnotations?.audience == [.user, .assistant])
             #expect(decodedAnnotations?.priority == 0.8)
@@ -896,7 +894,7 @@ struct PromptAdvancedFeaturesTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
 
-        if case .image(let imageData, let mimeType, let decodedAnnotations, _) = decoded {
+        if case let .image(imageData, mimeType, decodedAnnotations, _) = decoded {
             #expect(imageData == "base64imagedata")
             #expect(mimeType == "image/png")
             #expect(decodedAnnotations?.audience == [.user])
@@ -923,7 +921,7 @@ struct PromptAdvancedFeaturesTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
 
-        if case .audio(let audioData, let mimeType, let decodedAnnotations, let meta) = decoded {
+        if case let .audio(audioData, mimeType, decodedAnnotations, meta) = decoded {
             #expect(audioData == "base64audiodata")
             #expect(mimeType == "audio/wav")
             #expect(decodedAnnotations?.priority == 1.0)
@@ -953,7 +951,7 @@ struct PromptAdvancedFeaturesTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
 
-        if case .resource(let resource, let decodedAnnotations, _) = decoded {
+        if case let .resource(resource, decodedAnnotations, _) = decoded {
             #expect(resource.uri == "file:///test.txt")
             #expect(resource.text == "File content")
             #expect(decodedAnnotations?.audience == [.assistant])
@@ -991,7 +989,7 @@ struct PromptAdvancedFeaturesTests {
     @Test("ListPrompts result with _meta")
     func testListPromptsResultWithMeta() throws {
         let prompts = [
-            Prompt(name: "prompt1", description: "First prompt")
+            Prompt(name: "prompt1", description: "First prompt"),
         ]
 
         let result = ListPrompts.Result(
@@ -1014,7 +1012,7 @@ struct PromptAdvancedFeaturesTests {
     @Test("Full prompt with all optional fields")
     func testFullPromptWithAllOptionalFields() throws {
         let icons = [
-            Icon(src: "https://example.com/icon.svg", mimeType: "image/svg+xml")
+            Icon(src: "https://example.com/icon.svg", mimeType: "image/svg+xml"),
         ]
         let arguments = [
             Prompt.Argument(
@@ -1083,7 +1081,7 @@ struct PromptAdvancedFeaturesTests {
         let data = try encoder.encode(message)
         let decoded = try decoder.decode(Prompt.Message.self, from: data)
 
-        if case .resourceLink(let link) = decoded.content {
+        if case let .resourceLink(link) = decoded.content {
             #expect(link.name == "config.json")
             #expect(link.title == "Configuration File")
             #expect(link.uri == "file:///project/config.json")
@@ -1104,9 +1102,10 @@ struct PromptAdvancedFeaturesTests {
 
 /// Actor to track pagination state for prompt tests
 private actor PromptPaginationState {
-    private let allPrompts: [Prompt] = (1...8).map { i in
+    private let allPrompts: [Prompt] = (1 ... 8).map { i in
         Prompt(name: "prompt_\(i)", description: "Prompt number \(i)")
     }
+
     private let pageSize = 3
 
     func getPage(cursor: String?) -> ListPrompts.Result {
@@ -1114,21 +1113,21 @@ private actor PromptPaginationState {
         let nextCursor: String?
 
         switch cursor {
-        case nil:
-            startIndex = 0
-            nextCursor = "page_2"
-        case "page_2":
-            startIndex = 3
-            nextCursor = "page_3"
-        case "page_3":
-            startIndex = 6
-            nextCursor = nil
-        default:
-            return ListPrompts.Result(prompts: [])
+            case nil:
+                startIndex = 0
+                nextCursor = "page_2"
+            case "page_2":
+                startIndex = 3
+                nextCursor = "page_3"
+            case "page_3":
+                startIndex = 6
+                nextCursor = nil
+            default:
+                return ListPrompts.Result(prompts: [])
         }
 
         let endIndex = min(startIndex + pageSize, allPrompts.count)
-        let pagePrompts = Array(allPrompts[startIndex..<endIndex])
+        let pagePrompts = Array(allPrompts[startIndex ..< endIndex])
 
         return ListPrompts.Result(prompts: pagePrompts, nextCursor: nextCursor)
     }

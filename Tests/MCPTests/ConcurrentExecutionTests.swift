@@ -18,7 +18,6 @@ import Testing
 /// waiting for an event that the second handler (which never starts) should signal.
 @Suite("Concurrent Execution Tests")
 struct ConcurrentExecutionTests {
-
     // MARK: - Helper Types
 
     /// An actor that allows async coordination between concurrent tasks.
@@ -155,7 +154,7 @@ struct ConcurrentExecutionTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "sleep", description: "Waits for event", inputSchema: ["type": "object"])
+                Tool(name: "sleep", description: "Waits for event", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -172,7 +171,7 @@ struct ConcurrentExecutionTests {
 
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "Slow Resource", uri: "test://slow_resource")
+                Resource(name: "Slow Resource", uri: "test://slow_resource"),
             ])
         }
 
@@ -183,7 +182,7 @@ struct ConcurrentExecutionTests {
                 await event.signal()
                 await callOrder.append("resource_end")
                 return ReadResource.Result(contents: [
-                    .text("slow", uri: "test://slow_resource")
+                    .text("slow", uri: "test://slow_resource"),
                 ])
             }
             return ReadResource.Result(contents: [])
@@ -235,7 +234,7 @@ struct ConcurrentExecutionTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "wait_tool", description: "Waits for event", inputSchema: ["type": "object"])
+                Tool(name: "wait_tool", description: "Waits for event", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -255,7 +254,7 @@ struct ConcurrentExecutionTests {
         try await client.connect(transport: clientTransport)
 
         // Start multiple tool calls concurrently
-        let tasks = (0..<expectedConcurrency).map { _ in
+        let tasks = (0 ..< expectedConcurrency).map { _ in
             Task {
                 try await client.send(CallTool.request(.init(name: "wait_tool", arguments: nil)))
             }
@@ -263,7 +262,7 @@ struct ConcurrentExecutionTests {
 
         // Wait for all handlers to start (proves they're running concurrently)
         var attempts = 0
-        while await startedCount.value < expectedConcurrency && attempts < 100 {
+        while await startedCount.value < expectedConcurrency, attempts < 100 {
             try await Task.sleep(for: .milliseconds(10))
             attempts += 1
         }

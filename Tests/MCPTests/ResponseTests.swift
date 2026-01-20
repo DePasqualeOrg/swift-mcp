@@ -11,9 +11,11 @@ struct ResponseTests {
         struct Parameters: Codable, Hashable, Sendable {
             let value: String
         }
+
         struct Result: Codable, Hashable, Sendable {
             let success: Bool
         }
+
         static let name = "test.method"
     }
 
@@ -33,7 +35,7 @@ struct ResponseTests {
         let data = try encoder.encode(response)
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
 
-        if case .success(let decodedResult) = decoded.result {
+        if case let .success(decodedResult) = decoded.result {
             #expect(decodedResult.success == true)
         } else {
             #expect(Bool(false), "Expected success result")
@@ -52,7 +54,7 @@ struct ResponseTests {
         let data = try encoder.encode(response)
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
 
-        if case .failure(let decodedError) = decoded.result {
+        if case let .failure(decodedError) = decoded.result {
             #expect(decodedError.code == ErrorCode.parseError)
             // Roundtrip preserves the error: parseError(nil) encodes as "Invalid JSON",
             // which decodes back to parseError(nil) since it matches the default message
@@ -74,7 +76,7 @@ struct ResponseTests {
         let data = try encoder.encode(response)
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
 
-        if case .failure(let decodedError) = decoded.result {
+        if case let .failure(decodedError) = decoded.result {
             #expect(decodedError.code == ErrorCode.parseError)
             #expect(
                 decodedError.localizedDescription
@@ -102,8 +104,8 @@ struct ResponseTests {
     func testEmptyResultResponseDecoding() throws {
         // Create a minimal JSON string
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","result":{}}
-            """
+        {"jsonrpc":"2.0","id":"test-id","result":{}}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()

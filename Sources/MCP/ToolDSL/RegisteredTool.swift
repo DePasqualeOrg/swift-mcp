@@ -28,7 +28,7 @@ public struct RegisteredTool: Sendable {
     /// Optional callback to notify when the tool list changes.
     private let onListChanged: (@Sendable () async -> Void)?
 
-    internal init(name: String, registry: ToolRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
+    init(name: String, registry: ToolRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
         self.name = name
         self.registry = registry
         self.onListChanged = onListChanged

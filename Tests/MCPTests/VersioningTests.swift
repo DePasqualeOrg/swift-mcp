@@ -20,7 +20,7 @@ struct VersioningTests {
 
     @Test("Client requests unsupported version")
     func testClientRequestsUnsupportedVersion() {
-        let clientVersion = "2023-01-01"  // An unsupported version
+        let clientVersion = "2023-01-01" // An unsupported version
         let negotiatedVersion = Version.negotiate(clientRequestedVersion: clientVersion)
         #expect(negotiatedVersion == Version.latest)
     }

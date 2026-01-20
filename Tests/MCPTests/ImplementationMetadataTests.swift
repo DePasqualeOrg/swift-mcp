@@ -7,7 +7,6 @@ import Testing
 
 @Suite("Server.Info Metadata Tests")
 struct ServerInfoMetadataTests {
-
     @Test("Server.Info with all fields encodes correctly")
     func testServerInfoWithAllFields() throws {
         let icons = [
@@ -15,7 +14,7 @@ struct ServerInfoMetadataTests {
                 src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
                 mimeType: "image/png",
                 sizes: ["1x1"]
-            )
+            ),
         ]
 
         let info = Server.Info(
@@ -73,7 +72,7 @@ struct ServerInfoMetadataTests {
             description: "Testing roundtrip encoding",
             icons: [
                 Icon(src: "https://example.com/icon.png", mimeType: "image/png", sizes: ["48x48"], theme: .light),
-                Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark)
+                Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark),
             ],
             websiteUrl: "https://example.com/server"
         )
@@ -147,7 +146,6 @@ struct ServerInfoMetadataTests {
 
 @Suite("Client.Info Metadata Tests")
 struct ClientInfoMetadataTests {
-
     @Test("Client.Info with all fields encodes correctly")
     func testClientInfoWithAllFields() throws {
         let info = Client.Info(
@@ -215,7 +213,6 @@ struct ClientInfoMetadataTests {
 
 @Suite("Icon Type Tests")
 struct IconTypeTests {
-
     @Test("Icon with all fields encodes correctly")
     func testIconWithAllFields() throws {
         let icon = Icon(
@@ -292,7 +289,7 @@ struct IconTypeTests {
         let icons = [
             Icon(src: "data:image/png;base64,icon1", mimeType: "image/png", sizes: ["16x16"]),
             Icon(src: "data:image/png;base64,icon2", mimeType: "image/png", sizes: ["32x32"]),
-            Icon(src: "data:image/png;base64,icon3", mimeType: "image/png", sizes: ["64x64"])
+            Icon(src: "data:image/png;base64,icon3", mimeType: "image/png", sizes: ["64x64"]),
         ]
 
         let encoder = JSONEncoder()
@@ -312,7 +309,6 @@ struct IconTypeTests {
 
 @Suite("Server Initialization with Metadata Tests")
 struct ServerInitializationMetadataTests {
-
     @Test("Server can be initialized with all metadata fields")
     func testServerInitWithAllMetadata() async throws {
         let icons = [
@@ -320,7 +316,7 @@ struct ServerInitializationMetadataTests {
                 src: "https://example.com/server-icon.png",
                 mimeType: "image/png",
                 sizes: ["48x48"]
-            )
+            ),
         ]
 
         let server = Server(
@@ -368,7 +364,6 @@ struct ServerInitializationMetadataTests {
 
 @Suite("Client Initialization with Metadata Tests")
 struct ClientInitializationMetadataTests {
-
     @Test("Client can be initialized with all metadata fields")
     func testClientInitWithAllMetadata() async throws {
         let client = Client(
@@ -413,7 +408,6 @@ struct ClientInitializationMetadataTests {
 
 @Suite("Initialize Result Metadata Tests")
 struct InitializeResultMetadataTests {
-
     @Test("Initialize result with server title in serverInfo")
     func testInitializeResultWithServerTitle() throws {
         // Based on TypeScript SDK title.test.ts "should support serverInfo with title"
@@ -511,7 +505,6 @@ struct InitializeResultMetadataTests {
 
 @Suite("Metadata in Initialize Integration Tests")
 struct MetadataInitializeIntegrationTests {
-
     @Test("Server metadata is returned in initialize result")
     func testServerMetadataInInitializeResult() async throws {
         // Based on TypeScript SDK title.test.ts "should support serverInfo with title"

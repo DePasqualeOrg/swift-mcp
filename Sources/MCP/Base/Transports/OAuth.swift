@@ -1,6 +1,7 @@
 import Foundation
 
 // MARK: - OAuth Support
+
 //
 // This file provides the foundational types for OAuth 2.0 support in HTTP transports.
 // The full OAuth implementation (discovery, PKCE, token exchange, provider implementations)

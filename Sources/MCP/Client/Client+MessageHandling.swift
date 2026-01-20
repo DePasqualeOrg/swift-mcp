@@ -7,15 +7,17 @@ extension Client {
     ///
     /// Since `AnyMethod.Parameters` is `Value`, we need to extract `_meta` manually.
     private func extractMeta(from params: Value) -> RequestMeta? {
-        guard case .object(let dict) = params,
-              let metaValue = dict["_meta"] else {
+        guard case let .object(dict) = params,
+              let metaValue = dict["_meta"]
+        else {
             return nil
         }
         // Decode the _meta value as RequestMeta
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
         guard let data = try? encoder.encode(metaValue),
-              let meta = try? decoder.decode(RequestMeta.self, from: data) else {
+              let meta = try? decoder.decode(RequestMeta.self, from: data)
+        else {
             return nil
         }
         return meta
@@ -24,24 +26,26 @@ extension Client {
     func handleResponse(_ response: Response<AnyMethod>) async {
         await logger?.trace(
             "Processing response",
-            metadata: ["id": "\(response.id)"])
+            metadata: ["id": "\(response.id)"]
+        )
 
         // Check for task-augmented response BEFORE resuming the request.
         // Per MCP spec 2025-11-25: progress tokens continue for task lifetime.
         // If this is a CreateTaskResult, we need to keep the progress handler alive.
-        if case .success(let value) = response.result,
-           case .object(let resultObject) = value {
+        if case let .success(value) = response.result,
+           case let .object(resultObject) = value
+        {
             checkForTaskResponse(response: response, value: resultObject)
         }
 
         // Attempt to remove the pending request using the response ID.
         // Resume with the response only if it hadn't yet been removed.
-        if let removedRequest = self.removePendingRequest(id: response.id) {
+        if let removedRequest = removePendingRequest(id: response.id) {
             // If we successfully removed it, resume its continuation.
             switch response.result {
-                case .success(let value):
+                case let .success(value):
                     removedRequest.resume(returning: value)
-                case .failure(let error):
+                case let .failure(error):
                     removedRequest.resume(throwing: error)
             }
         } else {
@@ -69,9 +73,10 @@ extension Client {
         // Check if response has task.taskId (CreateTaskResult pattern)
         // This mirrors TypeScript's check: result.task?.taskId
         guard let taskValue = value["task"],
-              case .object(let taskObject) = taskValue,
+              case let .object(taskObject) = taskValue,
               let taskIdValue = taskObject["taskId"],
-              case .string(let taskId) = taskIdValue else {
+              case let .string(taskId) = taskIdValue
+        else {
             // Not a task response - clean up request tracking
             // (the progress callback itself is cleaned up in send() after receiving result)
             requestProgressTokens.removeValue(forKey: response.id)
@@ -129,7 +134,8 @@ extension Client {
     func handleMessage(_ message: Message<AnyNotification>) async {
         await logger?.trace(
             "Processing notification",
-            metadata: ["method": "\(message.method)"])
+            metadata: ["method": "\(message.method)"]
+        )
 
         // Check if this is a progress notification and invoke any registered callback
         if message.method == ProgressNotification.name {
@@ -155,7 +161,8 @@ extension Client {
                     metadata: [
                         "method": "\(message.method)",
                         "error": "\(error)",
-                    ])
+                    ]
+                )
             }
         }
     }
@@ -172,7 +179,8 @@ extension Client {
                 // TypeScript SDK logs an error for unknown progress tokens
                 await logger?.warning(
                     "Received progress notification for unknown token",
-                    metadata: ["progressToken": "\(params.progressToken)"])
+                    metadata: ["progressToken": "\(params.progressToken)"]
+                )
                 return
             }
 
@@ -192,7 +200,8 @@ extension Client {
         } catch {
             await logger?.warning(
                 "Failed to decode progress notification",
-                metadata: ["error": "\(error)"])
+                metadata: ["error": "\(error)"]
+            )
         }
     }
 
@@ -240,7 +249,8 @@ extension Client {
             metadata: [
                 "method": "\(request.method)",
                 "id": "\(request.id)",
-            ])
+            ]
+        )
 
         // Validate elicitation mode against client capabilities
         // Per spec: Client MUST return -32602 if server requests unsupported mode
@@ -262,7 +272,8 @@ extension Client {
         guard let handler = requestHandlers[request.method] else {
             await logger?.warning(
                 "No handler registered for server request",
-                metadata: ["method": "\(request.method)"])
+                metadata: ["method": "\(request.method)"]
+            )
 
             // Send error response
             let response = AnyMethod.response(
@@ -281,10 +292,10 @@ extension Client {
                 guard let self else {
                     throw MCPError.internalError("Client was deallocated")
                 }
-                guard let connection = await self.connection else {
+                guard let connection = await connection else {
                     throw MCPError.internalError("Cannot send notification - client not connected")
                 }
-                let notificationData = try self.encoder.encode(notification)
+                let notificationData = try encoder.encode(notification)
                 try await connection.send(notificationData)
             },
             requestId: request.id,
@@ -322,7 +333,8 @@ extension Client {
                 metadata: [
                     "method": "\(request.method)",
                     "error": "\(error)",
-                ])
+                ]
+            )
             // Error already logged above - sanitize for response
             let errorResponse = AnyMethod.response(
                 id: request.id,
@@ -366,7 +378,8 @@ extension Client {
             // If we can't decode the params, let the normal handler deal with it
             await logger?.warning(
                 "Failed to decode elicitation params for mode validation",
-                metadata: ["error": "\(error)"])
+                metadata: ["error": "\(error)"]
+            )
         }
 
         return nil
@@ -380,7 +393,8 @@ extension Client {
         do {
             // Check for task-augmented sampling request
             if request.method == CreateSamplingMessage.name,
-               let taskHandler = taskAugmentedSamplingHandler {
+               let taskHandler = taskAugmentedSamplingHandler
+            {
                 let paramsData = try encoder.encode(request.params)
                 let params = try decoder.decode(CreateSamplingMessage.Parameters.self, from: paramsData)
 
@@ -394,13 +408,14 @@ extension Client {
 
             // Check for task-augmented elicitation request
             if request.method == Elicit.name,
-               let taskHandler = taskAugmentedElicitationHandler {
+               let taskHandler = taskAugmentedElicitationHandler
+            {
                 let paramsData = try encoder.encode(request.params)
                 let params = try decoder.decode(Elicit.Parameters.self, from: paramsData)
 
                 let taskMetadata: TaskMetadata? = switch params {
-                    case .form(let formParams): formParams.task
-                    case .url(let urlParams): urlParams.task
+                    case let .form(formParams): formParams.task
+                    case let .url(urlParams): urlParams.task
                 }
 
                 if let taskMetadata {
@@ -435,7 +450,8 @@ extension Client {
         } catch {
             await logger?.error(
                 "Failed to send response to server",
-                metadata: ["error": "\(error)"])
+                metadata: ["error": "\(error)"]
+            )
         }
     }
 
@@ -443,11 +459,11 @@ extension Client {
 
     /// Validate the server capabilities.
     /// Throws an error if the client is configured to be strict and the capability is not supported.
-    func validateServerCapability<T>(
-        _ keyPath: KeyPath<Server.Capabilities, T?>,
+    func validateServerCapability(
+        _ keyPath: KeyPath<Server.Capabilities, (some Any)?>,
         _ name: String
     )
-    throws
+        throws
     {
         if configuration.strict {
             guard let capabilities = serverCapabilities else {
@@ -465,12 +481,12 @@ extension Client {
         for response in responses {
             // Attempt to remove the pending request.
             // If successful, pendingRequest contains the request.
-            if let pendingRequest = self.removePendingRequest(id: response.id) {
+            if let pendingRequest = removePendingRequest(id: response.id) {
                 // If we successfully removed it, handle the response using the pending request.
                 switch response.result {
-                    case .success(let value):
+                    case let .success(value):
                         pendingRequest.resume(returning: value)
-                    case .failure(let error):
+                    case let .failure(error):
                         pendingRequest.resume(throwing: error)
                 }
             } else {

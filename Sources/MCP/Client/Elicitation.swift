@@ -69,7 +69,7 @@ public struct StringSchema: Hashable, Codable, Sendable {
         format: StringSchemaFormat? = nil,
         defaultValue: String? = nil
     ) {
-        self.type = "string"
+        type = "string"
         self.title = title
         self.description = description
         self.minLength = minLength
@@ -113,7 +113,7 @@ public struct NumberSchema: Hashable, Codable, Sendable {
         maximum: Double? = nil,
         defaultValue: Double? = nil
     ) {
-        self.type = isInteger ? "integer" : "number"
+        type = isInteger ? "integer" : "number"
         self.title = title
         self.description = description
         self.minimum = minimum
@@ -149,7 +149,7 @@ public struct BooleanSchema: Hashable, Codable, Sendable {
         description: String? = nil,
         defaultValue: Bool? = nil
     ) {
-        self.type = "boolean"
+        type = "boolean"
         self.title = title
         self.description = description
         self.defaultValue = defaultValue
@@ -189,7 +189,7 @@ public struct UntitledEnumSchema: Hashable, Codable, Sendable {
         enumValues: [String],
         defaultValue: String? = nil
     ) {
-        self.type = "string"
+        type = "string"
         self.title = title
         self.description = description
         self.enumValues = enumValues
@@ -216,7 +216,7 @@ public struct TitledEnumSchema: Hashable, Codable, Sendable {
         oneOf: [TitledEnumOption],
         defaultValue: String? = nil
     ) {
-        self.type = "string"
+        type = "string"
         self.title = title
         self.description = description
         self.oneOf = oneOf
@@ -246,7 +246,7 @@ public struct LegacyTitledEnumSchema: Hashable, Codable, Sendable {
         enumNames: [String]? = nil,
         defaultValue: String? = nil
     ) {
-        self.type = "string"
+        type = "string"
         self.title = title
         self.description = description
         self.enumValues = enumValues
@@ -268,7 +268,7 @@ public struct UntitledMultiSelectItems: Hashable, Codable, Sendable {
     }
 
     public init(enumValues: [String]) {
-        self.type = "string"
+        type = "string"
         self.enumValues = enumValues
     }
 }
@@ -296,12 +296,12 @@ public struct UntitledMultiSelectEnumSchema: Hashable, Codable, Sendable {
         enumValues: [String],
         defaultValue: [String]? = nil
     ) {
-        self.type = "array"
+        type = "array"
         self.title = title
         self.description = description
         self.minItems = minItems
         self.maxItems = maxItems
-        self.items = UntitledMultiSelectItems(enumValues: enumValues)
+        items = UntitledMultiSelectItems(enumValues: enumValues)
         self.defaultValue = defaultValue
     }
 }
@@ -338,12 +338,12 @@ public struct TitledMultiSelectEnumSchema: Hashable, Codable, Sendable {
         options: [TitledEnumOption],
         defaultValue: [String]? = nil
     ) {
-        self.type = "array"
+        type = "array"
         self.title = title
         self.description = description
         self.minItems = minItems
         self.maxItems = maxItems
-        self.items = TitledMultiSelectItems(anyOf: options)
+        items = TitledMultiSelectItems(anyOf: options)
         self.defaultValue = defaultValue
     }
 }
@@ -398,101 +398,104 @@ extension PrimitiveSchemaDefinition: Codable {
         let type = try container.decode(String.self, forKey: .type)
 
         switch type {
-        case "string":
-            // Check if it's an enum type (has enum or oneOf)
-            if container.contains(.oneOf) {
-                let schema = try TitledEnumSchema(from: decoder)
-                self = .titledEnum(schema)
-            } else if container.contains(.enumValues) {
-                // Check for enumNames (legacy format)
-                if container.contains(.enumNames) {
-                    let schema = try LegacyTitledEnumSchema(from: decoder)
-                    self = .legacyTitledEnum(schema)
+            case "string":
+                // Check if it's an enum type (has enum or oneOf)
+                if container.contains(.oneOf) {
+                    let schema = try TitledEnumSchema(from: decoder)
+                    self = .titledEnum(schema)
+                } else if container.contains(.enumValues) {
+                    // Check for enumNames (legacy format)
+                    if container.contains(.enumNames) {
+                        let schema = try LegacyTitledEnumSchema(from: decoder)
+                        self = .legacyTitledEnum(schema)
+                    } else {
+                        let schema = try UntitledEnumSchema(from: decoder)
+                        self = .untitledEnum(schema)
+                    }
                 } else {
-                    let schema = try UntitledEnumSchema(from: decoder)
-                    self = .untitledEnum(schema)
+                    let schema = try StringSchema(from: decoder)
+                    self = .string(schema)
                 }
-            } else {
-                let schema = try StringSchema(from: decoder)
-                self = .string(schema)
-            }
-        case "array":
-            // Multi-select enum - check items for anyOf (titled) or enum (untitled)
-            if container.contains(.items) {
-                let itemsContainer = try container.nestedContainer(
-                    keyedBy: ItemsCodingKeys.self, forKey: .items)
-                if itemsContainer.contains(.anyOf) {
-                    let schema = try TitledMultiSelectEnumSchema(from: decoder)
-                    self = .titledMultiSelect(schema)
+            case "array":
+                // Multi-select enum - check items for anyOf (titled) or enum (untitled)
+                if container.contains(.items) {
+                    let itemsContainer = try container.nestedContainer(
+                        keyedBy: ItemsCodingKeys.self, forKey: .items
+                    )
+                    if itemsContainer.contains(.anyOf) {
+                        let schema = try TitledMultiSelectEnumSchema(from: decoder)
+                        self = .titledMultiSelect(schema)
+                    } else {
+                        let schema = try UntitledMultiSelectEnumSchema(from: decoder)
+                        self = .untitledMultiSelect(schema)
+                    }
                 } else {
-                    let schema = try UntitledMultiSelectEnumSchema(from: decoder)
-                    self = .untitledMultiSelect(schema)
+                    throw DecodingError.dataCorruptedError(
+                        forKey: .type, in: container,
+                        debugDescription: "Array type must have items property"
+                    )
                 }
-            } else {
+            case "number", "integer":
+                let schema = try NumberSchema(from: decoder)
+                self = .number(schema)
+            case "boolean":
+                let schema = try BooleanSchema(from: decoder)
+                self = .boolean(schema)
+            default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .type, in: container,
-                    debugDescription: "Array type must have items property")
-            }
-        case "number", "integer":
-            let schema = try NumberSchema(from: decoder)
-            self = .number(schema)
-        case "boolean":
-            let schema = try BooleanSchema(from: decoder)
-            self = .boolean(schema)
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .type, in: container,
-                debugDescription: "Unknown primitive schema type: \(type)")
+                    debugDescription: "Unknown primitive schema type: \(type)"
+                )
         }
     }
 
     public func encode(to encoder: Encoder) throws {
         switch self {
-        case .string(let schema):
-            try schema.encode(to: encoder)
-        case .number(let schema):
-            try schema.encode(to: encoder)
-        case .boolean(let schema):
-            try schema.encode(to: encoder)
-        case .untitledEnum(let schema):
-            try schema.encode(to: encoder)
-        case .titledEnum(let schema):
-            try schema.encode(to: encoder)
-        case .legacyTitledEnum(let schema):
-            try schema.encode(to: encoder)
-        case .untitledMultiSelect(let schema):
-            try schema.encode(to: encoder)
-        case .titledMultiSelect(let schema):
-            try schema.encode(to: encoder)
+            case let .string(schema):
+                try schema.encode(to: encoder)
+            case let .number(schema):
+                try schema.encode(to: encoder)
+            case let .boolean(schema):
+                try schema.encode(to: encoder)
+            case let .untitledEnum(schema):
+                try schema.encode(to: encoder)
+            case let .titledEnum(schema):
+                try schema.encode(to: encoder)
+            case let .legacyTitledEnum(schema):
+                try schema.encode(to: encoder)
+            case let .untitledMultiSelect(schema):
+                try schema.encode(to: encoder)
+            case let .titledMultiSelect(schema):
+                try schema.encode(to: encoder)
         }
     }
 }
 
-extension PrimitiveSchemaDefinition {
+public extension PrimitiveSchemaDefinition {
     /// The default value for this schema field, if defined.
     ///
     /// Used by `Server.elicit()` to apply schema defaults to missing form fields
     /// before validation.
-    public var `default`: ElicitValue? {
+    var `default`: ElicitValue? {
         switch self {
-        case .string(let schema):
-            return schema.defaultValue.map { .string($0) }
-        case .number(let schema):
-            guard let value = schema.defaultValue else { return nil }
-            // Use int if the schema specifies integer type
-            return schema.type == "integer" ? .int(Int(value)) : .double(value)
-        case .boolean(let schema):
-            return schema.defaultValue.map { .bool($0) }
-        case .untitledEnum(let schema):
-            return schema.defaultValue.map { .string($0) }
-        case .titledEnum(let schema):
-            return schema.defaultValue.map { .string($0) }
-        case .legacyTitledEnum(let schema):
-            return schema.defaultValue.map { .string($0) }
-        case .untitledMultiSelect(let schema):
-            return schema.defaultValue.map { .strings($0) }
-        case .titledMultiSelect(let schema):
-            return schema.defaultValue.map { .strings($0) }
+            case let .string(schema):
+                return schema.defaultValue.map { .string($0) }
+            case let .number(schema):
+                guard let value = schema.defaultValue else { return nil }
+                // Use int if the schema specifies integer type
+                return schema.type == "integer" ? .int(Int(value)) : .double(value)
+            case let .boolean(schema):
+                return schema.defaultValue.map { .bool($0) }
+            case let .untitledEnum(schema):
+                return schema.defaultValue.map { .string($0) }
+            case let .titledEnum(schema):
+                return schema.defaultValue.map { .string($0) }
+            case let .legacyTitledEnum(schema):
+                return schema.defaultValue.map { .string($0) }
+            case let .untitledMultiSelect(schema):
+                return schema.defaultValue.map { .strings($0) }
+            case let .titledMultiSelect(schema):
+                return schema.defaultValue.map { .strings($0) }
         }
     }
 }
@@ -550,7 +553,7 @@ public struct ElicitationSchema: Hashable, Codable, Sendable {
         required: [String]? = nil
     ) {
         self.schema = schema
-        self.type = "object"
+        type = "object"
         self.properties = properties
         self.required = required
     }
@@ -597,23 +600,25 @@ extension ElicitValue: Codable {
                 ElicitValue.self,
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Expected String, Int, Double, Bool, or [String]"))
+                    debugDescription: "Expected String, Int, Double, Bool, or [String]"
+                )
+            )
         }
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
-        case .string(let value):
-            try container.encode(value)
-        case .int(let value):
-            try container.encode(value)
-        case .double(let value):
-            try container.encode(value)
-        case .bool(let value):
-            try container.encode(value)
-        case .strings(let value):
-            try container.encode(value)
+            case let .string(value):
+                try container.encode(value)
+            case let .int(value):
+                try container.encode(value)
+            case let .double(value):
+                try container.encode(value)
+            case let .bool(value):
+                try container.encode(value)
+            case let .strings(value):
+                try container.encode(value)
         }
     }
 }
@@ -693,7 +698,7 @@ public struct ElicitRequestURLParams: Hashable, Codable, Sendable {
         _meta: RequestMeta? = nil,
         task: TaskMetadata? = nil
     ) {
-        self.mode = "url"
+        mode = "url"
         self.message = message
         self.elicitationId = elicitationId
         self.url = url
@@ -718,21 +723,21 @@ extension ElicitRequestParams: Codable {
         let mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "form"
 
         switch mode {
-        case "url":
-            let params = try ElicitRequestURLParams(from: decoder)
-            self = .url(params)
-        default:
-            let params = try ElicitRequestFormParams(from: decoder)
-            self = .form(params)
+            case "url":
+                let params = try ElicitRequestURLParams(from: decoder)
+                self = .url(params)
+            default:
+                let params = try ElicitRequestFormParams(from: decoder)
+                self = .form(params)
         }
     }
 
     public func encode(to encoder: Encoder) throws {
         switch self {
-        case .form(let params):
-            try params.encode(to: encoder)
-        case .url(let params):
-            try params.encode(to: encoder)
+            case let .form(params):
+                try params.encode(to: encoder)
+            case let .url(params):
+                try params.encode(to: encoder)
         }
     }
 }

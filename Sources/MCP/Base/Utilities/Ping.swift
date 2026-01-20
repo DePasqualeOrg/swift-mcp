@@ -8,7 +8,7 @@ public enum Ping: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self._meta = nil
+            _meta = nil
         }
 
         public init(_meta: RequestMeta?) {

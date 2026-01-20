@@ -6,7 +6,6 @@ import XCTest
 import MCPMacros
 
 final class PromptMacroTests: XCTestCase {
-
     let testMacros: [String: Macro.Type] = [
         "Prompt": PromptMacro.self,
     ]
@@ -35,7 +34,7 @@ final class PromptMacroTests: XCTestCase {
             }
             """,
             diagnostics: [
-                DiagnosticSpec(message: "@Prompt requires 'static let name: String' property", line: 1, column: 1)
+                DiagnosticSpec(message: "@Prompt requires 'static let name: String' property", line: 1, column: 1),
             ],
             macros: testMacros
         )
@@ -63,7 +62,7 @@ final class PromptMacroTests: XCTestCase {
             }
             """,
             diagnostics: [
-                DiagnosticSpec(message: "@Prompt requires 'static let description: String' property", line: 1, column: 1)
+                DiagnosticSpec(message: "@Prompt requires 'static let description: String' property", line: 1, column: 1),
             ],
             macros: testMacros
         )
@@ -85,7 +84,7 @@ final class PromptMacroTests: XCTestCase {
             }
             """,
             diagnostics: [
-                DiagnosticSpec(message: "@Prompt can only be applied to structs", line: 1, column: 1)
+                DiagnosticSpec(message: "@Prompt can only be applied to structs", line: 1, column: 1),
             ],
             macros: testMacros
         )

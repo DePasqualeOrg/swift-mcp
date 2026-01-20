@@ -100,10 +100,10 @@ public actor Resolver<T: Sendable> {
         // Check if already resolved
         if let result {
             switch result {
-            case .success(let value):
-                return value
-            case .failure(let error):
-                throw error
+                case let .success(value):
+                    return value
+                case let .failure(error):
+                    throw error
             }
         }
 
@@ -112,10 +112,10 @@ public actor Resolver<T: Sendable> {
             // Check again (race with setResult)
             if let result {
                 switch result {
-                case .success(let value):
-                    cont.resume(returning: value)
-                case .failure(let error):
-                    cont.resume(throwing: error)
+                    case let .success(value):
+                        cont.resume(returning: value)
+                    case let .failure(error):
+                        cont.resume(throwing: error)
                 }
             } else {
                 continuation = cont
@@ -148,18 +148,18 @@ public enum QueuedMessage: Sendable {
     /// The timestamp when this message was queued.
     public var timestamp: Date {
         switch self {
-        case .request(_, let ts), .notification(_, let ts),
-             .response(_, let ts), .error(_, let ts):
-            return ts
+            case let .request(_, ts), let .notification(_, ts),
+                 let .response(_, ts), let .error(_, ts):
+                ts
         }
     }
 
     /// The message data.
     public var data: Data {
         switch self {
-        case .request(let d, _), .notification(let d, _),
-             .response(let d, _), .error(let d, _):
-            return d
+            case let .request(d, _), let .notification(d, _),
+                 let .response(d, _), let .error(d, _):
+                d
         }
     }
 }

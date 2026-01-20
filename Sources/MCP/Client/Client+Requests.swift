@@ -1,13 +1,13 @@
 import Foundation
 
-extension Client {
+public extension Client {
     // MARK: - Request Options
 
     /// Options that can be given per request.
     ///
     /// Similar to TypeScript SDK's `RequestOptions`, this allows configuring
     /// timeout behavior for individual requests, including progress-aware timeouts.
-    public struct RequestOptions: Sendable {
+    struct RequestOptions: Sendable {
         /// The default request timeout (60 seconds), matching TypeScript SDK.
         public static let defaultTimeout: Duration = .seconds(60)
 
@@ -75,7 +75,7 @@ extension Client {
     ///
     /// This method sends a request without a timeout. For timeout support,
     /// use `send(_:options:)` instead.
-    public func send<M: Method>(_ request: Request<M>) async throws -> M.Result {
+    func send<M: Method>(_ request: Request<M>) async throws -> M.Result {
         try await send(request, options: nil)
     }
 
@@ -86,7 +86,7 @@ extension Client {
     ///   - options: Options for this request, including timeout configuration.
     /// - Returns: The response result.
     /// - Throws: `MCPError.requestTimeout` if the timeout is exceeded.
-    public func send<M: Method>(
+    func send<M: Method>(
         _ request: Request<M>,
         options: RequestOptions?
     ) async throws -> M.Result {
@@ -203,7 +203,7 @@ extension Client {
     ///   - request: The request to send
     ///   - onProgress: A callback invoked when progress notifications are received
     /// - Returns: The response result
-    public func send<M: Method>(
+    func send<M: Method>(
         _ request: Request<M>,
         onProgress: @escaping ProgressCallback
     ) async throws -> M.Result {
@@ -218,7 +218,7 @@ extension Client {
     ///   - onProgress: A callback invoked when progress notifications are received.
     /// - Returns: The response result.
     /// - Throws: `MCPError.requestTimeout` if the timeout is exceeded.
-    public func send<M: Method>(
+    func send<M: Method>(
         _ request: Request<M>,
         options: RequestOptions?,
         onProgress: @escaping ProgressCallback
@@ -229,8 +229,8 @@ extension Client {
 
         // Generate a progress token from the request ID
         let progressToken: ProgressToken = switch request.id {
-            case .number(let n): .integer(n)
-            case .string(let s): .string(s)
+            case let .number(n): .integer(n)
+            case let .string(s): .string(s)
         }
 
         // Encode the request, inject progressToken into _meta, then re-encode
@@ -241,8 +241,8 @@ extension Client {
         var params = requestDict["params"]?.objectValue ?? [:]
         var meta = params["_meta"]?.objectValue ?? [:]
         meta["progressToken"] = switch progressToken {
-            case .string(let s): .string(s)
-            case .integer(let n): .int(n)
+            case let .string(s): .string(s)
+            case let .integer(n): .int(n)
         }
         params["_meta"] = .object(meta)
         requestDict["params"] = .object(params)
@@ -408,20 +408,20 @@ extension Client {
         requestProgressTokens.removeValue(forKey: id)
     }
 
-    func addPendingRequest<T: Sendable & Decodable>(
+    internal func addPendingRequest(
         id: RequestId,
-        continuation: AsyncThrowingStream<T, Swift.Error>.Continuation
+        continuation: AsyncThrowingStream<some Sendable & Decodable, Swift.Error>.Continuation
     ) {
         pendingRequests[id] = AnyPendingRequest(continuation: continuation)
     }
 
-    func removePendingRequest(id: RequestId) -> AnyPendingRequest? {
-        return pendingRequests.removeValue(forKey: id)
+    internal func removePendingRequest(id: RequestId) -> AnyPendingRequest? {
+        pendingRequests.removeValue(forKey: id)
     }
 
     /// Removes a pending request without returning it.
     /// Used by onTermination handlers when the request has been cancelled.
-    func cleanUpPendingRequest(id: RequestId) {
+    internal func cleanUpPendingRequest(id: RequestId) {
         pendingRequests.removeValue(forKey: id)
     }
 
@@ -464,7 +464,7 @@ extension Client {
     /// - Note: If the request has already completed or is unknown, this is a no-op per the MCP spec.
     /// - Note: The `initialize` request MUST NOT be cancelled per the MCP spec.
     /// - Important: For task-augmented requests, use the `tasks/cancel` method instead.
-    public func cancelRequest(_ id: RequestId, reason: String? = nil) async {
+    func cancelRequest(_ id: RequestId, reason: String? = nil) async {
         // Remove and finish the pending request with cancellation error
         if let pendingRequest = removePendingRequest(id: id) {
             pendingRequest.resume(throwing: MCPError.requestCancelled(reason: reason))
@@ -487,7 +487,7 @@ extension Client {
     ///
     /// This is called when a client Task waiting for a response is cancelled.
     /// The notification is sent on a best-effort basis - failures are logged but not thrown.
-    func sendCancellationNotification(requestId: RequestId, reason: String?) async {
+    internal func sendCancellationNotification(requestId: RequestId, reason: String?) async {
         guard let connection else {
             await logger?.debug(
                 "Cannot send cancellation notification - connection is nil",

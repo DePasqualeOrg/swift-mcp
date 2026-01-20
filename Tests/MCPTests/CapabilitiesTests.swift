@@ -7,7 +7,6 @@ import Testing
 
 @Suite("Client Capabilities Encoding Tests")
 struct ClientCapabilitiesEncodingTests {
-
     @Test("Empty client capabilities encodes correctly")
     func testEmptyClientCapabilities() throws {
         let capabilities = Client.Capabilities()
@@ -57,8 +56,8 @@ struct ClientCapabilitiesEncodingTests {
             experimental: [
                 "feature": [
                     "enabled": .bool(true),
-                    "count": .int(42)
-                ]
+                    "count": .int(42),
+                ],
             ]
         )
 
@@ -106,7 +105,6 @@ struct ClientCapabilitiesEncodingTests {
 
 @Suite("Server Capabilities Encoding Tests")
 struct ServerCapabilitiesEncodingTests {
-
     @Test("Empty server capabilities encodes correctly")
     func testEmptyServerCapabilities() throws {
         let capabilities = Server.Capabilities()
@@ -239,8 +237,8 @@ struct ServerCapabilitiesEncodingTests {
         let capabilities = Server.Capabilities(
             experimental: [
                 "customFeature": [
-                    "supported": .bool(true)
-                ]
+                    "supported": .bool(true),
+                ],
             ]
         )
 
@@ -289,7 +287,6 @@ struct ServerCapabilitiesEncodingTests {
 
 @Suite("Initialize Request Encoding Tests")
 struct InitializeRequestEncodingTests {
-
     @Test("Initialize parameters encodes with capabilities")
     func testInitializeParametersEncoding() throws {
         let params = Initialize.Parameters(
@@ -462,7 +459,6 @@ struct InitializeRequestEncodingTests {
 
 @Suite("Capability Negotiation Integration Tests")
 struct CapabilityNegotiationTests {
-
     @Test("Client sends capabilities to server during initialization")
     func testClientSendsCapabilitiesToServer() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
@@ -672,7 +668,6 @@ struct CapabilityNegotiationTests {
 
 @Suite("Capability JSON Format Compatibility Tests")
 struct CapabilityJSONCompatibilityTests {
-
     @Test("Client capabilities matches TypeScript format")
     func testClientCapabilitiesMatchesTypeScriptFormat() throws {
         // TypeScript format: { "sampling": {}, "roots": { "listChanged": true } }
@@ -682,7 +677,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.sampling != nil)
         #expect(capabilities.roots?.listChanged == true)
@@ -707,7 +703,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Server.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Server.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.logging != nil)
         #expect(capabilities.prompts?.listChanged == true)
@@ -724,7 +721,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.elicitation?.form != nil)
         #expect(capabilities.elicitation?.url == nil)
@@ -739,7 +737,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.elicitation?.form?.applyDefaults == true)
     }
@@ -753,7 +752,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.elicitation?.form == nil)
         #expect(capabilities.elicitation?.url != nil)
@@ -768,7 +768,8 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!)
+            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+        )
 
         #expect(capabilities.elicitation?.form != nil)
         #expect(capabilities.elicitation?.url != nil)
@@ -838,7 +839,6 @@ struct CapabilityJSONCompatibilityTests {
 
 @Suite("Sampling Capability Encoding Tests")
 struct SamplingCapabilityEncodingTests {
-
     @Test("Client sampling with no sub-capabilities encodes correctly")
     func testClientSamplingBasic() throws {
         let capabilities = Client.Capabilities(
@@ -866,7 +866,6 @@ struct SamplingCapabilityEncodingTests {
 
 @Suite("Tasks Capability Encoding Tests")
 struct TasksCapabilityEncodingTests {
-
     @Test("Server tasks capability encodes correctly")
     func testServerTasksCapability() throws {
         let capabilities = Server.Capabilities(

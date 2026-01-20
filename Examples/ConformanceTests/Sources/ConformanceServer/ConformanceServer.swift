@@ -62,13 +62,13 @@ struct ConformanceServer: AsyncParsableCommand {
         let router = Router(context: ConformanceRequestContext.self)
 
         // MCP endpoints
-        router.post("/mcp") { request, context in
+        router.post("/mcp") { request, _ in
             try await sessionManager.handlePost(request: request)
         }
-        router.get("/mcp") { request, context in
+        router.get("/mcp") { request, _ in
             try await sessionManager.handleGet(request: request)
         }
-        router.delete("/mcp") { request, context in
+        router.delete("/mcp") { request, _ in
             try await sessionManager.handleDelete(request: request)
         }
 
@@ -94,7 +94,7 @@ struct ConformanceRequestContext: RequestContext {
     var coreContext: CoreRequestContextStorage
 
     init(source: Source) {
-        self.coreContext = .init(source: source)
+        coreContext = .init(source: source)
     }
 }
 
@@ -357,7 +357,7 @@ struct TestMultipleContentTypes {
         return MultiContent([
             .text("Multiple content types test:"),
             .image(data: TestData.redPixelPNGBase64, mimeType: "image/png"),
-            .resource(resource: resourceContent, annotations: nil, _meta: nil)
+            .resource(resource: resourceContent, annotations: nil, _meta: nil),
         ])
     }
 }
@@ -414,21 +414,21 @@ struct TestSampling {
         // Request a sampling completion from the client using the SDK's sampling API
         let result = try await context.createMessage(
             messages: [
-                Sampling.Message(role: .user, content: .text("What is 2+2? Reply with just the number."))
+                Sampling.Message(role: .user, content: .text("What is 2+2? Reply with just the number.")),
             ],
             maxTokens: 100
         )
 
         // Return the result from the LLM
         switch result.content {
-        case .text(let text, _, _):
-            return "LLM response: \(text)"
-        case .image:
-            return "LLM responded with an image"
-        case .audio:
-            return "LLM responded with audio"
-        case .toolUse, .toolResult:
-            return "LLM responded with tool content"
+            case let .text(text, _, _):
+                return "LLM response: \(text)"
+            case .image:
+                return "LLM responded with an image"
+            case .audio:
+                return "LLM responded with audio"
+            case .toolUse, .toolResult:
+                return "LLM responded with tool content"
         }
     }
 }
@@ -500,7 +500,7 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
         description: "A prompt with arguments",
         arguments: [
             Prompt.Argument(name: "arg1", description: "First test argument", required: true),
-            Prompt.Argument(name: "arg2", description: "Second test argument", required: true)
+            Prompt.Argument(name: "arg2", description: "Second test argument", required: true),
         ]
     ) { arguments, _ in
         let arg1 = arguments?["arg1"] ?? ""

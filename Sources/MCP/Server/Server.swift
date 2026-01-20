@@ -718,22 +718,22 @@ public actor Server {
         ) {
             _yield = { result in
                 switch result {
-                case .success(let value):
-                    if let typedValue = value as? T {
-                        continuation.yield(typedValue)
-                        continuation.finish()
-                    } else if let value = value as? Value,
-                        let data = try? JSONEncoder().encode(value),
-                        let decoded = try? JSONDecoder().decode(T.self, from: data)
-                    {
-                        continuation.yield(decoded)
-                        continuation.finish()
-                    } else {
-                        continuation.finish(
-                            throwing: MCPError.internalError("Type mismatch in response"))
-                    }
-                case .failure(let error):
-                    continuation.finish(throwing: error)
+                    case let .success(value):
+                        if let typedValue = value as? T {
+                            continuation.yield(typedValue)
+                            continuation.finish()
+                        } else if let value = value as? Value,
+                                  let data = try? JSONEncoder().encode(value),
+                                  let decoded = try? JSONDecoder().decode(T.self, from: data)
+                        {
+                            continuation.yield(decoded)
+                            continuation.finish()
+                        } else {
+                            continuation.finish(
+                                throwing: MCPError.internalError("Type mismatch in response"))
+                        }
+                    case let .failure(error):
+                        continuation.finish(throwing: error)
                 }
             }
             _finish = {
@@ -763,11 +763,11 @@ public actor Server {
         init(continuation: AsyncThrowingStream<Data, Swift.Error>.Continuation) {
             _yield = { result in
                 switch result {
-                case .success(let data):
-                    continuation.yield(data)
-                    continuation.finish()
-                case .failure(let error):
-                    continuation.finish(throwing: error)
+                    case let .success(data):
+                        continuation.yield(data)
+                        continuation.finish()
+                    case let .failure(error):
+                        continuation.finish(throwing: error)
                 }
             }
             _finish = {
@@ -894,7 +894,7 @@ public actor Server {
         configuration: Configuration = .default,
         validator: (any JSONSchemaValidator)? = nil
     ) {
-        self.serverInfo = Server.Info(
+        serverInfo = Server.Info(
             name: name,
             version: version,
             title: title,
@@ -916,19 +916,20 @@ public actor Server {
         transport: any Transport,
         initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)? = nil
     ) async throws {
-        self.connection = transport
+        connection = transport
         registerDefaultHandlers(initializeHook: initializeHook)
         try await transport.connect()
 
         await logger?.debug(
-            "Server started", metadata: ["name": "\(name)", "version": "\(version)"])
+            "Server started", metadata: ["name": "\(name)", "version": "\(version)"]
+        )
 
         // Start message handling loop
         task = Task {
             do {
                 let stream = await transport.receive()
                 for try await transportMessage in stream {
-                    if Task.isCancelled { break }  // Check cancellation inside loop
+                    if Task.isCancelled { break } // Check cancellation inside loop
 
                     // Extract the raw data and optional context from the transport message
                     let data = transportMessage.data
@@ -945,10 +946,11 @@ public actor Server {
                             Task { [weak self] in
                                 guard let self else { return }
                                 do {
-                                    try await self.handleBatch(
-                                        batch, messageContext: messageContext)
+                                    try await handleBatch(
+                                        batch, messageContext: messageContext
+                                    )
                                 } catch {
-                                    await self.logger?.error(
+                                    await logger?.error(
                                         "Error handling batch",
                                         metadata: ["error": "\(error)"]
                                     )
@@ -970,12 +972,13 @@ public actor Server {
                                     Task { await self.removeInFlightRequest(requestId) }
                                 }
                                 do {
-                                    _ = try await self.handleRequest(
-                                        request, sendResponse: true, messageContext: messageContext)
+                                    _ = try await handleRequest(
+                                        request, sendResponse: true, messageContext: messageContext
+                                    )
                                 } catch {
                                     // handleRequest already sends error responses, so this
                                     // only catches errors from send() itself
-                                    await self.logger?.error(
+                                    await logger?.error(
                                         "Error sending response",
                                         metadata: [
                                             "error": "\(error)", "requestId": "\(request.id)",
@@ -989,7 +992,8 @@ public actor Server {
                         } else {
                             // Try to extract request ID from raw JSON if possible
                             if let json = try? JSONDecoder().decode(
-                                [String: Value].self, from: data),
+                                [String: Value].self, from: data
+                            ),
                                 let idValue = json["id"]
                             {
                                 if let strValue = idValue.stringValue {
@@ -1004,7 +1008,8 @@ public actor Server {
                         // Note: EAGAIN handling is not needed here - the transport layer
                         // handles it internally. Message handling code won't throw EAGAIN.
                         await logger?.error(
-                            "Error processing message", metadata: ["error": "\(error)"])
+                            "Error processing message", metadata: ["error": "\(error)"]
+                        )
                         // Sanitize non-MCP errors to avoid leaking internal details to clients
                         let response = AnyMethod.response(
                             id: requestID ?? .random,
@@ -1016,7 +1021,8 @@ public actor Server {
                 }
             } catch {
                 await logger?.error(
-                    "Fatal error in message handling loop", metadata: ["error": "\(error)"])
+                    "Fatal error in message handling loop", metadata: ["error": "\(error)"]
+                )
             }
             await logger?.debug("Server finished", metadata: [:])
         }
@@ -1057,7 +1063,7 @@ public actor Server {
     ///   - type: The method type to handle
     ///   - handler: The handler function receiving parameters and context
     public func withRequestHandler<M: Method>(
-        _ type: M.Type,
+        _: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
     ) {
         methodHandlers[M.name] = TypedRequestHandler {
@@ -1075,7 +1081,7 @@ public actor Server {
     @available(
         *, deprecated,
         message:
-            "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
+        "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
     )
     public func withRequestHandler<M: Method>(
         _ type: M.Type,
@@ -1108,7 +1114,7 @@ public actor Server {
 
     /// Register a notification handler.
     public func onNotification<N: Notification>(
-        _ type: N.Type,
+        _: N.Type,
         handler: @escaping @Sendable (Message<N>) async throws -> Void
     ) {
         notificationHandlers[N.name, default: []].append(TypedNotificationHandler(handler))
@@ -1136,7 +1142,7 @@ public actor Server {
                 throw MCPError.internalError("Server was deallocated")
             }
 
-            guard await !self.isInitialized else {
+            guard await !isInitialized else {
                 throw MCPError.invalidRequest("Server is already initialized")
             }
 
@@ -1151,22 +1157,22 @@ public actor Server {
                 clientRequestedVersion: clientRequestedVersion)
 
             // Set initial state with the negotiated protocol version
-            await self.setInitialState(
+            await setInitialState(
                 clientInfo: params.clientInfo,
                 clientCapabilities: params.capabilities,
                 protocolVersion: negotiatedProtocolVersion
             )
 
-            return Initialize.Result(
+            return await Initialize.Result(
                 protocolVersion: negotiatedProtocolVersion,
-                capabilities: await self.capabilities,
-                serverInfo: self.serverInfo,
-                instructions: self.instructions
+                capabilities: capabilities,
+                serverInfo: serverInfo,
+                instructions: instructions
             )
         }
 
         // Ping
-        withRequestHandler(Ping.self) { _, _ in return Empty() }
+        withRequestHandler(Ping.self) { _, _ in Empty() }
 
         // CancelledNotification: Handle cancellation of in-flight requests
         onNotification(CancelledNotification.self) { [weak self] message in
@@ -1176,7 +1182,7 @@ public actor Server {
                 // If not provided, we cannot cancel a specific request.
                 return
             }
-            await self.cancelInFlightRequest(requestId, reason: message.params.reason)
+            await cancelInFlightRequest(requestId, reason: message.params.reason)
         }
 
         // Logging: Set minimum log level (only if logging capability is enabled)
@@ -1185,7 +1191,7 @@ public actor Server {
                 guard let self else {
                     throw MCPError.internalError("Server was deallocated")
                 }
-                await self.setLoggingLevel(params.level, forSession: context.sessionId)
+                await setLoggingLevel(params.level, forSession: context.sessionId)
                 return Empty()
             }
         }
@@ -1234,7 +1240,7 @@ public actor Server {
         self.clientInfo = clientInfo
         self.clientCapabilities = clientCapabilities
         self.protocolVersion = protocolVersion
-        self.isInitialized = true
+        isInitialized = true
     }
 }
 
@@ -1269,18 +1275,18 @@ extension Server.Batch.Item: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // Check if it's a request (has id) or notification (no id)
         if container.contains(.id) {
-            self = .request(try Request<AnyMethod>(from: decoder))
+            self = try .request(Request<AnyMethod>(from: decoder))
         } else {
-            self = .notification(try Message<AnyNotification>(from: decoder))
+            self = try .notification(Message<AnyNotification>(from: decoder))
         }
     }
 
     func encode(to encoder: Encoder) throws {
         switch self {
-        case .request(let request):
-            try request.encode(to: encoder)
-        case .notification(let notification):
-            try notification.encode(to: encoder)
+            case let .request(request):
+                try request.encode(to: encoder)
+            case let .notification(notification):
+                try notification.encode(to: encoder)
         }
     }
 }

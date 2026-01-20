@@ -30,7 +30,7 @@ public struct HandlerContext: Sendable {
     ///   - handlerContext: The underlying request handler context.
     ///   - progressToken: Optional progress token from the request metadata.
     public init(handlerContext: Server.RequestHandlerContext, progressToken: ProgressToken? = nil) {
-        self.requestContext = handlerContext
+        requestContext = handlerContext
         self.progressToken = progressToken
     }
 
@@ -259,4 +259,3 @@ public struct HandlerContext: Sendable {
         return try JSONDecoder().decode(CreateSamplingMessage.Result.self, from: responseData)
     }
 }
-

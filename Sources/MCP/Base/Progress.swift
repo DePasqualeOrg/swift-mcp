@@ -44,9 +44,10 @@ public struct RequestMeta: Hashable, Codable, Sendable {
     /// - Note: For the full `RelatedTaskMetadata` struct, use the experimental tasks API.
     public var relatedTaskId: String? {
         guard let metaValue = additionalFields?["io.modelcontextprotocol/related-task"],
-              case .object(let dict) = metaValue,
+              case let .object(dict) = metaValue,
               let taskIdValue = dict["taskId"],
-              let taskId = taskIdValue.stringValue else {
+              let taskId = taskIdValue.stringValue
+        else {
             return nil
         }
         return taskId
@@ -64,8 +65,8 @@ public struct RequestMeta: Hashable, Codable, Sendable {
             self.stringValue = stringValue
         }
 
-        init?(intValue: Int) {
-            return nil
+        init?(intValue _: Int) {
+            nil
         }
     }
 
@@ -132,10 +133,10 @@ extension ProgressToken: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
-        case .string(let value):
-            try container.encode(value)
-        case .integer(let value):
-            try container.encode(value)
+            case let .string(value):
+                try container.encode(value)
+            case let .integer(value):
+                try container.encode(value)
         }
     }
 }

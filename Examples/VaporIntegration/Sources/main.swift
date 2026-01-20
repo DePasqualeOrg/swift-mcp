@@ -47,7 +47,7 @@ struct Echo {
     @Parameter(description: "The message to echo")
     var message: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         message
     }
 }
@@ -64,7 +64,7 @@ struct Add {
     @Parameter(description: "Second number")
     var b: Double
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Result: \(a + b)"
     }
 }
@@ -209,7 +209,7 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
 /// Handle GET /mcp requests (SSE stream for server-initiated notifications)
 func handleGet(_ req: Vapor.Request) async throws -> Vapor.Response {
     guard let sessionId = req.headers.first(name: HTTPHeader.sessionId),
-        let session = await sessionManager.session(forId: sessionId)
+          let session = await sessionManager.session(forId: sessionId)
     else {
         throw Abort(.badRequest, reason: "Invalid or missing session ID")
     }
@@ -227,7 +227,7 @@ func handleGet(_ req: Vapor.Request) async throws -> Vapor.Response {
 /// Handle DELETE /mcp requests (session termination)
 func handleDelete(_ req: Vapor.Request) async throws -> Vapor.Response {
     guard let sessionId = req.headers.first(name: HTTPHeader.sessionId),
-        let session = await sessionManager.session(forId: sessionId)
+          let session = await sessionManager.session(forId: sessionId)
     else {
         throw Abort(.notFound, reason: "Session not found")
     }

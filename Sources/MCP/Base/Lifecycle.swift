@@ -35,13 +35,13 @@ public enum Initialize: Method {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             protocolVersion =
                 try container.decodeIfPresent(String.self, forKey: .protocolVersion)
-                ?? Version.latest
+                    ?? Version.latest
             capabilities =
                 try container.decodeIfPresent(Client.Capabilities.self, forKey: .capabilities)
-                ?? .init()
+                    ?? .init()
             clientInfo =
                 try container.decodeIfPresent(Client.Info.self, forKey: .clientInfo)
-                ?? .init(name: "unknown", version: "0.0.0")
+                    ?? .init(name: "unknown", version: "0.0.0")
             _meta = try container.decodeIfPresent(RequestMeta.self, forKey: ._meta)
         }
     }

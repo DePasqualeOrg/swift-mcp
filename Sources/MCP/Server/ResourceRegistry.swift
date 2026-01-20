@@ -25,7 +25,7 @@ public struct TextResource: ResourceProvider {
         description: String? = nil,
         mimeType: String = "text/plain"
     ) {
-        self.definition = Resource(
+        definition = Resource(
             name: name,
             uri: uri,
             description: description,
@@ -51,7 +51,7 @@ public struct BinaryResource: ResourceProvider {
         description: String? = nil,
         mimeType: String = "application/octet-stream"
     ) {
-        self.definition = Resource(
+        definition = Resource(
             name: name,
             uri: uri,
             description: description,
@@ -77,13 +77,13 @@ public struct FunctionResource: ResourceProvider {
         mimeType: String? = nil,
         read: @escaping @Sendable () async throws -> Resource.Contents
     ) {
-        self.definition = Resource(
+        definition = Resource(
             name: name,
             uri: uri,
             description: description,
             mimeType: mimeType
         )
-        self.readHandler = read
+        readHandler = read
     }
 
     public func read() async throws -> Resource.Contents {
@@ -115,7 +115,7 @@ public struct FileResource: ResourceProvider {
         let resolvedName = name ?? URL(fileURLWithPath: path).lastPathComponent
         let resolvedMimeType = mimeType ?? Self.inferMimeType(from: path)
 
-        self.definition = Resource(
+        definition = Resource(
             name: resolvedName,
             uri: resolvedUri,
             description: description,
@@ -142,33 +142,33 @@ public struct FileResource: ResourceProvider {
     private static func inferMimeType(from path: String) -> String {
         let ext = URL(fileURLWithPath: path).pathExtension.lowercased()
         switch ext {
-        case "json": return "application/json"
-        case "xml": return "application/xml"
-        case "html", "htm": return "text/html"
-        case "css": return "text/css"
-        case "js": return "application/javascript"
-        case "txt": return "text/plain"
-        case "md": return "text/markdown"
-        case "yaml", "yml": return "application/yaml"
-        case "png": return "image/png"
-        case "jpg", "jpeg": return "image/jpeg"
-        case "gif": return "image/gif"
-        case "pdf": return "application/pdf"
-        case "swift": return "text/x-swift"
-        case "py": return "text/x-python"
-        case "ts": return "text/typescript"
-        case "tsx": return "text/tsx"
-        case "jsx": return "text/jsx"
-        default: return "application/octet-stream"
+            case "json": return "application/json"
+            case "xml": return "application/xml"
+            case "html", "htm": return "text/html"
+            case "css": return "text/css"
+            case "js": return "application/javascript"
+            case "txt": return "text/plain"
+            case "md": return "text/markdown"
+            case "yaml", "yml": return "application/yaml"
+            case "png": return "image/png"
+            case "jpg", "jpeg": return "image/jpeg"
+            case "gif": return "image/gif"
+            case "pdf": return "application/pdf"
+            case "swift": return "text/x-swift"
+            case "py": return "text/x-python"
+            case "ts": return "text/typescript"
+            case "tsx": return "text/tsx"
+            case "jsx": return "text/jsx"
+            default: return "application/octet-stream"
         }
     }
 
     private static func isTextMimeType(_ mimeType: String) -> Bool {
         mimeType.hasPrefix("text/") ||
-        mimeType == "application/json" ||
-        mimeType == "application/xml" ||
-        mimeType == "application/javascript" ||
-        mimeType == "application/yaml"
+            mimeType == "application/json" ||
+            mimeType == "application/xml" ||
+            mimeType == "application/javascript" ||
+            mimeType == "application/yaml"
     }
 }
 
@@ -238,7 +238,8 @@ public struct DirectoryResource: Sendable {
         for case let fileURL as URL in enumerator {
             // Check if it's a regular file
             guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey]),
-                  values.isRegularFile == true else {
+                  values.isRegularFile == true
+            else {
                 continue
             }
 
@@ -307,14 +308,14 @@ public struct ManagedResourceTemplate: Sendable {
         read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents
     ) {
         self.uriTemplate = uriTemplate
-        self.definition = Resource.Template(
+        definition = Resource.Template(
             uriTemplate: uriTemplate,
             name: name,
             description: description,
             mimeType: mimeType
         )
-        self.readHandler = read
-        self.listHandler = list
+        readHandler = read
+        listHandler = list
     }
 
     /// Attempts to match a URI against this template.
@@ -334,7 +335,8 @@ public struct ManagedResourceTemplate: Sendable {
               let match = regex.firstMatch(
                   in: uri,
                   range: NSRange(uri.startIndex..., in: uri)
-              ) else {
+              )
+        else {
             return nil
         }
 
@@ -562,45 +564,45 @@ public actor ResourceRegistry {
 
     // MARK: - Resource Management (Internal)
 
-    internal func isResourceEnabled(_ uri: String) -> Bool {
+    func isResourceEnabled(_ uri: String) -> Bool {
         resources[uri]?.enabled ?? false
     }
 
-    internal func resourceDefinition(for uri: String) -> Resource? {
+    func resourceDefinition(for uri: String) -> Resource? {
         resources[uri]?.provider.definition
     }
 
-    internal func enableResource(_ uri: String) {
+    func enableResource(_ uri: String) {
         resources[uri]?.enabled = true
     }
 
-    internal func disableResource(_ uri: String) {
+    func disableResource(_ uri: String) {
         resources[uri]?.enabled = false
     }
 
-    internal func removeResource(_ uri: String) {
+    func removeResource(_ uri: String) {
         resources.removeValue(forKey: uri)
     }
 
     // MARK: - Template Management (Internal)
 
-    internal func isTemplateEnabled(_ uriTemplate: String) -> Bool {
+    func isTemplateEnabled(_ uriTemplate: String) -> Bool {
         templates[uriTemplate]?.enabled ?? false
     }
 
-    internal func templateDefinition(for uriTemplate: String) -> Resource.Template? {
+    func templateDefinition(for uriTemplate: String) -> Resource.Template? {
         templates[uriTemplate]?.template.definition
     }
 
-    internal func enableTemplate(_ uriTemplate: String) {
+    func enableTemplate(_ uriTemplate: String) {
         templates[uriTemplate]?.enabled = true
     }
 
-    internal func disableTemplate(_ uriTemplate: String) {
+    func disableTemplate(_ uriTemplate: String) {
         templates[uriTemplate]?.enabled = false
     }
 
-    internal func removeTemplate(_ uriTemplate: String) {
+    func removeTemplate(_ uriTemplate: String) {
         templates.removeValue(forKey: uriTemplate)
     }
 }
@@ -618,7 +620,7 @@ public struct RegisteredResource: Sendable {
     /// Optional callback to notify when the resource list changes.
     private let onListChanged: (@Sendable () async -> Void)?
 
-    internal init(uri: String, registry: ResourceRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
+    init(uri: String, registry: ResourceRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
         self.uri = uri
         self.registry = registry
         self.onListChanged = onListChanged
@@ -664,7 +666,7 @@ public struct RegisteredResourceTemplate: Sendable {
     /// Optional callback to notify when the resource list changes.
     private let onListChanged: (@Sendable () async -> Void)?
 
-    internal init(uriTemplate: String, registry: ResourceRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
+    init(uriTemplate: String, registry: ResourceRegistry, onListChanged: (@Sendable () async -> Void)? = nil) {
         self.uriTemplate = uriTemplate
         self.registry = registry
         self.onListChanged = onListChanged

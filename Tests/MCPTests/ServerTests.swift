@@ -32,7 +32,7 @@ struct ServerTests {
             ))
 
         // Start the server
-        let server: Server = Server(
+        let server = Server(
             name: "TestServer",
             version: "1.0"
         )
@@ -68,7 +68,7 @@ struct ServerTests {
         let server = Server(name: "TestServer", version: "1.0")
 
         // Start with the hook directly
-        try await server.start(transport: transport) { clientInfo, capabilities in
+        try await server.start(transport: transport) { clientInfo, _ in
             #expect(clientInfo.name == "TestClient")
             #expect(clientInfo.version == "1.0")
             await state.setHookCalled()
@@ -170,11 +170,11 @@ struct ServerTests {
 
         // Create a batch with multiple requests
         let batchJSON = """
-            [
-                {"jsonrpc":"2.0","id":1,"method":"ping","params":{}},
-                {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","id":1,"method":"ping","params":{}},
+            {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
+        ]
+        """
         let batch = try JSONDecoder().decode([AnyRequest].self, from: batchJSON.data(using: .utf8)!)
 
         // Send the batch request
@@ -249,6 +249,7 @@ struct ServerTests {
     }
 
     // MARK: - Ping Before Initialization Tests
+
     // Based on Python SDK: test_ping_request_before_initialization
 
     @Test("Ping request allowed before initialization")
@@ -262,8 +263,8 @@ struct ServerTests {
 
         // Send ping request BEFORE sending initialize request
         let pingRequest = """
-            {"jsonrpc":"2.0","method":"ping","id":42}
-            """
+        {"jsonrpc":"2.0","method":"ping","id":42}
+        """
         await transport.queueRaw(pingRequest)
 
         // Wait for ping response
@@ -286,6 +287,7 @@ struct ServerTests {
     }
 
     // MARK: - Requests Before Initialization Behavior (Server level)
+
     //
     // MCP spec says clients "SHOULD NOT" send requests before initialization.
     // Swift SDK aligns with Python SDK behavior: blocks at Server level for all transports.
@@ -324,8 +326,8 @@ struct ServerTests {
 
         // Send prompts/list request BEFORE initialize
         let promptsRequest = """
-            {"jsonrpc":"2.0","method":"prompts/list","id":1}
-            """
+        {"jsonrpc":"2.0","method":"prompts/list","id":1}
+        """
         await transport.queueRaw(promptsRequest)
 
         // Wait for response
@@ -370,8 +372,8 @@ struct ServerTests {
 
         // Send prompts/list request BEFORE initialize
         let promptsRequest = """
-            {"jsonrpc":"2.0","method":"prompts/list","id":1}
-            """
+        {"jsonrpc":"2.0","method":"prompts/list","id":1}
+        """
         await transport.queueRaw(promptsRequest)
 
         // Wait for response
@@ -393,6 +395,7 @@ struct ServerTests {
     }
 
     // MARK: - Protocol Version Negotiation Tests
+
     // Based on Python SDK: test_server_session_initialize_with_older_protocol_version
 
     @Test("Server responds with client's requested protocol version when supported")

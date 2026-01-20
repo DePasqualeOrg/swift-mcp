@@ -18,7 +18,6 @@ import Testing
 
 @Suite("validateTaskMode Tests")
 struct ValidateTaskModeTests {
-
     // MARK: - Required Mode Tests
 
     @Test("REQUIRED mode with task request is valid")
@@ -119,7 +118,6 @@ struct ValidateTaskModeTests {
 
 @Suite("validateTaskMode for Tool Tests")
 struct ValidateTaskModeForToolTests {
-
     @Test("Tool with execution.taskSupport=required rejects non-task request")
     func testToolWithRequiredRejectsNonTask() throws {
         // Python: test_validate_for_tool_with_execution_required
@@ -232,7 +230,6 @@ struct ValidateTaskModeForToolTests {
 
 @Suite("canUseToolWithTaskMode Tests")
 struct CanUseToolWithTaskModeTests {
-
     @Test("REQUIRED mode with client task support returns true")
     func testRequiredWithTaskSupport() {
         // Python: test_can_use_tool_required_with_task_support
@@ -291,7 +288,6 @@ struct CanUseToolWithTaskModeTests {
 
 @Suite("Task Request Detection Tests")
 struct TaskRequestDetectionTests {
-
     /// These tests verify the pattern for detecting if a request is task-augmented,
     /// matching Python's `Experimental.is_task` property.
 
@@ -340,7 +336,6 @@ struct TaskRequestDetectionTests {
 
 @Suite("Client Task Capability Tests")
 struct ClientTaskCapabilityTests {
-
     /// These tests verify the pattern for detecting if a client supports tasks,
     /// matching Python's `Experimental.client_supports_tasks` property.
 
@@ -384,7 +379,6 @@ struct ClientTaskCapabilityTests {
 
 @Suite("Task Mode Validation Integration Tests")
 struct TaskModeValidationIntegrationTests {
-
     @Test("Tool invocation validation flow for required task tool")
     func testToolInvocationValidationFlowRequired() throws {
         // Simulate a tool that requires task-augmented invocation
@@ -491,11 +485,11 @@ struct TaskModeValidationIntegrationTests {
         } catch let error as MCPError {
             // MCPError.methodNotFound should be used
             switch error {
-            case .methodNotFound:
-                // Correct error type
-                break
-            default:
-                Issue.record("Expected methodNotFound error, got \(error)")
+                case .methodNotFound:
+                    // Correct error type
+                    break
+                default:
+                    Issue.record("Expected methodNotFound error, got \(error)")
             }
         }
 
@@ -504,11 +498,11 @@ struct TaskModeValidationIntegrationTests {
             Issue.record("Expected error")
         } catch let error as MCPError {
             switch error {
-            case .methodNotFound:
-                // Correct error type
-                break
-            default:
-                Issue.record("Expected methodNotFound error, got \(error)")
+                case .methodNotFound:
+                    // Correct error type
+                    break
+                default:
+                    Issue.record("Expected methodNotFound error, got \(error)")
             }
         }
     }

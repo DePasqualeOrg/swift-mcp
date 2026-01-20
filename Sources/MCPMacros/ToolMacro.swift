@@ -16,13 +16,12 @@ import SwiftSyntaxMacros
 /// - `init()` - Empty initializer
 /// - `func perform(context:)` - Bridging method (only if you write `perform()` without context)
 public struct ToolMacro: MemberMacro, ExtensionMacro {
-
     // MARK: - MemberMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
-        conformingTo protocols: [TypeSyntax],
+        conformingTo _: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         // Ensure we're applied to a struct
@@ -40,16 +39,16 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         // Generate init()
         members.append("""
-            public init() {}
-            """)
+        public init() {}
+        """)
 
         // Generate bridging perform(context:) if user wrote perform() without context
         if !toolInfo.hasContextParameter {
             members.append("""
-                public func perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
-                    try await perform()
-                }
-                """)
+            public func perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
+                try await perform()
+            }
+            """)
         }
 
         // Generate toolDefinition
@@ -69,11 +68,11 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     // MARK: - ExtensionMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
+        conformingTo _: [TypeSyntax],
+        in _: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         // Validate before adding conformance
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -89,7 +88,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         for member in structDecl.memberBlock.members {
             if let varDecl = member.decl.as(VariableDeclSyntax.self),
-               varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 for binding in varDecl.bindings {
                     if let identifier = binding.pattern.as(IdentifierPatternSyntax.self) {
                         let propName = identifier.identifier.text
@@ -98,13 +98,15 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                             // Extract name value for validation
                             if let initializer = binding.initializer,
                                let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
                                 toolName = segment.content.text
                             }
                         }
                         if propName == "description" { hasDescription = true }
                         if propName == "annotations",
-                           let initializer = binding.initializer {
+                           let initializer = binding.initializer
+                        {
                             annotations = extractAnnotationNames(from: initializer.value)
                         }
                     }
@@ -113,11 +115,13 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
             // Check for @Parameter properties with non-literal defaults
             if let varDecl = member.decl.as(VariableDeclSyntax.self),
-               !varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               !varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 if hasParameterAttribute(varDecl) {
                     for binding in varDecl.bindings {
                         if let initializer = binding.initializer,
-                           !isLiteralExpression(initializer.value) {
+                           !isLiteralExpression(initializer.value)
+                        {
                             // Non-literal default - don't add conformance
                             return []
                         }
@@ -127,7 +131,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         }
 
         // Don't add conformance if basic validation fails
-        guard hasName && hasDescription else {
+        guard hasName, hasDescription else {
             return []
         }
 
@@ -147,8 +151,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         // Add ToolSpec and Sendable conformance
         let extensionDecl: DeclSyntax = """
-            extension \(type): ToolSpec, Sendable {}
-            """
+        extension \(type): ToolSpec, Sendable {}
+        """
 
         guard let ext = extensionDecl.as(ExtensionDeclSyntax.self) else {
             return []
@@ -164,9 +168,9 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var description: String
         var parameters: [ParameterInfo]
         var outputType: String
-        var annotations: [String]  // Annotation case names for validation
+        var annotations: [String] // Annotation case names for validation
         var strictSchema: Bool
-        var hasContextParameter: Bool  // Whether perform() takes a context parameter
+        var hasContextParameter: Bool // Whether perform() takes a context parameter
     }
 
     private struct ParameterInfo {
@@ -176,7 +180,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var isOptional: Bool
         var hasDefault: Bool
         var defaultValue: String?
-        var defaultExpr: ExprSyntax?  // For validation
+        var defaultExpr: ExprSyntax? // For validation
         var description: String?
         var minLength: String?
         var maxLength: String?
@@ -192,19 +196,20 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var nameSyntax: SyntaxProtocol?
         var description: String?
         var parameters: [ParameterInfo] = []
-        var outputType: String = "String"
+        var outputType = "String"
         var annotations: [String] = []
         var annotationsSyntax: SyntaxProtocol?
-        var strictSchema: Bool = false
-        var hasContextParameter: Bool = true  // Default to true for backwards compatibility
-        var hasPerformMethod: Bool = false
+        var strictSchema = false
+        var hasContextParameter = true // Default to true for backwards compatibility
+        var hasPerformMethod = false
 
         for member in structDecl.memberBlock.members {
             let decl = member.decl
 
             // Look for static let name/description/annotations
             if let varDecl = decl.as(VariableDeclSyntax.self),
-               varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 for binding in varDecl.bindings {
                     guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
                         continue
@@ -215,7 +220,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     if propertyName == "name",
                        let initializer = binding.initializer,
                        let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                    {
                         name = segment.content.text
                         nameSyntax = stringLiteral
                     }
@@ -223,13 +229,15 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     if propertyName == "description",
                        let initializer = binding.initializer,
                        let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                    {
                         description = segment.content.text
                     }
 
                     // Extract annotations for validation
                     if propertyName == "annotations",
-                       let initializer = binding.initializer {
+                       let initializer = binding.initializer
+                    {
                         annotationsSyntax = initializer.value
                         annotations = extractAnnotationNames(from: initializer.value)
                     }
@@ -237,7 +245,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     // Extract strictSchema flag
                     if propertyName == "strictSchema",
                        let initializer = binding.initializer,
-                       let boolLiteral = initializer.value.as(BooleanLiteralExprSyntax.self) {
+                       let boolLiteral = initializer.value.as(BooleanLiteralExprSyntax.self)
+                    {
                         strictSchema = boolLiteral.literal.text == "true"
                     }
                 }
@@ -245,7 +254,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
             // Look for @Parameter properties
             if let varDecl = decl.as(VariableDeclSyntax.self),
-               !varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               !varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 if hasParameterAttribute(varDecl) {
                     for binding in varDecl.bindings {
                         if let paramInfo = try extractParameterInfo(from: varDecl, binding: binding, context: context) {
@@ -257,7 +267,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
             // Look for perform method to get output type and check for context parameter
             if let funcDecl = decl.as(FunctionDeclSyntax.self),
-               funcDecl.name.text == "perform" {
+               funcDecl.name.text == "perform"
+            {
                 hasPerformMethod = true
                 if let returnClause = funcDecl.signature.returnClause {
                     outputType = returnClause.type.trimmedDescription
@@ -289,7 +300,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         // Warn about tool name style issues
         if let styleWarning = toolNameStyleWarning(toolName),
-           let syntax = nameSyntax {
+           let syntax = nameSyntax
+        {
             context.diagnose(Diagnostic(
                 node: Syntax(syntax),
                 message: ToolMacroDiagnostic.warning(styleWarning)
@@ -349,7 +361,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         }
 
         // Warn about redundant combinations
-        if annotations.contains("readOnly") && annotations.contains("idempotent") {
+        if annotations.contains("readOnly"), annotations.contains("idempotent") {
             if let syntax {
                 context.diagnose(Diagnostic(
                     node: Syntax(syntax),
@@ -364,7 +376,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     private static func extractParameterInfo(
         from varDecl: VariableDeclSyntax,
         binding: PatternBindingSyntax,
-        context: some MacroExpansionContext
+        context _: some MacroExpansionContext
     ) throws -> ParameterInfo? {
         guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
             return nil
@@ -412,34 +424,36 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         // Extract @Parameter arguments
         for attr in varDecl.attributes {
-            if case .attribute(let attrSyntax) = attr,
+            if case let .attribute(attrSyntax) = attr,
                isParameterAttribute(attr),
-               let arguments = attrSyntax.arguments?.as(LabeledExprListSyntax.self) {
-
+               let arguments = attrSyntax.arguments?.as(LabeledExprListSyntax.self)
+            {
                 for arg in arguments {
                     let label = arg.label?.text
 
                     switch label {
-                    case "key":
-                        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-                           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
-                            jsonKey = segment.content.text
-                        }
-                    case "description":
-                        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-                           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
-                            paramDescription = segment.content.text
-                        }
-                    case "minLength":
-                        minLength = arg.expression.trimmedDescription
-                    case "maxLength":
-                        maxLength = arg.expression.trimmedDescription
-                    case "minimum":
-                        minimum = arg.expression.trimmedDescription
-                    case "maximum":
-                        maximum = arg.expression.trimmedDescription
-                    default:
-                        break
+                        case "key":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                jsonKey = segment.content.text
+                            }
+                        case "description":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                paramDescription = segment.content.text
+                            }
+                        case "minLength":
+                            minLength = arg.expression.trimmedDescription
+                        case "maxLength":
+                            maxLength = arg.expression.trimmedDescription
+                        case "minimum":
+                            minimum = arg.expression.trimmedDescription
+                        case "maximum":
+                            maximum = arg.expression.trimmedDescription
+                        default:
+                            break
                     }
                 }
             }
@@ -464,7 +478,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     // MARK: - Code Generation
 
     private static func generateToolDefinition(
-        structName: String,
+        structName _: String,
         toolInfo: ToolInfo
     ) -> DeclSyntax {
         // Generate properties for each parameter
@@ -529,7 +543,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var schemaEntries = [
             "\"type\": .string(\"object\")",
             "\"properties\": .object(\(propertiesLiteral))",
-            "\"required\": .array([\(requiredStr)])"
+            "\"required\": .array([\(requiredStr)])",
         ]
 
         // Add additionalProperties: false if strictSchema is enabled
@@ -540,28 +554,28 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         let schemaLiteral = schemaEntries.joined(separator: ",\n                    ")
 
         return """
-            public static var toolDefinition: MCP.Tool {
-                MCP.Tool(
-                    name: name,
-                    description: description,
-                    inputSchema: .object([
-                        \(raw: schemaLiteral)
-                    ]),
-                    outputSchema: outputSchema(for: Output.self),
-                    annotations: AnnotationOption.buildAnnotations(from: annotations)
-                )
-            }
-            """
+        public static var toolDefinition: MCP.Tool {
+            MCP.Tool(
+                name: name,
+                description: description,
+                inputSchema: .object([
+                    \(raw: schemaLiteral)
+                ]),
+                outputSchema: outputSchema(for: Output.self),
+                annotations: AnnotationOption.buildAnnotations(from: annotations)
+            )
+        }
+        """
     }
 
     private static func generateParseMethod(toolInfo: ToolInfo) -> DeclSyntax {
         // For tools with no parameters, generate a simple parse method
         if toolInfo.parameters.isEmpty {
             return """
-                public static func parse(from arguments: [String: Value]?) throws -> Self {
-                    Self()
-                }
-                """
+            public static func parse(from arguments: [String: Value]?) throws -> Self {
+                Self()
+            }
+            """
         }
 
         var parseStatements: [String] = []
@@ -593,13 +607,13 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         let statements = parseStatements.joined(separator: "\n    ")
 
         return """
-            public static func parse(from arguments: [String: Value]?) throws -> Self {
-                var _instance = Self()
-                let _args = arguments ?? [:]
-                \(raw: statements)
-                return _instance
-            }
-            """
+        public static func parse(from arguments: [String: Value]?) throws -> Self {
+            var _instance = Self()
+            let _args = arguments ?? [:]
+            \(raw: statements)
+            return _instance
+        }
+        """
     }
 
     // MARK: - Type Mapping Helpers
@@ -611,14 +625,14 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var bracketDepth = 0
         for char in inner {
             switch char {
-            case "[": bracketDepth += 1
-            case "]": bracketDepth -= 1
-            case ":":
-                // Only count as dictionary if colon is at top level
-                if bracketDepth == 0 {
-                    return true
-                }
-            default: break
+                case "[": bracketDepth += 1
+                case "]": bracketDepth -= 1
+                case ":":
+                    // Only count as dictionary if colon is at top level
+                    if bracketDepth == 0 {
+                        return true
+                    }
+                default: break
             }
         }
         return false
@@ -630,14 +644,14 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var bracketDepth = 0
         for (index, char) in inner.enumerated() {
             switch char {
-            case "[": bracketDepth += 1
-            case "]": bracketDepth -= 1
-            case ":":
-                if bracketDepth == 0 {
-                    let afterColon = inner.index(inner.startIndex, offsetBy: index + 1)
-                    return String(inner[afterColon...]).trimmingCharacters(in: .whitespaces)
-                }
-            default: break
+                case "[": bracketDepth += 1
+                case "]": bracketDepth -= 1
+                case ":":
+                    if bracketDepth == 0 {
+                        let afterColon = inner.index(inner.startIndex, offsetBy: index + 1)
+                        return String(inner[afterColon...]).trimmingCharacters(in: .whitespaces)
+                    }
+                default: break
             }
         }
         return nil
@@ -645,48 +659,48 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     private static func getJSONSchemaType(for swiftType: String) -> String {
         switch swiftType {
-        case "String": return "string"
-        case "Int": return "integer"
-        case "Double": return "number"
-        case "Bool": return "boolean"
-        case "Date": return "string"
-        case "Data": return "string"
-        default:
-            // Check for collection types [T] or [K: V]
-            if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
-                let inner = String(swiftType.dropFirst().dropLast())
-                // Dictionary type [String: T] - check for top-level colon only
-                if isDictionaryType(inner) {
-                    return "object"
+            case "String": return "string"
+            case "Int": return "integer"
+            case "Double": return "number"
+            case "Bool": return "boolean"
+            case "Date": return "string"
+            case "Data": return "string"
+            default:
+                // Check for collection types [T] or [K: V]
+                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
+                    let inner = String(swiftType.dropFirst().dropLast())
+                    // Dictionary type [String: T] - check for top-level colon only
+                    if isDictionaryType(inner) {
+                        return "object"
+                    }
+                    // Array type [T] (including nested arrays like [[String: String]])
+                    return "array"
                 }
-                // Array type [T] (including nested arrays like [[String: String]])
-                return "array"
-            }
-            // Could be an enum or other type - default to string
-            return "string"
+                // Could be an enum or other type - default to string
+                return "string"
         }
     }
 
     private static func getJSONSchemaProperties(for swiftType: String) -> [(String, String)] {
         switch swiftType {
-        case "Date":
-            return [("format", ".string(\"date-time\")")]
-        case "Data":
-            return [("contentEncoding", ".string(\"base64\")")]
-        default:
-            // Check for collection types [T] or [K: V]
-            if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
-                let inner = String(swiftType.dropFirst().dropLast())
-                // Dictionary type [String: T] - check for top-level colon only
-                if let valueType = extractDictionaryValueType(inner) {
-                    let valueSchema = generateSchemaObject(for: valueType)
-                    return [("additionalProperties", valueSchema)]
+            case "Date":
+                return [("format", ".string(\"date-time\")")]
+            case "Data":
+                return [("contentEncoding", ".string(\"base64\")")]
+            default:
+                // Check for collection types [T] or [K: V]
+                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
+                    let inner = String(swiftType.dropFirst().dropLast())
+                    // Dictionary type [String: T] - check for top-level colon only
+                    if let valueType = extractDictionaryValueType(inner) {
+                        let valueSchema = generateSchemaObject(for: valueType)
+                        return [("additionalProperties", valueSchema)]
+                    }
+                    // Array type [T] - use recursive schema generation for nested arrays
+                    let elementSchema = generateSchemaObject(for: inner)
+                    return [("items", elementSchema)]
                 }
-                // Array type [T] - use recursive schema generation for nested arrays
-                let elementSchema = generateSchemaObject(for: inner)
-                return [("items", elementSchema)]
-            }
-            return []
+                return []
         }
     }
 
@@ -697,23 +711,23 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         // Add type-specific properties
         switch swiftType {
-        case "Date":
-            parts.append("\"format\": .string(\"date-time\")")
-        case "Data":
-            parts.append("\"contentEncoding\": .string(\"base64\")")
-        default:
-            if swiftType.hasPrefix("[") && swiftType.hasSuffix("]") {
-                let inner = String(swiftType.dropFirst().dropLast())
-                // Dictionary type [String: T] - check for top-level colon only
-                if let valueType = extractDictionaryValueType(inner) {
-                    let valueSchema = generateSchemaObject(for: valueType)
-                    parts.append("\"additionalProperties\": \(valueSchema)")
-                } else {
-                    // Array [T] (including nested arrays)
-                    let elementSchema = generateSchemaObject(for: inner)
-                    parts.append("\"items\": \(elementSchema)")
+            case "Date":
+                parts.append("\"format\": .string(\"date-time\")")
+            case "Data":
+                parts.append("\"contentEncoding\": .string(\"base64\")")
+            default:
+                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
+                    let inner = String(swiftType.dropFirst().dropLast())
+                    // Dictionary type [String: T] - check for top-level colon only
+                    if let valueType = extractDictionaryValueType(inner) {
+                        let valueSchema = generateSchemaObject(for: valueType)
+                        parts.append("\"additionalProperties\": \(valueSchema)")
+                    } else {
+                        // Array [T] (including nested arrays)
+                        let elementSchema = generateSchemaObject(for: inner)
+                        parts.append("\"items\": \(elementSchema)")
+                    }
                 }
-            }
         }
 
         return ".object([\(parts.joined(separator: ", "))])"
@@ -721,26 +735,26 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     private static func convertToValueLiteral(_ value: String, type: String) -> String {
         switch type {
-        case "String":
-            // Already a string literal
-            return ".string(\(value))"
-        case "Int":
-            return ".int(\(value))"
-        case "Double":
-            return ".double(\(value))"
-        case "Bool":
-            return ".bool(\(value))"
-        default:
-            // Try to infer from value format
-            if value == "true" || value == "false" {
-                return ".bool(\(value))"
-            } else if value.contains(".") {
-                return ".double(\(value))"
-            } else if let _ = Int(value) {
-                return ".int(\(value))"
-            } else {
-                return ".string(\(value))"
-            }
+            case "String":
+                // Already a string literal
+                ".string(\(value))"
+            case "Int":
+                ".int(\(value))"
+            case "Double":
+                ".double(\(value))"
+            case "Bool":
+                ".bool(\(value))"
+            default:
+                // Try to infer from value format
+                if value == "true" || value == "false" {
+                    ".bool(\(value))"
+                } else if value.contains(".") {
+                    ".double(\(value))"
+                } else if let _ = Int(value) {
+                    ".int(\(value))"
+                } else {
+                    ".string(\(value))"
+                }
         }
     }
 }
@@ -758,20 +772,20 @@ enum ToolMacroError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .notAStruct:
-            return "@Tool can only be applied to structs"
-        case .missingName:
-            return "@Tool requires 'static let name: String' property"
-        case .missingDescription:
-            return "@Tool requires 'static let description: String' property"
-        case .missingPerformMethod:
-            return "@Tool requires a 'func perform() async throws' method"
-        case .invalidToolName(let reason):
-            return "Invalid tool name: \(reason)"
-        case .nonLiteralDefaultValue(let param):
-            return "Parameter '\(param)' has a non-literal default value. Only literal values (numbers, strings, booleans) are supported. For complex defaults, make the parameter optional and handle the default in perform()."
-        case .duplicateAnnotation(let annotation):
-            return "Duplicate annotation: \(annotation)"
+            case .notAStruct:
+                "@Tool can only be applied to structs"
+            case .missingName:
+                "@Tool requires 'static let name: String' property"
+            case .missingDescription:
+                "@Tool requires 'static let description: String' property"
+            case .missingPerformMethod:
+                "@Tool requires a 'func perform() async throws' method"
+            case let .invalidToolName(reason):
+                "Invalid tool name: \(reason)"
+            case let .nonLiteralDefaultValue(param):
+                "Parameter '\(param)' has a non-literal default value. Only literal values (numbers, strings, booleans) are supported. For complex defaults, make the parameter optional and handle the default in perform()."
+            case let .duplicateAnnotation(annotation):
+                "Duplicate annotation: \(annotation)"
         }
     }
 }
@@ -850,7 +864,7 @@ extension ToolMacro {
     /// Recognizes both `@Parameter` and `@MCP.Parameter` forms for compatibility
     /// when MCP module is imported alongside other frameworks that also define Parameter.
     static func isParameterAttribute(_ attr: AttributeListSyntax.Element) -> Bool {
-        guard case .attribute(let attrSyntax) = attr else { return false }
+        guard case let .attribute(attrSyntax) = attr else { return false }
 
         // Check for simple `@Parameter`
         if let identifier = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
@@ -859,7 +873,8 @@ extension ToolMacro {
 
         // Check for qualified `@MCP.Parameter`
         if let memberType = attrSyntax.attributeName.as(MemberTypeSyntax.self),
-           let baseIdentifier = memberType.baseType.as(IdentifierTypeSyntax.self) {
+           let baseIdentifier = memberType.baseType.as(IdentifierTypeSyntax.self)
+        {
             return baseIdentifier.name.text == "MCP" && memberType.name.text == "Parameter"
         }
 
@@ -901,7 +916,8 @@ extension ToolMacro {
         }
         // Negative number: -42, -3.14
         if let prefixExpr = expr.as(PrefixOperatorExprSyntax.self),
-           prefixExpr.operator.text == "-" {
+           prefixExpr.operator.text == "-"
+        {
             return isLiteralExpression(prefixExpr.expression)
         }
         return false

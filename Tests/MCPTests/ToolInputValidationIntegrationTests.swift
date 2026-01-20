@@ -11,7 +11,6 @@ import Testing
 /// by unit tests in JSONSchemaValidationTests.
 @Suite("Tool Input Validation Integration Tests")
 struct ToolInputValidationIntegrationTests {
-
     @Test("Valid tool call with correct arguments succeeds")
     func validToolCallSucceeds() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
@@ -23,9 +22,9 @@ struct ToolInputValidationIntegrationTests {
                 "type": "object",
                 "properties": [
                     "a": ["type": "number"],
-                    "b": ["type": "number"]
+                    "b": ["type": "number"],
                 ],
-                "required": ["a", "b"]
+                "required": ["a", "b"],
             ]
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
@@ -58,9 +57,9 @@ struct ToolInputValidationIntegrationTests {
                 "type": "object",
                 "properties": [
                     "a": ["type": "number"],
-                    "b": ["type": "number"]
+                    "b": ["type": "number"],
                 ],
-                "required": ["a", "b"]
+                "required": ["a", "b"],
             ]
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
@@ -81,7 +80,7 @@ struct ToolInputValidationIntegrationTests {
         )
 
         #expect(result.isError == true)
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text.lowercased().contains("validation"))
         } else {
             Issue.record("Expected text content in error result")
@@ -99,9 +98,9 @@ struct ToolInputValidationIntegrationTests {
                 "type": "object",
                 "properties": [
                     "a": ["type": "number"],
-                    "b": ["type": "number"]
+                    "b": ["type": "number"],
                 ],
-                "required": ["a", "b"]
+                "required": ["a", "b"],
             ]
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
@@ -122,7 +121,7 @@ struct ToolInputValidationIntegrationTests {
         )
 
         #expect(result.isError == true)
-        if case .text(let text, _, _) = result.content.first {
+        if case let .text(text, _, _) = result.content.first {
             #expect(text.lowercased().contains("validation"))
         } else {
             Issue.record("Expected text content in error result")
@@ -141,9 +140,9 @@ struct ToolInputValidationIntegrationTests {
             inputSchema: [
                 "type": "object",
                 "properties": [
-                    "value": ["type": "number"]
+                    "value": ["type": "number"],
                 ],
-                "required": ["value"]
+                "required": ["value"],
             ]
         ) { (_: ValueArgs, _: HandlerContext) in
             handlerCalled.set()

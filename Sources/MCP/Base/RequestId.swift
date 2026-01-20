@@ -10,7 +10,7 @@ public enum RequestId: Hashable, Sendable {
 
     /// Generates a random string ID.
     public static var random: RequestId {
-        return .string(UUID().uuidString)
+        .string(UUID().uuidString)
     }
 }
 
@@ -39,8 +39,8 @@ extension RequestId: ExpressibleByIntegerLiteral {
 extension RequestId: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .string(let str): return str
-        case .number(let num): return String(num)
+            case let .string(str): str
+            case let .number(num): String(num)
         }
     }
 }
@@ -59,15 +59,16 @@ extension RequestId: Codable {
             self = .string("")
         } else {
             throw DecodingError.dataCorruptedError(
-                in: container, debugDescription: "ID must be string or number")
+                in: container, debugDescription: "ID must be string or number"
+            )
         }
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
-        case .string(let str): try container.encode(str)
-        case .number(let num): try container.encode(num)
+            case let .string(str): try container.encode(str)
+            case let .number(num): try container.encode(num)
         }
     }
 }

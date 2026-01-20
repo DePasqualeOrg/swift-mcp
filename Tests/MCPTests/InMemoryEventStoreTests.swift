@@ -6,7 +6,6 @@ import Testing
 /// Tests for InMemoryEventStore - event storage for resumability support.
 @Suite("InMemory Event Store Tests")
 struct InMemoryEventStoreTests {
-
     // MARK: - Basic Operations
 
     @Test("Initialization creates empty store")
@@ -34,7 +33,7 @@ struct InMemoryEventStoreTests {
     func storeMultipleEvents() async throws {
         let store = InMemoryEventStore()
 
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             let message = #"{"jsonrpc":"2.0","result":"\#(i)","id":"\#(i)"}"#.data(using: .utf8)!
             _ = try await store.storeEvent(streamId: "stream-1", message: message)
         }
@@ -82,7 +81,7 @@ struct InMemoryEventStoreTests {
 
         // Store some events
         var eventIds: [String] = []
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             let message = #"{"jsonrpc":"2.0","result":"\#(i)","id":"\#(i)"}"#.data(using: .utf8)!
             let eventId = try await store.storeEvent(streamId: "stream-1", message: message)
             eventIds.append(eventId)
@@ -98,7 +97,7 @@ struct InMemoryEventStoreTests {
 
         let streamId = try await store.replayEventsAfter(eventIds[1]) { _, message in
             if let json = try? JSONSerialization.jsonObject(with: message) as? [String: Any],
-                let result = json["result"] as? String
+               let result = json["result"] as? String
             {
                 await collector.add(result)
             }
@@ -106,7 +105,7 @@ struct InMemoryEventStoreTests {
 
         #expect(streamId == "stream-1")
         let replayedMessages = await collector.get()
-        #expect(replayedMessages == ["2", "3", "4"])  // Events 2, 3, 4 (after event 1)
+        #expect(replayedMessages == ["2", "3", "4"]) // Events 2, 3, 4 (after event 1)
     }
 
     @Test("Replay events only from same stream")
@@ -156,7 +155,7 @@ struct InMemoryEventStoreTests {
         let store = InMemoryEventStore()
 
         // Store some events
-        for _ in 0..<5 {
+        for _ in 0 ..< 5 {
             let message = Data()
             _ = try await store.storeEvent(streamId: "stream", message: message)
         }
@@ -175,10 +174,10 @@ struct InMemoryEventStoreTests {
         let store = InMemoryEventStore()
 
         // Store events for two streams
-        for _ in 0..<3 {
+        for _ in 0 ..< 3 {
             _ = try await store.storeEvent(streamId: "stream-1", message: Data())
         }
-        for _ in 0..<2 {
+        for _ in 0 ..< 2 {
             _ = try await store.storeEvent(streamId: "stream-2", message: Data())
         }
 
@@ -233,7 +232,7 @@ struct InMemoryEventStoreTests {
 
         // Concurrently store events
         await withTaskGroup(of: String.self) { group in
-            for i in 0..<100 {
+            for i in 0 ..< 100 {
                 group.addTask {
                     let message = Data()
                     return try! await store.storeEvent(streamId: "stream-\(i % 10)", message: message)
@@ -252,13 +251,13 @@ struct InMemoryEventStoreTests {
         // Store events for multiple streams
         // Note: Use non-empty data because empty data is treated as priming events and skipped during replay
         var firstEventIds: [String] = []
-        for stream in 0..<5 {
+        for stream in 0 ..< 5 {
             let message = Data("test".utf8)
             let eventId = try await store.storeEvent(streamId: "stream-\(stream)", message: message)
             firstEventIds.append(eventId)
 
             // Add more events to each stream
-            for _ in 0..<10 {
+            for _ in 0 ..< 10 {
                 _ = try await store.storeEvent(streamId: "stream-\(stream)", message: message)
             }
         }
@@ -286,7 +285,7 @@ struct InMemoryEventStoreTests {
             }
 
             for await count in group {
-                #expect(count == 10)  // Each stream should replay 10 events
+                #expect(count == 10) // Each stream should replay 10 events
             }
         }
     }
@@ -309,12 +308,12 @@ struct InMemoryEventStoreTests {
         let message = Data()
 
         var eventIds = Set<String>()
-        for _ in 0..<100 {
+        for _ in 0 ..< 100 {
             let eventId = try await store.storeEvent(streamId: "stream", message: message)
             eventIds.insert(eventId)
         }
 
-        #expect(eventIds.count == 100)  // All IDs should be unique
+        #expect(eventIds.count == 100) // All IDs should be unique
     }
 
     // MARK: - Max Events Per Stream
@@ -338,7 +337,7 @@ struct InMemoryEventStoreTests {
 
         // Store 5 events (at capacity)
         var eventIds: [String] = []
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             let msg = #"{"id":"\#(i)"}"#.data(using: .utf8)!
             let eventId = try await store.storeEvent(streamId: "stream", message: msg)
             eventIds.append(eventId)
@@ -351,12 +350,12 @@ struct InMemoryEventStoreTests {
         let newEventId = try await store.storeEvent(streamId: "stream", message: message)
 
         count = await store.eventCount
-        #expect(count == 5)  // Still 5 events
+        #expect(count == 5) // Still 5 events
 
         // The oldest event should be evicted
         let oldestStreamId = await store.streamIdForEventId(eventIds[0])
         // The event is no longer in the index, so we fall back to parsing
-        #expect(oldestStreamId == "stream")  // Parsing still works
+        #expect(oldestStreamId == "stream") // Parsing still works
 
         // But replay should fail for the evicted event
         await #expect(throws: EventStoreError.self) {
@@ -374,23 +373,23 @@ struct InMemoryEventStoreTests {
         let message = Data("test".utf8)
 
         // Fill stream-1 to capacity
-        for _ in 0..<3 {
+        for _ in 0 ..< 3 {
             _ = try await store.storeEvent(streamId: "stream-1", message: message)
         }
 
         // Fill stream-2 to capacity
-        for _ in 0..<3 {
+        for _ in 0 ..< 3 {
             _ = try await store.storeEvent(streamId: "stream-2", message: message)
         }
 
         var count = await store.eventCount
-        #expect(count == 6)  // 3 per stream
+        #expect(count == 6) // 3 per stream
 
         // Add to stream-1 - should only evict from stream-1
         _ = try await store.storeEvent(streamId: "stream-1", message: message)
 
         count = await store.eventCount
-        #expect(count == 6)  // Still 6 total (3 + 3)
+        #expect(count == 6) // Still 6 total (3 + 3)
 
         let streamCount = await store.streamCount
         #expect(streamCount == 2)
@@ -402,14 +401,14 @@ struct InMemoryEventStoreTests {
 
         // Store 5 events
         var eventIds: [String] = []
-        for i in 0..<5 {
+        for i in 0 ..< 5 {
             let msg = #"{"id":"\#(i)"}"#.data(using: .utf8)!
             let eventId = try await store.storeEvent(streamId: "stream", message: msg)
             eventIds.append(eventId)
         }
 
         // Store 2 more (evicting the first 2)
-        for i in 5..<7 {
+        for i in 5 ..< 7 {
             let msg = #"{"id":"\#(i)"}"#.data(using: .utf8)!
             let eventId = try await store.storeEvent(streamId: "stream", message: msg)
             eventIds.append(eventId)
@@ -425,7 +424,7 @@ struct InMemoryEventStoreTests {
 
         _ = try await store.replayEventsAfter(eventIds[2]) { _, message in
             if let json = try? JSONSerialization.jsonObject(with: message) as? [String: Any],
-                let id = json["id"] as? String
+               let id = json["id"] as? String
             {
                 await collector.add(id)
             }
@@ -501,8 +500,8 @@ struct InMemoryEventStoreTests {
         }
 
         let replayedMessages = await collector.get()
-        #expect(replayedMessages.count == 1)  // Only the non-priming event
-        #expect(replayedMessages[0] == msg2)  // The second regular message
+        #expect(replayedMessages.count == 1) // Only the non-priming event
+        #expect(replayedMessages[0] == msg2) // The second regular message
     }
 
     @Test("Replay events in strict chronological order")
@@ -511,7 +510,7 @@ struct InMemoryEventStoreTests {
 
         // Store events with explicit ordering in their content
         var eventIds: [String] = []
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             let message = #"{"order":\#(i)}"#.data(using: .utf8)!
             let eventId = try await store.storeEvent(streamId: "stream", message: message)
             eventIds.append(eventId)
@@ -527,7 +526,7 @@ struct InMemoryEventStoreTests {
 
         _ = try await store.replayEventsAfter(eventIds[0]) { _, message in
             if let json = try? JSONSerialization.jsonObject(with: message) as? [String: Any],
-                let order = json["order"] as? Int
+               let order = json["order"] as? Int
             {
                 await collector.add(order)
             }
@@ -539,7 +538,7 @@ struct InMemoryEventStoreTests {
         #expect(replayedOrders.count == 9)
 
         // Verify strict chronological ordering
-        for i in 0..<replayedOrders.count {
+        for i in 0 ..< replayedOrders.count {
             #expect(replayedOrders[i] == i + 1)
         }
     }
@@ -549,8 +548,8 @@ struct InMemoryEventStoreTests {
         let store = InMemoryEventStore()
 
         // Store some events
-        var lastEventId: String = ""
-        for i in 0..<5 {
+        var lastEventId = ""
+        for i in 0 ..< 5 {
             let message = #"{"id":"\#(i)"}"#.data(using: .utf8)!
             lastEventId = try await store.storeEvent(streamId: "stream", message: message)
         }
@@ -569,7 +568,7 @@ struct InMemoryEventStoreTests {
 
         #expect(streamId == "stream")
         let replayedCount = await counter.value()
-        #expect(replayedCount == 0)  // Nothing to replay after the most recent event
+        #expect(replayedCount == 0) // Nothing to replay after the most recent event
     }
 
     @Test("Replay returns correct stream ID")
@@ -657,8 +656,8 @@ struct InMemoryEventStoreTests {
 
         let streamId = try await store.replayEventsAfter(eventIdS1_1) { _, message in
             if let json = try? JSONSerialization.jsonObject(with: message) as? [String: Any],
-                let stream = json["stream"] as? String,
-                let seq = json["seq"] as? Int
+               let stream = json["stream"] as? String,
+               let seq = json["seq"] as? Int
             {
                 // Verify only stream-1 messages are replayed
                 #expect(stream == "1")
@@ -668,6 +667,6 @@ struct InMemoryEventStoreTests {
 
         #expect(streamId == "stream-1")
         let sequences = await collector.get()
-        #expect(sequences == [2, 3])  // Only stream-1 events after the first one
+        #expect(sequences == [2, 3]) // Only stream-1 events after the first one
     }
 }

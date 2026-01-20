@@ -163,9 +163,9 @@ public protocol StructuredOutput: ToolOutput, Encodable {
     static var schema: Value { get }
 }
 
-extension StructuredOutput {
+public extension StructuredOutput {
     /// Default implementation that encodes to JSON and includes structuredContent.
-    public func toCallToolResult() throws -> CallTool.Result {
+    func toCallToolResult() throws -> CallTool.Result {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let data = try encoder.encode(self)

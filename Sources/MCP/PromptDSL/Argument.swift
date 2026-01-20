@@ -21,7 +21,7 @@ extension String: ArgumentValue {
     }
 }
 
-extension Optional: ArgumentValue where Wrapped == String {
+extension String?: ArgumentValue {
     public static var isOptional: Bool { true }
 
     public init?(argumentString: String?) {
@@ -98,11 +98,11 @@ public struct Argument<Value: ArgumentValue>: Sendable {
         self.key = key
         self.title = title
         self.description = description
-        self.requiredOverride = required
+        requiredOverride = required
     }
 }
 
-extension Argument where Value == String {
+public extension Argument where Value == String {
     /// Creates a required argument (value will be set during parsing).
     ///
     /// Use this initializer for required arguments without a default value.
@@ -113,21 +113,21 @@ extension Argument where Value == String {
     ///   - title: Human-readable display title.
     ///   - description: A description of the argument.
     ///   - required: Whether required (defaults to true for non-optional).
-    public init(
+    init(
         key: String? = nil,
         title: String? = nil,
         description: String? = nil,
         required: Bool? = nil
     ) {
-        self.wrappedValue = ""
+        wrappedValue = ""
         self.key = key
         self.title = title
         self.description = description
-        self.requiredOverride = required
+        requiredOverride = required
     }
 }
 
-extension Argument where Value: ExpressibleByNilLiteral {
+public extension Argument where Value: ExpressibleByNilLiteral {
     /// Creates an optional argument.
     ///
     /// Use this initializer for optional arguments where no default value is needed.
@@ -137,16 +137,16 @@ extension Argument where Value: ExpressibleByNilLiteral {
     ///   - title: Human-readable display title.
     ///   - description: A description of the argument.
     ///   - required: Whether required (defaults to false for optional).
-    public init(
+    init(
         key: String? = nil,
         title: String? = nil,
         description: String? = nil,
         required: Bool? = nil
     ) {
-        self.wrappedValue = nil
+        wrappedValue = nil
         self.key = key
         self.title = title
         self.description = description
-        self.requiredOverride = required
+        requiredOverride = required
     }
 }

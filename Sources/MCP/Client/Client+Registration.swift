@@ -1,18 +1,18 @@
 import Foundation
 
-extension Client {
+public extension Client {
     // MARK: - Handler Registration
 
     /// Register a handler for a notification.
-    public func onNotification<N: Notification>(
-        _ type: N.Type,
+    func onNotification<N: Notification>(
+        _: N.Type,
         handler: @escaping @Sendable (Message<N>) async throws -> Void
     ) {
         notificationHandlers[N.name, default: []].append(TypedNotificationHandler(handler))
     }
 
     /// Send a notification to the server
-    public func notify<N: Notification>(_ notification: Message<N>) async throws {
+    func notify(_ notification: Message<some Notification>) async throws {
         guard let connection else {
             throw MCPError.internalError("Client connection not initialized")
         }
@@ -44,7 +44,7 @@ extension Client {
     ///   - progress: The current progress value (should increase monotonically)
     ///   - total: The total progress value, if known
     ///   - message: An optional human-readable message describing current progress
-    public func sendProgressNotification(
+    func sendProgressNotification(
         token: ProgressToken,
         progress: Double,
         total: Double? = nil,
@@ -65,7 +65,7 @@ extension Client {
     ///
     /// - Throws: `MCPError.invalidRequest` if the client has not declared
     ///   the `roots.listChanged` capability.
-    public func sendRootsChanged() async throws {
+    func sendRootsChanged() async throws {
         guard capabilities.roots?.listChanged == true else {
             throw MCPError.invalidRequest(
                 "Client does not support roots.listChanged capability")
@@ -99,8 +99,8 @@ extension Client {
     /// - Parameters:
     ///   - type: The method type to handle
     ///   - handler: The handler function that receives parameters and context, returns a result
-    public func withRequestHandler<M: Method>(
-        _ type: M.Type,
+    func withRequestHandler<M: Method>(
+        _: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
     ) {
         requestHandlers[M.name] = TypedClientRequestHandler<M>(handler)
@@ -137,7 +137,7 @@ extension Client {
     ///     and you will call `sendRootsChanged()` to notify the server. Default: `false`.
     ///   - handler: A closure that receives the request context and returns the list of available roots.
     /// - Precondition: Must not be called after `connect()`.
-    public func withRootsHandler(
+    func withRootsHandler(
         listChanged: Bool = false,
         handler: @escaping @Sendable (RequestHandlerContext) async throws -> [Root]
     ) {
@@ -147,7 +147,7 @@ extension Client {
         )
         rootsConfig = RootsConfig(listChanged: listChanged)
         withRequestHandler(ListRoots.self) { _, context in
-            ListRoots.Result(roots: try await handler(context))
+            try await ListRoots.Result(roots: handler(context))
         }
     }
 
@@ -173,7 +173,7 @@ extension Client {
     ///
     /// - Parameter roots: The fixed list of roots to return for all requests.
     /// - Precondition: Must not be called after `connect()`.
-    public func withStaticRoots(_ roots: [Root]) {
+    func withStaticRoots(_ roots: [Root]) {
         withRootsHandler(listChanged: false) { _ in roots }
     }
 
@@ -192,7 +192,7 @@ extension Client {
     ///
     /// - Parameter config: Configuration for task capability support.
     /// - Precondition: Must not be called after `connect()`.
-    public func withTasksCapability(_ config: Capabilities.Tasks) {
+    func withTasksCapability(_ config: Capabilities.Tasks) {
         precondition(
             !isConnected,
             "Cannot register handlers after connect(). Register all handlers before calling connect()."
@@ -243,7 +243,7 @@ extension Client {
     ///     Default: `false`.
     ///   - handler: A closure that receives sampling parameters and context, returns the result.
     /// - Precondition: Must not be called after `connect()`.
-    public func withSamplingHandler(
+    func withSamplingHandler(
         supportsContext: Bool = false,
         supportsTools: Bool = false,
         handler: @escaping @Sendable (ClientSamplingRequest.Parameters, RequestHandlerContext) async throws -> ClientSamplingRequest.Result
@@ -304,7 +304,7 @@ extension Client {
     ///   - handler: A closure that receives elicitation parameters and context, returns the result.
     /// - Precondition: Must not be called after `connect()`.
     /// - Precondition: At least one mode must be enabled.
-    public func withElicitationHandler(
+    func withElicitationHandler(
         formMode: FormModeConfig? = .enabled(),
         urlMode: URLModeConfig? = nil,
         handler: @escaping @Sendable (Elicit.Parameters, RequestHandlerContext) async throws -> Elicit.Result

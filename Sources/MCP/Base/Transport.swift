@@ -189,21 +189,21 @@ public protocol Transport: Actor {
 
 // MARK: - Default Implementation
 
-extension Transport {
+public extension Transport {
     /// Default implementation returns `nil` for simple transports.
     ///
     /// HTTP transports override this to return their session identifier.
-    public var sessionId: String? { nil }
+    var sessionId: String? { nil }
 
     /// Default implementation returns `true` since most transports support
     /// bidirectional communication. Stateless HTTP transports override this.
-    public var supportsServerToClientRequests: Bool { true }
+    var supportsServerToClientRequests: Bool { true }
 
     /// Default implementation that ignores the request ID.
     ///
     /// Simple transports (stdio, single-connection) don't need request ID routing,
     /// so they can use this default implementation that delegates to `send(_:)`.
-    public func send(_ data: Data, relatedRequestId: RequestId?) async throws {
+    func send(_ data: Data, relatedRequestId _: RequestId?) async throws {
         try await send(data)
     }
 }

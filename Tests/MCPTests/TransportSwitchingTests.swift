@@ -11,7 +11,6 @@ import Testing
 /// `connection` reference gets reassigned.
 @Suite("Transport Switching Tests")
 struct TransportSwitchingTests {
-
     /// Mock transport that tracks sent messages with their related request IDs
     actor TrackingMockTransport: Transport {
         var logger: Logger
@@ -62,7 +61,7 @@ struct TransportSwitchingTests {
         }
 
         public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
-            return AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
+            AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
                 dataStreamContinuation = continuation
                 for message in dataToReceive {
                     continuation.yield(TransportMessage(data: message))
@@ -79,8 +78,8 @@ struct TransportSwitchingTests {
             }
         }
 
-        func queue<M: MCP.Method>(request: Request<M>) throws {
-            queue(data: try encoder.encode(request))
+        func queue(request: Request<some MCP.Method>) throws {
+            try queue(data: encoder.encode(request))
         }
 
         func clearMessages() {
@@ -153,8 +152,8 @@ struct TransportSwitchingTests {
 
         // 2. Send a ping request from transport A (with ID 100)
         let pingJSON = """
-            {"jsonrpc":"2.0","id":100,"method":"ping","params":{}}
-            """
+        {"jsonrpc":"2.0","id":100,"method":"ping","params":{}}
+        """
         await transportA.queue(data: pingJSON.data(using: .utf8)!)
 
         // Wait for the handler to be called
@@ -236,8 +235,8 @@ struct TransportSwitchingTests {
 
         // Send ping request from A with a specific ID
         let pingJSON = """
-            {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
-            """
+        {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
+        """
         await transportA.queue(data: pingJSON.data(using: .utf8)!)
 
         // Wait for response
@@ -287,11 +286,11 @@ struct TransportSwitchingTests {
 
         // Send a batch request
         let batchJSON = """
-            [
-                {"jsonrpc":"2.0","id":1,"method":"ping","params":{}},
-                {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","id":1,"method":"ping","params":{}},
+            {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
+        ]
+        """
         let batchData = batchJSON.data(using: .utf8)!
         await transportA.queue(data: batchData)
 
@@ -340,8 +339,8 @@ struct TransportSwitchingTests {
 
         // Send a request for an unknown method
         let unknownMethodJSON = """
-            {"jsonrpc":"2.0","id":99,"method":"unknown/method","params":{}}
-            """
+        {"jsonrpc":"2.0","id":99,"method":"unknown/method","params":{}}
+        """
         await transportA.queue(data: unknownMethodJSON.data(using: .utf8)!)
 
         // Wait for response
@@ -408,8 +407,8 @@ struct TransportSwitchingTests {
 
         // Send ping with a specific ID
         let pingJSON = """
-            {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
-            """
+        {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
+        """
         await transportA.queue(data: pingJSON.data(using: .utf8)!)
 
         // Wait for handler to execute

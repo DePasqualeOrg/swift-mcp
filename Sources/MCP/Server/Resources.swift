@@ -75,16 +75,16 @@ public struct Resource: Hashable, Codable, Sendable {
             self.uri = uri
             self.mimeType = mimeType
             self.text = text
-            self.blob = nil
-            self._meta = nil
+            blob = nil
+            _meta = nil
         }
 
         private init(uri: String, mimeType: String? = nil, blob: String) {
             self.uri = uri
             self.mimeType = mimeType
-            self.text = nil
+            text = nil
             self.blob = blob
-            self._meta = nil
+            _meta = nil
         }
     }
 
@@ -234,7 +234,8 @@ public struct ResourceLink: Hashable, Codable, Sendable {
         if let type, type != "resource_link" {
             throw DecodingError.dataCorruptedError(
                 forKey: .type, in: container,
-                debugDescription: "Expected type 'resource_link', got '\(type)'")
+                debugDescription: "Expected type 'resource_link', got '\(type)'"
+            )
         }
         name = try container.decode(String.self, forKey: .name)
         title = try container.decodeIfPresent(String.self, forKey: .title)
@@ -275,8 +276,8 @@ public enum ListResources: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self.cursor = nil
-            self._meta = nil
+            cursor = nil
+            _meta = nil
         }
 
         public init(cursor: String? = nil, _meta: RequestMeta? = nil) {
@@ -395,8 +396,8 @@ public enum ListResourceTemplates: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self.cursor = nil
-            self._meta = nil
+            cursor = nil
+            _meta = nil
         }
 
         public init(cursor: String? = nil, _meta: RequestMeta? = nil) {

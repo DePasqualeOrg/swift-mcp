@@ -54,8 +54,8 @@ public struct Root: Hashable, Codable, Sendable {
             )
         }
         self.uri = uri
-        self.name = try container.decodeIfPresent(String.self, forKey: .name)
-        self._meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
+        name = try container.decodeIfPresent(String.self, forKey: .name)
+        _meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -74,7 +74,7 @@ public enum ListRoots: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self._meta = nil
+            _meta = nil
         }
 
         public init(_meta: RequestMeta?) {

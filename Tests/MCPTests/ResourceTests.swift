@@ -48,7 +48,8 @@ struct ResourceTests {
     @Test("Resource.Content text initialization and encoding")
     func testResourceContentTextEncoding() throws {
         let content = Resource.Content.text(
-            "Hello, world!", uri: "file://test.txt", mimeType: "text/plain")
+            "Hello, world!", uri: "file://test.txt", mimeType: "text/plain"
+        )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -65,7 +66,8 @@ struct ResourceTests {
     func testResourceContentBinaryEncoding() throws {
         let binaryData = "Test binary data".data(using: .utf8)!
         let content = Resource.Content.binary(
-            binaryData, uri: "file://test.bin", mimeType: "application/octet-stream")
+            binaryData, uri: "file://test.bin", mimeType: "application/octet-stream"
+        )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -86,13 +88,13 @@ struct ResourceTests {
         let emptyParams = ListResources.Parameters()
         #expect(emptyParams.cursor == nil)
     }
-    
+
     @Test("ListResources request decoding with omitted params")
     func testListResourcesRequestDecodingWithOmittedParams() throws {
         // Test decoding when params field is omitted
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"resources/list"}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"resources/list"}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -101,13 +103,13 @@ struct ResourceTests {
         #expect(decoded.id == "test-id")
         #expect(decoded.method == ListResources.name)
     }
-    
+
     @Test("ListResources request decoding with null params")
     func testListResourcesRequestDecodingWithNullParams() throws {
         // Test decoding when params field is null
         let jsonString = """
-            {"jsonrpc":"2.0","id":"test-id","method":"resources/list","params":null}
-            """
+        {"jsonrpc":"2.0","id":"test-id","method":"resources/list","params":null}
+        """
         let data = jsonString.data(using: .utf8)!
 
         let decoder = JSONDecoder()
@@ -381,7 +383,7 @@ struct ResourceTests {
     func testListResourceTemplatesUsesCorrectJsonKey() throws {
         let result = ListResourceTemplates.Result(
             templates: [
-                Resource.Template(uriTemplate: "test://{id}", name: "test")
+                Resource.Template(uriTemplate: "test://{id}", name: "test"),
             ]
         )
 
@@ -433,8 +435,8 @@ struct ResourceTests {
     func testResourceLinkDecodingValidatesType() throws {
         // Valid resource_link type
         let validJson = """
-            {"type":"resource_link","name":"test","uri":"file:///test.txt"}
-            """
+        {"type":"resource_link","name":"test","uri":"file:///test.txt"}
+        """
         let validData = validJson.data(using: .utf8)!
         let decoder = JSONDecoder()
 
@@ -444,8 +446,8 @@ struct ResourceTests {
 
         // Invalid type should throw
         let invalidJson = """
-            {"type":"wrong_type","name":"test","uri":"file:///test.txt"}
-            """
+        {"type":"wrong_type","name":"test","uri":"file:///test.txt"}
+        """
         let invalidData = invalidJson.data(using: .utf8)!
 
         #expect(throws: DecodingError.self) {
@@ -457,8 +459,8 @@ struct ResourceTests {
     func testResourceLinkDecodesWithoutType() throws {
         // Type field is optional for backward compatibility
         let json = """
-            {"name":"test","uri":"file:///test.txt"}
-            """
+        {"name":"test","uri":"file:///test.txt"}
+        """
         let data = json.data(using: .utf8)!
         let decoder = JSONDecoder()
 
@@ -502,8 +504,8 @@ struct ResourceTests {
     func testResourceLinkDecodingFailsMissingName() throws {
         // Missing required 'name' field
         let json = """
-            {"type":"resource_link","uri":"file:///test.txt"}
-            """
+        {"type":"resource_link","uri":"file:///test.txt"}
+        """
         let data = json.data(using: .utf8)!
         let decoder = JSONDecoder()
 
@@ -516,8 +518,8 @@ struct ResourceTests {
     func testResourceLinkDecodingFailsMissingUri() throws {
         // Missing required 'uri' field
         let json = """
-            {"type":"resource_link","name":"test"}
-            """
+        {"type":"resource_link","name":"test"}
+        """
         let data = json.data(using: .utf8)!
         let decoder = JSONDecoder()
 
@@ -568,7 +570,7 @@ struct ResourceTests {
     @Test("Pagination result with no more pages")
     func testPaginationResultNoMorePages() throws {
         let resources = [
-            Resource(name: "last_resource", uri: "file://last.txt")
+            Resource(name: "last_resource", uri: "file://last.txt"),
         ]
 
         let result = ListResources.Result(resources: resources, nextCursor: nil)
@@ -712,14 +714,14 @@ struct ResourceTests {
             if uri.hasPrefix("greeting://") {
                 let name = String(uri.dropFirst("greeting://".count))
                 return ReadResource.Result(contents: [
-                    .text("Hello, \(name)!", uri: uri, mimeType: "text/plain")
+                    .text("Hello, \(name)!", uri: uri, mimeType: "text/plain"),
                 ])
-            } else if uri.hasPrefix("users://") && uri.hasSuffix("/profile") {
+            } else if uri.hasPrefix("users://"), uri.hasSuffix("/profile") {
                 let userId = uri
                     .replacingOccurrences(of: "users://", with: "")
                     .replacingOccurrences(of: "/profile", with: "")
                 return ReadResource.Result(contents: [
-                    .text("Profile for user \(userId)", uri: uri, mimeType: "text/plain")
+                    .text("Profile for user \(userId)", uri: uri, mimeType: "text/plain"),
                 ])
             }
 
@@ -789,7 +791,7 @@ struct ResourceTests {
                         "<html><body>Hello MCP-UI</body></html>",
                         uri: params.uri,
                         mimeType: "text/html;profile=mcp-app"
-                    )
+                    ),
                 ])
             }
             throw MCPError.resourceNotFound(uri: params.uri)
@@ -837,7 +839,7 @@ struct ResourceTests {
             } else if params.cursor == "page_2" {
                 return ListResourceTemplates.Result(
                     templates: [
-                        Resource.Template(uriTemplate: "template://{id3}", name: "template3")
+                        Resource.Template(uriTemplate: "template://{id3}", name: "template3"),
                     ],
                     nextCursor: nil
                 )
@@ -935,9 +937,10 @@ struct ResourceTests {
 
 /// Actor to track pagination state for tests
 private actor PaginationState {
-    private let allResources: [Resource] = (1...8).map { i in
+    private let allResources: [Resource] = (1 ... 8).map { i in
         Resource(name: "resource_\(i)", uri: "file:///resource_\(i).txt")
     }
+
     private let pageSize = 3
 
     func getPage(cursor: String?) -> ListResources.Result {
@@ -945,21 +948,21 @@ private actor PaginationState {
         let nextCursor: String?
 
         switch cursor {
-        case nil:
-            startIndex = 0
-            nextCursor = "page_2"
-        case "page_2":
-            startIndex = 3
-            nextCursor = "page_3"
-        case "page_3":
-            startIndex = 6
-            nextCursor = nil
-        default:
-            return ListResources.Result(resources: [])
+            case nil:
+                startIndex = 0
+                nextCursor = "page_2"
+            case "page_2":
+                startIndex = 3
+                nextCursor = "page_3"
+            case "page_3":
+                startIndex = 6
+                nextCursor = nil
+            default:
+                return ListResources.Result(resources: [])
         }
 
         let endIndex = min(startIndex + pageSize, allResources.count)
-        let pageResources = Array(allResources[startIndex..<endIndex])
+        let pageResources = Array(allResources[startIndex ..< endIndex])
 
         return ListResources.Result(resources: pageResources, nextCursor: nextCursor)
     }

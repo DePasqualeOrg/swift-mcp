@@ -14,7 +14,7 @@ struct GreetingPrompt {
     @Argument(description: "The person's name")
     var userName: String
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         [.user(.text("Hello, \(userName)! How can I help you today?"))]
     }
 }
@@ -31,7 +31,7 @@ struct InterviewPrompt {
     @Argument(description: "Years of experience required")
     var experience: String
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         [.user(.text("Prepare interview questions for a \(role) with \(experience) years of experience."))]
     }
 }
@@ -48,7 +48,7 @@ struct SummarizePrompt {
     @Argument(description: "Maximum length of summary")
     var maxLength: String?
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         var instruction = "Please summarize the following:\n\n\(text)"
         if let maxLength {
             instruction += "\n\nKeep the summary under \(maxLength) words."
@@ -69,7 +69,7 @@ struct CodeReviewPrompt {
     @Argument(key: "review_focus", description: "Areas to focus on")
     var reviewFocus: String?
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         var messages: [Prompt.Message] = []
         messages.append(.user(.text("Please review this code:\n\n```\n\(sourceCode)\n```")))
         if let focus = reviewFocus {
@@ -89,7 +89,7 @@ struct BrainstormPrompt {
     @Argument(title: "Topic", description: "Topic to brainstorm about")
     var topic: String
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         [.user(.text("Let's brainstorm ideas about: \(topic)"))]
     }
 }
@@ -100,7 +100,7 @@ struct SimpleGreetingPrompt {
     static let name = "simple_greeting"
     static let description = "A simple greeting prompt"
 
-    func render(context: HandlerContext) async throws -> [Prompt.Message] {
+    func render(context _: HandlerContext) async throws -> [Prompt.Message] {
         [.user(.text("Hello! How can I assist you today?"))]
     }
 }
@@ -114,7 +114,7 @@ struct SingleMessagePrompt {
     @Argument(description: "Message content")
     var content: String
 
-    func render(context: HandlerContext) async throws -> Prompt.Message {
+    func render(context _: HandlerContext) async throws -> Prompt.Message {
         .user(.text(content))
     }
 }
@@ -128,7 +128,7 @@ struct StringOutputPrompt {
     @Argument(description: "Topic")
     var topic: String
 
-    func render(context: HandlerContext) async throws -> String {
+    func render(context _: HandlerContext) async throws -> String {
         "Tell me about \(topic)"
     }
 }
@@ -165,7 +165,6 @@ struct SimpleRenderSingleMessagePrompt {
 
 @Suite("Prompt DSL - PromptSpec Conformance")
 struct PromptSpecConformanceTests {
-
     @Test("@Prompt macro generates PromptSpec conformance")
     func promptMacroGeneratesConformance() {
         let _: any PromptSpec.Type = GreetingPrompt.self
@@ -269,10 +268,9 @@ struct PromptSpecConformanceTests {
 
 @Suite("Prompt DSL - Parse Method")
 struct PromptParseMethodTests {
-
     @Test("parse extracts string argument")
     func parseStringArgument() throws {
-        let args: [String: String] = ["userName": "Alice"]
+        let args = ["userName": "Alice"]
         let prompt = try GreetingPrompt.parse(from: args)
 
         #expect(prompt.userName == "Alice")
@@ -282,7 +280,7 @@ struct PromptParseMethodTests {
     func parseMultipleArguments() throws {
         let args: [String: String] = [
             "role": "Senior Developer",
-            "experience": "5"
+            "experience": "5",
         ]
         let prompt = try InterviewPrompt.parse(from: args)
 
@@ -294,7 +292,7 @@ struct PromptParseMethodTests {
     func parseOptionalArgumentPresent() throws {
         let args: [String: String] = [
             "text": "This is a long document.",
-            "maxLength": "100"
+            "maxLength": "100",
         ]
         let prompt = try SummarizePrompt.parse(from: args)
 
@@ -304,7 +302,7 @@ struct PromptParseMethodTests {
 
     @Test("parse handles optional argument when absent")
     func parseOptionalArgumentAbsent() throws {
-        let args: [String: String] = ["text": "Short text"]
+        let args = ["text": "Short text"]
         let prompt = try SummarizePrompt.parse(from: args)
 
         #expect(prompt.text == "Short text")
@@ -315,7 +313,7 @@ struct PromptParseMethodTests {
     func parseCustomKeys() throws {
         let args: [String: String] = [
             "source_code": "func hello() { print(\"Hello\") }",
-            "review_focus": "error handling"
+            "review_focus": "error handling",
         ]
         let prompt = try CodeReviewPrompt.parse(from: args)
 
@@ -347,7 +345,7 @@ struct PromptParseMethodTests {
 
     @Test("parse throws for missing one of multiple required arguments")
     func parseMissingOneRequired() throws {
-        let args: [String: String] = ["role": "Developer"]
+        let args = ["role": "Developer"]
 
         #expect(throws: MCPError.self) {
             _ = try InterviewPrompt.parse(from: args)
@@ -359,7 +357,6 @@ struct PromptParseMethodTests {
 
 @Suite("Prompt DSL - Render Execution")
 struct RenderExecutionTests {
-
     func createMockContext() -> HandlerContext {
         let handlerContext = Server.RequestHandlerContext(
             sendNotification: { _ in },
@@ -380,7 +377,7 @@ struct RenderExecutionTests {
 
     @Test("render returns expected messages")
     func renderReturnsMessages() async throws {
-        let args: [String: String] = ["userName": "World"]
+        let args = ["userName": "World"]
         let prompt = try GreetingPrompt.parse(from: args)
         let context = createMockContext()
 
@@ -388,7 +385,7 @@ struct RenderExecutionTests {
         #expect(messages.count == 1)
 
         #expect(messages[0].role == .user)
-        if case .text(let text, _, _) = messages[0].content {
+        if case let .text(text, _, _) = messages[0].content {
             #expect(text == "Hello, World! How can I help you today?")
         } else {
             Issue.record("Expected text content")
@@ -400,11 +397,11 @@ struct RenderExecutionTests {
         let context = createMockContext()
 
         // Without optional
-        let args1: [String: String] = ["text": "Long text here"]
+        let args1 = ["text": "Long text here"]
         let prompt1 = try SummarizePrompt.parse(from: args1)
         let messages1 = try await prompt1.render(context: context)
         #expect(messages1[0].role == .user)
-        if case .text(let text, _, _) = messages1[0].content {
+        if case let .text(text, _, _) = messages1[0].content {
             #expect(!text.contains("words"))
         } else {
             Issue.record("Expected text content")
@@ -415,7 +412,7 @@ struct RenderExecutionTests {
         let prompt2 = try SummarizePrompt.parse(from: args2)
         let messages2 = try await prompt2.render(context: context)
         #expect(messages2[0].role == .user)
-        if case .text(let text, _, _) = messages2[0].content {
+        if case let .text(text, _, _) = messages2[0].content {
             #expect(text.contains("50 words"))
         } else {
             Issue.record("Expected text content")
@@ -426,7 +423,7 @@ struct RenderExecutionTests {
     func renderReturnsMultipleMessages() async throws {
         let args: [String: String] = [
             "source_code": "let x = 1",
-            "review_focus": "best practices"
+            "review_focus": "best practices",
         ]
         let prompt = try CodeReviewPrompt.parse(from: args)
         let context = createMockContext()
@@ -446,7 +443,7 @@ struct RenderExecutionTests {
 
     @Test("Prompt with render() works")
     func simpleRenderPromptRender() async throws {
-        let args: [String: String] = ["input": "Hello simple render"]
+        let args = ["input": "Hello simple render"]
         let prompt = try SimpleRenderPrompt.parse(from: args)
         let context = createMockContext()
 
@@ -454,7 +451,7 @@ struct RenderExecutionTests {
         let messages = try await prompt.render(context: context)
         #expect(messages.count == 1)
         #expect(messages[0].role == .user)
-        if case .text(let text, _, _) = messages[0].content {
+        if case let .text(text, _, _) = messages[0].content {
             #expect(text == "Simple render: Hello simple render")
         } else {
             Issue.record("Expected text content")
@@ -463,13 +460,13 @@ struct RenderExecutionTests {
 
     @Test("Prompt with render() and single message output")
     func simpleRenderSingleMessagePromptRender() async throws {
-        let args: [String: String] = ["message": "test message"]
+        let args = ["message": "test message"]
         let prompt = try SimpleRenderSingleMessagePrompt.parse(from: args)
         let context = createMockContext()
 
         let message = try await prompt.render(context: context)
         #expect(message.role == .assistant)
-        if case .text(let text, _, _) = message.content {
+        if case let .text(text, _, _) = message.content {
             #expect(text == "Response to: test message")
         } else {
             Issue.record("Expected text content")
@@ -481,7 +478,6 @@ struct RenderExecutionTests {
 
 @Suite("Prompt DSL - PromptOutput Protocol")
 struct PromptOutputProtocolTests {
-
     @Test("String conforms to PromptOutput")
     func stringPromptOutput() {
         let output: any PromptOutput = "Hello, World!"
@@ -489,7 +485,7 @@ struct PromptOutputProtocolTests {
 
         #expect(result.messages.count == 1)
         #expect(result.messages[0].role == .user)
-        if case .text(let text, _, _) = result.messages[0].content {
+        if case let .text(text, _, _) = result.messages[0].content {
             #expect(text == "Hello, World!")
         } else {
             Issue.record("Expected text content")
@@ -510,7 +506,7 @@ struct PromptOutputProtocolTests {
     func promptMessageArrayOutput() {
         let messages: [Prompt.Message] = [
             .user(.text("First")),
-            .assistant(.text("Second"))
+            .assistant(.text("Second")),
         ]
         let result = messages.toGetPromptResult(description: nil)
 
@@ -523,7 +519,6 @@ struct PromptOutputProtocolTests {
 
 @Suite("Prompt DSL - PromptRegistry")
 struct PromptRegistryTests {
-
     func createMockContext() -> HandlerContext {
         let handlerContext = Server.RequestHandlerContext(
             sendNotification: { _ in },
@@ -602,13 +597,13 @@ struct PromptRegistryTests {
         }
 
         let context = createMockContext()
-        let arguments: [String: String] = ["userName": "Test User"]
+        let arguments = ["userName": "Test User"]
 
         let result = try await registry.getPrompt("greeting", arguments: arguments, context: context)
 
         #expect(result.messages.count == 1)
         #expect(result.messages[0].role == .user)
-        if case .text(let text, _, _) = result.messages[0].content {
+        if case let .text(text, _, _) = result.messages[0].content {
             #expect(text.contains("Test User"))
         } else {
             Issue.record("Expected text content")
@@ -636,7 +631,7 @@ struct PromptRegistryTests {
             name: "dynamic_prompt",
             description: "A dynamically registered prompt",
             arguments: [
-                Prompt.Argument(name: "topic", description: "Discussion topic", required: true)
+                Prompt.Argument(name: "topic", description: "Discussion topic", required: true),
             ]
         ) { args, _ in
             let topic = args?["topic"] ?? "general"
@@ -655,7 +650,7 @@ struct PromptRegistryTests {
         )
 
         #expect(result.messages[0].role == .user)
-        if case .text(let text, _, _) = result.messages[0].content {
+        if case let .text(text, _, _) = result.messages[0].content {
             #expect(text.contains("Swift"))
         } else {
             Issue.record("Expected text content")
@@ -677,7 +672,6 @@ struct PromptRegistryTests {
 
 @Suite("Prompt DSL - Lifecycle Management")
 struct PromptLifecycleTests {
-
     func createMockContext() -> HandlerContext {
         let handlerContext = Server.RequestHandlerContext(
             sendNotification: { _ in },
@@ -755,7 +749,7 @@ struct PromptLifecycleTests {
         await registered.disable()
 
         let context = createMockContext()
-        let arguments: [String: String] = ["userName": "Test"]
+        let arguments = ["userName": "Test"]
 
         await #expect(throws: MCPError.self) {
             _ = try await registry.getPrompt("greeting", arguments: arguments, context: context)
@@ -800,10 +794,9 @@ struct PromptLifecycleTests {
 
 @Suite("Prompt DSL - Edge Cases")
 struct PromptEdgeCaseTests {
-
     @Test("Empty string argument is valid")
     func emptyStringArgument() throws {
-        let args: [String: String] = ["userName": ""]
+        let args = ["userName": ""]
         let prompt = try GreetingPrompt.parse(from: args)
         #expect(prompt.userName == "")
     }
@@ -836,7 +829,7 @@ struct PromptEdgeCaseTests {
     func nilArgumentsDictionary() throws {
         // SimpleGreetingPrompt has no required arguments
         let prompt = try SimpleGreetingPrompt.parse(from: nil)
-        _ = prompt  // Should not throw
+        _ = prompt // Should not throw
     }
 }
 
@@ -844,7 +837,6 @@ struct PromptEdgeCaseTests {
 
 @Suite("Prompt DSL - ArgumentValue Protocol")
 struct ArgumentValueProtocolTests {
-
     @Test("String ArgumentValue properties")
     func stringArgumentValue() {
         #expect(String.isOptional == false)
@@ -858,7 +850,7 @@ struct ArgumentValueProtocolTests {
 
     @Test("Optional<String> ArgumentValue properties")
     func optionalStringArgumentValue() {
-        #expect(Optional<String>.isOptional == true)
+        #expect(String?.isOptional == true)
 
         let value: String?? = Optional<String>(argumentString: "hello")
         #expect(value == "hello")

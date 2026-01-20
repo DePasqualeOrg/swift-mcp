@@ -21,7 +21,7 @@ public struct PromptReference: Hashable, Codable, Sendable {
     public let title: String?
 
     public init(name: String, title: String? = nil) {
-        self.type = "ref/prompt"
+        type = "ref/prompt"
         self.name = name
         self.title = title
     }
@@ -44,7 +44,7 @@ public struct ResourceTemplateReference: Hashable, Codable, Sendable {
     public let uri: String
 
     public init(uri: String) {
-        self.type = "ref/resource"
+        type = "ref/resource"
         self.uri = uri
     }
 
@@ -85,25 +85,26 @@ extension CompletionReference: Codable {
         let type = try container.decode(String.self, forKey: .type)
 
         switch type {
-        case "ref/prompt":
-            let ref = try PromptReference(from: decoder)
-            self = .prompt(ref)
-        case "ref/resource":
-            let ref = try ResourceTemplateReference(from: decoder)
-            self = .resource(ref)
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .type, in: container,
-                debugDescription: "Unknown reference type: \(type)")
+            case "ref/prompt":
+                let ref = try PromptReference(from: decoder)
+                self = .prompt(ref)
+            case "ref/resource":
+                let ref = try ResourceTemplateReference(from: decoder)
+                self = .resource(ref)
+            default:
+                throw DecodingError.dataCorruptedError(
+                    forKey: .type, in: container,
+                    debugDescription: "Unknown reference type: \(type)"
+                )
         }
     }
 
     public func encode(to encoder: Encoder) throws {
         switch self {
-        case .prompt(let ref):
-            try ref.encode(to: encoder)
-        case .resource(let ref):
-            try ref.encode(to: encoder)
+            case let .prompt(ref):
+                try ref.encode(to: encoder)
+            case let .resource(ref):
+                try ref.encode(to: encoder)
         }
     }
 }
@@ -224,9 +225,9 @@ public struct CompletionSuggestions: Hashable, Codable, Sendable {
     ///                        are provided, only the first 100 will be returned.
     public init(from allValues: [String]) {
         let truncated = Array(allValues.prefix(Self.maxValues))
-        self.values = truncated
-        self.total = allValues.count
-        self.hasMore = allValues.count > Self.maxValues
+        values = truncated
+        total = allValues.count
+        hasMore = allValues.count > Self.maxValues
     }
 }
 
@@ -312,9 +313,9 @@ public enum Complete: Method {
         ///
         /// - Parameter allValues: All available completion values.
         public init(from allValues: [String]) {
-            self.completion = CompletionSuggestions(from: allValues)
-            self._meta = nil
-            self.extraFields = nil
+            completion = CompletionSuggestions(from: allValues)
+            _meta = nil
+            extraFields = nil
         }
 
         public enum CodingKeys: String, CodingKey, CaseIterable {

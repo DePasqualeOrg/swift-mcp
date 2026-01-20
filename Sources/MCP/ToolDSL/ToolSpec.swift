@@ -83,9 +83,9 @@ public protocol ToolSpec: Sendable {
     init()
 }
 
-extension ToolSpec {
+public extension ToolSpec {
     /// Default: empty array (MCP implicit defaults apply).
-    public static var annotations: [AnnotationOption] { [] }
+    static var annotations: [AnnotationOption] { [] }
 }
 
 /// Macro that generates `ToolSpec` conformance for a struct.

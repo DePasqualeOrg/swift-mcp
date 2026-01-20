@@ -10,7 +10,6 @@ import Testing
 /// - `test/integration/test/stateManagementStreamableHttp.test.ts`
 @Suite("Full Roundtrip Tests")
 struct FullRoundtripTests {
-
     // MARK: - Test Helpers
 
     /// Creates a configured MCP Server with tools for testing
@@ -34,8 +33,8 @@ struct FullRoundtripTests {
                     inputSchema: [
                         "type": "object",
                         "properties": [
-                            "name": ["type": "string", "description": "Name to greet"]
-                        ]
+                            "name": ["type": "string", "description": "Name to greet"],
+                        ],
                     ]
                 ),
                 Tool(
@@ -45,9 +44,9 @@ struct FullRoundtripTests {
                         "type": "object",
                         "properties": [
                             "a": ["type": "number", "description": "First number"],
-                            "b": ["type": "number", "description": "Second number"]
+                            "b": ["type": "number", "description": "Second number"],
                         ],
-                        "required": ["a", "b"]
+                        "required": ["a", "b"],
                     ]
                 ),
             ])
@@ -56,21 +55,20 @@ struct FullRoundtripTests {
         // Register tool call handler
         await server.withRequestHandler(CallTool.self) { request, _ in
             switch request.name {
-            case "greet":
-                let name = request.arguments?["name"]?.stringValue ?? "World"
-                return CallTool.Result(content: [.text("Hello, \(name)!")])
+                case "greet":
+                    let name = request.arguments?["name"]?.stringValue ?? "World"
+                    return CallTool.Result(content: [.text("Hello, \(name)!")])
 
-            case "add":
-                let a = request.arguments?["a"]?.doubleValue ?? 0
-                let b = request.arguments?["b"]?.doubleValue ?? 0
-                return CallTool.Result(content: [.text("Result: \(a + b)")])
+                case "add":
+                    let a = request.arguments?["a"]?.doubleValue ?? 0
+                    let b = request.arguments?["b"]?.doubleValue ?? 0
+                    return CallTool.Result(content: [.text("Result: \(a + b)")])
 
-            default:
-                return CallTool.Result(content: [.text("Unknown tool: \(request.name)")], isError: true)
+                default:
+                    return CallTool.Result(content: [.text("Unknown tool: \(request.name)")], isError: true)
             }
         }
     }
-
 
     // MARK: - 2.1 Multiple client connections (stateless mode)
 
@@ -183,8 +181,8 @@ struct FullRoundtripTests {
 
         // Step 2: List tools
         let listToolsRequest = """
-            {"jsonrpc":"2.0","method":"tools/list","id":"2"}
-            """
+        {"jsonrpc":"2.0","method":"tools/list","id":"2"}
+        """
         let listResponse = await transport.handleRequest(TestPayloads.postRequest(body: listToolsRequest, sessionId: sessionId))
         #expect(listResponse.statusCode == 200)
 
@@ -195,8 +193,8 @@ struct FullRoundtripTests {
 
         // Step 3: Call greet tool
         let greetRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"3","params":{"name":"greet","arguments":{"name":"MCP Swift"}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"3","params":{"name":"greet","arguments":{"name":"MCP Swift"}}}
+        """
         let greetResponse = await transport.handleRequest(TestPayloads.postRequest(body: greetRequest, sessionId: sessionId))
         #expect(greetResponse.statusCode == 200)
 
@@ -206,8 +204,8 @@ struct FullRoundtripTests {
 
         // Step 4: Call add tool
         let addRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"4","params":{"name":"add","arguments":{"a":5,"b":3}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"4","params":{"name":"add","arguments":{"a":5,"b":3}}}
+        """
         let addResponse = await transport.handleRequest(TestPayloads.postRequest(body: addRequest, sessionId: sessionId))
         #expect(addResponse.statusCode == 200)
 
@@ -245,8 +243,8 @@ struct FullRoundtripTests {
 
         // Verify subsequent requests work with the protocol version header
         let pingRequest = """
-            {"jsonrpc":"2.0","method":"ping","id":"2"}
-            """
+        {"jsonrpc":"2.0","method":"ping","id":"2"}
+        """
         let headers = [
             HTTPHeader.accept: "application/json, text/event-stream",
             HTTPHeader.contentType: "application/json",
@@ -281,13 +279,13 @@ struct FullRoundtripTests {
 
         // Send request with different protocol version
         let pingRequest = """
-            {"jsonrpc":"2.0","method":"ping","id":"2"}
-            """
+        {"jsonrpc":"2.0","method":"ping","id":"2"}
+        """
         let headers = [
             HTTPHeader.accept: "application/json, text/event-stream",
             HTTPHeader.contentType: "application/json",
             HTTPHeader.sessionId: sessionId,
-            HTTPHeader.protocolVersion: "9999-99-99",  // Invalid version
+            HTTPHeader.protocolVersion: "9999-99-99", // Invalid version
         ]
         let response = await transport.handleRequest(HTTPRequest(
             method: "POST",
@@ -322,10 +320,10 @@ struct FullRoundtripTests {
 
         // Call unknown tool
         let unknownToolRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"2","params":{"name":"nonexistent","arguments":{}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"2","params":{"name":"nonexistent","arguments":{}}}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: unknownToolRequest, sessionId: sessionId))
-        #expect(response.statusCode == 200)  // JSON-RPC error is 200 with error in body
+        #expect(response.statusCode == 200) // JSON-RPC error is 200 with error in body
 
         if let body = response.body, let text = String(data: body, encoding: .utf8) {
             #expect(text.contains("Unknown tool") || text.contains("isError"), "Should indicate error for unknown tool")
@@ -353,11 +351,11 @@ struct FullRoundtripTests {
 
         // Send batch request with multiple tool calls
         let batchRequest = """
-            [
-                {"jsonrpc":"2.0","method":"tools/call","id":"b1","params":{"name":"greet","arguments":{"name":"Alice"}}},
-                {"jsonrpc":"2.0","method":"tools/call","id":"b2","params":{"name":"add","arguments":{"a":10,"b":20}}}
-            ]
-            """
+        [
+            {"jsonrpc":"2.0","method":"tools/call","id":"b1","params":{"name":"greet","arguments":{"name":"Alice"}}},
+            {"jsonrpc":"2.0","method":"tools/call","id":"b2","params":{"name":"add","arguments":{"a":10,"b":20}}}
+        ]
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: batchRequest, sessionId: sessionId))
         #expect(response.statusCode == 200)
 

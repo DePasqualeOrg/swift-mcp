@@ -17,13 +17,12 @@ import SwiftSyntaxMacros
 /// - `init()` - Empty initializer
 /// - `func render(context:)` - Bridging method (only if you write `render()` without context)
 public struct PromptMacro: MemberMacro, ExtensionMacro {
-
     // MARK: - MemberMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
-        conformingTo protocols: [TypeSyntax],
+        conformingTo _: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -36,16 +35,16 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
         // Generate init()
         members.append("""
-            public init() {}
-            """)
+        public init() {}
+        """)
 
         // Generate bridging render(context:) if user wrote render() without context
         if !promptInfo.hasContextParameter {
             members.append("""
-                public func render(context: HandlerContext) async throws -> \(raw: promptInfo.outputType) {
-                    try await render()
-                }
-                """)
+            public func render(context: HandlerContext) async throws -> \(raw: promptInfo.outputType) {
+                try await render()
+            }
+            """)
         }
 
         // Generate promptDefinition
@@ -62,11 +61,11 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
     // MARK: - ExtensionMacro
 
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
+        conformingTo _: [TypeSyntax],
+        in _: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
             return []
@@ -78,7 +77,8 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
         for member in structDecl.memberBlock.members {
             if let varDecl = member.decl.as(VariableDeclSyntax.self),
-               varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 for binding in varDecl.bindings {
                     if let identifier = binding.pattern.as(IdentifierPatternSyntax.self) {
                         let propName = identifier.identifier.text
@@ -89,13 +89,13 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
             }
         }
 
-        guard hasName && hasDescription else {
+        guard hasName, hasDescription else {
             return []
         }
 
         let extensionDecl: DeclSyntax = """
-            extension \(type): PromptSpec {}
-            """
+        extension \(type): PromptSpec {}
+        """
 
         guard let ext = extensionDecl.as(ExtensionDeclSyntax.self) else {
             return []
@@ -111,8 +111,8 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
         var description: String
         var title: String?
         var arguments: [ArgumentInfo]
-        var outputType: String  // The return type of render()
-        var hasContextParameter: Bool  // Whether render() takes a context parameter
+        var outputType: String // The return type of render()
+        var hasContextParameter: Bool // Whether render() takes a context parameter
     }
 
     private struct ArgumentInfo {
@@ -126,21 +126,22 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
     private static func extractPromptInfo(
         from structDecl: StructDeclSyntax,
-        context: some MacroExpansionContext
+        context _: some MacroExpansionContext
     ) throws -> PromptInfo {
         var name: String?
         var description: String?
         var title: String?
         var arguments: [ArgumentInfo] = []
-        var outputType: String = "[Prompt.Message]"  // Default output type
-        var hasContextParameter: Bool = true  // Default to true for backwards compatibility
+        var outputType = "[Prompt.Message]" // Default output type
+        var hasContextParameter = true // Default to true for backwards compatibility
 
         for member in structDecl.memberBlock.members {
             let decl = member.decl
 
             // Look for static let name/description/title
             if let varDecl = decl.as(VariableDeclSyntax.self),
-               varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
+               varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 for binding in varDecl.bindings {
                     guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
                         continue
@@ -151,21 +152,24 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
                     if propertyName == "name",
                        let initializer = binding.initializer,
                        let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                    {
                         name = segment.content.text
                     }
 
                     if propertyName == "description",
                        let initializer = binding.initializer,
                        let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                    {
                         description = segment.content.text
                     }
 
                     if propertyName == "title",
                        let initializer = binding.initializer,
                        let stringLiteral = initializer.value.as(StringLiteralExprSyntax.self),
-                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+                       let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                    {
                         title = segment.content.text
                     }
                 }
@@ -173,11 +177,12 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
             // Look for @Argument properties
             if let varDecl = decl.as(VariableDeclSyntax.self),
-               !varDecl.modifiers.contains(where: { $0.name.text == "static" }) {
-
+               !varDecl.modifiers.contains(where: { $0.name.text == "static" })
+            {
                 let hasArgument = varDecl.attributes.contains { attr in
-                    if case .attribute(let attrSyntax) = attr,
-                       let identifier = attrSyntax.attributeName.as(IdentifierTypeSyntax.self) {
+                    if case let .attribute(attrSyntax) = attr,
+                       let identifier = attrSyntax.attributeName.as(IdentifierTypeSyntax.self)
+                    {
                         return identifier.name.text == "Argument"
                     }
                     return false
@@ -194,7 +199,8 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
             // Look for render method to get output type and check for context parameter
             if let funcDecl = decl.as(FunctionDeclSyntax.self),
-               funcDecl.name.text == "render" {
+               funcDecl.name.text == "render"
+            {
                 if let returnClause = funcDecl.signature.returnClause {
                     outputType = returnClause.type.trimmedDescription
                 }
@@ -249,36 +255,39 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
         // Extract @Argument arguments
         for attr in varDecl.attributes {
-            if case .attribute(let attrSyntax) = attr,
+            if case let .attribute(attrSyntax) = attr,
                let attrIdentifier = attrSyntax.attributeName.as(IdentifierTypeSyntax.self),
                attrIdentifier.name.text == "Argument",
-               let arguments = attrSyntax.arguments?.as(LabeledExprListSyntax.self) {
-
+               let arguments = attrSyntax.arguments?.as(LabeledExprListSyntax.self)
+            {
                 for arg in arguments {
                     let label = arg.label?.text
 
                     switch label {
-                    case "key":
-                        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-                           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
-                            argumentKey = segment.content.text
-                        }
-                    case "title":
-                        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-                           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
-                            title = segment.content.text
-                        }
-                    case "description":
-                        if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-                           let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
-                            argDescription = segment.content.text
-                        }
-                    case "required":
-                        if let boolLiteral = arg.expression.as(BooleanLiteralExprSyntax.self) {
-                            requiredOverride = boolLiteral.literal.text == "true"
-                        }
-                    default:
-                        break
+                        case "key":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                argumentKey = segment.content.text
+                            }
+                        case "title":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                title = segment.content.text
+                            }
+                        case "description":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                argDescription = segment.content.text
+                            }
+                        case "required":
+                            if let boolLiteral = arg.expression.as(BooleanLiteralExprSyntax.self) {
+                                requiredOverride = boolLiteral.literal.text == "true"
+                            }
+                        default:
+                            break
                     }
                 }
             }
@@ -301,7 +310,7 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
         var argumentEntries: [String] = []
 
         for arg in promptInfo.arguments {
-            var argParts: [String] = ["name: \"\(arg.argumentKey)\""]
+            var argParts = ["name: \"\(arg.argumentKey)\""]
 
             if let title = arg.title {
                 argParts.append("title: \"\(title)\"")
@@ -312,36 +321,34 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
             }
 
             // Determine required status
-            let isRequired: Bool
-            if let override = arg.requiredOverride {
-                isRequired = override
+            let isRequired: Bool = if let override = arg.requiredOverride {
+                override
             } else {
-                isRequired = !arg.isOptional
+                !arg.isOptional
             }
             argParts.append("required: \(isRequired)")
 
             argumentEntries.append("Prompt.Argument(\(argParts.joined(separator: ", ")))")
         }
 
-        let argumentsLiteral: String
-        if argumentEntries.isEmpty {
-            argumentsLiteral = "nil"
+        let argumentsLiteral = if argumentEntries.isEmpty {
+            "nil"
         } else {
-            argumentsLiteral = "[\n            \(argumentEntries.joined(separator: ",\n            "))\n        ]"
+            "[\n            \(argumentEntries.joined(separator: ",\n            "))\n        ]"
         }
 
         let titleLiteral = promptInfo.title.map { "\"\($0)\"" } ?? "nil"
 
         return """
-            public static var promptDefinition: Prompt {
-                Prompt(
-                    name: name,
-                    title: \(raw: titleLiteral),
-                    description: description,
-                    arguments: \(raw: argumentsLiteral)
-                )
-            }
-            """
+        public static var promptDefinition: Prompt {
+            Prompt(
+                name: name,
+                title: \(raw: titleLiteral),
+                description: description,
+                arguments: \(raw: argumentsLiteral)
+            )
+        }
+        """
     }
 
     private static func generateParseMethod(promptInfo: PromptInfo) -> DeclSyntax {
@@ -352,11 +359,10 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
             let prop = arg.propertyName
 
             // Determine if required
-            let isRequired: Bool
-            if let override = arg.requiredOverride {
-                isRequired = override
+            let isRequired: Bool = if let override = arg.requiredOverride {
+                override
             } else {
-                isRequired = !arg.isOptional
+                !arg.isOptional
             }
 
             if arg.isOptional {
@@ -379,13 +385,13 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
         let statements = parseStatements.isEmpty ? "" : parseStatements.joined(separator: "\n        ")
 
         return """
-            public static func parse(from arguments: [String: String]?) throws -> Self {
-                var _instance = Self()
-                let _args = arguments ?? [:]
-                \(raw: statements)
-                return _instance
-            }
-            """
+        public static func parse(from arguments: [String: String]?) throws -> Self {
+            var _instance = Self()
+            let _args = arguments ?? [:]
+            \(raw: statements)
+            return _instance
+        }
+        """
     }
 }
 
@@ -398,12 +404,12 @@ enum PromptMacroError: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .notAStruct:
-            return "@Prompt can only be applied to structs"
-        case .missingName:
-            return "@Prompt requires 'static let name: String' property"
-        case .missingDescription:
-            return "@Prompt requires 'static let description: String' property"
+            case .notAStruct:
+                "@Prompt can only be applied to structs"
+            case .missingName:
+                "@Prompt requires 'static let name: String' property"
+            case .missingDescription:
+                "@Prompt requires 'static let description: String' property"
         }
     }
 }

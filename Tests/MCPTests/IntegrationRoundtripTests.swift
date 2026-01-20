@@ -18,7 +18,6 @@ import Testing
 
 @Suite("Integration Roundtrip Tests")
 struct IntegrationRoundtripTests {
-
     // MARK: - Basic Tools Roundtrip Tests
 
     /// Tests basic tool functionality with list and call operations.
@@ -58,7 +57,7 @@ struct IntegrationRoundtripTests {
                     inputSchema: [
                         "type": "object",
                         "properties": [
-                            "city": ["type": "string", "description": "City name"]
+                            "city": ["type": "string", "description": "City name"],
                         ],
                         "required": ["city"],
                     ]
@@ -68,22 +67,22 @@ struct IntegrationRoundtripTests {
 
         await server.withRequestHandler(CallTool.self) { request, _ in
             switch request.name {
-            case "sum":
-                let a = request.arguments?["a"]?.intValue ?? 0
-                let b = request.arguments?["b"]?.intValue ?? 0
-                return CallTool.Result(content: [.text("\(a + b)")])
+                case "sum":
+                    let a = request.arguments?["a"]?.intValue ?? 0
+                    let b = request.arguments?["b"]?.intValue ?? 0
+                    return CallTool.Result(content: [.text("\(a + b)")])
 
-            case "get_weather":
-                let city = request.arguments?["city"]?.stringValue ?? "Unknown"
-                return CallTool.Result(content: [
-                    .text("Weather in \(city): 22°C, Sunny")
-                ])
+                case "get_weather":
+                    let city = request.arguments?["city"]?.stringValue ?? "Unknown"
+                    return CallTool.Result(content: [
+                        .text("Weather in \(city): 22°C, Sunny"),
+                    ])
 
-            default:
-                return CallTool.Result(
-                    content: [.text("Unknown tool: \(request.name)")],
-                    isError: true
-                )
+                default:
+                    return CallTool.Result(
+                        content: [.text("Unknown tool: \(request.name)")],
+                        isError: true
+                    )
             }
         }
 
@@ -112,7 +111,7 @@ struct IntegrationRoundtripTests {
             arguments: ["a": 5, "b": 3]
         )
         #expect(sumResult.content.count == 1)
-        if case .text(let text, _, _) = sumResult.content[0] {
+        if case let .text(text, _, _) = sumResult.content[0] {
             #expect(text == "8")
         } else {
             Issue.record("Expected text content")
@@ -124,7 +123,7 @@ struct IntegrationRoundtripTests {
             arguments: ["city": "London"]
         )
         #expect(weatherResult.content.count == 1)
-        if case .text(let text, _, _) = weatherResult.content[0] {
+        if case let .text(text, _, _) = weatherResult.content[0] {
             #expect(text.contains("Weather in London"))
             #expect(text.contains("22°C"))
         } else {
@@ -150,7 +149,7 @@ struct IntegrationRoundtripTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "known_tool", inputSchema: ["type": "object"])
+                Tool(name: "known_tool", inputSchema: ["type": "object"]),
             ])
         }
 
@@ -176,7 +175,7 @@ struct IntegrationRoundtripTests {
         )
 
         #expect(result.isError == true)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("Unknown tool"))
         }
 
@@ -222,21 +221,21 @@ struct IntegrationRoundtripTests {
 
         await server.withRequestHandler(ReadResource.self) { request, _ in
             switch request.uri {
-            case "file://documents/readme":
-                return ReadResource.Result(contents: [
-                    .text("# Project Readme\n\nContent of readme file.", uri: request.uri)
-                ])
+                case "file://documents/readme":
+                    return ReadResource.Result(contents: [
+                        .text("# Project Readme\n\nContent of readme file.", uri: request.uri),
+                    ])
 
-            case "config://settings":
-                let settingsJSON = """
+                case "config://settings":
+                    let settingsJSON = """
                     {"theme": "dark", "language": "en", "notifications": true}
                     """
-                return ReadResource.Result(contents: [
-                    .text(settingsJSON, uri: request.uri, mimeType: "application/json")
-                ])
+                    return ReadResource.Result(contents: [
+                        .text(settingsJSON, uri: request.uri, mimeType: "application/json"),
+                    ])
 
-            default:
-                throw MCPError.resourceNotFound(uri: request.uri)
+                default:
+                    throw MCPError.resourceNotFound(uri: request.uri)
             }
         }
 
@@ -307,14 +306,14 @@ struct IntegrationRoundtripTests {
                     name: "review_code",
                     description: "Reviews code and provides feedback",
                     arguments: [
-                        Prompt.Argument(name: "code", description: "The code to review", required: true)
+                        Prompt.Argument(name: "code", description: "The code to review", required: true),
                     ]
                 ),
                 Prompt(
                     name: "debug_error",
                     description: "Helps debug an error",
                     arguments: [
-                        Prompt.Argument(name: "error", description: "The error message", required: true)
+                        Prompt.Argument(name: "error", description: "The error message", required: true),
                     ]
                 ),
             ])
@@ -323,28 +322,28 @@ struct IntegrationRoundtripTests {
         // Handle getPrompt with argument substitution
         await server.withRequestHandler(GetPrompt.self) { request, _ in
             switch request.name {
-            case "review_code":
-                let code = request.arguments?["code"] ?? ""
-                return GetPrompt.Result(
-                    description: "Code review prompt",
-                    messages: [
-                        .user("Please review this code:\n\n\(code)")
-                    ]
-                )
+                case "review_code":
+                    let code = request.arguments?["code"] ?? ""
+                    return GetPrompt.Result(
+                        description: "Code review prompt",
+                        messages: [
+                            .user("Please review this code:\n\n\(code)"),
+                        ]
+                    )
 
-            case "debug_error":
-                let error = request.arguments?["error"] ?? ""
-                return GetPrompt.Result(
-                    description: "Debug error prompt",
-                    messages: [
-                        .user("I'm seeing this error:"),
-                        .user(.text(error)),
-                        .assistant("I'll help debug that error. Let me analyze it."),
-                    ]
-                )
+                case "debug_error":
+                    let error = request.arguments?["error"] ?? ""
+                    return GetPrompt.Result(
+                        description: "Debug error prompt",
+                        messages: [
+                            .user("I'm seeing this error:"),
+                            .user(.text(error)),
+                            .assistant("I'll help debug that error. Let me analyze it."),
+                        ]
+                    )
 
-            default:
-                throw MCPError.invalidParams("Unknown prompt: \(request.name)")
+                default:
+                    throw MCPError.invalidParams("Unknown prompt: \(request.name)")
             }
         }
 
@@ -370,7 +369,7 @@ struct IntegrationRoundtripTests {
             arguments: ["code": codeToReview]
         )
         #expect(reviewResult.messages.count == 1)
-        if case .text(let text, _, _) = reviewResult.messages[0].content {
+        if case let .text(text, _, _) = reviewResult.messages[0].content {
             #expect(text.contains("Please review this code:"))
             #expect(text.contains("def hello():"))
         } else {
@@ -388,19 +387,19 @@ struct IntegrationRoundtripTests {
         #expect(debugResult.messages[1].role == .user)
         #expect(debugResult.messages[2].role == .assistant)
 
-        if case .text(let text, _, _) = debugResult.messages[0].content {
+        if case let .text(text, _, _) = debugResult.messages[0].content {
             #expect(text.contains("I'm seeing this error:"))
         } else {
             Issue.record("Expected text content for first message")
         }
 
-        if case .text(let text, _, _) = debugResult.messages[1].content {
+        if case let .text(text, _, _) = debugResult.messages[1].content {
             #expect(text.contains("TypeError"))
         } else {
             Issue.record("Expected text content for second message")
         }
 
-        if case .text(let text, _, _) = debugResult.messages[2].content {
+        if case let .text(text, _, _) = debugResult.messages[2].content {
             #expect(text.contains("I'll help debug"))
         } else {
             Issue.record("Expected text content for third message")
@@ -440,7 +439,7 @@ struct IntegrationRoundtripTests {
                             "steps": ["type": "integer"],
                         ],
                     ]
-                )
+                ),
             ])
         }
 
@@ -449,7 +448,7 @@ struct IntegrationRoundtripTests {
             let steps = request.arguments?["steps"]?.intValue ?? 3
 
             // Send progress notifications for each step
-            for step in 1...steps {
+            for step in 1 ... steps {
                 let progress = Double(step) / Double(steps)
                 let message = "Step \(step)/\(steps): Processing..."
 
@@ -466,7 +465,7 @@ struct IntegrationRoundtripTests {
             }
 
             return CallTool.Result(content: [
-                .text("Task '\(taskName)' completed after \(steps) steps")
+                .text("Task '\(taskName)' completed after \(steps) steps"),
             ])
         }
 
@@ -498,7 +497,7 @@ struct IntegrationRoundtripTests {
 
         // Verify tool completed successfully
         #expect(result.content.count == 1)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("Test Task"))
             #expect(text.contains("completed"))
         } else {
@@ -548,10 +547,10 @@ struct IntegrationRoundtripTests {
                     inputSchema: [
                         "type": "object",
                         "properties": [
-                            "topic": ["type": "string"]
+                            "topic": ["type": "string"],
                         ],
                     ]
-                )
+                ),
             ])
         }
 
@@ -568,7 +567,7 @@ struct IntegrationRoundtripTests {
             )
 
             // Return the LLM response
-            if case .text(let text, _, _) = samplingResult.content {
+            if case let .text(text, _, _) = samplingResult.content {
                 return CallTool.Result(content: [.text("Generated poem:\n\(text)")])
             } else {
                 return CallTool.Result(content: [.text("Failed to generate poem")])
@@ -607,7 +606,7 @@ struct IntegrationRoundtripTests {
         let invocations = await samplingCallbackInvoked.invocations
         #expect(invocations.count == 1)
         #expect(invocations[0].messages.count == 1)
-        if case .text(let text, _, _) = invocations[0].messages[0].content.first {
+        if case let .text(text, _, _) = invocations[0].messages[0].content.first {
             #expect(text.contains("poem"))
             #expect(text.contains("nature"))
         }
@@ -615,7 +614,7 @@ struct IntegrationRoundtripTests {
 
         // Verify tool returned the LLM response
         #expect(result.content.count == 1)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("simulated LLM response"))
         } else {
             Issue.record("Expected text content")
@@ -657,7 +656,7 @@ struct IntegrationRoundtripTests {
                             "party_size": ["type": "integer"],
                         ],
                     ]
-                )
+                ),
             ])
         }
 
@@ -686,23 +685,23 @@ struct IntegrationRoundtripTests {
                 )))
 
                 if elicitResult.action == .accept,
-                    let checkAlt = elicitResult.content?["checkAlternative"]?.boolValue,
-                    checkAlt,
-                    let altDate = elicitResult.content?["alternativeDate"]?.stringValue
+                   let checkAlt = elicitResult.content?["checkAlternative"]?.boolValue,
+                   checkAlt,
+                   let altDate = elicitResult.content?["alternativeDate"]?.stringValue
                 {
                     return CallTool.Result(content: [
-                        .text("[SUCCESS] Booked for \(altDate) at \(time) for \(partySize) guests")
+                        .text("[SUCCESS] Booked for \(altDate) at \(time) for \(partySize) guests"),
                     ])
                 } else {
                     return CallTool.Result(content: [
-                        .text("[CANCELLED] Booking cancelled by user")
+                        .text("[CANCELLED] Booking cancelled by user"),
                     ])
                 }
             }
 
             // Date is available
             return CallTool.Result(content: [
-                .text("[SUCCESS] Booked for \(date) at \(time) for \(partySize) guests")
+                .text("[SUCCESS] Booked for \(date) at \(time) for \(partySize) guests"),
             ])
         }
 
@@ -718,7 +717,7 @@ struct IntegrationRoundtripTests {
             await elicitationCallbackInvoked.record(params: params)
 
             // Simulate user accepting and providing alternative date
-            if case .form(let formParams) = params {
+            if case let .form(formParams) = params {
                 if formParams.message.contains("No tables available") {
                     return ElicitResult(
                         action: .accept,
@@ -751,7 +750,7 @@ struct IntegrationRoundtripTests {
 
         // Verify booking succeeded with alternative date
         #expect(result1.content.count == 1)
-        if case .text(let text, _, _) = result1.content[0] {
+        if case let .text(text, _, _) = result1.content[0] {
             #expect(text.contains("[SUCCESS]"))
             #expect(text.contains("2024-12-26"))
         } else {
@@ -770,10 +769,10 @@ struct IntegrationRoundtripTests {
 
         // Verify no additional elicitation was triggered
         let invocationsAfter = await elicitationCallbackInvoked.invocations
-        #expect(invocationsAfter.count == 1)  // Still just 1
+        #expect(invocationsAfter.count == 1) // Still just 1
 
         // Verify booking succeeded directly
-        if case .text(let text, _, _) = result2.content[0] {
+        if case let .text(text, _, _) = result2.content[0] {
             #expect(text.contains("[SUCCESS]"))
             #expect(text.contains("2024-12-20"))
         } else {
@@ -810,10 +809,10 @@ struct IntegrationRoundtripTests {
                     inputSchema: [
                         "type": "object",
                         "properties": [
-                            "data": ["type": "string"]
+                            "data": ["type": "string"],
                         ],
                     ]
-                )
+                ),
             ])
         }
 
@@ -867,7 +866,7 @@ struct IntegrationRoundtripTests {
 
         // Verify tool completed
         #expect(result.content.count == 1)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("Processed: test_data"))
         }
 
@@ -909,13 +908,13 @@ struct IntegrationRoundtripTests {
                     name: "create_resource",
                     description: "Creates a new resource",
                     inputSchema: ["type": "object"]
-                )
+                ),
             ])
         }
 
         await server.withRequestHandler(ListResources.self) { _, _ in
             ListResources.Result(resources: [
-                Resource(name: "Initial Resource", uri: "test://initial")
+                Resource(name: "Initial Resource", uri: "test://initial"),
             ])
         }
 
@@ -983,18 +982,18 @@ struct IntegrationRoundtripTests {
 
         await server.withRequestHandler(CallTool.self) { [toolRegistry] request, context in
             switch request.name {
-            case "add_tool":
-                // Add the new tool and send notification
-                let toolName = request.arguments?["name"]?.stringValue ?? "unnamed"
-                await toolRegistry.addTool(Tool(
-                    name: toolName,
-                    description: "Dynamically added",
-                    inputSchema: ["type": "object"]
-                ))
-                try await context.sendToolListChanged()
-                return CallTool.Result(content: [.text("Added tool: \(toolName)")])
-            default:
-                return CallTool.Result(content: [.text("Called: \(request.name)")])
+                case "add_tool":
+                    // Add the new tool and send notification
+                    let toolName = request.arguments?["name"]?.stringValue ?? "unnamed"
+                    await toolRegistry.addTool(Tool(
+                        name: toolName,
+                        description: "Dynamically added",
+                        inputSchema: ["type": "object"]
+                    ))
+                    try await context.sendToolListChanged()
+                    return CallTool.Result(content: [.text("Added tool: \(toolName)")])
+                default:
+                    return CallTool.Result(content: [.text("Called: \(request.name)")])
             }
         }
 
@@ -1078,7 +1077,7 @@ struct IntegrationRoundtripTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "add_prompt", inputSchema: ["type": "object", "properties": ["name": ["type": "string"]]])
+                Tool(name: "add_prompt", inputSchema: ["type": "object", "properties": ["name": ["type": "string"]]]),
             ])
         }
 

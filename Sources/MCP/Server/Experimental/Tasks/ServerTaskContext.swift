@@ -106,9 +106,9 @@ public final class ServerTaskContext: Sendable {
         server: Server? = nil
     ) {
         #if canImport(os)
-        self.state = OSAllocatedUnfairLock(initialState: State(task: task))
+        state = OSAllocatedUnfairLock(initialState: State(task: task))
         #else
-        self.state = Mutex(State(task: task))
+        state = Mutex(State(task: task))
         #endif
         self.store = store
         self.queue = queue
@@ -310,7 +310,7 @@ public final class ServerTaskContext: Sendable {
         // Build the elicitation request with related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = ElicitRequestFormParams(
@@ -414,7 +414,7 @@ public final class ServerTaskContext: Sendable {
         // Build the URL elicitation request with related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = ElicitRequestURLParams(
@@ -524,7 +524,7 @@ public final class ServerTaskContext: Sendable {
         // Build the sampling request with related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = CreateSamplingMessage.Parameters(
@@ -643,7 +643,7 @@ public final class ServerTaskContext: Sendable {
         // Build the elicitation request with task field and related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = ElicitRequestFormParams(
@@ -744,7 +744,7 @@ public final class ServerTaskContext: Sendable {
         // Build the URL elicitation request with task field and related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = ElicitRequestURLParams(
@@ -884,7 +884,7 @@ public final class ServerTaskContext: Sendable {
         // Build the sampling request with task field and related task metadata
         let requestId = nextRequestId()
         let relatedTaskMeta: [String: Value] = [
-            relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+            relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
         ]
 
         let params = CreateSamplingMessage.Parameters(

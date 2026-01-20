@@ -82,7 +82,7 @@ public struct Parameter<Value: ParameterValue>: Sendable {
     }
 }
 
-extension Parameter where Value: ExpressibleByNilLiteral {
+public extension Parameter where Value: ExpressibleByNilLiteral {
     /// Creates an optional parameter with the specified metadata and constraints.
     ///
     /// Use this initializer for optional parameters where no default value is needed.
@@ -94,7 +94,7 @@ extension Parameter where Value: ExpressibleByNilLiteral {
     ///   - maxLength: Maximum string length.
     ///   - minimum: Minimum numeric value.
     ///   - maximum: Maximum numeric value.
-    public init(
+    init(
         key: String? = nil,
         description: String? = nil,
         minLength: Int? = nil,
@@ -102,7 +102,7 @@ extension Parameter where Value: ExpressibleByNilLiteral {
         minimum: Double? = nil,
         maximum: Double? = nil
     ) {
-        self.wrappedValue = nil
+        wrappedValue = nil
         self.key = key
         self.description = description
         self.minLength = minLength
@@ -183,12 +183,12 @@ public protocol ParameterValue: Sendable {
     static var placeholderValue: Self { get }
 }
 
-extension ParameterValue {
+public extension ParameterValue {
     /// Default: no additional properties.
-    public static var jsonSchemaProperties: [String: Value] { [:] }
+    static var jsonSchemaProperties: [String: Value] { [:] }
 }
 
-extension Parameter {
+public extension Parameter {
     /// Creates a required parameter with the specified metadata and constraints.
     ///
     /// Use this initializer for required parameters without a default value.
@@ -201,7 +201,7 @@ extension Parameter {
     ///   - maxLength: Maximum string length.
     ///   - minimum: Minimum numeric value.
     ///   - maximum: Maximum numeric value.
-    public init(
+    init(
         key: String? = nil,
         description: String? = nil,
         minLength: Int? = nil,
@@ -209,7 +209,7 @@ extension Parameter {
         minimum: Double? = nil,
         maximum: Double? = nil
     ) {
-        self.wrappedValue = Value.placeholderValue
+        wrappedValue = Value.placeholderValue
         self.key = key
         self.description = description
         self.minLength = minLength
@@ -285,7 +285,7 @@ extension Date: ParameterValue {
 
     /// Parse a Date from an MCP Value containing an ISO 8601 string.
     public init?(parameterValue value: Value) {
-        guard case .string(let str) = value else { return nil }
+        guard case let .string(str) = value else { return nil }
 
         // Try ISO 8601 with fractional seconds first
         let formatter = ISO8601DateFormatter()
@@ -318,8 +318,9 @@ extension Data: ParameterValue {
 
     /// Parse Data from an MCP Value containing a base64-encoded string.
     public init?(parameterValue value: Value) {
-        guard case .string(let str) = value,
-              let data = Data(base64Encoded: str) else {
+        guard case let .string(str) = value,
+              let data = Data(base64Encoded: str)
+        else {
             return nil
         }
         self = data
@@ -358,8 +359,8 @@ extension Array: ParameterValue where Element: ParameterValue {
     public static var jsonSchemaProperties: [String: Value] {
         var props: [String: Value] = [
             "items": .object([
-                "type": .string(Element.jsonSchemaType)
-            ])
+                "type": .string(Element.jsonSchemaType),
+            ]),
         ]
         // Merge element's additional properties into items
         let elementProps = Element.jsonSchemaProperties
@@ -375,7 +376,7 @@ extension Array: ParameterValue where Element: ParameterValue {
 
     /// Parse an array from an MCP Value.
     public init?(parameterValue value: Value) {
-        guard case .array(let arr) = value else { return nil }
+        guard case let .array(arr) = value else { return nil }
 
         var result: [Element] = []
         for item in arr {
@@ -406,7 +407,7 @@ extension Dictionary: ParameterValue where Key == String, Value: ParameterValue 
 
     /// Parse a dictionary from an MCP Value.
     public init?(parameterValue value: MCP.Value) {
-        guard case .object(let dict) = value else { return nil }
+        guard case let .object(dict) = value else { return nil }
 
         var result: [String: Value] = [:]
         for (key, val) in dict {
@@ -445,25 +446,25 @@ extension Dictionary: ParameterValue where Key == String, Value: ParameterValue 
 /// ```
 public protocol ToolEnum: ParameterValue, RawRepresentable, CaseIterable where RawValue == String {}
 
-extension ToolEnum {
-    public static var jsonSchemaType: String { "string" }
+public extension ToolEnum {
+    static var jsonSchemaType: String { "string" }
 
     /// Uses the first case as the placeholder value.
-    public static var placeholderValue: Self {
+    static var placeholderValue: Self {
         guard let first = allCases.first else {
             fatalError("ToolEnum '\(Self.self)' must have at least one case")
         }
         return first
     }
 
-    public static var jsonSchemaProperties: [String: Value] {
+    static var jsonSchemaProperties: [String: Value] {
         let cases = allCases.map { Value.string($0.rawValue) }
         return ["enum": .array(cases)]
     }
 
     /// Parse an enum from an MCP Value containing its raw string value.
-    public init?(parameterValue value: Value) {
-        guard case .string(let str) = value else { return nil }
+    init?(parameterValue value: Value) {
+        guard case let .string(str) = value else { return nil }
         self.init(rawValue: str)
     }
 }

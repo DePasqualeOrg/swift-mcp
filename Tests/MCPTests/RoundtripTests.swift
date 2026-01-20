@@ -5,9 +5,9 @@ import Testing
 @testable import MCP
 
 #if canImport(System)
-    import System
+import System
 #else
-    @preconcurrency import SystemPackage
+@preconcurrency import SystemPackage
 #endif
 
 @Suite("Roundtrip Tests")
@@ -21,7 +21,8 @@ struct RoundtripTests {
 
         var logger = Logger(
             label: "mcp.test.initialize",
-            factory: { StreamLogHandler.standardError(label: $0) })
+            factory: { StreamLogHandler.standardError(label: $0) }
+        )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
@@ -45,7 +46,7 @@ struct RoundtripTests {
             )
         )
         await server.withRequestHandler(ListTools.self) { _, _ in
-            return ListTools.Result(tools: [
+            ListTools.Result(tools: [
                 Tool(
                     name: "add",
                     description: "Adds two numbers together",
@@ -53,10 +54,11 @@ struct RoundtripTests {
                         "type": "object",
                         "properties": [
                             "a": ["type": "integer", "description": "The first number"],
-                            "b": ["type": "integer", "description": "The second number"]
+                            "b": ["type": "integer", "description": "The second number"],
                         ],
-                        "required": ["a", "b"]
-                    ])
+                        "required": ["a", "b"],
+                    ]
+                ),
             ])
         }
         await server.withRequestHandler(CallTool.self) { request, _ in
@@ -65,10 +67,11 @@ struct RoundtripTests {
             }
 
             guard let a = request.arguments?["a"]?.intValue,
-                let b = request.arguments?["b"]?.intValue
+                  let b = request.arguments?["b"]?.intValue
             else {
                 return CallTool.Result(
-                    content: [.text("Did not receive valid arguments")], isError: true)
+                    content: [.text("Did not receive valid arguments")], isError: true
+                )
             }
 
             return CallTool.Result(content: [.text("\(a + b)")])
@@ -76,7 +79,7 @@ struct RoundtripTests {
 
         // Add resource handlers to server
         await server.withRequestHandler(ListResources.self) { _, _ in
-            return ListResources.Result(resources: [
+            ListResources.Result(resources: [
                 Resource(
                     name: "Example Text",
                     uri: "test://example.txt",

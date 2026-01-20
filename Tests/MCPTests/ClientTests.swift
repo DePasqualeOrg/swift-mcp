@@ -16,8 +16,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -49,11 +49,11 @@ struct ClientTests {
         let client = Client(name: "TestClient", version: "1.0")
 
         // Queue a response for the initialize request
-        try await Task.sleep(for: .milliseconds(10))  // Wait for request to be sent
+        try await Task.sleep(for: .milliseconds(10)) // Wait for request to be sent
 
         if let lastMessage = await transport.sentMessages.last,
-            let data = lastMessage.data(using: .utf8),
-            let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+           let data = lastMessage.data(using: .utf8),
+           let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
         {
             // Create a valid initialize response
             let response = Initialize.response(
@@ -85,7 +85,7 @@ struct ClientTests {
             // Give it a moment to send the request
             try await Task.sleep(for: .milliseconds(10))
 
-            #expect(await transport.sentMessages.count == 2)  // Initialize + Ping
+            #expect(await transport.sentMessages.count == 2) // Initialize + Ping
             #expect(await transport.sentMessages.last?.contains(Ping.name) == true)
 
             // Cancel the ping task
@@ -126,8 +126,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -176,8 +176,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -232,8 +232,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -264,11 +264,11 @@ struct ClientTests {
 
                 // Get the last sent message and extract the request ID
                 if let lastMessage = await transport.sentMessages.last,
-                    let data = lastMessage.data(using: .utf8),
-                    let decodedRequest = try? JSONDecoder().decode(
-                        Request<ListPrompts>.self, from: data)
+                   let data = lastMessage.data(using: .utf8),
+                   let decodedRequest = try? JSONDecoder().decode(
+                       Request<ListPrompts>.self, from: data
+                   )
                 {
-
                     // Create an error response with the same ID
                     let errorResponse = Response<ListPrompts>(
                         id: decodedRequest.id,
@@ -323,8 +323,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -340,7 +340,7 @@ struct ClientTests {
         }
 
         try await client.connect(transport: transport)
-        try await Task.sleep(for: .milliseconds(10))  // Allow connection tasks
+        try await Task.sleep(for: .milliseconds(10)) // Allow connection tasks
         initTask.cancel()
 
         let request1 = Ping.request()
@@ -365,7 +365,7 @@ struct ClientTests {
 
         // Check if batch message was sent (after initialize and initialized notification)
         let sentMessages = await transport.sentMessages
-        #expect(sentMessages.count == 3)  // Initialize request + Initialized notification + Batch
+        #expect(sentMessages.count == 3) // Initialize request + Initialized notification + Batch
 
         guard let batchData = sentMessages.last?.data(using: .utf8) else {
             #expect(Bool(false), "Failed to get batch data")
@@ -396,10 +396,10 @@ struct ClientTests {
             return
         }
 
-        _ = try await task1.value  // Should succeed
-        _ = try await task2.value  // Should succeed
+        _ = try await task1.value // Should succeed
+        _ = try await task2.value // Should succeed
 
-        #expect(Bool(true))  // Reaching here means success
+        #expect(Bool(true)) // Reaching here means success
 
         await client.disconnect()
     }
@@ -413,8 +413,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -433,8 +433,8 @@ struct ClientTests {
         try await Task.sleep(for: .milliseconds(10))
         initTask.cancel()
 
-        let request1 = Ping.request()  // Success
-        let request2 = Ping.request()  // Error
+        let request1 = Ping.request() // Success
+        let request2 = Ping.request() // Error
 
         // Use an actor to safely capture the tasks from the closure
         actor TasksHolder {
@@ -446,12 +446,12 @@ struct ClientTests {
         let holder = TasksHolder()
 
         try await client.withBatch { batch in
-            await holder.append(try await batch.addRequest(request1))
-            await holder.append(try await batch.addRequest(request2))
+            try await holder.append(batch.addRequest(request1))
+            try await holder.append(batch.addRequest(request2))
         }
 
         // Check if batch message was sent (after initialize and initialized notification)
-        #expect(await transport.sentMessages.count == 3)  // Initialize request + Initialized notification + Batch
+        #expect(await transport.sentMessages.count == 3) // Initialize request + Initialized notification + Batch
 
         // Prepare batch response (success for 1, error for 2)
         let response1 = Response<Ping>(id: request1.id, result: .init())
@@ -474,13 +474,13 @@ struct ClientTests {
         let task1 = resultTasks[0]
         let task2 = resultTasks[1]
 
-        _ = try await task1.value  // Task 1 should succeed
+        _ = try await task1.value // Task 1 should succeed
 
         do {
-            _ = try await task2.value  // Task 2 should fail
+            _ = try await task2.value // Task 2 should fail
             #expect(Bool(false), "Task 2 should have thrown an error")
         } catch let mcpError as MCPError {
-            if case .internalError(let message) = mcpError {
+            if case let .internalError(message) = mcpError {
                 #expect(message == "Simulated batch error")
             } else {
                 #expect(Bool(false), "Expected internalError, got \(mcpError)")
@@ -501,8 +501,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -527,7 +527,7 @@ struct ClientTests {
         }
 
         // Check that only initialize message and initialized notification were sent
-        #expect(await transport.sentMessages.count == 2)  // Initialize request + Initialized notification
+        #expect(await transport.sentMessages.count == 2) // Initialize request + Initialized notification
 
         await client.disconnect()
     }
@@ -541,8 +541,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -566,17 +566,17 @@ struct ClientTests {
         try await client.notify(notification)
 
         // Verify notification was sent (in addition to initialize and initialized notification)
-        #expect(await transport.sentMessages.count == 3)  // Initialize request + Initialized notification + Custom notification
+        #expect(await transport.sentMessages.count == 3) // Initialize request + Initialized notification + Custom notification
 
         if let sentMessage = await transport.sentMessages.last,
-            let data = sentMessage.data(using: .utf8)
+           let data = sentMessage.data(using: .utf8)
         {
-
             // Decode as Message<InitializedNotification>
             let decoder = JSONDecoder()
             do {
                 let decodedNotification = try decoder.decode(
-                    Message<InitializedNotification>.self, from: data)
+                    Message<InitializedNotification>.self, from: data
+                )
                 #expect(decodedNotification.method == InitializedNotification.name)
             } catch {
                 #expect(Bool(false), "Failed to decode notification: \(error)")
@@ -596,13 +596,12 @@ struct ClientTests {
         // Create a task for initialize
         let initTask = Task {
             // Queue a response for the initialize request
-            try await Task.sleep(for: .milliseconds(10))  // Wait for request to be sent
+            try await Task.sleep(for: .milliseconds(10)) // Wait for request to be sent
 
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
-
                 // Create a valid initialize response
                 let response = Initialize.response(
                     id: request.id,
@@ -631,7 +630,8 @@ struct ClientTests {
                         do {
                             let decoder = JSONDecoder()
                             let decodedNotification = try decoder.decode(
-                                Message<InitializedNotification>.self, from: notificationData)
+                                Message<InitializedNotification>.self, from: notificationData
+                            )
                             #expect(decodedNotification.method == InitializedNotification.name)
                         } catch {
                             #expect(Bool(false), "Failed to decode notification: \(error)")
@@ -676,8 +676,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -737,8 +737,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -804,8 +804,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -868,14 +868,14 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 // Respond with an unsupported protocol version
                 let response = Initialize.response(
                     id: request.id,
                     result: .init(
-                        protocolVersion: "2099-01-01",  // Future unsupported version
+                        protocolVersion: "2099-01-01", // Future unsupported version
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
                         instructions: nil
@@ -893,7 +893,7 @@ struct ClientTests {
             #expect(Bool(false), "Expected connection to fail due to unsupported protocol version")
         } catch let error as MCPError {
             // Should be an invalidRequest error about unsupported version
-            if case .invalidRequest(let message) = error {
+            if case let .invalidRequest(message) = error {
                 #expect(message?.contains("unsupported protocol version") == true)
                 #expect(message?.contains("2099-01-01") == true)
             } else {
@@ -919,8 +919,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -946,6 +946,7 @@ struct ClientTests {
     }
 
     // MARK: - Initialization Request Tests
+
     // Based on TypeScript SDK: should initialize with matching protocol version
     // Based on Python SDK: test_client_session_initialize
 
@@ -961,8 +962,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 // Verify the client sent the latest protocol version
                 #expect(request.params.protocolVersion == Version.latest)
@@ -1001,8 +1002,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 // Verify the client info in the request
                 #expect(request.params.clientInfo.name == clientName)
@@ -1049,8 +1050,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 // Verify the client capabilities in the request
                 #expect(request.params.capabilities.sampling != nil)
@@ -1098,8 +1099,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -1143,8 +1144,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,
@@ -1182,8 +1183,8 @@ struct ClientTests {
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
-                let data = lastMessage.data(using: .utf8),
-                let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
+               let data = lastMessage.data(using: .utf8),
+               let request = try? JSONDecoder().decode(Request<Initialize>.self, from: data)
             {
                 let response = Initialize.response(
                     id: request.id,

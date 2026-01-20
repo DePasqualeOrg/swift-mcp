@@ -15,7 +15,7 @@ public let mcpDefaultTimeout: TimeInterval = 30.0
 /// Matches the Python SDK's MCP_DEFAULT_SSE_READ_TIMEOUT.
 public let mcpDefaultSSEReadTimeout: TimeInterval = 300.0
 
-extension URLSessionConfiguration {
+public extension URLSessionConfiguration {
     /// Creates a URLSessionConfiguration optimized for MCP HTTP transport.
     ///
     /// This configuration sets appropriate timeouts for long-lived SSE connections:
@@ -24,7 +24,7 @@ extension URLSessionConfiguration {
     /// - `timeoutIntervalForResource`: 3600 seconds (1 hour) for the total connection lifetime
     ///
     /// These defaults match the Python MCP SDK's timeout configuration.
-    public static var mcp: URLSessionConfiguration {
+    static var mcp: URLSessionConfiguration {
         let configuration = URLSessionConfiguration.default
         // Use SSE read timeout for request interval since SSE connections
         // may wait extended periods for server events

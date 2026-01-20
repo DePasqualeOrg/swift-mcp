@@ -1,10 +1,10 @@
 import Foundation
 
-extension Server {
+public extension Server {
     // MARK: - Sending
 
     /// Send a response to a request
-    public func send<M: Method>(_ response: Response<M>) async throws {
+    func send(_ response: Response<some Method>) async throws {
         guard let connection else {
             throw MCPError.internalError("Server connection not initialized")
         }
@@ -17,7 +17,7 @@ extension Server {
     }
 
     /// Send a notification to connected clients
-    public func notify<N: Notification>(_ notification: Message<N>) async throws {
+    func notify(_ notification: Message<some Notification>) async throws {
         guard let connection else {
             throw MCPError.internalError("Server connection not initialized")
         }
@@ -45,7 +45,7 @@ extension Server {
     ///   - data: The log message data (can be a string or structured data)
     ///   - sessionId: Optional session ID for per-session log level filtering.
     ///     If `nil`, the log level for the nil-session (default) is used.
-    public func sendLogMessage(
+    func sendLogMessage(
         level: LoggingLevel,
         logger: String? = nil,
         data: Value,

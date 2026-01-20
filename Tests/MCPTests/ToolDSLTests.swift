@@ -14,7 +14,7 @@ struct EchoTool {
     @Parameter(description: "Message to echo")
     var message: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Echo: \(message)"
     }
 }
@@ -34,14 +34,13 @@ struct CalculatorTool {
     @Parameter(description: "Operation to perform")
     var operation: String
 
-    func perform(context: HandlerContext) async throws -> String {
-        let result: Double
-        switch operation {
-        case "add": result = a + b
-        case "subtract": result = a - b
-        case "multiply": result = a * b
-        case "divide": result = b != 0 ? a / b : .nan
-        default: result = .nan
+    func perform(context _: HandlerContext) async throws -> String {
+        let result: Double = switch operation {
+            case "add": a + b
+            case "subtract": a - b
+            case "multiply": a * b
+            case "divide": b != 0 ? a / b : .nan
+            default: .nan
         }
         return "Result: \(result)"
     }
@@ -59,7 +58,7 @@ struct GreetTool {
     @Parameter(description: "Optional greeting prefix")
     var prefix: String?
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         let greeting = prefix ?? "Hello"
         return "\(greeting), \(name)!"
     }
@@ -77,7 +76,7 @@ struct PaginatedListTool {
     @Parameter(description: "Page number", minimum: 1)
     var page: Int = 1
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Showing page \(page) with \(pageSize) items"
     }
 }
@@ -91,7 +90,7 @@ struct ProcessItemsTool {
     @Parameter(description: "Items to process")
     var items: [String]
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Processed \(items.count) items: \(items.joined(separator: ", "))"
     }
 }
@@ -108,7 +107,7 @@ struct ScheduleTool {
     @Parameter(description: "Event date")
     var eventDate: Date
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         let formatter = ISO8601DateFormatter()
         return "Scheduled '\(eventName)' for \(formatter.string(from: eventDate))"
     }
@@ -126,7 +125,7 @@ struct CustomKeyTool {
     @Parameter(key: "end_date", description: "End date")
     var endDate: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Range: \(startDate) to \(endDate)"
     }
 }
@@ -141,7 +140,7 @@ struct ReadOnlyTool {
     @Parameter(description: "Config key")
     var key: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Config[\(key)] = some_value"
     }
 }
@@ -158,7 +157,7 @@ struct FilterTool {
     @Parameter(description: "Maximum items to return")
     var limit: Int
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Filtered with archived=\(includeArchived), limit=\(limit)"
     }
 }
@@ -172,7 +171,7 @@ struct ConstrainedTool {
     @Parameter(description: "Username", minLength: 3, maxLength: 20)
     var username: String
 
-    func perform(context: HandlerContext) async throws -> String { username }
+    func perform(context _: HandlerContext) async throws -> String { username }
 }
 
 /// Enum for priority levels
@@ -197,7 +196,7 @@ struct CreateTaskTool {
     @Parameter(description: "Task priority")
     var priority: Priority
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Created task '\(title)' with priority: \(priority.rawValue)"
     }
 }
@@ -222,7 +221,7 @@ struct SearchTool {
     @Parameter(description: "Maximum results")
     var maxResults: Int = 10
 
-    func perform(context: HandlerContext) async throws -> SearchResult {
+    func perform(context _: HandlerContext) async throws -> SearchResult {
         SearchResult(
             query: query,
             totalCount: 42,
@@ -243,7 +242,7 @@ struct HttpRequestTool {
     @Parameter(description: "HTTP headers")
     var headers: [String: String]
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         let headerList = headers.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
         return "Request to \(url) with headers: \(headerList)"
     }
@@ -259,7 +258,7 @@ struct StrictTool {
     @Parameter(description: "Input value")
     var input: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Received: \(input)"
     }
 }
@@ -305,7 +304,7 @@ struct MatrixTool {
     @Parameter(description: "2D matrix of integers")
     var matrix: [[Int]]
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         let rows = matrix.count
         let cols = matrix.first?.count ?? 0
         return "Matrix: \(rows)x\(cols)"
@@ -321,7 +320,7 @@ struct RecordsTool {
     @Parameter(description: "Array of record dictionaries")
     var records: [[String: String]]
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Processed \(records.count) records"
     }
 }
@@ -335,7 +334,7 @@ struct GroupedDataTool {
     @Parameter(description: "Dictionary mapping group names to arrays of integers")
     var groups: [String: [Int]]
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         let totalItems = groups.values.reduce(0) { $0 + $1.count }
         return "Processed \(groups.count) groups with \(totalItems) total items"
     }
@@ -345,7 +344,6 @@ struct GroupedDataTool {
 
 @Suite("Tool DSL - ToolSpec Conformance")
 struct ToolSpecConformanceTests {
-
     @Test("@Tool macro generates ToolSpec conformance")
     func toolMacroGeneratesConformance() {
         // Verify that the macro-generated types conform to ToolSpec
@@ -588,7 +586,6 @@ struct ToolSpecConformanceTests {
 
 @Suite("Tool DSL - Parse Method")
 struct ParseMethodTests {
-
     @Test("parse extracts string parameter")
     func parseStringParameter() throws {
         let args: [String: Value] = ["message": .string("Hello, World!")]
@@ -602,7 +599,7 @@ struct ParseMethodTests {
         let args: [String: Value] = [
             "a": .double(10.5),
             "b": .double(3.5),
-            "operation": .string("add")
+            "operation": .string("add"),
         ]
         let tool = try CalculatorTool.parse(from: args)
 
@@ -615,7 +612,7 @@ struct ParseMethodTests {
     func parseOptionalParameterPresent() throws {
         let args: [String: Value] = [
             "name": .string("Alice"),
-            "prefix": .string("Hi")
+            "prefix": .string("Hi"),
         ]
         let tool = try GreetTool.parse(from: args)
 
@@ -646,7 +643,7 @@ struct ParseMethodTests {
     func parseOverrideDefaults() throws {
         let args: [String: Value] = [
             "pageSize": .int(50),
-            "page": .int(3)
+            "page": .int(3),
         ]
         let tool = try PaginatedListTool.parse(from: args)
 
@@ -657,8 +654,8 @@ struct ParseMethodTests {
     @Test("parse throws error when default parameter has wrong type")
     func parseThrowsForWrongTypeOnDefault() throws {
         let args: [String: Value] = [
-            "pageSize": .string("not a number"),  // Wrong type - should throw, not silently use default
-            "page": .int(1)
+            "pageSize": .string("not a number"), // Wrong type - should throw, not silently use default
+            "page": .int(1),
         ]
 
         #expect(throws: MCPError.self) {
@@ -669,7 +666,7 @@ struct ParseMethodTests {
     @Test("parse handles array parameters")
     func parseArrayParameter() throws {
         let args: [String: Value] = [
-            "items": .array([.string("one"), .string("two"), .string("three")])
+            "items": .array([.string("one"), .string("two"), .string("three")]),
         ]
         let tool = try ProcessItemsTool.parse(from: args)
 
@@ -682,8 +679,8 @@ struct ParseMethodTests {
             "url": .string("https://example.com"),
             "headers": .object([
                 "Content-Type": .string("application/json"),
-                "Authorization": .string("Bearer token123")
-            ])
+                "Authorization": .string("Bearer token123"),
+            ]),
         ]
         let tool = try HttpRequestTool.parse(from: args)
 
@@ -698,8 +695,8 @@ struct ParseMethodTests {
         let args: [String: Value] = [
             "matrix": .array([
                 .array([.int(1), .int(2), .int(3)]),
-                .array([.int(4), .int(5), .int(6)])
-            ])
+                .array([.int(4), .int(5), .int(6)]),
+            ]),
         ]
         let tool = try MatrixTool.parse(from: args)
 
@@ -713,8 +710,8 @@ struct ParseMethodTests {
         let args: [String: Value] = [
             "records": .array([
                 .object(["name": .string("Alice"), "role": .string("admin")]),
-                .object(["name": .string("Bob"), "role": .string("user")])
-            ])
+                .object(["name": .string("Bob"), "role": .string("user")]),
+            ]),
         ]
         let tool = try RecordsTool.parse(from: args)
 
@@ -730,8 +727,8 @@ struct ParseMethodTests {
         let args: [String: Value] = [
             "groups": .object([
                 "scores": .array([.int(85), .int(90), .int(78)]),
-                "counts": .array([.int(10), .int(20)])
-            ])
+                "counts": .array([.int(10), .int(20)]),
+            ]),
         ]
         let tool = try GroupedDataTool.parse(from: args)
 
@@ -745,7 +742,7 @@ struct ParseMethodTests {
         let dateString = "2024-06-15T10:30:00Z"
         let args: [String: Value] = [
             "eventName": .string("Meeting"),
-            "eventDate": .string(dateString)
+            "eventDate": .string(dateString),
         ]
         let tool = try ScheduleTool.parse(from: args)
 
@@ -760,7 +757,7 @@ struct ParseMethodTests {
     func parseCustomKeys() throws {
         let args: [String: Value] = [
             "start_date": .string("2024-01-01"),
-            "end_date": .string("2024-12-31")
+            "end_date": .string("2024-12-31"),
         ]
         let tool = try CustomKeyTool.parse(from: args)
 
@@ -772,7 +769,7 @@ struct ParseMethodTests {
     func parseBoolParameter() throws {
         let args: [String: Value] = [
             "includeArchived": .bool(true),
-            "limit": .int(50)
+            "limit": .int(50),
         ]
         let tool = try FilterTool.parse(from: args)
 
@@ -784,7 +781,7 @@ struct ParseMethodTests {
     func parseEnumParameter() throws {
         let args: [String: Value] = [
             "title": .string("Fix bug"),
-            "priority": .string("high")
+            "priority": .string("high"),
         ]
         let tool = try CreateTaskTool.parse(from: args)
 
@@ -804,7 +801,7 @@ struct ParseMethodTests {
     @Test("parse throws for invalid type")
     func parseInvalidType() throws {
         let args: [String: Value] = [
-            "message": .int(123)  // Should be string
+            "message": .int(123), // Should be string
         ]
 
         #expect(throws: MCPError.self) {
@@ -817,7 +814,6 @@ struct ParseMethodTests {
 
 @Suite("Tool DSL - Tool Execution")
 struct ToolExecutionTests {
-
     /// Creates a mock HandlerContext for testing
     func createMockContext() -> HandlerContext {
         let handlerContext = Server.RequestHandlerContext(
@@ -852,7 +848,7 @@ struct ToolExecutionTests {
         let args: [String: Value] = [
             "a": .double(10),
             "b": .double(5),
-            "operation": .string("multiply")
+            "operation": .string("multiply"),
         ]
         let tool = try CalculatorTool.parse(from: args)
         let context = createMockContext()
@@ -881,7 +877,7 @@ struct ToolExecutionTests {
     @Test("Tool execution with array processing")
     func toolExecutionArrayProcessing() async throws {
         let args: [String: Value] = [
-            "items": .array([.string("apple"), .string("banana"), .string("cherry")])
+            "items": .array([.string("apple"), .string("banana"), .string("cherry")]),
         ]
         let tool = try ProcessItemsTool.parse(from: args)
         let context = createMockContext()
@@ -894,7 +890,7 @@ struct ToolExecutionTests {
     func toolExecutionEnumParameter() async throws {
         let args: [String: Value] = [
             "title": .string("Important task"),
-            "priority": .string("critical")
+            "priority": .string("critical"),
         ]
         let tool = try CreateTaskTool.parse(from: args)
         let context = createMockContext()
@@ -931,7 +927,6 @@ struct ToolExecutionTests {
 
 @Suite("Tool DSL - StructuredOutput")
 struct StructuredOutputTests {
-
     @Test("@OutputSchema generates StructuredOutput conformance")
     func outputSchemaConformance() {
         let _: any StructuredOutput.Type = SearchResult.self
@@ -995,7 +990,6 @@ struct StructuredOutputTests {
 
 @Suite("Tool DSL - ToolRegistry")
 struct ToolRegistryTests {
-
     @Test("ToolRegistry registers tools via result builder")
     func registersToolsViaBuilder() async throws {
         let registry = ToolRegistry {
@@ -1063,7 +1057,7 @@ struct ToolRegistryTests {
         let result = try await registry.execute("echo", arguments: arguments, context: context)
 
         #expect(result.content.count == 1)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Echo: Hello from execute")
         } else {
             Issue.record("Expected text content")
@@ -1127,14 +1121,13 @@ struct ToolRegistryTests {
 
 @Suite("Tool DSL - ToolOutput Protocol")
 struct ToolOutputProtocolTests {
-
     @Test("String conforms to ToolOutput")
     func stringToolOutput() throws {
         let output: any ToolOutput = "Hello, World!"
         let result = try output.toCallToolResult()
 
         #expect(result.content.count == 1)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Hello, World!")
         } else {
             Issue.record("Expected text content")
@@ -1143,13 +1136,13 @@ struct ToolOutputProtocolTests {
 
     @Test("ImageOutput creates correct result")
     func imageOutputResult() throws {
-        let testData = Data([0x89, 0x50, 0x4E, 0x47])  // PNG magic bytes
+        let testData = Data([0x89, 0x50, 0x4E, 0x47]) // PNG magic bytes
         let output = ImageOutput(pngData: testData)
 
         let result = try output.toCallToolResult()
         #expect(result.content.count == 1)
 
-        if case .image(let data, let mimeType, _, _) = result.content[0] {
+        if case let .image(data, mimeType, _, _) = result.content[0] {
             #expect(mimeType == "image/png")
             #expect(Data(base64Encoded: data) == testData)
         } else {
@@ -1161,7 +1154,7 @@ struct ToolOutputProtocolTests {
     func multiContentResult() throws {
         let output = MultiContent([
             .text("First"),
-            .text("Second")
+            .text("Second"),
         ])
 
         let result = try output.toCallToolResult()
@@ -1173,13 +1166,12 @@ struct ToolOutputProtocolTests {
 
 @Suite("Tool DSL - AnnotationOption")
 struct AnnotationOptionTests {
-
     @Test("AnnotationOption.buildAnnotations creates correct annotations")
     func buildAnnotationsFromOptions() {
         let options: [AnnotationOption] = [
             .readOnly,
             .idempotent,
-            .title("Test Tool")
+            .title("Test Tool"),
         ]
 
         let annotations = AnnotationOption.buildAnnotations(from: options)
@@ -1220,7 +1212,6 @@ struct AnnotationOptionTests {
 
 @Suite("Tool DSL - ParameterValue Protocol")
 struct ParameterValueProtocolTests {
-
     @Test("String ParameterValue conversion")
     func stringParameterValue() {
         let value = Value.string("hello")
@@ -1328,7 +1319,7 @@ struct ParameterValueProtocolTests {
         #expect(Bool.placeholderValue == false)
         #expect(Date.placeholderValue == Date(timeIntervalSince1970: 0))
         #expect(Data.placeholderValue == Data())
-        #expect(Optional<String>.placeholderValue == nil)
+        #expect(String?.placeholderValue == nil)
         #expect([String].placeholderValue == [])
         #expect(Priority.placeholderValue == .low)
     }
@@ -1338,7 +1329,6 @@ struct ParameterValueProtocolTests {
 
 @Suite("Tool DSL - Edge Cases")
 struct EdgeCaseTests {
-
     @Test("Empty string parameter is valid")
     func emptyStringParameter() throws {
         let args: [String: Value] = ["message": .string("")]
@@ -1358,7 +1348,7 @@ struct EdgeCaseTests {
         let args: [String: Value] = [
             "a": .double(1e308),
             "b": .double(1e-308),
-            "operation": .string("add")
+            "operation": .string("add"),
         ]
         let tool = try CalculatorTool.parse(from: args)
         #expect(tool.a == 1e308)
@@ -1385,7 +1375,7 @@ struct EdgeCaseTests {
     func invalidEnumValue() throws {
         let args: [String: Value] = [
             "title": .string("Task"),
-            "priority": .string("invalid_priority")
+            "priority": .string("invalid_priority"),
         ]
 
         #expect(throws: MCPError.self) {
@@ -1398,7 +1388,7 @@ struct EdgeCaseTests {
         let args: [String: Value] = [
             "a": .double(-100.5),
             "b": .double(-50.25),
-            "operation": .string("add")
+            "operation": .string("add"),
         ]
         let tool = try CalculatorTool.parse(from: args)
         #expect(tool.a == -100.5)
@@ -1410,7 +1400,6 @@ struct EdgeCaseTests {
 
 @Suite("Tool DSL - Lifecycle Management")
 struct DSLToolLifecycleTests {
-
     @Test("DSL tool registration returns RegisteredTool")
     func dslToolReturnsRegisteredTool() async throws {
         let registry = ToolRegistry()

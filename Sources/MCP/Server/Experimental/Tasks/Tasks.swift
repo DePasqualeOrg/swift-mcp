@@ -56,10 +56,10 @@ public enum TaskStatus: String, Hashable, Codable, Sendable {
     /// Once a task reaches a terminal state, no further status updates will occur.
     public var isTerminal: Bool {
         switch self {
-        case .completed, .failed, .cancelled:
-            return true
-        case .working, .inputRequired:
-            return false
+            case .completed, .failed, .cancelled:
+                true
+            case .working, .inputRequired:
+                false
         }
     }
 }
@@ -248,11 +248,11 @@ public struct CreateTaskResult: ResultWithExtraFields {
     public init(task: MCPTask, modelImmediateResponse: String?) {
         self.task = task
         if let response = modelImmediateResponse {
-            self._meta = [modelImmediateResponseKey: .string(response)]
+            _meta = [modelImmediateResponseKey: .string(response)]
         } else {
-            self._meta = nil
+            _meta = nil
         }
-        self.extraFields = nil
+        extraFields = nil
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -344,13 +344,13 @@ public enum GetTask: Method {
 
         /// Convenience initializer from MCPTask
         public init(task: MCPTask, _meta: [String: Value]? = nil, extraFields: [String: Value]? = nil) {
-            self.taskId = task.taskId
-            self.status = task.status
-            self.ttl = task.ttl
-            self.createdAt = task.createdAt
-            self.lastUpdatedAt = task.lastUpdatedAt
-            self.pollInterval = task.pollInterval
-            self.statusMessage = task.statusMessage
+            taskId = task.taskId
+            status = task.status
+            ttl = task.ttl
+            createdAt = task.createdAt
+            lastUpdatedAt = task.lastUpdatedAt
+            pollInterval = task.pollInterval
+            statusMessage = task.statusMessage
             self._meta = _meta
             self.extraFields = extraFields
         }
@@ -453,10 +453,10 @@ public enum GetTaskPayload: Method {
         ///   - _meta: Optional metadata
         public init(fromResultValue resultValue: Value?, _meta: [String: Value]? = nil) {
             self._meta = _meta
-            if case .object(let fields) = resultValue {
-                self.extraFields = fields
+            if case let .object(fields) = resultValue {
+                extraFields = fields
             } else {
-                self.extraFields = nil
+                extraFields = nil
             }
         }
 
@@ -491,8 +491,8 @@ public enum ListTasks: Method {
         public let _meta: RequestMeta?
 
         public init() {
-            self.cursor = nil
-            self._meta = nil
+            cursor = nil
+            _meta = nil
         }
 
         public init(cursor: String? = nil, _meta: RequestMeta? = nil) {
@@ -617,13 +617,13 @@ public enum CancelTask: Method {
 
         /// Convenience initializer from MCPTask
         public init(task: MCPTask, _meta: [String: Value]? = nil, extraFields: [String: Value]? = nil) {
-            self.taskId = task.taskId
-            self.status = task.status
-            self.ttl = task.ttl
-            self.createdAt = task.createdAt
-            self.lastUpdatedAt = task.lastUpdatedAt
-            self.pollInterval = task.pollInterval
-            self.statusMessage = task.statusMessage
+            taskId = task.taskId
+            status = task.status
+            ttl = task.ttl
+            createdAt = task.createdAt
+            lastUpdatedAt = task.lastUpdatedAt
+            pollInterval = task.pollInterval
+            statusMessage = task.statusMessage
             self._meta = _meta
             self.extraFields = extraFields
         }
@@ -714,13 +714,13 @@ public struct TaskStatusNotification: Notification {
 
         /// Convenience initializer from MCPTask
         public init(task: MCPTask, _meta: [String: Value]? = nil) {
-            self.taskId = task.taskId
-            self.status = task.status
-            self.ttl = task.ttl
-            self.createdAt = task.createdAt
-            self.lastUpdatedAt = task.lastUpdatedAt
-            self.pollInterval = task.pollInterval
-            self.statusMessage = task.statusMessage
+            taskId = task.taskId
+            status = task.status
+            ttl = task.ttl
+            createdAt = task.createdAt
+            lastUpdatedAt = task.lastUpdatedAt
+            pollInterval = task.pollInterval
+            statusMessage = task.statusMessage
             self._meta = _meta
         }
 
@@ -759,7 +759,7 @@ extension TaskStatusNotification.Parameters: Codable {
 
 // MARK: - Server Capabilities
 
-extension Server.Capabilities {
+public extension Server.Capabilities {
     /// Tasks capabilities for servers.
     ///
     /// Servers advertise these capabilities during initialization to indicate
@@ -776,7 +776,7 @@ extension Server.Capabilities {
     ///     )
     /// )
     /// ```
-    public struct Tasks: Hashable, Codable, Sendable {
+    struct Tasks: Hashable, Codable, Sendable {
         /// Capability marker for list operations.
         public struct List: Hashable, Codable, Sendable {
             public init() {}
@@ -844,7 +844,7 @@ extension Server.Capabilities {
 
 // MARK: - Client Capabilities
 
-extension Client.Capabilities {
+public extension Client.Capabilities {
     /// Tasks capabilities for clients.
     ///
     /// Clients advertise these capabilities during initialization to indicate
@@ -865,7 +865,7 @@ extension Client.Capabilities {
     ///     )
     /// )
     /// ```
-    public struct Tasks: Hashable, Codable, Sendable {
+    struct Tasks: Hashable, Codable, Sendable {
         /// Capability marker for list operations.
         public struct List: Hashable, Codable, Sendable {
             public init() {}
@@ -1010,4 +1010,3 @@ public func requireTaskAugmentedToolsCall(_ caps: Server.Capabilities?) throws {
         throw MCPError.invalidRequest("Server does not support task-augmented tools/call")
     }
 }
-

@@ -118,7 +118,7 @@ struct MCPErrorRoundtripTests {
                 message: "Please authorize",
                 elicitationId: "auth-123",
                 url: "https://example.com/oauth"
-            )
+            ),
         ]
         let original = MCPError.urlElicitationRequired(
             message: "Authorization required",
@@ -192,7 +192,7 @@ struct MCPErrorRoundtripTests {
         let decoded = try roundtrip(original)
         #expect(decoded.code == ErrorCode.requestCancelled)
         #expect(decoded.message == "User cancelled the operation")
-        if case .requestCancelled(let reason) = decoded {
+        if case let .requestCancelled(reason) = decoded {
             #expect(reason == "User cancelled the operation")
         } else {
             Issue.record("Expected requestCancelled")
@@ -279,7 +279,7 @@ struct MCPErrorFromErrorTests {
     @Test("fromError reconstructs resourceNotFound with URI from data")
     func testFromErrorResourceNotFound() {
         let withoutData = MCPError.fromError(code: ErrorCode.resourceNotFound, message: "Resource not found")
-        if case .resourceNotFound(let uri) = withoutData {
+        if case let .resourceNotFound(uri) = withoutData {
             #expect(uri == nil)
         } else {
             Issue.record("Expected resourceNotFound")
@@ -287,7 +287,7 @@ struct MCPErrorFromErrorTests {
 
         let data: Value = .object(["uri": .string("file:///test.txt")])
         let withData = MCPError.fromError(code: ErrorCode.resourceNotFound, message: "Resource not found", data: data)
-        if case .resourceNotFound(let uri) = withData {
+        if case let .resourceNotFound(uri) = withData {
             #expect(uri == "file:///test.txt")
         } else {
             Issue.record("Expected resourceNotFound with uri")
@@ -302,9 +302,9 @@ struct MCPErrorFromErrorTests {
                     "mode": .string("url"),
                     "elicitationId": .string("test-123"),
                     "url": .string("https://example.com"),
-                    "message": .string("Authorize")
-                ])
-            ])
+                    "message": .string("Authorize"),
+                ]),
+            ]),
         ])
         let error = MCPError.fromError(code: ErrorCode.urlElicitationRequired, message: "Elicitation required", data: data)
         #expect(error.code == ErrorCode.urlElicitationRequired)
@@ -315,7 +315,7 @@ struct MCPErrorFromErrorTests {
     @Test("fromError falls back to serverError for unknown codes")
     func testFromErrorUnknownCode() {
         let error = MCPError.fromError(code: -32099, message: "Unknown error")
-        if case .serverError(let code, let message) = error {
+        if case let .serverError(code, message) = error {
             #expect(code == -32099)
             #expect(message == "Unknown error")
         } else {
@@ -327,7 +327,7 @@ struct MCPErrorFromErrorTests {
     func testFromErrorUnknownCodeWithData() {
         let data: Value = .object(["extra": .string("info")])
         let error = MCPError.fromError(code: -32099, message: "Error with data", data: data)
-        if case .serverErrorWithData(let code, let message, let errorData) = error {
+        if case let .serverErrorWithData(code, message, errorData) = error {
             #expect(code == -32099)
             #expect(message == "Error with data")
             #expect(errorData == data)
@@ -340,7 +340,7 @@ struct MCPErrorFromErrorTests {
     func testFromErrorRequestCancelled() {
         // Without reason
         let withoutReason = MCPError.fromError(code: ErrorCode.requestCancelled, message: "Request cancelled")
-        if case .requestCancelled(let reason) = withoutReason {
+        if case let .requestCancelled(reason) = withoutReason {
             #expect(reason == nil)
         } else {
             Issue.record("Expected requestCancelled")
@@ -348,7 +348,7 @@ struct MCPErrorFromErrorTests {
 
         // With reason in message
         let withMessage = MCPError.fromError(code: ErrorCode.requestCancelled, message: "User cancelled")
-        if case .requestCancelled(let reason) = withMessage {
+        if case let .requestCancelled(reason) = withMessage {
             #expect(reason == "User cancelled")
         } else {
             Issue.record("Expected requestCancelled")
@@ -357,7 +357,7 @@ struct MCPErrorFromErrorTests {
         // With reason in data
         let data: Value = .object(["reason": .string("Operation aborted by user")])
         let withData = MCPError.fromError(code: ErrorCode.requestCancelled, message: "Request cancelled", data: data)
-        if case .requestCancelled(let reason) = withData {
+        if case let .requestCancelled(reason) = withData {
             #expect(reason == "Operation aborted by user")
         } else {
             Issue.record("Expected requestCancelled")
@@ -400,7 +400,7 @@ struct MCPErrorWireFormatTests {
                     message: "Auth",
                     elicitationId: "e1",
                     url: "https://auth.example.com"
-                )
+                ),
             ],
             message: "Authorization needed"
         )

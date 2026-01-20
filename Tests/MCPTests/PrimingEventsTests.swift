@@ -36,7 +36,6 @@ import Testing
 /// protocol versions, which is the correct behavior for backwards compatibility.
 @Suite("Priming Events Tests")
 struct PrimingEventsTests {
-
     // MARK: - Test Helpers
 
     /// Helper to read from stream with timeout
@@ -129,24 +128,25 @@ struct PrimingEventsTests {
                     description: "A simple greeting tool",
                     inputSchema: [
                         "type": "object",
-                        "properties": ["name": ["type": "string"]]
+                        "properties": ["name": ["type": "string"]],
                     ]
-                )
+                ),
             ])
         }
 
         await server.withRequestHandler(CallTool.self) { request, _ in
             switch request.name {
-            case "greet":
-                let name = request.arguments?["name"]?.stringValue ?? "World"
-                return CallTool.Result(content: [.text("Hello, \(name)!")])
-            default:
-                return CallTool.Result(content: [.text("Unknown tool")], isError: true)
+                case "greet":
+                    let name = request.arguments?["name"]?.stringValue ?? "World"
+                    return CallTool.Result(content: [.text("Hello, \(name)!")])
+                default:
+                    return CallTool.Result(content: [.text("Unknown tool")], isError: true)
             }
         }
     }
 
     // MARK: - 4.1 Priming event configuration
+
     //
     // Note: The Swift SDK currently requires protocol version >= "2025-11-25" for priming events,
     // but the supported versions are "2024-11-05" and "2025-03-26". This means priming events
@@ -186,8 +186,8 @@ struct PrimingEventsTests {
 
         // Send a tool call request
         let toolCallRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: toolCallRequest, sessionId: sessionId, protocolVersion: Version.v2025_03_26))
 
         #expect(response.statusCode == 200, "Expected 200 but got \(response.statusCode)")
@@ -229,8 +229,8 @@ struct PrimingEventsTests {
 
         // Send a tool call request
         let toolCallRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: toolCallRequest, sessionId: sessionId))
 
         #expect(response.statusCode == 200)
@@ -274,8 +274,8 @@ struct PrimingEventsTests {
 
         // Send a tool call request
         let toolCallRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: toolCallRequest, sessionId: sessionId, protocolVersion: Version.v2024_11_05))
 
         #expect(response.statusCode == 200)
@@ -316,8 +316,8 @@ struct PrimingEventsTests {
 
         // Send a tool call request
         let toolCallRequest = """
-            {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
-            """
+        {"jsonrpc":"2.0","method":"tools/call","id":"100","params":{"name":"greet","arguments":{"name":"Test"}}}
+        """
         let response = await transport.handleRequest(TestPayloads.postRequest(body: toolCallRequest, sessionId: sessionId))
 
         #expect(response.statusCode == 200)
@@ -361,7 +361,7 @@ struct PrimingEventsTests {
                     name: "slow-tool",
                     description: "A slow tool",
                     inputSchema: ["type": "object"]
-                )
+                ),
             ])
         }
 

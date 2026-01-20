@@ -44,26 +44,26 @@ public enum AnnotationOption: Sendable, Equatable {
     case title(String)
 }
 
-extension AnnotationOption {
+public extension AnnotationOption {
     /// Converts an array of `AnnotationOption` to `Tool.Annotations`.
     ///
     /// - Parameter options: The array of annotation options.
     /// - Returns: A configured `Tool.Annotations` instance.
-    public static func buildAnnotations(from options: [AnnotationOption]) -> Tool.Annotations {
+    static func buildAnnotations(from options: [AnnotationOption]) -> Tool.Annotations {
         var annotations = Tool.Annotations()
 
         for option in options {
             switch option {
-            case .readOnly:
-                annotations.readOnlyHint = true
-                annotations.destructiveHint = false
-                annotations.idempotentHint = true
-            case .idempotent:
-                annotations.idempotentHint = true
-            case .closedWorld:
-                annotations.openWorldHint = false
-            case .title(let t):
-                annotations.title = t
+                case .readOnly:
+                    annotations.readOnlyHint = true
+                    annotations.destructiveHint = false
+                    annotations.idempotentHint = true
+                case .idempotent:
+                    annotations.idempotentHint = true
+                case .closedWorld:
+                    annotations.openWorldHint = false
+                case let .title(t):
+                    annotations.title = t
             }
         }
 

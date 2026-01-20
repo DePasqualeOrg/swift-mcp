@@ -49,7 +49,7 @@ struct Echo {
     @Parameter(description: "The message to echo")
     var message: String
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         message
     }
 }
@@ -66,7 +66,7 @@ struct Add {
     @Parameter(description: "Second number")
     var b: Double
 
-    func perform(context: HandlerContext) async throws -> String {
+    func perform(context _: HandlerContext) async throws -> String {
         "Result: \(a + b)"
     }
 }
@@ -135,14 +135,14 @@ struct MCPRequestContext: RequestContext {
     var coreContext: CoreRequestContextStorage
 
     init(source: Source) {
-        self.coreContext = .init(source: source)
+        coreContext = .init(source: source)
     }
 }
 
 // MARK: - HTTP Handlers
 
 /// Handle POST /mcp requests
-func handlePost(request: Request, context: MCPRequestContext) async throws -> Response {
+func handlePost(request: Request, context _: MCPRequestContext) async throws -> Response {
     // Get session ID from header (if present)
     let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!]
 
@@ -230,9 +230,9 @@ func handlePost(request: Request, context: MCPRequestContext) async throws -> Re
 }
 
 /// Handle GET /mcp requests (SSE stream for server-initiated notifications)
-func handleGet(request: Request, context: MCPRequestContext) async throws -> Response {
+func handleGet(request: Request, context _: MCPRequestContext) async throws -> Response {
     guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!],
-        let session = await sessionManager.session(forId: sessionId)
+          let session = await sessionManager.session(forId: sessionId)
     else {
         return Response(
             status: .badRequest,
@@ -251,9 +251,9 @@ func handleGet(request: Request, context: MCPRequestContext) async throws -> Res
 }
 
 /// Handle DELETE /mcp requests (session termination)
-func handleDelete(request: Request, context: MCPRequestContext) async throws -> Response {
+func handleDelete(request: Request, context _: MCPRequestContext) async throws -> Response {
     guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!],
-        let session = await sessionManager.session(forId: sessionId)
+          let session = await sessionManager.session(forId: sessionId)
     else {
         return Response(
             status: .notFound,

@@ -124,14 +124,14 @@ public actor MCPServer {
         self.name = name
         self.version = version
         self.title = title
-        self.serverDescription = description
+        serverDescription = description
         self.icons = icons
         self.websiteUrl = websiteUrl
         self.instructions = instructions
-        self.baseCapabilities = capabilities ?? .init()
-        self.toolRegistry = ToolRegistry()
-        self.resourceRegistry = ResourceRegistry()
-        self.promptRegistry = PromptRegistry()
+        baseCapabilities = capabilities ?? .init()
+        toolRegistry = ToolRegistry()
+        resourceRegistry = ResourceRegistry()
+        promptRegistry = PromptRegistry()
     }
 
     // MARK: - Session Creation
@@ -168,13 +168,13 @@ public actor MCPServer {
         // Build capabilities: use explicit overrides from baseCapabilities,
         // otherwise auto-detect based on registrations.
         var capabilities = baseCapabilities
-        if capabilities.tools == nil && hasTools {
+        if capabilities.tools == nil, hasTools {
             capabilities.tools = .init(listChanged: true)
         }
-        if capabilities.resources == nil && hasResources {
+        if capabilities.resources == nil, hasResources {
             capabilities.resources = .init(subscribe: false, listChanged: true)
         }
-        if capabilities.prompts == nil && hasPrompts {
+        if capabilities.prompts == nil, hasPrompts {
             capabilities.prompts = .init(listChanged: true)
         }
 
@@ -326,15 +326,14 @@ public actor MCPServer {
         let session = await createSession()
 
         switch transport {
-        case .stdio:
-            let stdioTransport = StdioTransport()
-            try await session.start(transport: stdioTransport)
+            case .stdio:
+                let stdioTransport = StdioTransport()
+                try await session.start(transport: stdioTransport)
 
-        case .custom(let customTransport):
-            try await session.start(transport: customTransport)
+            case let .custom(customTransport):
+                try await session.start(transport: customTransport)
         }
     }
-
 }
 
 // MARK: - Tool Registration
@@ -382,7 +381,7 @@ public actor MCPServer {
 ///
 /// Errors conforming to `LocalizedError` will have their `errorDescription` surfaced directly
 /// to the LLM. For other error types, the server uses `String(describing:)` as a fallback.
-extension MCPServer {
+public extension MCPServer {
     // MARK: DSL-Based Tools
 
     /// Registers multiple tools using a result builder.
@@ -401,7 +400,7 @@ extension MCPServer {
     /// - Returns: An array of `RegisteredTool` for managing the tools.
     /// - Throws: `MCPError.invalidParams` if any tool name is already registered.
     @discardableResult
-    public func register(@ToolBuilder tools: () -> [any ToolSpec.Type]) async throws -> [RegisteredTool] {
+    func register(@ToolBuilder tools: () -> [any ToolSpec.Type]) async throws -> [RegisteredTool] {
         var registeredTools: [RegisteredTool] = []
         for tool in tools() {
             let registered = try await toolRegistry.register(tool)
@@ -424,7 +423,7 @@ extension MCPServer {
     /// - Returns: A `RegisteredTool` for managing the tool.
     /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
     @discardableResult
-    public func register<T: ToolSpec>(_ tool: T.Type) async throws -> RegisteredTool {
+    func register(_ tool: (some ToolSpec).Type) async throws -> RegisteredTool {
         let registered = try await toolRegistry.register(tool)
         hasTools = true
         return registered
@@ -478,7 +477,7 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
     @discardableResult
-    public func register<Input: Codable & Sendable, Output: ToolOutput>(
+    func register<Input: Codable & Sendable, Output: ToolOutput>(
         name: String,
         description: String? = nil,
         inputSchema: Value,
@@ -506,11 +505,11 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
     @discardableResult
-    public func register<Output: ToolOutput>(
+    func register(
         name: String,
         description: String? = nil,
         annotations: [AnnotationOption] = [],
-        handler: @escaping @Sendable (HandlerContext) async throws -> Output
+        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput
     ) async throws -> RegisteredTool {
         let registered = try await toolRegistry.registerClosure(
             name: name,
@@ -525,7 +524,7 @@ extension MCPServer {
 
 // MARK: - Resource Registration
 
-extension MCPServer {
+public extension MCPServer {
     /// Registers a static resource with a closure handler.
     ///
     /// Example:
@@ -541,7 +540,7 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a resource with the same URI is already registered.
     @discardableResult
-    public func registerResource(
+    func registerResource(
         uri: String,
         name: String,
         description: String? = nil,
@@ -576,7 +575,7 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a template with the same URI pattern is already registered.
     @discardableResult
-    public func registerResourceTemplate(
+    func registerResourceTemplate(
         uriTemplate: String,
         name: String,
         description: String? = nil,
@@ -599,7 +598,7 @@ extension MCPServer {
 
 // MARK: - Prompt Registration
 
-extension MCPServer {
+public extension MCPServer {
     // MARK: DSL-Based Prompts
 
     /// Registers multiple prompts using a result builder.
@@ -618,7 +617,7 @@ extension MCPServer {
     /// - Returns: An array of `RegisteredPrompt` for managing the prompts.
     /// - Throws: `MCPError.invalidParams` if any prompt name is already registered.
     @discardableResult
-    public func register(@PromptBuilder prompts: () -> [any PromptSpec.Type]) async throws -> [RegisteredPrompt] {
+    func register(@PromptBuilder prompts: () -> [any PromptSpec.Type]) async throws -> [RegisteredPrompt] {
         var registeredPrompts: [RegisteredPrompt] = []
         for prompt in prompts() {
             let registered = try await promptRegistry.register(prompt)
@@ -641,7 +640,7 @@ extension MCPServer {
     /// - Returns: A `RegisteredPrompt` for managing the prompt.
     /// - Throws: `MCPError.invalidParams` if a prompt with the same name is already registered.
     @discardableResult
-    public func register<T: PromptSpec>(_ prompt: T.Type) async throws -> RegisteredPrompt {
+    func register(_ prompt: (some PromptSpec).Type) async throws -> RegisteredPrompt {
         let registered = try await promptRegistry.register(prompt)
         hasPrompts = true
         return registered
@@ -693,7 +692,7 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a prompt with the same name is already registered.
     @discardableResult
-    public func registerPrompt(
+    func registerPrompt(
         name: String,
         title: String? = nil,
         description: String? = nil,
@@ -729,7 +728,7 @@ extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a prompt with the same name is already registered.
     @discardableResult
-    public func registerPrompt(
+    func registerPrompt(
         name: String,
         title: String? = nil,
         description: String? = nil,

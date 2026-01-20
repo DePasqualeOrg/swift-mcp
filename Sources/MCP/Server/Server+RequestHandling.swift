@@ -9,7 +9,6 @@ extension Server {
         enum Item: Sendable {
             case request(Request<AnyMethod>)
             case notification(Message<AnyNotification>)
-
         }
 
         var items: [Item]
@@ -23,7 +22,7 @@ extension Server {
     func handleBatch(_ batch: Batch, messageContext: MessageContext? = nil) async throws {
         // Capture the connection at batch start.
         // This ensures all batch responses go to the correct client.
-        let capturedConnection = self.connection
+        let capturedConnection = connection
 
         await logger?.trace("Processing batch request", metadata: ["size": "\(batch.items.count)"])
 
@@ -47,19 +46,19 @@ extension Server {
         for item in batch.items {
             do {
                 switch item {
-                    case .request(let request):
+                    case let .request(request):
                         // For batched requests, collect responses instead of sending immediately
                         if let response = try await handleRequest(request, sendResponse: false, messageContext: messageContext) {
                             responses.append(response)
                         }
 
-                    case .notification(let notification):
+                    case let .notification(notification):
                         // Handle notification (no response needed)
                         try await handleMessage(notification)
                 }
             } catch {
                 // Only add errors to response for requests (notifications don't have responses)
-                if case .request(let request) = item {
+                if case let .request(request) = item {
                     // Log full error for debugging, but sanitize for client response.
                     // Only log non-MCP errors since MCP errors are expected/user-facing.
                     if !(error is MCPError) {
@@ -134,15 +133,17 @@ extension Server {
     ///
     /// Since `AnyMethod.Parameters` is `Value`, we need to extract `_meta` manually.
     private func extractMeta(from params: Value) -> RequestMeta? {
-        guard case .object(let dict) = params,
-              let metaValue = dict["_meta"] else {
+        guard case let .object(dict) = params,
+              let metaValue = dict["_meta"]
+        else {
             return nil
         }
         // Decode the _meta value as RequestMeta
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
         guard let data = try? encoder.encode(metaValue),
-              let meta = try? decoder.decode(RequestMeta.self, from: data) else {
+              let meta = try? decoder.decode(RequestMeta.self, from: data)
+        else {
             return nil
         }
         return meta
@@ -155,7 +156,7 @@ extension Server {
         let params: Value
 
         init(notification: any Notification) {
-            self.method = type(of: notification).name
+            method = type(of: notification).name
 
             // Encode the notification's params to Value
             // Since Notification is Codable, we encode it and extract the params field
@@ -163,10 +164,11 @@ extension Server {
             let decoder = JSONDecoder()
             if let data = try? encoder.encode(notification),
                let dict = try? decoder.decode([String: Value].self, from: data),
-               let params = dict["params"] {
+               let params = dict["params"]
+            {
                 self.params = params
             } else {
-                self.params = .object([:])
+                params = .object([:])
             }
         }
     }
@@ -176,7 +178,7 @@ extension Server {
     /// This ensures responses are routed to the correct client by:
     /// 1. Using the connection that was active when the request was received
     /// 2. Passing the request ID so multiplexing transports can route correctly
-    func send<M: Method>(_ response: Response<M>, using context: RequestContext) async throws {
+    func send(_ response: Response<some Method>, using context: RequestContext) async throws {
         guard let connection = context.capturedConnection else {
             await logger?.warning(
                 "Cannot send response - connection was nil at request time",
@@ -200,12 +202,12 @@ extension Server {
     ///   - messageContext: Optional context from the transport message (authInfo, SSE closures)
     /// - Returns: The response when sendResponse is false
     func handleRequest(_ request: Request<AnyMethod>, sendResponse: Bool = true, messageContext: MessageContext? = nil)
-    async throws -> Response<AnyMethod>?
+        async throws -> Response<AnyMethod>?
     {
         // Capture the connection and session ID at request time.
         // This ensures responses go to the correct client even if self.connection
         // changes while the handler is executing (e.g., another client connects).
-        let capturedConnection = self.connection
+        let capturedConnection = connection
         let requestMeta = extractMeta(from: request.params)
 
         // Extract context from transport message (set by HTTP transports with per-message context)
@@ -215,10 +217,10 @@ extension Server {
         let closeSSEStream = messageContext?.closeSSEStream
         let closeStandaloneSSEStream = messageContext?.closeStandaloneSSEStream
 
-        let context = RequestContext(
+        let context = await RequestContext(
             capturedConnection: capturedConnection,
             requestId: request.id,
-            sessionId: await capturedConnection?.sessionId,
+            sessionId: capturedConnection?.sessionId,
             meta: requestMeta,
             authInfo: authInfo,
             requestInfo: requestInfo,
@@ -227,7 +229,7 @@ extension Server {
         )
 
         // Check if this is a pre-processed error request (empty method)
-        if request.method.isEmpty && !sendResponse {
+        if request.method.isEmpty, !sendResponse {
             // This is a placeholder for an invalid request that couldn't be parsed in batch mode
             return AnyMethod.response(
                 id: request.id,
@@ -240,28 +242,29 @@ extension Server {
             metadata: [
                 "method": "\(request.method)",
                 "id": "\(request.id)",
-            ])
+            ]
+        )
 
         // Check initialization state for strict mode (matches Python SDK behavior).
         // We chose to align with Python (block at Server level) rather than TypeScript
         // (block only at HTTP transport level) for consistent behavior across all transports.
         if configuration.strict {
             switch request.method {
-            case Initialize.name, Ping.name:
-                // Always allow initialize and ping requests
-                break
-            default:
-                guard isInitialized else {
-                    let error = MCPError.invalidRequest("Server is not initialized")
-                    let response = AnyMethod.response(id: request.id, error: error)
+                case Initialize.name, Ping.name:
+                    // Always allow initialize and ping requests
+                    break
+                default:
+                    guard isInitialized else {
+                        let error = MCPError.invalidRequest("Server is not initialized")
+                        let response = AnyMethod.response(id: request.id, error: error)
 
-                    if sendResponse {
-                        try await send(response, using: context)
-                        return nil
+                        if sendResponse {
+                            try await send(response, using: context)
+                            return nil
+                        }
+
+                        return response
                     }
-
-                    return response
-                }
             }
         }
 
@@ -323,7 +326,7 @@ extension Server {
             closeStandaloneSSEStream: context.closeStandaloneSSEStream,
             shouldSendLogMessage: { [weak self, context] level in
                 guard let self else { return true }
-                return await self.shouldSendLogMessage(at: level, forSession: context.sessionId)
+                return await shouldSendLogMessage(at: level, forSession: context.sessionId)
             },
             sendRequest: { [weak self, context] requestData in
                 guard let self else {
@@ -335,7 +338,8 @@ extension Server {
 
                 // Parse the request to get its ID
                 guard let jsonObject = try? JSONSerialization.jsonObject(with: requestData) as? [String: Any],
-                      let requestId = jsonObject["id"] else {
+                      let requestId = jsonObject["id"]
+                else {
                     throw MCPError.invalidParams("Could not parse request ID")
                 }
 
@@ -357,13 +361,13 @@ extension Server {
                 }
 
                 // Register the pending request
-                await self.registerContextRequest(id: typedRequestId, continuation: continuation)
+                await registerContextRequest(id: typedRequestId, continuation: continuation)
 
                 // Send the request using captured connection
                 do {
                     try await connection.send(requestData, relatedRequestId: context.requestId)
                 } catch {
-                    await self.cleanUpPendingRequest(id: typedRequestId)
+                    await cleanUpPendingRequest(id: typedRequestId)
                     continuation.finish(throwing: error)
                     throw error
                 }
@@ -427,15 +431,17 @@ extension Server {
     func handleMessage(_ message: Message<AnyNotification>) async throws {
         await logger?.trace(
             "Processing notification",
-            metadata: ["method": "\(message.method)"])
+            metadata: ["method": "\(message.method)"]
+        )
 
         // Check initialization state for strict mode (matches Python SDK behavior).
         // For notifications (unlike requests), we log and ignore since no response is expected.
         if configuration.strict {
-            if message.method != InitializedNotification.name && !isInitialized {
+            if message.method != InitializedNotification.name, !isInitialized {
                 await logger?.warning(
                     "Ignoring notification before initialization",
-                    metadata: ["method": "\(message.method)"])
+                    metadata: ["method": "\(message.method)"]
+                )
                 return
             }
         }
@@ -453,7 +459,8 @@ extension Server {
                     metadata: [
                         "method": "\(message.method)",
                         "error": "\(error)",
-                    ])
+                    ]
+                )
             }
         }
     }
@@ -462,23 +469,26 @@ extension Server {
     func handleClientResponse(_ response: Response<AnyMethod>) async {
         await logger?.trace(
             "Processing client response",
-            metadata: ["id": "\(response.id)"])
+            metadata: ["id": "\(response.id)"]
+        )
 
         // Check response routers first (e.g., for task-related responses)
         for router in responseRouters {
             switch response.result {
-                case .success(let value):
+                case let .success(value):
                     if await router.routeResponse(requestId: response.id, response: value) {
                         await logger?.trace(
                             "Response routed via router",
-                            metadata: ["id": "\(response.id)"])
+                            metadata: ["id": "\(response.id)"]
+                        )
                         return
                     }
-                case .failure(let error):
+                case let .failure(error):
                     if await router.routeError(requestId: response.id, error: error) {
                         await logger?.trace(
                             "Error routed via router",
-                            metadata: ["id": "\(response.id)"])
+                            metadata: ["id": "\(response.id)"]
+                        )
                         return
                     }
             }
@@ -487,23 +497,24 @@ extension Server {
         // Fall back to normal pending request handling
         if let pendingRequest = pendingRequests.removeValue(forKey: response.id) {
             switch response.result {
-                case .success(let value):
+                case let .success(value):
                     pendingRequest.resume(returning: value)
-                case .failure(let error):
+                case let .failure(error):
                     pendingRequest.resume(throwing: error)
             }
         } else if let pendingContextRequest = pendingContextRequests.removeValue(forKey: response.id) {
             // Handle context requests that return raw Data
             switch response.result {
-                case .success(let value):
+                case let .success(value):
                     pendingContextRequest.resume(returning: value)
-                case .failure(let error):
+                case let .failure(error):
                     pendingContextRequest.resume(throwing: error)
             }
         } else {
             await logger?.warning(
                 "Received response for unknown request",
-                metadata: ["id": "\(response.id)"])
+                metadata: ["id": "\(response.id)"]
+            )
         }
     }
 }

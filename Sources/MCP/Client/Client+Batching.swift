@@ -1,13 +1,13 @@
 import Foundation
 
-extension Client {
+public extension Client {
     // MARK: - Batching
 
     /// A batch of requests.
     ///
     /// Objects of this type are passed as an argument to the closure
     /// of the ``Client/withBatch(body:)`` method.
-    public actor Batch {
+    actor Batch {
         unowned let client: Client
         var requests: [AnyRequest] = []
 
@@ -21,7 +21,7 @@ extension Client {
         public func addRequest<M: Method>(_ request: Request<M>) async throws -> Task<
             M.Result, Swift.Error
         > {
-            requests.append(try AnyRequest(request))
+            try requests.append(AnyRequest(request))
 
             // Create stream for receiving the response
             let (stream, continuation) = AsyncThrowingStream<M.Result, Swift.Error>.makeStream()
@@ -132,7 +132,7 @@ extension Client {
     ///                   Use this object to add requests to the batch.
     /// - Throws: `MCPError.internalError` if the client is not connected.
     ///           Can also rethrow errors from the `body` closure or from sending the batch request.
-    public func withBatch(body: @escaping (Batch) async throws -> Void) async throws {
+    func withBatch(body: @escaping (Batch) async throws -> Void) async throws {
         guard let connection else {
             throw MCPError.internalError("Client connection not initialized")
         }
@@ -149,11 +149,12 @@ extension Client {
         // Check if there are any requests to send
         guard !requests.isEmpty else {
             await logger?.debug("Batch requested but no requests were added.")
-            return  // Nothing to send
+            return // Nothing to send
         }
 
         await logger?.debug(
-            "Sending batch request", metadata: ["count": "\(requests.count)"])
+            "Sending batch request", metadata: ["count": "\(requests.count)"]
+        )
 
         // Encode the array of AnyMethod requests into a single JSON payload
         let data = try encoder.encode(requests)

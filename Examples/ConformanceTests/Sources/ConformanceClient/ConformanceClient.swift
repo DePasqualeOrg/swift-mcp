@@ -36,7 +36,8 @@ struct ConformanceClient {
     static func run() async throws {
         // Parse command line arguments
         guard CommandLine.arguments.count >= 2,
-              let serverURL = URL(string: CommandLine.arguments[1]) else {
+              let serverURL = URL(string: CommandLine.arguments[1])
+        else {
             logger.error("Usage: ConformanceClient <server-url>")
             logger.info("The MCP_CONFORMANCE_SCENARIO env var is set by the conformance runner.")
             exit(1)
@@ -48,19 +49,19 @@ struct ConformanceClient {
         logger.info("Server URL: \(serverURL)")
 
         switch scenario {
-        case "initialize":
-            try await runInitializeScenario(serverURL: serverURL)
-        case "tools_call":
-            try await runToolsCallScenario(serverURL: serverURL)
-        case "elicitation-sep1034-client-defaults":
-            try await runElicitationScenario(serverURL: serverURL)
-        case "sse-retry":
-            try await runSSERetryScenario(serverURL: serverURL)
-        default:
-            logger.error("Unknown scenario: \(scenario)")
-            logger.info("Supported scenarios: initialize, tools_call, elicitation-sep1034-client-defaults, sse-retry")
-            logger.info("Not implemented: auth/* (requires OAuth support)")
-            exit(1)
+            case "initialize":
+                try await runInitializeScenario(serverURL: serverURL)
+            case "tools_call":
+                try await runToolsCallScenario(serverURL: serverURL)
+            case "elicitation-sep1034-client-defaults":
+                try await runElicitationScenario(serverURL: serverURL)
+            case "sse-retry":
+                try await runSSERetryScenario(serverURL: serverURL)
+            default:
+                logger.error("Unknown scenario: \(scenario)")
+                logger.info("Supported scenarios: initialize, tools_call, elicitation-sep1034-client-defaults, sse-retry")
+                logger.info("Not implemented: auth/* (requires OAuth support)")
+                exit(1)
         }
 
         logger.info("Scenario completed successfully")
@@ -133,23 +134,23 @@ struct ConformanceClient {
             urlMode: .enabled
         ) { params, _ in
             switch params {
-            case .form(let formParams):
-                logger.info("Received elicitation request: \(formParams.message)")
+                case let .form(formParams):
+                    logger.info("Received elicitation request: \(formParams.message)")
 
-                // Extract defaults from schema - this is what applyDefaults: true means
-                var content: [String: ElicitValue] = [:]
-                for (fieldName, fieldSchema) in formParams.requestedSchema.properties {
-                    if let defaultValue = fieldSchema.default {
-                        content[fieldName] = defaultValue
-                        logger.debug("Applying default for \(fieldName): \(defaultValue)")
+                    // Extract defaults from schema - this is what applyDefaults: true means
+                    var content: [String: ElicitValue] = [:]
+                    for (fieldName, fieldSchema) in formParams.requestedSchema.properties {
+                        if let defaultValue = fieldSchema.default {
+                            content[fieldName] = defaultValue
+                            logger.debug("Applying default for \(fieldName): \(defaultValue)")
+                        }
                     }
-                }
 
-                return ElicitResult(action: .accept, content: content)
+                    return ElicitResult(action: .accept, content: content)
 
-            case .url(let urlParams):
-                logger.info("Received URL elicitation request: \(urlParams.message)")
-                return ElicitResult(action: .accept, content: nil)
+                case let .url(urlParams):
+                    logger.info("Received URL elicitation request: \(urlParams.message)")
+                    return ElicitResult(action: .accept, content: nil)
             }
         }
 

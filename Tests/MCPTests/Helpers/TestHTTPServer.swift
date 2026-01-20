@@ -30,7 +30,7 @@ actor TestHTTPServer {
     private init(transport: HTTPServerTransport, serviceGroup: ServiceGroup, port: Int, serverTask: Task<Void, Error>) {
         self.transport = transport
         self.serviceGroup = serviceGroup
-        self.serverPort = port
+        serverPort = port
         self.serverTask = serverTask
     }
 
@@ -45,7 +45,7 @@ actor TestHTTPServer {
                 sessionIdGenerator: sessionIdGenerator,
                 onSessionInitialized: onSessionInitialized,
                 onSessionClosed: onSessionClosed,
-                dnsRebindingProtection: .localhost()  // URLSession sets Host header automatically
+                dnsRebindingProtection: .localhost() // URLSession sets Host header automatically
             )
         )
         try await transport.connect()
@@ -96,7 +96,7 @@ actor TestHTTPServer {
 
         // Create app with random port (0)
         var logger = Logger(label: "test-http-server")
-        logger.logLevel = .error  // Suppress noise during tests
+        logger.logLevel = .error // Suppress noise during tests
 
         let app = Application(
             router: router,
@@ -158,7 +158,7 @@ actor TestHTTPServer {
         }
 
         let body: Data?
-        let collected = try await request.body.collect(upTo: 10 * 1024 * 1024)  // 10MB limit
+        let collected = try await request.body.collect(upTo: 10 * 1024 * 1024) // 10MB limit
         if collected.readableBytes > 0 {
             body = Data(buffer: collected)
         } else {
@@ -181,11 +181,10 @@ actor TestHTTPServer {
         }
 
         let status = HTTPTypes.HTTPResponse.Status(code: response.statusCode)
-        let body: ResponseBody
-        if let bodyData = response.body {
-            body = ResponseBody(byteBuffer: ByteBuffer(data: bodyData))
+        let body = if let bodyData = response.body {
+            ResponseBody(byteBuffer: ByteBuffer(data: bodyData))
         } else {
-            body = ResponseBody()
+            ResponseBody()
         }
 
         return Hummingbird.Response(status: status, headers: headers, body: body)

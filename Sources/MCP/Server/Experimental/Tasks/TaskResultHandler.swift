@@ -60,7 +60,7 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
             if isTerminalStatus(task.status) {
                 let result = await store.getResult(taskId: taskId)
                 let relatedTaskMeta: [String: Value] = [
-                    relatedTaskMetaKey: .object(["taskId": .string(taskId)])
+                    relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
                 ]
 
                 // Flatten result fields into extraFields

@@ -8,27 +8,27 @@ import Testing
 /// Extension to provide convenient value accessors for testing
 extension ElicitValue {
     var stringValue: String? {
-        if case .string(let value) = self { return value }
+        if case let .string(value) = self { return value }
         return nil
     }
 
     var intValue: Int? {
-        if case .int(let value) = self { return value }
+        if case let .int(value) = self { return value }
         return nil
     }
 
     var doubleValue: Double? {
-        if case .double(let value) = self { return value }
+        if case let .double(value) = self { return value }
         return nil
     }
 
     var boolValue: Bool? {
-        if case .bool(let value) = self { return value }
+        if case let .bool(value) = self { return value }
         return nil
     }
 
     var stringsValue: [String]? {
-        if case .strings(let value) = self { return value }
+        if case let .strings(value) = self { return value }
         return nil
     }
 }
@@ -37,7 +37,6 @@ extension ElicitValue {
 
 @Suite("Schema Encoding/Decoding Tests")
 struct SchemaEncodingTests {
-
     @Test("StringSchema encodes and decodes correctly")
     func testStringSchemaRoundtrip() throws {
         let schema = StringSchema(
@@ -107,7 +106,7 @@ struct SchemaEncodingTests {
         let data = try JSONEncoder().encode(schema)
         let decoded = try JSONDecoder().decode(NumberSchema.self, from: data)
 
-        #expect(decoded.type == "integer")  // isInteger is encoded as type
+        #expect(decoded.type == "integer") // isInteger is encoded as type
         #expect(decoded.title == "Age")
         #expect(decoded.minimum == 0)
         #expect(decoded.maximum == 150)
@@ -185,7 +184,7 @@ struct SchemaEncodingTests {
         let decoded = try JSONDecoder().decode(TitledMultiSelectEnumSchema.self, from: data)
 
         #expect(decoded.title == "Interests")
-        #expect(decoded.items.anyOf.count == 3)  // options are in items.anyOf
+        #expect(decoded.items.anyOf.count == 3) // options are in items.anyOf
         #expect(decoded.defaultValue == ["tech"])
     }
 
@@ -201,7 +200,7 @@ struct SchemaEncodingTests {
         let decoded = try JSONDecoder().decode(UntitledMultiSelectEnumSchema.self, from: data)
 
         #expect(decoded.title == "Tags")
-        #expect(decoded.items.enumValues == ["tag1", "tag2", "tag3"])  // enumValues are in items
+        #expect(decoded.items.enumValues == ["tag1", "tag2", "tag3"]) // enumValues are in items
         #expect(decoded.defaultValue == ["tag1", "tag2"])
     }
 
@@ -232,7 +231,6 @@ struct SchemaEncodingTests {
 
 @Suite("ElicitRequestParams Tests")
 struct ElicitRequestParamsTests {
-
     @Test("Form mode params encode and decode correctly")
     func testFormModeParams() throws {
         let params = ElicitRequestParams.form(ElicitRequestFormParams(
@@ -248,7 +246,7 @@ struct ElicitRequestParamsTests {
         let data = try JSONEncoder().encode(params)
         let decoded = try JSONDecoder().decode(ElicitRequestParams.self, from: data)
 
-        if case .form(let formParams) = decoded {
+        if case let .form(formParams) = decoded {
             #expect(formParams.message == "Please fill out this form")
             #expect(formParams.requestedSchema.properties.count == 1)
         } else {
@@ -267,7 +265,7 @@ struct ElicitRequestParamsTests {
         let data = try JSONEncoder().encode(params)
         let decoded = try JSONDecoder().decode(ElicitRequestParams.self, from: data)
 
-        if case .url(let urlParams) = decoded {
+        if case let .url(urlParams) = decoded {
             #expect(urlParams.message == "Please authorize access")
             #expect(urlParams.elicitationId == "auth-123")
             #expect(urlParams.url == "https://example.com/oauth/authorize")
@@ -281,7 +279,6 @@ struct ElicitRequestParamsTests {
 
 @Suite("ElicitResult Tests")
 struct ElicitResultTests {
-
     @Test("ElicitResult with accept action encodes correctly")
     func testElicitResultAccept() throws {
         let result = ElicitResult(
@@ -326,7 +323,6 @@ struct ElicitResultTests {
 
 @Suite("ElicitValue Tests")
 struct ElicitValueTests {
-
     @Test("String value encodes and decodes correctly")
     func testStringValue() throws {
         let value = ElicitValue.string("hello")
@@ -372,7 +368,6 @@ struct ElicitValueTests {
 
 @Suite("ElicitAction Tests")
 struct ElicitActionTests {
-
     @Test("All action types encode and decode correctly")
     func testActionTypes() throws {
         let actions: [ElicitAction] = [.accept, .decline, .cancel]
@@ -389,7 +384,6 @@ struct ElicitActionTests {
 
 @Suite("Elicitation Capability Tests")
 struct ElicitationCapabilityTests {
-
     @Test("Form capability encodes correctly")
     func testFormCapability() throws {
         let capability = Client.Capabilities.Elicitation(
@@ -433,7 +427,6 @@ struct ElicitationCapabilityTests {
 
 @Suite("ElicitationRequiredErrorData Tests")
 struct ElicitationRequiredErrorDataTests {
-
     @Test("Error data encodes correctly")
     func testErrorDataEncoding() throws {
         let errorData = ElicitationRequiredErrorData(
@@ -442,7 +435,7 @@ struct ElicitationRequiredErrorDataTests {
                     message: "Authorize",
                     elicitationId: "auth-1",
                     url: "https://example.com/auth"
-                )
+                ),
             ]
         )
 
@@ -459,7 +452,6 @@ struct ElicitationRequiredErrorDataTests {
 
 @Suite("Elicitation Integration Tests")
 struct ElicitationIntegrationTests {
-
     // MARK: - Form Mode Flow Tests
 
     @Test("Server can elicit form input from client - accept with content")
@@ -474,7 +466,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "askName", description: "Ask for name", inputSchema: [:])
+                Tool(name: "askName", description: "Ask for name", inputSchema: [:]),
             ])
         }
 
@@ -496,7 +488,7 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { params, _ in
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
             #expect(formParams.message == "Please enter your name")
@@ -509,7 +501,7 @@ struct ElicitationIntegrationTests {
         let result = try await client.callTool(name: "askName", arguments: [:])
 
         #expect(result.isError == nil)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Hello, Alice!")
         }
 
@@ -528,7 +520,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "confirm", description: "Confirm action", inputSchema: [:])
+                Tool(name: "confirm", description: "Confirm action", inputSchema: [:]),
             ])
         }
 
@@ -541,15 +533,15 @@ struct ElicitationIntegrationTests {
             )))
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Confirmed")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Confirmed")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(action: .decline)
+            ElicitResult(action: .decline)
         }
 
         try await server.start(transport: serverTransport)
@@ -557,7 +549,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "confirm", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Declined")
         }
 
@@ -576,7 +568,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "getData", description: "Get data", inputSchema: [:])
+                Tool(name: "getData", description: "Get data", inputSchema: [:]),
             ])
         }
 
@@ -589,15 +581,15 @@ struct ElicitationIntegrationTests {
             )))
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Got data")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Got data")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(action: .cancel)
+            ElicitResult(action: .cancel)
         }
 
         try await server.start(transport: serverTransport)
@@ -605,7 +597,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "getData", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Cancelled")
         }
 
@@ -624,7 +616,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "survey", description: "Survey", inputSchema: [:])
+                Tool(name: "survey", description: "Survey", inputSchema: [:]),
             ])
         }
 
@@ -658,7 +650,7 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(
+            ElicitResult(
                 action: .accept,
                 content: [
                     "name": .string("Bob"),
@@ -674,7 +666,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "survey", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("Name: Bob"))
             #expect(text.contains("Age: 30"))
             #expect(text.contains("Score: 95.5"))
@@ -698,7 +690,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize", inputSchema: [:]),
             ])
         }
 
@@ -710,15 +702,15 @@ struct ElicitationIntegrationTests {
             )))
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Authorized")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Authorized")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { params, _ in
-            guard case .url(let urlParams) = params else {
+            guard case let .url(urlParams) = params else {
                 return ElicitResult(action: .decline)
             }
             #expect(urlParams.message == "Please authorize access")
@@ -732,7 +724,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Authorized")
         }
 
@@ -753,7 +745,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "formTool", description: "Tool requiring form", inputSchema: [:])
+                Tool(name: "formTool", description: "Tool requiring form", inputSchema: [:]),
             ])
         }
 
@@ -798,7 +790,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "urlTool", description: "Tool requiring URL", inputSchema: [:])
+                Tool(name: "urlTool", description: "Tool requiring URL", inputSchema: [:]),
             ])
         }
 
@@ -844,7 +836,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "elicitTool", description: "Tool that elicits", inputSchema: [:])
+                Tool(name: "elicitTool", description: "Tool that elicits", inputSchema: [:]),
             ])
         }
 
@@ -887,7 +879,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "wizard", description: "Multi-step wizard", inputSchema: [:])
+                Tool(name: "wizard", description: "Multi-step wizard", inputSchema: [:]),
             ])
         }
 
@@ -932,7 +924,7 @@ struct ElicitationIntegrationTests {
 
         await client.withElicitationHandler(formMode: .enabled()) { params, _ in
             await counter.increment()
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
 
@@ -951,7 +943,7 @@ struct ElicitationIntegrationTests {
         let result = try await client.callTool(name: "wizard", arguments: [:])
 
         #expect(await counter.getCount() == 2)
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Completed: Charlie, 25")
         }
 
@@ -972,7 +964,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "pickColor", description: "Pick a color", inputSchema: [:])
+                Tool(name: "pickColor", description: "Pick a color", inputSchema: [:]),
             ])
         }
 
@@ -988,7 +980,7 @@ struct ElicitationIntegrationTests {
                                 TitledEnumOption(const: "#00FF00", title: "Green"),
                                 TitledEnumOption(const: "#0000FF", title: "Blue"),
                             ]
-                        ))
+                        )),
                     ],
                     required: ["color"]
                 )
@@ -1003,12 +995,12 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { params, _ in
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
 
             // Verify enum options are present
-            if case .titledEnum(let enumSchema) = formParams.requestedSchema.properties["color"] {
+            if case let .titledEnum(enumSchema) = formParams.requestedSchema.properties["color"] {
                 #expect(enumSchema.oneOf.count == 3)
                 #expect(enumSchema.oneOf[0].title == "Red")
             }
@@ -1021,7 +1013,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "pickColor", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Color: #00FF00")
         }
 
@@ -1040,7 +1032,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "selectTags", description: "Select tags", inputSchema: [:])
+                Tool(name: "selectTags", description: "Select tags", inputSchema: [:]),
             ])
         }
 
@@ -1056,13 +1048,14 @@ struct ElicitationIntegrationTests {
                                 TitledEnumOption(const: "sports", title: "Sports"),
                                 TitledEnumOption(const: "music", title: "Music"),
                             ]
-                        ))
+                        )),
                     ]
                 )
             )))
 
             guard result.action == .accept,
-                  let interests = result.content?["interests"]?.stringsValue else {
+                  let interests = result.content?["interests"]?.stringsValue
+            else {
                 return CallTool.Result(content: [.text("No interests")])
             }
 
@@ -1071,7 +1064,7 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(action: .accept, content: ["interests": .strings(["tech", "music"])])
+            ElicitResult(action: .accept, content: ["interests": .strings(["tech", "music"])])
         }
 
         try await server.start(transport: serverTransport)
@@ -1079,7 +1072,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "selectTags", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Interests: tech, music")
         }
 
@@ -1100,7 +1093,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize", inputSchema: [:]),
             ])
         }
 
@@ -1112,15 +1105,15 @@ struct ElicitationIntegrationTests {
             )))
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Authorized")])
-            case .decline: CallTool.Result(content: [.text("User declined authorization")])
-            case .cancel: CallTool.Result(content: [.text("Cancelled")])
+                case .accept: CallTool.Result(content: [.text("Authorized")])
+                case .decline: CallTool.Result(content: [.text("User declined authorization")])
+                case .cancel: CallTool.Result(content: [.text("Cancelled")])
             }
         }
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { params, _ in
-            guard case .url(let urlParams) = params else {
+            guard case let .url(urlParams) = params else {
                 return ElicitResult(action: .cancel)
             }
             #expect(urlParams.elicitationId == "auth-decline-123")
@@ -1132,7 +1125,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "User declined authorization")
         }
 
@@ -1151,7 +1144,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize", inputSchema: [:]),
             ])
         }
 
@@ -1163,9 +1156,9 @@ struct ElicitationIntegrationTests {
             )))
 
             return switch result.action {
-            case .accept: CallTool.Result(content: [.text("Authorized")])
-            case .decline: CallTool.Result(content: [.text("Declined")])
-            case .cancel: CallTool.Result(content: [.text("User cancelled authorization")])
+                case .accept: CallTool.Result(content: [.text("Authorized")])
+                case .decline: CallTool.Result(content: [.text("Declined")])
+                case .cancel: CallTool.Result(content: [.text("User cancelled authorization")])
             }
         }
 
@@ -1182,7 +1175,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "User cancelled authorization")
         }
 
@@ -1201,7 +1194,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "checkContent", description: "Check content", inputSchema: [:])
+                Tool(name: "checkContent", description: "Check content", inputSchema: [:]),
             ])
         }
 
@@ -1231,7 +1224,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "checkContent", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Action: accept, HasContent: false")
         }
 
@@ -1252,7 +1245,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "pickColor", description: "Pick a color", inputSchema: [:])
+                Tool(name: "pickColor", description: "Pick a color", inputSchema: [:]),
             ])
         }
 
@@ -1267,7 +1260,7 @@ struct ElicitationIntegrationTests {
                             enumValues: ["#FF0000", "#00FF00", "#0000FF"],
                             enumNames: ["Red", "Green", "Blue"],
                             defaultValue: "#00FF00"
-                        ))
+                        )),
                     ],
                     required: ["color"]
                 )
@@ -1282,12 +1275,12 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { params, _ in
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
 
             // Verify legacy enum schema is decoded correctly
-            if case .legacyTitledEnum(let enumSchema) = formParams.requestedSchema.properties["color"] {
+            if case let .legacyTitledEnum(enumSchema) = formParams.requestedSchema.properties["color"] {
                 #expect(enumSchema.enumValues == ["#FF0000", "#00FF00", "#0000FF"])
                 #expect(enumSchema.enumNames == ["Red", "Green", "Blue"])
                 #expect(enumSchema.defaultValue == "#00FF00")
@@ -1302,7 +1295,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "pickColor", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Selected color: #FF0000")
         }
 
@@ -1323,7 +1316,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "userInfo", description: "Get user info", inputSchema: [:])
+                Tool(name: "userInfo", description: "Get user info", inputSchema: [:]),
             ])
         }
 
@@ -1337,7 +1330,7 @@ struct ElicitationIntegrationTests {
                         "age": .number(NumberSchema(isInteger: true, title: "Age", description: "Optional age")),
                         "subscribe": .boolean(BooleanSchema(title: "Subscribe", description: "Optional subscription")),
                     ],
-                    required: ["name"]  // Only name is required
+                    required: ["name"] // Only name is required
                 )
             )))
 
@@ -1364,7 +1357,7 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(
+            ElicitResult(
                 action: .accept,
                 content: [
                     "name": .string("John Doe"),
@@ -1380,7 +1373,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "userInfo", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text.contains("Name: John Doe"))
             #expect(text.contains("Nickname: Johnny"))
             #expect(text.contains("Age: 30"))
@@ -1402,7 +1395,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "userInfo", description: "Get user info", inputSchema: [:])
+                Tool(name: "userInfo", description: "Get user info", inputSchema: [:]),
             ])
         }
 
@@ -1433,7 +1426,7 @@ struct ElicitationIntegrationTests {
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
             // Only provide the required field
-            return ElicitResult(action: .accept, content: ["name": .string("Jane Smith")])
+            ElicitResult(action: .accept, content: ["name": .string("Jane Smith")])
         }
 
         try await server.start(transport: serverTransport)
@@ -1441,7 +1434,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "userInfo", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Name: Jane Smith, HasNickname: false, HasEmail: false")
         }
 
@@ -1496,7 +1489,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "preferences", description: "Get preferences", inputSchema: [:])
+                Tool(name: "preferences", description: "Get preferences", inputSchema: [:]),
             ])
         }
 
@@ -1519,9 +1512,9 @@ struct ElicitationIntegrationTests {
             }
 
             let email = content["email"]?.stringValue ?? "none"
-            let nickname = content["nickname"]?.stringValue ?? "Guest"  // Use default if not provided
-            let volume = content["volume"]?.intValue ?? 50  // Use default if not provided
-            let darkMode = content["darkMode"]?.boolValue ?? false  // Use default if not provided
+            let nickname = content["nickname"]?.stringValue ?? "Guest" // Use default if not provided
+            let volume = content["volume"]?.intValue ?? 50 // Use default if not provided
+            let darkMode = content["darkMode"]?.boolValue ?? false // Use default if not provided
 
             return CallTool.Result(content: [.text("Email: \(email), Nickname: \(nickname), Volume: \(volume), DarkMode: \(darkMode)")])
         }
@@ -1529,17 +1522,17 @@ struct ElicitationIntegrationTests {
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { params, _ in
             // Verify the schema contains default values
-            guard case .form(let formParams) = params else {
+            guard case let .form(formParams) = params else {
                 return ElicitResult(action: .decline)
             }
 
-            if case .string(let nicknameSchema) = formParams.requestedSchema.properties["nickname"] {
+            if case let .string(nicknameSchema) = formParams.requestedSchema.properties["nickname"] {
                 #expect(nicknameSchema.defaultValue == "Guest")
             }
-            if case .number(let volumeSchema) = formParams.requestedSchema.properties["volume"] {
+            if case let .number(volumeSchema) = formParams.requestedSchema.properties["volume"] {
                 #expect(volumeSchema.defaultValue == 50)
             }
-            if case .boolean(let darkModeSchema) = formParams.requestedSchema.properties["darkMode"] {
+            if case let .boolean(darkModeSchema) = formParams.requestedSchema.properties["darkMode"] {
                 #expect(darkModeSchema.defaultValue == false)
             }
 
@@ -1552,7 +1545,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "preferences", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Email: test@example.com, Nickname: Guest, Volume: 50, DarkMode: false")
         }
 
@@ -1573,7 +1566,7 @@ struct ElicitationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "userProfile", description: "Get user profile", inputSchema: [:])
+                Tool(name: "userProfile", description: "Get user profile", inputSchema: [:]),
             ])
         }
 
@@ -1613,7 +1606,7 @@ struct ElicitationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler { _, _ in
-            return ElicitResult(
+            ElicitResult(
                 action: .accept,
                 content: [
                     "name": .string("Jane Smith"),
@@ -1633,7 +1626,7 @@ struct ElicitationIntegrationTests {
 
         let result = try await client.callTool(name: "userProfile", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Jane Smith, jane@example.com, 28, San Francisco, 94105, newsletter=true")
         }
 
@@ -1645,7 +1638,6 @@ struct ElicitationIntegrationTests {
 
 @Suite("LegacyTitledEnumSchema Tests")
 struct LegacyTitledEnumSchemaTests {
-
     @Test("LegacyTitledEnumSchema encodes and decodes correctly")
     func testLegacyTitledEnumSchemaRoundtrip() throws {
         let schema = LegacyTitledEnumSchema(
@@ -1683,7 +1675,7 @@ struct LegacyTitledEnumSchemaTests {
         let data = json.data(using: .utf8)!
         let decoded = try JSONDecoder().decode(PrimitiveSchemaDefinition.self, from: data)
 
-        guard case .legacyTitledEnum(let schema) = decoded else {
+        guard case let .legacyTitledEnum(schema) = decoded else {
             Issue.record("Expected legacyTitledEnum")
             return
         }
@@ -1699,7 +1691,6 @@ struct LegacyTitledEnumSchemaTests {
 
 @Suite("ElicitationCompleteNotification Tests")
 struct ElicitationCompleteNotificationTests {
-
     @Test("ElicitationCompleteNotification name is correct")
     func testNotificationName() {
         #expect(ElicitationCompleteNotification.name == "notifications/elicitation/complete")
@@ -1738,7 +1729,6 @@ struct ElicitationCompleteNotificationTests {
 
 @Suite("UntitledEnumSchema Tests")
 struct UntitledEnumSchemaTests {
-
     @Test("UntitledEnumSchema with minItems/maxItems constraints")
     func testUntitledMultiSelectWithConstraints() throws {
         let schema = UntitledMultiSelectEnumSchema(
@@ -1767,7 +1757,6 @@ struct UntitledEnumSchemaTests {
 
 @Suite("Elicitation Capability applyDefaults Tests")
 struct ElicitationCapabilityApplyDefaultsTests {
-
     @Test("Form capability with applyDefaults encodes correctly")
     func testFormCapabilityWithApplyDefaults() throws {
         let capability = Client.Capabilities.Elicitation(
@@ -1801,7 +1790,6 @@ struct ElicitationCapabilityApplyDefaultsTests {
 
 @Suite("URLElicitationRequiredError Tests")
 struct URLElicitationRequiredErrorTests {
-
     @Test("MCPError.urlElicitationRequired creates error with correct code")
     func testErrorCode() {
         let error = MCPError.urlElicitationRequired(
@@ -1810,7 +1798,7 @@ struct URLElicitationRequiredErrorTests {
                     message: "Please authorize",
                     elicitationId: "auth-123",
                     url: "https://example.com/oauth"
-                )
+                ),
             ]
         )
 
@@ -1825,7 +1813,7 @@ struct URLElicitationRequiredErrorTests {
                     message: "Authorize",
                     elicitationId: "auth-1",
                     url: "https://example.com/auth"
-                )
+                ),
             ]
         )
 
@@ -1849,7 +1837,7 @@ struct URLElicitationRequiredErrorTests {
                     message: "Authorize",
                     elicitationId: "auth-1",
                     url: "https://example.com/auth"
-                )
+                ),
             ],
             message: "Custom authorization required"
         )
@@ -1879,7 +1867,7 @@ struct URLElicitationRequiredErrorTests {
                     message: "Please authorize",
                     elicitationId: "auth-123",
                     url: "https://example.com/oauth"
-                )
+                ),
             ],
             message: "Authorization required"
         )
@@ -1932,7 +1920,7 @@ struct URLElicitationRequiredErrorTests {
                     message: "Authorize OAuth",
                     elicitationId: "oauth-789",
                     url: "https://provider.com/oauth/authorize"
-                )
+                ),
             ],
             message: "OAuth authorization needed"
         )
@@ -1955,8 +1943,8 @@ struct URLElicitationRequiredErrorTests {
                     "message": .string("Authorize access"),
                     "elicitationId": .string("from-error-123"),
                     "url": .string("https://example.com/auth"),
-                ])
-            ])
+                ]),
+            ]),
         ])
 
         let error = MCPError.fromError(
@@ -1979,7 +1967,7 @@ struct URLElicitationRequiredErrorTests {
         )
 
         // Should fall back to serverError when data is missing
-        if case .serverError(let code, let message) = error {
+        if case let .serverError(code, message) = error {
             #expect(code == ErrorCode.urlElicitationRequired)
             #expect(message == "Elicitation required")
         } else {
@@ -1999,7 +1987,7 @@ struct URLElicitationRequiredErrorTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "requiresAuth", description: "Requires auth", inputSchema: [:])
+                Tool(name: "requiresAuth", description: "Requires auth", inputSchema: [:]),
             ])
         }
 
@@ -2011,7 +1999,7 @@ struct URLElicitationRequiredErrorTests {
                         message: "Please authorize access to your files",
                         elicitationId: "file-access-auth",
                         url: "https://files.example.com/oauth"
-                    )
+                    ),
                 ],
                 message: "Authorization required to access files"
             )
@@ -2047,7 +2035,7 @@ struct URLElicitationRequiredErrorTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "multiAuth", description: "Multiple auth", inputSchema: [:])
+                Tool(name: "multiAuth", description: "Multiple auth", inputSchema: [:]),
             ])
         }
 
@@ -2111,7 +2099,6 @@ private actor NotificationState {
 
 @Suite("ElicitationComplete Notification Integration Tests")
 struct ElicitationCompleteNotificationIntegrationTests {
-
     @Test("Server can send elicitation complete notification")
     func testServerSendsElicitationCompleteNotification() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
@@ -2126,7 +2113,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "completeAuth", description: "Complete auth", inputSchema: [:])
+                Tool(name: "completeAuth", description: "Complete auth", inputSchema: [:]),
             ])
         }
 
@@ -2150,7 +2137,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
         }
 
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { _, _ in
-            return ElicitResult(action: .accept)
+            ElicitResult(action: .accept)
         }
 
         try await server.start(transport: serverTransport)
@@ -2159,7 +2146,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
         let result = try await client.callTool(name: "completeAuth", arguments: [:])
 
         // Verify tool result
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Elicitation completed")
         }
 
@@ -2189,7 +2176,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
 
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
-                Tool(name: "authorize", description: "Authorize", inputSchema: [:])
+                Tool(name: "authorize", description: "Authorize", inputSchema: [:]),
             ])
         }
 
@@ -2214,7 +2201,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
         await client.withElicitationHandler(formMode: nil, urlMode: .enabled) { params, _ in
-            guard case .url(let urlParams) = params else {
+            guard case let .url(urlParams) = params else {
                 return ElicitResult(action: .decline)
             }
             #expect(urlParams.elicitationId == "oauth-flow-456")
@@ -2230,7 +2217,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
 
         let result = try await client.callTool(name: "authorize", arguments: [:])
 
-        if case .text(let text, _, _) = result.content[0] {
+        if case let .text(text, _, _) = result.content[0] {
             #expect(text == "Authorization complete")
         }
 
@@ -2259,7 +2246,6 @@ private actor TaskAugmentedState {
 
 @Suite("Task-Augmented Elicitation Tests")
 struct TaskAugmentedElicitationTests {
-
     /// Helper to create a simple MCPTask for testing
     private static func makeTask(taskId: String, status: TaskStatus) -> MCPTask {
         let now = ISO8601DateFormatter().string(from: Date())
