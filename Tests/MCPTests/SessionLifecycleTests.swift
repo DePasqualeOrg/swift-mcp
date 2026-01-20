@@ -306,11 +306,11 @@ struct SessionLifecycleTests {
     @Suite("Server capabilities")
     struct ServerCapabilitiesTests {
 
-        /// Test that getServerCapabilities returns nil before init and capabilities after.
+        /// Test that serverCapabilities returns nil before init and capabilities after.
         ///
         /// Based on Python SDK: test_get_server_capabilities
         @Test(.timeLimit(.minutes(1)))
-        func getServerCapabilitiesBeforeAndAfterInit() async throws {
+        func serverCapabilitiesBeforeAndAfterInit() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 

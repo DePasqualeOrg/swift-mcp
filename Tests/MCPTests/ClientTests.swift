@@ -1079,12 +1079,12 @@ struct ClientTests {
     @Test("Server capabilities accessible after initialization")
     func testServerCapabilitiesAccessibleAfterInit() async throws {
         // Python SDK: test_get_server_capabilities
-        // Verifies that getServerCapabilities() returns nil before connect and is populated after
+        // Verifies that serverCapabilities returns nil before connect and is populated after
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
         // Before connect, capabilities should be nil
-        #expect(await client.getServerCapabilities() == nil)
+        #expect(await client.serverCapabilities == nil)
 
         // Create server capabilities with various features
         let serverCapabilities = Server.Capabilities(
@@ -1119,7 +1119,7 @@ struct ClientTests {
         try await client.connect(transport: transport)
 
         // After connect, capabilities should be populated
-        let capabilities = await client.getServerCapabilities()
+        let capabilities = await client.serverCapabilities
         #expect(capabilities != nil)
         #expect(capabilities?.prompts?.listChanged == true)
         #expect(capabilities?.resources?.subscribe == true)

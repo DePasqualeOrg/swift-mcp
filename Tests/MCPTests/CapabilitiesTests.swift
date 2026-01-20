@@ -608,20 +608,20 @@ struct CapabilityNegotiationTests {
         await server.stop()
     }
 
-    @Test("getServerCapabilities returns nil before connect")
-    func testGetServerCapabilitiesReturnsNilBeforeConnect() async throws {
+    @Test("serverCapabilities returns nil before connect")
+    func testServerCapabilitiesReturnsNilBeforeConnect() async throws {
         let client = Client(
             name: "TestClient",
             version: "1.0.0"
         )
 
         // Before connecting, server capabilities should be nil
-        let capabilities = await client.getServerCapabilities()
+        let capabilities = await client.serverCapabilities
         #expect(capabilities == nil)
     }
 
-    @Test("getServerCapabilities returns capabilities after connect")
-    func testGetServerCapabilitiesReturnsCapabilitiesAfterConnect() async throws {
+    @Test("serverCapabilities returns capabilities after connect")
+    func testServerCapabilitiesReturnsCapabilitiesAfterConnect() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Set up server with specific capabilities
@@ -648,14 +648,14 @@ struct CapabilityNegotiationTests {
         )
 
         // Before connecting
-        let beforeCapabilities = await client.getServerCapabilities()
+        let beforeCapabilities = await client.serverCapabilities
         #expect(beforeCapabilities == nil)
 
         // Connect
         try await client.connect(transport: clientTransport)
 
         // After connecting, should have server capabilities
-        let afterCapabilities = await client.getServerCapabilities()
+        let afterCapabilities = await client.serverCapabilities
         #expect(afterCapabilities != nil)
         #expect(afterCapabilities?.logging != nil)
         #expect(afterCapabilities?.prompts?.listChanged == true)

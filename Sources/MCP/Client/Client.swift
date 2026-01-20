@@ -377,12 +377,26 @@ public actor Client {
         ExperimentalClientFeatures(client: self)
     }
 
-    /// The server capabilities
-    var serverCapabilities: Server.Capabilities?
-    /// The server version
-    var serverVersion: String?
-    /// The server instructions
-    var instructions: String?
+    /// The server capabilities received during initialization.
+    ///
+    /// Use this to check what capabilities the server supports after connecting.
+    /// Returns `nil` if the client has not been initialized yet.
+    public private(set) var serverCapabilities: Server.Capabilities?
+
+    /// The server information received during initialization.
+    ///
+    /// Contains the server's name, version, and optional metadata like title and description.
+    /// Returns `nil` if the client has not been initialized yet.
+    public private(set) var serverInfo: Server.Info?
+
+    /// The protocol version negotiated during initialization.
+    private var protocolVersion: String?
+
+    /// Instructions from the server describing how to use its features.
+    ///
+    /// This can be used to improve the LLM's understanding of available tools, resources, etc.
+    /// Returns `nil` if the client has not been initialized or the server didn't provide instructions.
+    public private(set) var instructions: String?
 
     /// A dictionary of type-erased notification handlers, keyed by method name
     var notificationHandlers: [String: [NotificationHandlerBox]] = [:]
@@ -657,20 +671,6 @@ public actor Client {
         self.capabilities = Capabilities()  // Will be built at connect time
         self.configuration = configuration
         self.validator = validator ?? DefaultJSONSchemaValidator()
-    }
-
-    /// Returns the server capabilities received during initialization.
-    ///
-    /// Use this method to check what capabilities the server supports after
-    /// successfully connecting. This can be useful for:
-    /// - Conditionally enabling features based on server support
-    /// - Logging or debugging connection details
-    /// - Building adaptive clients that work with various server implementations
-    ///
-    /// - Returns: The server's capabilities, or `nil` if the client has not
-    ///   been initialized yet (i.e., `connect()` has not been called or failed).
-    public func getServerCapabilities() -> Server.Capabilities? {
-        return serverCapabilities
     }
 
     /// Connect to the server using the given transport.
@@ -1012,7 +1012,8 @@ public actor Client {
         }
 
         self.serverCapabilities = result.capabilities
-        self.serverVersion = result.protocolVersion
+        self.serverInfo = result.serverInfo
+        self.protocolVersion = result.protocolVersion
         self.instructions = result.instructions
 
         // HTTP transports must set the protocol version in headers after initialization
