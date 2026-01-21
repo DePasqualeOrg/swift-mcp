@@ -60,6 +60,10 @@ public struct Parameter<Value: ParameterValue>: Sendable {
     /// If nil, the Swift property name is used.
     public let key: String?
 
+    /// A user-facing title for display in UIs.
+    /// If nil, defaults to the property name.
+    public let title: String?
+
     /// A description of the parameter for the JSON Schema.
     public let description: String?
 
@@ -82,6 +86,7 @@ public struct Parameter<Value: ParameterValue>: Sendable {
     /// - Parameters:
     ///   - wrappedValue: The default value for this parameter.
     ///   - key: The JSON key (defaults to property name).
+    ///   - title: A user-facing title for display in UIs.
     ///   - description: A description of the parameter.
     ///   - minLength: Minimum string length.
     ///   - maxLength: Maximum string length.
@@ -90,6 +95,7 @@ public struct Parameter<Value: ParameterValue>: Sendable {
     public init(
         wrappedValue: Value,
         key: String? = nil,
+        title: String? = nil,
         description: String? = nil,
         minLength: Int? = nil,
         maxLength: Int? = nil,
@@ -98,6 +104,7 @@ public struct Parameter<Value: ParameterValue>: Sendable {
     ) {
         self.wrappedValue = wrappedValue
         self.key = key
+        self.title = title
         self.description = description
         self.minLength = minLength
         self.maxLength = maxLength
@@ -110,6 +117,7 @@ public extension Parameter where Value: ExpressibleByNilLiteral {
     /// Creates an optional parameter with the specified metadata and constraints.
     init(
         key: String? = nil,
+        title: String? = nil,
         description: String? = nil,
         minLength: Int? = nil,
         maxLength: Int? = nil,
@@ -118,6 +126,7 @@ public extension Parameter where Value: ExpressibleByNilLiteral {
     ) {
         wrappedValue = nil
         self.key = key
+        self.title = title
         self.description = description
         self.minLength = minLength
         self.maxLength = maxLength
@@ -130,6 +139,7 @@ public extension Parameter {
     /// Creates a required parameter with the specified metadata and constraints.
     init(
         key: String? = nil,
+        title: String? = nil,
         description: String? = nil,
         minLength: Int? = nil,
         maxLength: Int? = nil,
@@ -138,6 +148,7 @@ public extension Parameter {
     ) {
         wrappedValue = Value.placeholderValue
         self.key = key
+        self.title = title
         self.description = description
         self.minLength = minLength
         self.maxLength = maxLength

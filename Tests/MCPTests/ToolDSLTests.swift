@@ -1,4 +1,5 @@
 import Foundation
+import MCPTool
 import Testing
 
 @testable import MCP
@@ -127,6 +128,26 @@ struct CustomKeyTool {
 
     func perform(context _: HandlerContext) async throws -> String {
         "Range: \(startDate) to \(endDate)"
+    }
+}
+
+/// Tool with parameter titles for UI display
+@Tool
+struct ParameterTitlesTool {
+    static let name = "parameter_titles"
+    static let description = "Tool with parameter titles"
+
+    @Parameter(title: "City Name", description: "City to get weather for")
+    var city: String
+
+    @Parameter(title: "Temperature Units", description: "Temperature unit system")
+    var units: String?
+
+    @Parameter(description: "No title specified")
+    var other: String?
+
+    func perform(context _: HandlerContext) async throws -> String {
+        "Weather in \(city)"
     }
 }
 
@@ -579,6 +600,23 @@ struct ToolSpecConformanceTests {
         #expect(enumValues?.contains(.string("medium")) == true)
         #expect(enumValues?.contains(.string("high")) == true)
         #expect(enumValues?.contains(.string("critical")) == true)
+    }
+
+    @Test("toolDefinition includes parameter titles")
+    func toolDefinitionParameterTitles() {
+        let definition = ParameterTitlesTool.toolDefinition
+        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
+
+        // Parameter with title should have it in schema
+        let citySchema = properties?["city"]?.objectValue
+        #expect(citySchema?["title"]?.stringValue == "City Name")
+
+        let unitsSchema = properties?["units"]?.objectValue
+        #expect(unitsSchema?["title"]?.stringValue == "Temperature Units")
+
+        // Parameter without title should not have title in schema
+        let otherSchema = properties?["other"]?.objectValue
+        #expect(otherSchema?["title"] == nil)
     }
 }
 

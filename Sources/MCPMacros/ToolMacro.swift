@@ -181,6 +181,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var hasDefault: Bool
         var defaultValue: String?
         var defaultExpr: ExprSyntax? // For validation
+        var title: String?
         var description: String?
         var minLength: String?
         var maxLength: String?
@@ -389,6 +390,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var hasDefault = false
         var defaultValue: String?
         var defaultExpr: ExprSyntax?
+        var paramTitle: String?
         var paramDescription: String?
         var minLength: String?
         var maxLength: String?
@@ -438,6 +440,12 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                             {
                                 jsonKey = segment.content.text
                             }
+                        case "title":
+                            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
+                               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+                            {
+                                paramTitle = segment.content.text
+                            }
                         case "description":
                             if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
                                let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
@@ -467,6 +475,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             hasDefault: hasDefault,
             defaultValue: defaultValue,
             defaultExpr: defaultExpr,
+            title: paramTitle,
             description: paramDescription,
             minLength: minLength,
             maxLength: maxLength,
@@ -492,6 +501,10 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             let schemaType = getJSONSchemaType(for: baseType)
 
             propEntries.append("\"type\": .string(\"\(schemaType)\")")
+
+            if let title = param.title {
+                propEntries.append("\"title\": .string(\"\(title)\")")
+            }
 
             if let desc = param.description {
                 propEntries.append("\"description\": .string(\"\(desc)\")")

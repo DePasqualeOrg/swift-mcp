@@ -54,10 +54,10 @@ struct Summarize {
     static let name = "summarize"
     static let description = "Summarize content"
 
-    @Argument(description: "Content to summarize")
+    @Argument(title: "Content", description: "Content to summarize")
     var content: String
 
-    @Argument(description: "Summary length: short, medium, long")
+    @Argument(title: "Length", description: "Summary length: short, medium, long")
     var length: String?  // Optional argument
 
     func render() async throws -> [Prompt.Message] {
@@ -66,6 +66,8 @@ struct Summarize {
     }
 }
 ```
+
+The `title` parameter provides a user-facing label for display in UIs. If omitted, the property name is used as the default.
 
 ## Registering Prompts
 
@@ -104,9 +106,9 @@ let prompt = try await server.registerPrompt(
     name: "translate",
     description: "Translate text between languages",
     arguments: [
-        .init(name: "text", description: "Text to translate", required: true),
-        .init(name: "from", description: "Source language", required: true),
-        .init(name: "to", description: "Target language", required: true)
+        .init(name: "text", title: "Text", description: "Text to translate", required: true),
+        .init(name: "from", title: "Source Language", description: "Source language", required: true),
+        .init(name: "to", title: "Target Language", description: "Target language", required: true)
     ]
 ) { arguments, context in
     let text = arguments?["text"] ?? ""
@@ -251,13 +253,13 @@ struct Translate {
     static let title = "Translation Helper"
     static let description = "Translate text between languages"
 
-    @Argument(description: "Text to translate")
+    @Argument(title: "Text", description: "Text to translate")
     var text: String
 
-    @Argument(description: "Source language")
+    @Argument(title: "Source Language", description: "Source language")
     var from: String
 
-    @Argument(description: "Target language")
+    @Argument(title: "Target Language", description: "Target language")
     var to: String
 
     func render() async throws -> [Prompt.Message] {

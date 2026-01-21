@@ -28,10 +28,10 @@ struct GetWeather {
     static let name = "get_weather"
     static let description = "Get current weather for a location"
 
-    @Parameter(description: "City name")
+    @Parameter(title: "Location", description: "City name")
     var location: String
 
-    @Parameter(description: "Temperature units", default: "metric")
+    @Parameter(title: "Units", description: "Temperature units", default: "metric")
     var units: String
 
     func perform() async throws -> String {
@@ -53,13 +53,13 @@ struct Search {
     static let name = "search"
     static let description = "Search documents"
 
-    @Parameter(description: "Search query")
+    @Parameter(title: "Query", description: "Search query")
     var query: String
 
-    @Parameter(description: "Maximum results", default: 10)
+    @Parameter(title: "Limit", description: "Maximum results", default: 10)
     var limit: Int
 
-    @Parameter(description: "Include archived", default: false)
+    @Parameter(title: "Include Archived", description: "Include archived", default: false)
     var includeArchived: Bool
 
     func perform() async throws -> String {
@@ -67,6 +67,10 @@ struct Search {
     }
 }
 ```
+
+The `title` parameter provides a user-facing label for display in UIs. If omitted, the property name is used as the default.
+
+> Note: Parameter titles are included in the tool's `inputSchema` as standard JSON Schema `title` properties. Client applications can use these for form labels, documentation, or other display purposes, but they're optional metadata — clients that don't look for them simply ignore them.
 
 ### Supported Parameter Types
 
@@ -279,7 +283,11 @@ let tool = try await server.register(
     inputSchema: [
         "type": "object",
         "properties": [
-            "message": ["type": "string", "description": "Message to echo"]
+            "message": [
+                "type": "string",
+                "title": "Message",  // Optional: displayed in UIs
+                "description": "Message to echo"
+            ]
         ],
         "required": ["message"]
     ]
