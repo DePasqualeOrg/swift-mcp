@@ -75,9 +75,14 @@ public protocol ToolSpec: Sendable {
     /// This method can throw errors for additional validation beyond JSON Schema constraints
     /// (e.g., semantic validation, business rules, or format checks like regex patterns).
     ///
+    /// For clear, actionable error messages that help models self-correct, use types
+    /// conforming to `LocalizedError`. Without it, the model sees generic messages like
+    /// `"The operation couldn't be completed."` which aren't helpful for recovery.
+    ///
     /// - Parameter context: Provides progress reporting, logging, and cancellation checking.
     /// - Returns: The tool's output, which will be converted to a `CallTool.Result`.
-    /// - Throws: Any error to indicate tool failure. The error message is returned to the client.
+    /// - Throws: Any error to indicate tool failure. The error's `localizedDescription`
+    ///   is returned to the client with `isError: true`.
     func perform(context: HandlerContext) async throws -> Output
 
     /// Required empty initializer for instance creation during parsing.
