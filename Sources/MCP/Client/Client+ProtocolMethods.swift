@@ -140,7 +140,39 @@ public extension Client {
         let request = CallTool.request(.init(name: name, arguments: arguments))
         let result = try await send(request)
 
-        // Validate output against cached schema if present.
+        try validateToolOutput(name: name, result: result)
+
+        return result
+    }
+
+    /// Call a tool by name with progress notifications.
+    ///
+    /// This overload accepts a progress callback that is invoked when the server
+    /// sends progress notifications during tool execution. The client automatically
+    /// injects a progress token into the request metadata.
+    ///
+    /// - Parameters:
+    ///   - name: The name of the tool to call.
+    ///   - arguments: Optional arguments to pass to the tool.
+    ///   - onProgress: A callback invoked when progress notifications are received.
+    /// - Returns: The tool call result containing content, structured content, and error flag.
+    /// - Throws: `MCPError.invalidParams` if output validation fails.
+    func callTool(
+        name: String,
+        arguments: [String: Value]? = nil,
+        onProgress: @escaping ProgressCallback
+    ) async throws -> CallTool.Result {
+        try validateServerCapability(\.tools, "Tools")
+        let request = CallTool.request(.init(name: name, arguments: arguments))
+        let result = try await send(request, onProgress: onProgress)
+
+        try validateToolOutput(name: name, result: result)
+
+        return result
+    }
+
+    /// Validates tool output against cached schemas.
+    private func validateToolOutput(name: String, result: CallTool.Result) throws {
         // We intentionally don't auto-refresh the cache if the tool is missing (unlike Python SDK).
         // Rationale: auto-refresh is a hidden side effect, and if the client cares about validation,
         // they should call listTools() first. This matches TypeScript SDK behavior.
@@ -154,8 +186,6 @@ public extension Client {
                 )
             }
         }
-
-        return result
     }
 
     // MARK: - Completions
