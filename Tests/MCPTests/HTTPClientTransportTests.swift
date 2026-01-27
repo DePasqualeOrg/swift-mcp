@@ -397,11 +397,7 @@ struct HTTPClientTransportTests {
             try await transport.send(secondMessageData)
             Issue.record("Expected send to throw session expired error")
         } catch let error as MCPError {
-            guard case let .internalError(message) = error else {
-                Issue.record("Expected MCPError.internalError, got \(error)")
-                throw error
-            }
-            #expect(message?.contains("Session expired") ?? false)
+            #expect(error == .sessionExpired)
             #expect(await transport.sessionID == nil)
         } catch {
             Issue.record("Expected MCPError, got \(error)")

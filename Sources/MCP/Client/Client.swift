@@ -447,8 +447,14 @@ public actor Client {
     /// Only non-nil fields override auto-detection.
     let explicitCapabilities: Capabilities?
 
-    /// Whether the client is connected. Used to prevent handler registration after connect.
-    var isConnected: Bool = false
+    /// Whether handler registration is locked. Set to `true` on the first call to `connect()`
+    /// and intentionally never reset, so handlers registered before connection persist across
+    /// reconnections without allowing duplicate registration.
+    var handlersLocked: Bool = false
+
+    /// Whether the CancelledNotification handler has been registered.
+    /// Prevents duplicate registration when `connect()` is called multiple times (e.g., reconnection).
+    private var cancelledNotificationRegistered: Bool = false
 
     /// In-flight server request handler Tasks, tracked by request ID.
     /// Used for protocol-level cancellation when CancelledNotification is received.
@@ -697,8 +703,8 @@ public actor Client {
         capabilities = buildCapabilities()
         await validateCapabilities(capabilities)
 
-        // Mark as connected to prevent further handler registration
-        isConnected = true
+        // Lock handler registration after first connection
+        handlersLocked = true
 
         connection = transport
         try await connection?.connect()
@@ -777,15 +783,20 @@ public actor Client {
             await self.logger?.debug("Client message handling loop task is terminating.")
         }
 
-        // Register default handler for CancelledNotification (protocol-level cancellation)
-        onNotification(CancelledNotification.self) { [weak self] message in
-            guard let self else { return }
-            guard let requestId = message.params.requestId else {
-                // Per protocol 2025-11-25+, requestId is optional.
-                // If not provided, we cannot cancel a specific request.
-                return
+        // Register default handler for CancelledNotification (protocol-level cancellation).
+        // Guarded to prevent duplicate handlers when connect() is called multiple times
+        // (e.g., during reconnection via MCPClient).
+        if !cancelledNotificationRegistered {
+            cancelledNotificationRegistered = true
+            onNotification(CancelledNotification.self) { [weak self] message in
+                guard let self else { return }
+                guard let requestId = message.params.requestId else {
+                    // Per protocol 2025-11-25+, requestId is optional.
+                    // If not provided, we cannot cancel a specific request.
+                    return
+                }
+                await cancelInFlightServerRequest(requestId, reason: message.params.reason)
             }
-            await cancelInFlightServerRequest(requestId, reason: message.params.reason)
         }
 
         // Automatically initialize after connecting

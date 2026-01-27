@@ -59,6 +59,11 @@ public enum ErrorCode {
     /// Not defined in MCP spec. SDK-specific, matches TypeScript SDK.
     public static let requestTimeout: Int = -32001
 
+    /// Session expired: The server session is no longer valid.
+    ///
+    /// Not defined in MCP spec. SDK-specific for Swift.
+    public static let sessionExpired: Int = -32005
+
     /// Transport error: An error occurred in the transport layer.
     ///
     /// Not defined in MCP spec. SDK-specific for Swift.
@@ -97,6 +102,7 @@ public enum MCPError: Swift.Error, Sendable {
 
     // Transport and connection errors
     case connectionClosed
+    case sessionExpired
     case transportError(Swift.Error)
 
     // Request timeout
@@ -120,6 +126,7 @@ public enum MCPError: Swift.Error, Sendable {
             case let .serverError(code, _): code
             case let .serverErrorWithData(code, _, _): code
             case .connectionClosed: ErrorCode.connectionClosed
+            case .sessionExpired: ErrorCode.sessionExpired
             case .transportError: ErrorCode.transportError
             case .requestTimeout: ErrorCode.requestTimeout
             case .requestCancelled: ErrorCode.requestCancelled
@@ -186,6 +193,8 @@ public enum MCPError: Swift.Error, Sendable {
                 message
             case .connectionClosed:
                 "Connection closed"
+            case .sessionExpired:
+                "Session expired"
             case let .transportError(error):
                 error.localizedDescription
             case let .requestTimeout(timeout, message):
@@ -223,6 +232,8 @@ public enum MCPError: Swift.Error, Sendable {
             case let .serverErrorWithData(_, _, data):
                 return data
             case .connectionClosed:
+                return nil
+            case .sessionExpired:
                 return nil
             case let .transportError(error):
                 return .object(["error": .string(error.localizedDescription)])
@@ -277,6 +288,8 @@ extension MCPError: LocalizedError {
                 "Server error: \(message)"
             case .connectionClosed:
                 "Connection closed"
+            case .sessionExpired:
+                "Session expired"
             case let .transportError(error):
                 "Transport error: \(error.localizedDescription)"
             case let .requestTimeout(timeout, message):
@@ -310,6 +323,8 @@ extension MCPError: LocalizedError {
                 "Server-defined error occurred"
             case .connectionClosed:
                 "The connection to the server was closed"
+            case .sessionExpired:
+                "The server session is no longer valid"
             case let .transportError(error):
                 (error as? LocalizedError)?.failureReason ?? error.localizedDescription
             case .requestTimeout:
@@ -334,6 +349,8 @@ extension MCPError: LocalizedError {
             case .urlElicitationRequired:
                 "Complete the required URL elicitation(s) and retry the request"
             case .connectionClosed:
+                "Try reconnecting to the server"
+            case .sessionExpired:
                 "Try reconnecting to the server"
             case .requestTimeout:
                 "Try increasing the timeout or check if the server is responding"
@@ -420,6 +437,8 @@ extension MCPError: Codable {
                 }
             case ErrorCode.connectionClosed:
                 self = .connectionClosed
+            case ErrorCode.sessionExpired:
+                self = .sessionExpired
             case ErrorCode.requestTimeout:
                 // Extract timeout from data if present
                 var timeoutMs = 60000 // Default 60 seconds
@@ -528,6 +547,8 @@ extension MCPError: Codable {
                 return .serverError(code: code, message: message)
             case ErrorCode.connectionClosed:
                 return .connectionClosed
+            case ErrorCode.sessionExpired:
+                return .sessionExpired
             case ErrorCode.requestTimeout:
                 // Extract timeout from data if present
                 var timeoutMs = 60000 // Default 60 seconds
@@ -598,6 +619,8 @@ extension MCPError: Equatable {
                 lCode == rCode && lMsg == rMsg && lData == rData
             case (.connectionClosed, .connectionClosed):
                 true
+            case (.sessionExpired, .sessionExpired):
+                true
             case let (.transportError(l), .transportError(r)):
                 l.localizedDescription == r.localizedDescription
             case let (.requestTimeout(lTimeout, lMsg), .requestTimeout(rTimeout, rMsg)):
@@ -637,6 +660,8 @@ extension MCPError: Hashable {
                 hasher.combine(message)
                 hasher.combine(data)
             case .connectionClosed:
+                break
+            case .sessionExpired:
                 break
             case let .transportError(error):
                 hasher.combine(error.localizedDescription)

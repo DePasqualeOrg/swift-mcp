@@ -144,7 +144,7 @@ public extension Client {
         handler: @escaping @Sendable (RequestHandlerContext) async throws -> [Root]
     ) {
         precondition(
-            !isConnected,
+            !handlersLocked,
             "Cannot register handlers after connect(). Register all handlers before calling connect()."
         )
         rootsConfig = RootsConfig(listChanged: listChanged)
@@ -196,7 +196,7 @@ public extension Client {
     /// - Precondition: Must not be called after `connect()`.
     func withTasksCapability(_ config: Capabilities.Tasks) {
         precondition(
-            !isConnected,
+            !handlersLocked,
             "Cannot register handlers after connect(). Register all handlers before calling connect()."
         )
         tasksConfig = config
@@ -251,7 +251,7 @@ public extension Client {
         handler: @escaping @Sendable (ClientSamplingRequest.Parameters, RequestHandlerContext) async throws -> ClientSamplingRequest.Result
     ) {
         precondition(
-            !isConnected,
+            !handlersLocked,
             "Cannot register handlers after connect(). Register all handlers before calling connect()."
         )
         samplingConfig = SamplingConfig(supportsContext: supportsContext, supportsTools: supportsTools)
@@ -312,7 +312,7 @@ public extension Client {
         handler: @escaping @Sendable (Elicit.Parameters, RequestHandlerContext) async throws -> Elicit.Result
     ) {
         precondition(
-            !isConnected,
+            !handlersLocked,
             "Cannot register handlers after connect(). Register all handlers before calling connect()."
         )
         precondition(

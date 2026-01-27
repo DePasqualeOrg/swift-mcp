@@ -12,6 +12,21 @@ import EventSource
 import FoundationNetworking
 #endif
 
+/// Status of the event stream within an HTTP transport.
+///
+/// This is separate from `MCPClient.ConnectionState` because event stream disruptions
+/// don't prevent POST-based tool calls from succeeding. The event stream carries
+/// server-initiated push messages; its health is reported independently so the UI
+/// can surface connectivity changes without blocking request-level operations.
+public enum EventStreamStatus: Sendable, Equatable {
+    /// The event stream is connected and receiving events.
+    case connected
+    /// The event stream has disconnected and the transport is retrying.
+    case reconnecting
+    /// The transport has exhausted all reconnection attempts for the event stream.
+    case failed
+}
+
 /// An implementation of the MCP Streamable HTTP transport protocol for clients.
 ///
 /// This transport implements the [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)
@@ -107,6 +122,10 @@ public actor HTTPClientTransport: Transport {
     /// Current reconnection attempt count
     private var reconnectionAttempt: Int = 0
 
+    /// Whether the event stream status change has been fired for the current disconnection episode.
+    /// Used to deduplicate so we fire `.reconnecting` only once per episode.
+    private var eventStreamDisconnectedFired: Bool = false
+
     /// Callback invoked when a new resumption token (event ID) is received
     public var onResumptionToken: ((String) -> Void)?
 
@@ -115,6 +134,30 @@ public actor HTTPClientTransport: Transport {
     /// - Parameter callback: The callback to invoke with the event ID
     public func setOnResumptionToken(_ callback: ((String) -> Void)?) {
         onResumptionToken = callback
+    }
+
+    /// Callback invoked when the session is detected as expired (HTTP 404 with existing session ID).
+    ///
+    /// This allows higher-level abstractions (e.g., `MCPClient`) to proactively trigger
+    /// reconnection when the session expires, rather than waiting for the next tool call to fail.
+    public var onSessionExpired: (@Sendable () -> Void)?
+
+    /// Sets the callback invoked when the session expires.
+    ///
+    /// - Parameter callback: The callback to invoke when session expiration is detected
+    public func setOnSessionExpired(_ callback: (@Sendable () -> Void)?) {
+        onSessionExpired = callback
+    }
+
+    /// Callback invoked when the event stream status changes.
+    ///
+    /// Fires on transitions only (not on initial connection). The first event a consumer
+    /// will see is `.reconnecting` if the stream drops after being established.
+    public var onEventStreamStatusChanged: (@Sendable (EventStreamStatus) async -> Void)?
+
+    /// Sets the callback invoked when the event stream status changes.
+    public func setOnEventStreamStatusChanged(_ callback: (@Sendable (EventStreamStatus) async -> Void)?) {
+        onEventStreamStatusChanged = callback
     }
 
     #if os(Linux)
@@ -277,6 +320,7 @@ public actor HTTPClientTransport: Transport {
     public func disconnect() async {
         guard isConnected else { return }
         isConnected = false
+        eventStreamDisconnectedFired = false
 
         // Cancel streaming task if active
         streamingTask?.cancel()
@@ -612,7 +656,8 @@ public actor HTTPClientTransport: Transport {
                 if sessionID != nil {
                     logger.warning("Session has expired")
                     sessionID = nil
-                    throw MCPError.internalError("Session expired")
+                    onSessionExpired?()
+                    throw MCPError.sessionExpired
                 }
                 throw MCPError.internalError("Endpoint not found")
 
@@ -744,9 +789,20 @@ public actor HTTPClientTransport: Transport {
                 try await connectToEventStream()
                 // Reset attempt counter on successful connection
                 reconnectionAttempt = 0
+                // Signal reconnection if we were previously disconnected
+                if eventStreamDisconnectedFired {
+                    eventStreamDisconnectedFired = false
+                    await onEventStreamStatusChanged?(.connected)
+                }
             } catch {
                 if !Task.isCancelled {
                     logger.error("SSE connection error: \(error)")
+
+                    // Fire reconnecting only once per episode
+                    if !eventStreamDisconnectedFired {
+                        eventStreamDisconnectedFired = true
+                        await onEventStreamStatusChanged?(.reconnecting)
+                    }
 
                     // Check if we've exceeded max retries
                     if reconnectionAttempt >= reconnectionOptions.maxRetries {
@@ -754,6 +810,7 @@ public actor HTTPClientTransport: Transport {
                             "Maximum reconnection attempts exceeded",
                             metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"]
                         )
+                        await onEventStreamStatusChanged?(.failed)
                         break
                     }
 
@@ -841,9 +898,6 @@ public actor HTTPClientTransport: Transport {
 
         logger.debug("Starting SSE connection")
 
-        // Reset reconnection attempt on new connection
-        reconnectionAttempt = 0
-
         // Create URLSession task for SSE
         let (stream, response) = try await session.bytes(for: request)
 
@@ -858,6 +912,12 @@ public actor HTTPClientTransport: Transport {
             // We should cancel the task instead of retrying the connection.
             if httpResponse.statusCode == 405 {
                 streamingTask?.cancel()
+            }
+            // Detect session expiration on the GET path (matching POST behavior)
+            if httpResponse.statusCode == 404, sessionID != nil {
+                logger.warning("Event stream: session has expired")
+                sessionID = nil
+                onSessionExpired?()
             }
             throw MCPError.internalError("HTTP error: \(httpResponse.statusCode)")
         }
