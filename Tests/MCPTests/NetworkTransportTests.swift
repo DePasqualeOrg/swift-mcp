@@ -35,11 +35,16 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
 
     /// Start the connection
     func start(queue _: DispatchQueue) {
-        // Simulate successful connection by default, but only if not already failed
         Task { @MainActor in
-            // Don't override failed/cancelled states
-            if case .failed = self.mockState { return }
-            if case .cancelled = self.mockState { return }
+            // Re-notify the handler for terminal states so waitForConnectionReady() unblocks
+            if case .failed = self.mockState {
+                self.stateUpdateHandler?(self.mockState)
+                return
+            }
+            if case .cancelled = self.mockState {
+                self.stateUpdateHandler?(self.mockState)
+                return
+            }
             self.updateState(.ready)
         }
     }
