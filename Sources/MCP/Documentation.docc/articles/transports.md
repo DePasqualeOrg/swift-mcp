@@ -69,6 +69,20 @@ The transport automatically handles session IDs and protocol version headers:
 // Protocol version header (Mcp-Protocol-Version) is sent with requests
 ```
 
+### Event Stream Status
+
+When streaming is enabled, the transport monitors the SSE event stream independently of request/response communication. The ``EventStreamStatus`` enum reports the stream's health:
+
+- ``EventStreamStatus/connected``: The event stream is connected and receiving events.
+- ``EventStreamStatus/reconnecting``: The event stream has disconnected and the transport is retrying.
+- ``EventStreamStatus/failed``: The transport has exhausted all reconnection attempts for the event stream.
+
+Event stream disruptions don't prevent POST-based requests (like tool calls) from succeeding — the two channels are independent.
+
+### Using MCPClient
+
+``MCPClient`` wraps any transport with automatic reconnection, health monitoring, and transparent retry on recoverable errors. When used with ``HTTPClientTransport``, it additionally hooks into session expiration and event stream status callbacks. See <doc:client-setup> for details.
+
 ## HTTPServerTransport
 
 Host MCP servers over HTTP. Integrates with any HTTP framework (Hummingbird, Vapor, etc.).

@@ -74,6 +74,8 @@ let serverTransport = HTTPServerTransport(
 
 ## Error Handling
 
+The ``MCPError`` enum covers all error conditions, including ``MCPError/connectionClosed``, ``MCPError/sessionExpired``, ``MCPError/requestTimeout(timeout:message:)``, and ``MCPError/transportError(_:)``. When using ``MCPClient``, session expiration and transport errors are handled automatically via reconnection — see <doc:client-setup>.
+
 In request handlers, throw ``MCPError`` for protocol-compliant error responses:
 
 ```swift

@@ -4,20 +4,26 @@ import Foundation
 import Logging
 
 /// High-level MCP client providing automatic reconnection, health monitoring,
-/// and transparent retry on session expiration.
+/// and transparent retry on recoverable errors.
 ///
 /// `MCPClient` wraps `Client` the same way `MCPServer` wraps `Server`:
 /// - `MCPServer` manages sessions, shared registries, notification broadcasting
 /// - `MCPClient` manages connection lifecycle, reconnection, health monitoring
 ///
+/// These features work with any transport. For example, if a stdio server process
+/// crashes, `MCPClient` re-invokes the transport factory to spawn a new process.
+/// When used with `HTTPClientTransport`, `MCPClient` additionally hooks into
+/// session expiration and event stream status callbacks for proactive reconnection.
+///
 /// ## Key Behaviors
 ///
-/// - **Automatic reconnection**: When a session expires or the connection drops,
+/// - **Automatic reconnection**: When the connection drops or a session expires,
 ///   `MCPClient` creates a fresh transport and reconnects the underlying `Client`.
 /// - **Deduplication**: Multiple concurrent failures trigger only one reconnection.
-/// - **Transparent retry**: Protocol methods catch session expiration errors,
-///   reconnect, and retry the operation once before propagating the error.
-/// - **Health monitoring**: Optional periodic ping detects stale sessions proactively.
+/// - **Transparent retry**: Protocol methods catch recoverable errors (session
+///   expiration, connection closed, transport errors), reconnect, and retry the
+///   operation once before propagating the error.
+/// - **Health monitoring**: Optional periodic ping detects stale connections proactively.
 ///
 /// ## Example
 ///

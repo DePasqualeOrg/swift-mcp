@@ -77,7 +77,23 @@ let result = try await client.send(
 
 ## Progress Tracking
 
-Track progress for long-running requests using a callback:
+### Convenience Method
+
+For tool calls, ``Client/callTool(name:arguments:onProgress:)`` automatically manages progress tokens:
+
+```swift
+let result = try await client.callTool(
+    name: "process_data",
+    arguments: ["input": "data.csv"],
+    onProgress: { progress in
+        print("Progress: \(progress.value) / \(progress.total ?? 100)")
+    }
+)
+```
+
+### Low-Level Progress
+
+For other request types or when you need full control, use ``Client/send(_:onProgress:)`` directly:
 
 ```swift
 let result = try await client.send(
@@ -189,9 +205,14 @@ let results = try await withThrowingTaskGroup(of: String.self) { group in
 }
 ```
 
+## Notification Handler Dispatch
+
+Notification handlers registered via ``Client/onNotification(_:handler:)`` are dispatched outside the message loop. This means handlers can safely make requests back to the server (such as calling `listTools()` in response to a `ToolListChangedNotification`) without deadlocking the message processing pipeline.
+
 ## See Also
 
 - <doc:client-setup>
 - <doc:client-tools>
+- ``MCPClient``
 - ``Client``
 - ``Client/RequestOptions``

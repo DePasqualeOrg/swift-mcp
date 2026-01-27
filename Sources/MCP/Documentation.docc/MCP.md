@@ -20,6 +20,11 @@ The Model Context Protocol defines a standardized way for applications to commun
 - <doc:transports>
 - <doc:debugging>
 
+### Convenience Types
+
+- ``MCPClient``
+- ``MCPServer``
+
 ### Core Types
 
 - ``Client``

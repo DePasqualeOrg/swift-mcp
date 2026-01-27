@@ -347,6 +347,19 @@ await server.waitUntilCompleted()
 await server.stop()
 ```
 
+### Disconnect Callback
+
+Register a callback to be notified when the server's transport disconnects:
+
+```swift
+await server.setOnDisconnect {
+    print("Client disconnected")
+    // Clean up session-specific resources
+}
+```
+
+> Note: When using ``MCPServer``, disconnect callbacks are automatically set up on sessions created via ``MCPServer/createSession()`` to remove them from the active session list.
+
 ## Configuration Options
 
 ```swift

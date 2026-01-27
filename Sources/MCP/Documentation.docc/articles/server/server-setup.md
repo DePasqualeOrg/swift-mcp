@@ -37,7 +37,7 @@ let server = MCPServer(
 
 ## Registering Tools, Resources, and Prompts
 
-`MCPServer` manages capabilities automatically based on what you register:
+`MCPServer` manages capabilities automatically based on what you register. When tools, resources, or prompts are registered, enabled, disabled, or removed, `MCPServer` automatically broadcasts list-changed notifications to all connected sessions:
 
 ```swift
 // Register tools - enables tools capability
@@ -103,6 +103,8 @@ let session = await mcpServer.createSession()
 let transport = HTTPServerTransport(...)
 try await session.start(transport: transport)
 ```
+
+Sessions created via `createSession()` are tracked by `MCPServer`. When tools, resources, or prompts change at runtime, list-changed notifications are automatically broadcast to all active sessions. Sessions are automatically removed when their transport disconnects.
 
 See the [Vapor Integration](https://github.com/DePasqualeOrg/swift-mcp/tree/main/Examples/VaporIntegration)
 and [Hummingbird Integration](https://github.com/DePasqualeOrg/swift-mcp/tree/main/Examples/HummingbirdIntegration)

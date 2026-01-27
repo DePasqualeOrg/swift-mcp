@@ -560,11 +560,17 @@ Types conforming to `StructuredOutput` (via `@OutputSchema`) automatically:
 
 ## Notifying Tool Changes
 
-``MCPServer`` automatically sends list change notifications when tools are registered, enabled, disabled, or removed. You can also send manually:
+``MCPServer`` automatically broadcasts list-changed notifications to all connected sessions when tools are registered, enabled, disabled, or removed. For single-session servers (stdio), this notifies the connected client. For HTTP servers with multiple sessions, all active sessions receive the notification concurrently. Sessions that have disconnected are automatically cleaned up during broadcast.
+
+You can also send a notification manually from a specific session's handler context:
 
 ```swift
-await server.sendToolListChanged()
+try await context.sendToolListChanged()
 ```
+
+## Concurrent Execution
+
+When multiple tool calls arrive concurrently (e.g., from a client using a task group), they execute in parallel. The tool registry resolves each tool on its serial executor, then dispatches execution to the global concurrent executor. This means long-running tools don't block other tool calls.
 
 ## Tool Naming
 

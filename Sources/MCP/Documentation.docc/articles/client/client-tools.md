@@ -77,6 +77,35 @@ let result = try await client.callTool(
 )
 ```
 
+### Tracking Progress
+
+Use ``Client/callTool(name:arguments:onProgress:)`` to receive progress notifications during execution:
+
+```swift
+let result = try await client.callTool(
+    name: "process_data",
+    arguments: ["input": "data.csv"],
+    onProgress: { progress in
+        print("Progress: \(progress.value) / \(progress.total ?? 100)")
+    }
+)
+```
+
+The client automatically injects a progress token into the request. For more control over timeouts and progress, see <doc:client-advanced>.
+
+### Using MCPClient
+
+When using ``MCPClient``, tool calls automatically reconnect and retry on recoverable errors (session expiration, connection loss, transport errors):
+
+```swift
+let result = try await mcpClient.callTool(
+    name: "weather",
+    arguments: ["location": "San Francisco"]
+)
+```
+
+See <doc:client-setup> for ``MCPClient`` setup details.
+
 ### Checking for Errors
 
 The result includes an `isError` flag:
@@ -134,6 +163,8 @@ await client.onNotification(ToolListChangedNotification.self) { _ in
 ## See Also
 
 - <doc:client-setup>
+- <doc:client-advanced>
 - <doc:server-tools>
+- ``MCPClient``
 - ``Client``
 - ``Tool``

@@ -6,6 +6,7 @@
 /// - Simplified registration APIs for tools, resources, and prompts
 /// - Shared registries that can be used across multiple sessions
 /// - Factory method for creating per-session Server instances (for HTTP)
+/// - Automatic broadcasting of list-changed notifications to all connected sessions
 /// - Simple one-liner for stdio transport
 ///
 /// ## Stdio Transport (CLI tools)
