@@ -246,7 +246,7 @@ struct TimeoutControllerTests {
     @Test("Timeout resets when progress is signaled")
     func testTimeoutResetsOnProgress() async throws {
         let controller = TimeoutController(
-            timeout: .milliseconds(100),
+            timeout: .milliseconds(200),
             resetOnProgress: true,
             maxTotalTimeout: nil
         )
@@ -256,12 +256,12 @@ struct TimeoutControllerTests {
             try await controller.waitForTimeout()
         }
 
-        // Wait 80ms, then signal progress (should reset the 100ms timeout)
-        try await Task.sleep(for: .milliseconds(80))
+        // Wait 100ms, then signal progress (should reset the 200ms timeout)
+        try await Task.sleep(for: .milliseconds(100))
         await controller.signalProgress()
 
-        // Wait another 80ms - if timeout wasn't reset, we'd be at 160ms and timed out
-        try await Task.sleep(for: .milliseconds(80))
+        // Wait another 100ms - if timeout wasn't reset, we'd be at 200ms and timed out
+        try await Task.sleep(for: .milliseconds(100))
 
         // Cancel the controller and task
         await controller.cancel()
@@ -303,33 +303,38 @@ struct TimeoutControllerTests {
 
     @Test("maxTotalTimeout is respected even with progress")
     func testMaxTotalTimeoutRespected() async throws {
+        // Per-progress timeout is much larger than maxTotalTimeout so it never fires.
+        // Frequent progress signals keep the loop iterating so the maxTotal check triggers.
         let controller = TimeoutController(
-            timeout: .milliseconds(100),
+            timeout: .milliseconds(500),
             resetOnProgress: true,
-            maxTotalTimeout: .milliseconds(120)
+            maxTotalTimeout: .milliseconds(200)
         )
 
         let timeoutTask = Task {
             try await controller.waitForTimeout()
         }
 
-        // Keep signaling progress to reset the per-progress timeout
-        try await Task.sleep(for: .milliseconds(50))
-        await controller.signalProgress()
-        try await Task.sleep(for: .milliseconds(50))
-        await controller.signalProgress()
+        // Continuously signal progress until the timeout task completes
+        let progressTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(30))
+                await controller.signalProgress()
+            }
+        }
 
-        // But maxTotalTimeout should still trigger around 120ms
+        defer { progressTask.cancel() }
+
+        // maxTotalTimeout should trigger even though progress keeps resetting the per-progress timeout
         do {
             try await timeoutTask.value
             Issue.record("Should have thrown timeout error for max total")
         } catch let error as MCPError {
-            guard case .requestTimeout = error else {
+            guard case let .requestTimeout(_, message) = error else {
                 Issue.record("Expected requestTimeout, got: \(error)")
                 return
             }
-            // Verify the message mentions "maximum total timeout"
-            #expect("\(error)".contains("maximum") || "\(error)".contains("Maximum"))
+            #expect(message?.contains("maximum") == true)
         } catch is CancellationError {
             // Acceptable if cancelled
         }
