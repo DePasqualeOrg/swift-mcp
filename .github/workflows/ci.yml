@@ -23,6 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Refresh stale runner apt metadata to avoid 404s when swiftly-action installs dependencies.
+      - name: Update apt package index
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update
+
       - name: Set up Swift on Linux
         if: matrix.os == 'ubuntu-latest'
         uses: vapor/swiftly-action@v0.2
