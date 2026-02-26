@@ -124,23 +124,31 @@ public actor BasicHTTPSessionManager {
         // Check if this is an initialization request
         guard isInitializeRequest(request) else {
             // No session and not initializing - return error
-            return HTTPResponse(
-                statusCode: 400,
-                headers: [HTTPHeader.contentType: "application/json"],
-                body: """
-                {"jsonrpc":"2.0","error":{"code":-32600,"message":"Bad Request: Mcp-Session-Id header required"},"id":null}
-                """.data(using: .utf8)
+            if sessionId == nil {
+                return jsonErrorResponse(
+                    statusCode: 400,
+                    code: ErrorCode.invalidRequest,
+                    message: "Bad Request: Mcp-Session-Id header required"
+                )
+            }
+            // Use invalidRequest (-32600) for manager-level session lookup failures.
+            // HTTPServerTransport currently uses connectionClosed (-32000) for transport-level
+            // validation, but the spec does not prescribe a specific code here and Python's
+            // streamable HTTP server pattern uses INVALID_REQUEST for this scenario.
+            return jsonErrorResponse(
+                statusCode: 404,
+                code: ErrorCode.invalidRequest,
+                message: "Session not found"
             )
         }
 
         // Check session limit
         if sessions.count >= maxSessions {
-            return HTTPResponse(
+            return jsonErrorResponse(
                 statusCode: 503,
-                headers: [HTTPHeader.contentType: "application/json"],
-                body: """
-                {"jsonrpc":"2.0","error":{"code":-32603,"message":"Service Unavailable: Maximum sessions reached"},"id":null}
-                """.data(using: .utf8)
+                code: ErrorCode.internalError,
+                message: "Service Unavailable: Maximum sessions reached",
+                extraHeaders: ["retry-after": "60"]
             )
         }
 
@@ -175,12 +183,10 @@ public actor BasicHTTPSessionManager {
                 "sessionId": "\(newSessionId)",
                 "error": "\(error)",
             ])
-            return HTTPResponse(
+            return jsonErrorResponse(
                 statusCode: 500,
-                headers: [HTTPHeader.contentType: "application/json"],
-                body: """
-                {"jsonrpc":"2.0","error":{"code":-32603,"message":"Internal Error: Failed to start session"},"id":null}
-                """.data(using: .utf8)
+                code: ErrorCode.internalError,
+                message: "Internal Error: Failed to start session"
             )
         }
 
@@ -239,6 +245,32 @@ public actor BasicHTTPSessionManager {
         await session.server.stop()
         logger.info("Session removed", metadata: ["sessionId": "\(sessionId)"])
         return true
+    }
+
+    /// Builds a JSON-RPC error response with `application/json` content type.
+    private func jsonErrorResponse(
+        statusCode: Int,
+        code: Int,
+        message: String,
+        extraHeaders: [String: String] = [:]
+    ) -> HTTPResponse {
+        let payload: [String: Any] = [
+            "jsonrpc": "2.0",
+            "error": [
+                "code": code,
+                "message": message,
+            ],
+            "id": NSNull(),
+        ]
+
+        let body =
+            (try? JSONSerialization.data(withJSONObject: payload))
+                ?? Data("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal Error\"},\"id\":null}".utf8)
+
+        var headers = extraHeaders
+        headers[HTTPHeader.contentType] = "application/json"
+
+        return HTTPResponse(statusCode: statusCode, headers: headers, body: body)
     }
 
     /// Checks if a request is an initialization request.
