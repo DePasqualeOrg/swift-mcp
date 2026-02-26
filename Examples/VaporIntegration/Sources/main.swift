@@ -135,7 +135,11 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
 
     // Read request body
     guard let bodyData = req.body.data else {
-        throw Abort(.badRequest, reason: "Missing request body")
+        return mcpErrorResponse(
+            status: .badRequest,
+            message: "Missing request body",
+            code: ErrorCode.invalidRequest
+        )
     }
     let data = Data(buffer: bodyData)
 
@@ -151,7 +155,14 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
     } else if isInitializeRequest {
         // Check capacity
         guard await sessionManager.canAddSession() else {
-            throw Abort(.serviceUnavailable, reason: "Server at capacity")
+            var headers = HTTPHeaders()
+            headers.add(name: "retry-after", value: "60")
+            return mcpErrorResponse(
+                status: .serviceUnavailable,
+                message: "Server at capacity",
+                code: ErrorCode.internalError,
+                extraHeaders: headers
+            )
         }
 
         // Generate session ID upfront
@@ -188,10 +199,18 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
         try await server.start(transport: transport)
     } else if sessionId != nil {
         // Client sent a session ID that no longer exists
-        throw Abort(.notFound, reason: "Session expired. Try reconnecting.")
+        return mcpErrorResponse(
+            status: .notFound,
+            message: "Session expired. Try reconnecting.",
+            code: ErrorCode.invalidRequest
+        )
     } else {
         // No session ID and not an initialize request
-        throw Abort(.badRequest, reason: "Missing \(HTTPHeader.sessionId) header")
+        return mcpErrorResponse(
+            status: .badRequest,
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
+        )
     }
 
     // Create the MCP HTTP request for the transport
@@ -210,10 +229,19 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
 
 /// Handle GET /mcp requests (SSE stream for server-initiated notifications)
 func handleGet(_ req: Vapor.Request) async throws -> Vapor.Response {
-    guard let sessionId = req.headers.first(name: HTTPHeader.sessionId),
-          let session = await sessionManager.session(forId: sessionId)
-    else {
-        throw Abort(.badRequest, reason: "Invalid or missing session ID")
+    guard let sessionId = req.headers.first(name: HTTPHeader.sessionId) else {
+        return mcpErrorResponse(
+            status: .badRequest,
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
+        )
+    }
+    guard let session = await sessionManager.session(forId: sessionId) else {
+        return mcpErrorResponse(
+            status: .notFound,
+            message: "Session not found",
+            code: ErrorCode.invalidRequest
+        )
     }
 
     let mcpRequest = MCP.HTTPRequest(
@@ -228,10 +256,19 @@ func handleGet(_ req: Vapor.Request) async throws -> Vapor.Response {
 
 /// Handle DELETE /mcp requests (session termination)
 func handleDelete(_ req: Vapor.Request) async throws -> Vapor.Response {
-    guard let sessionId = req.headers.first(name: HTTPHeader.sessionId),
-          let session = await sessionManager.session(forId: sessionId)
-    else {
-        throw Abort(.notFound, reason: "Session not found")
+    guard let sessionId = req.headers.first(name: HTTPHeader.sessionId) else {
+        return mcpErrorResponse(
+            status: .badRequest,
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
+        )
+    }
+    guard let session = await sessionManager.session(forId: sessionId) else {
+        return mcpErrorResponse(
+            status: .notFound,
+            message: "Session not found",
+            code: ErrorCode.invalidRequest
+        )
     }
 
     let mcpRequest = MCP.HTTPRequest(
@@ -265,6 +302,9 @@ func buildVaporResponse(from mcpResponse: MCP.HTTPResponse, for req: Vapor.Reque
     let status = HTTPResponseStatus(statusCode: mcpResponse.statusCode)
 
     if let stream = mcpResponse.stream {
+        if headers.first(name: HTTPHeader.contentType) == nil {
+            headers.add(name: HTTPHeader.contentType, value: "text/event-stream")
+        }
         // SSE response - create streaming body
         let response = Vapor.Response(status: status, headers: headers)
         response.body = .init(asyncStream: { writer in
@@ -279,6 +319,9 @@ func buildVaporResponse(from mcpResponse: MCP.HTTPResponse, for req: Vapor.Reque
         })
         return response
     } else if let body = mcpResponse.body {
+        if headers.first(name: HTTPHeader.contentType) == nil {
+            headers.add(name: HTTPHeader.contentType, value: "application/json")
+        }
         // JSON response
         return Vapor.Response(
             status: status,
@@ -289,6 +332,39 @@ func buildVaporResponse(from mcpResponse: MCP.HTTPResponse, for req: Vapor.Reque
         // No content (e.g., 202 Accepted for notifications)
         return Vapor.Response(status: status, headers: headers)
     }
+}
+
+func mcpErrorResponse(
+    status: HTTPResponseStatus,
+    message: String,
+    code: Int = ErrorCode.internalError,
+    extraHeaders: HTTPHeaders = HTTPHeaders()
+) -> Vapor.Response {
+    var headers = HTTPHeaders()
+    for (name, value) in extraHeaders {
+        headers.add(name: name, value: value)
+    }
+    headers.remove(name: HTTPHeader.contentType)
+    headers.add(name: HTTPHeader.contentType, value: "application/json")
+
+    let payload: [String: Any] = [
+        "jsonrpc": "2.0",
+        "error": [
+            "code": code,
+            "message": message,
+        ],
+        "id": NSNull(),
+    ]
+
+    let bodyData =
+        (try? JSONSerialization.data(withJSONObject: payload))
+            ?? Data("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal Error\"},\"id\":null}".utf8)
+
+    return Vapor.Response(
+        status: status,
+        headers: headers,
+        body: .init(data: bodyData)
+    )
 }
 
 // MARK: - Main

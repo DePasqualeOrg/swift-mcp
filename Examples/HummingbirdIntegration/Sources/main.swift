@@ -164,10 +164,13 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
     } else if isInitializeRequest {
         // Check capacity
         guard await sessionManager.canAddSession() else {
-            return Response(
+            var headers = HTTPFields()
+            headers[.retryAfter] = "60"
+            return mcpErrorResponse(
                 status: .serviceUnavailable,
-                headers: [.retryAfter: "60"],
-                body: .init(byteBuffer: .init(string: "Server at capacity"))
+                message: "Server at capacity",
+                code: ErrorCode.internalError,
+                extraHeaders: headers
             )
         }
 
@@ -205,15 +208,17 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
         try await server.start(transport: transport)
     } else if sessionId != nil {
         // Client sent a session ID that no longer exists
-        return Response(
+        return mcpErrorResponse(
             status: .notFound,
-            body: .init(byteBuffer: .init(string: "Session expired. Try reconnecting."))
+            message: "Session expired. Try reconnecting.",
+            code: ErrorCode.invalidRequest
         )
     } else {
         // No session ID and not an initialize request
-        return Response(
+        return mcpErrorResponse(
             status: .badRequest,
-            body: .init(byteBuffer: .init(string: "Missing \(HTTPHeader.sessionId) header"))
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
         )
     }
 
@@ -233,12 +238,18 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
 
 /// Handle GET /mcp requests (SSE stream for server-initiated notifications)
 func handleGet(request: Request, context _: MCPRequestContext) async throws -> Response {
-    guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!],
-          let session = await sessionManager.session(forId: sessionId)
-    else {
-        return Response(
+    guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!] else {
+        return mcpErrorResponse(
             status: .badRequest,
-            body: .init(byteBuffer: .init(string: "Invalid or missing session ID"))
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
+        )
+    }
+    guard let session = await sessionManager.session(forId: sessionId) else {
+        return mcpErrorResponse(
+            status: .notFound,
+            message: "Session not found",
+            code: ErrorCode.invalidRequest
         )
     }
 
@@ -254,12 +265,18 @@ func handleGet(request: Request, context _: MCPRequestContext) async throws -> R
 
 /// Handle DELETE /mcp requests (session termination)
 func handleDelete(request: Request, context _: MCPRequestContext) async throws -> Response {
-    guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!],
-          let session = await sessionManager.session(forId: sessionId)
-    else {
-        return Response(
+    guard let sessionId = request.headers[HTTPField.Name(HTTPHeader.sessionId)!] else {
+        return mcpErrorResponse(
+            status: .badRequest,
+            message: "Missing \(HTTPHeader.sessionId) header",
+            code: ErrorCode.invalidRequest
+        )
+    }
+    guard let session = await sessionManager.session(forId: sessionId) else {
+        return mcpErrorResponse(
             status: .notFound,
-            body: .init(byteBuffer: .init(string: "Session not found"))
+            message: "Session not found",
+            code: ErrorCode.invalidRequest
         )
     }
 
@@ -302,8 +319,12 @@ func buildResponse(from mcpResponse: MCP.HTTPResponse) -> Response {
     }
 
     let status = HTTPResponse.Status(code: mcpResponse.statusCode)
+    let contentTypeName = HTTPField.Name(HTTPHeader.contentType)!
 
     if let stream = mcpResponse.stream {
+        if responseHeaders[contentTypeName] == nil {
+            responseHeaders[contentTypeName] = "text/event-stream"
+        }
         // SSE response - stream the events
         let responseBody = ResponseBody(asyncSequence: SSEResponseSequence(stream: stream))
         return Response(
@@ -312,6 +333,9 @@ func buildResponse(from mcpResponse: MCP.HTTPResponse) -> Response {
             body: responseBody
         )
     } else if let body = mcpResponse.body {
+        if responseHeaders[contentTypeName] == nil {
+            responseHeaders[contentTypeName] = "application/json"
+        }
         // JSON response
         return Response(
             status: status,
@@ -325,6 +349,36 @@ func buildResponse(from mcpResponse: MCP.HTTPResponse) -> Response {
             headers: responseHeaders
         )
     }
+}
+
+func mcpErrorResponse(
+    status: HTTPResponse.Status,
+    message: String,
+    code: Int = ErrorCode.internalError,
+    extraHeaders: HTTPFields = HTTPFields()
+) -> Response {
+    var headers = extraHeaders
+    let contentTypeName = HTTPField.Name(HTTPHeader.contentType)!
+    headers[contentTypeName] = "application/json"
+
+    let payload: [String: Any] = [
+        "jsonrpc": "2.0",
+        "error": [
+            "code": code,
+            "message": message,
+        ],
+        "id": NSNull(),
+    ]
+
+    let bodyData =
+        (try? JSONSerialization.data(withJSONObject: payload))
+            ?? Data("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal Error\"},\"id\":null}".utf8)
+
+    return Response(
+        status: status,
+        headers: headers,
+        body: .init(byteBuffer: .init(data: bodyData))
+    )
 }
 
 /// Async sequence wrapper for SSE stream
