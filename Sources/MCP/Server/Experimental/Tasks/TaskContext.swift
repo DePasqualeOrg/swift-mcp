@@ -21,9 +21,9 @@ import Foundation
 /// ## Example (Distributed Worker)
 ///
 /// ```swift
-/// func workerProcess(taskId: String) async {
+/// func workerProcess(taskId: String, sessionId: String) async {
 ///     let store = RedisTaskStore(url: redisUrl)
-///     let context = try await TaskContext.load(taskId: taskId, from: store)
+///     let context = try await TaskContext.load(taskId: taskId, from: store, sessionId: sessionId)
 ///
 ///     do {
 ///         await context.updateStatus("Processing...")
@@ -41,6 +41,9 @@ public actor TaskContext {
     /// The task store for persistence.
     private let store: any TaskStore
 
+    /// The session that owns this task.
+    private let sessionId: String
+
     /// Whether cancellation has been requested.
     private var _isCancelled = false
 
@@ -55,9 +58,11 @@ public actor TaskContext {
     /// - Parameters:
     ///   - task: The task to manage
     ///   - store: The task store for persistence
-    public init(task: MCPTask, store: any TaskStore) {
+    ///   - sessionId: The session that owns this task
+    public init(task: MCPTask, store: any TaskStore, sessionId: String) {
         self.task = task
         self.store = store
+        self.sessionId = sessionId
     }
 
     /// Load a task context from the store.
@@ -67,13 +72,14 @@ public actor TaskContext {
     /// - Parameters:
     ///   - taskId: The task identifier
     ///   - store: The task store
+    ///   - sessionId: The session that owns this task
     /// - Returns: A TaskContext for the loaded task
     /// - Throws: Error if the task is not found
-    public static func load(taskId: String, from store: any TaskStore) async throws -> TaskContext {
-        guard let task = await store.getTask(taskId: taskId) else {
+    public static func load(taskId: String, from store: any TaskStore, sessionId: String) async throws -> TaskContext {
+        guard let task = await store.getTask(taskId: taskId, sessionId: sessionId) else {
             throw MCPError.invalidParams("Task not found: \(taskId)")
         }
-        return TaskContext(task: task, store: store)
+        return TaskContext(task: task, store: store, sessionId: sessionId)
     }
 
     /// Request cancellation of the task.
@@ -95,7 +101,8 @@ public actor TaskContext {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .working,
-            statusMessage: message
+            statusMessage: message,
+            sessionId: sessionId
         )
         task = updatedTask
     }
@@ -113,7 +120,8 @@ public actor TaskContext {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .inputRequired,
-            statusMessage: message
+            statusMessage: message,
+            sessionId: sessionId
         )
         task = updatedTask
     }
@@ -125,11 +133,12 @@ public actor TaskContext {
     /// - Parameter result: The result value to store
     /// - Throws: Error if the task cannot be completed
     public func complete(result: Value) async throws {
-        try await store.storeResult(taskId: taskId, result: result)
+        try await store.storeResult(taskId: taskId, result: result, sessionId: sessionId)
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .completed,
-            statusMessage: nil
+            statusMessage: nil,
+            sessionId: sessionId
         )
         task = updatedTask
     }
@@ -158,7 +167,8 @@ public actor TaskContext {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .failed,
-            statusMessage: error
+            statusMessage: error,
+            sessionId: sessionId
         )
         task = updatedTask
     }
@@ -188,7 +198,8 @@ public actor TaskContext {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .cancelled,
-            statusMessage: message ?? "Cancelled"
+            statusMessage: message ?? "Cancelled",
+            sessionId: sessionId
         )
         task = updatedTask
     }
@@ -210,7 +221,7 @@ public actor TaskContext {
 ///
 /// ```swift
 /// let store = RedisTaskStore(url: redisUrl)
-/// try await withTaskExecution(taskId: taskId, store: store) { context in
+/// try await withTaskExecution(taskId: taskId, store: store, sessionId: sessionId) { context in
 ///     await context.updateStatus("Working...")
 ///     let result = try await doWork()
 ///     try await context.complete(result: result)
@@ -221,14 +232,16 @@ public actor TaskContext {
 /// - Parameters:
 ///   - taskId: The task identifier to execute
 ///   - store: The task store (must be accessible by the worker)
+///   - sessionId: The session that owns this task
 ///   - work: The async work function that receives the task context
 /// - Throws: Error only if the task cannot be loaded (not for work failures)
 public func withTaskExecution(
     taskId: String,
     store: any TaskStore,
+    sessionId: String,
     work: @escaping @Sendable (TaskContext) async throws -> Void
 ) async throws {
-    let context = try await TaskContext.load(taskId: taskId, from: store)
+    let context = try await TaskContext.load(taskId: taskId, from: store, sessionId: sessionId)
 
     do {
         try await work(context)

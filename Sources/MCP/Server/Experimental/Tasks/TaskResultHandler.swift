@@ -42,16 +42,18 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
     ///
     /// - Parameters:
     ///   - taskId: The task to get results for
+    ///   - sessionId: The session that owns this task
     ///   - sendMessage: Closure to send queued messages to the client
     /// - Returns: The task result with related-task metadata
     /// - Throws: MCPError if task not found or processing fails
     public func handle(
         taskId: String,
+        sessionId: String,
         sendMessage: @Sendable (Data) async throws -> Void
     ) async throws -> GetTaskPayload.Result {
         while true {
             // Check task exists
-            guard let task = await store.getTask(taskId: taskId) else {
+            guard let task = await store.getTask(taskId: taskId, sessionId: sessionId) else {
                 throw MCPError.invalidParams("Task not found: \(taskId)")
             }
 
@@ -60,7 +62,7 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
 
             // If task is terminal, return result
             if isTerminalStatus(task.status) {
-                let result = await store.getResult(taskId: taskId)
+                let result = await store.getResult(taskId: taskId, sessionId: sessionId)
                 let relatedTaskMeta: [String: Value] = [
                     relatedTaskMetaKey: .object(["taskId": .string(taskId)]),
                 ]

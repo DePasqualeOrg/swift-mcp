@@ -705,12 +705,14 @@ struct ClientTasksCapabilitiesTests {
 
 @Suite("InMemoryTaskStore Tests")
 struct InMemoryTaskStoreTests {
+    let defaultSessionId = "session-1"
+
     @Test("createTask creates task with working status")
     func createTaskCreatesWorkingTask() async throws {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata(ttl: 60000)
 
-        let task = try await store.createTask(metadata: metadata, taskId: nil)
+        let task = try await store.createTask(metadata: metadata, taskId: nil, sessionId: defaultSessionId)
 
         #expect(task.status == .working)
         #expect(task.ttl == 60000)
@@ -722,7 +724,7 @@ struct InMemoryTaskStoreTests {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata(ttl: nil)
 
-        let task = try await store.createTask(metadata: metadata, taskId: "custom-id-123")
+        let task = try await store.createTask(metadata: metadata, taskId: "custom-id-123", sessionId: defaultSessionId)
 
         #expect(task.taskId == "custom-id-123")
     }
@@ -732,19 +734,19 @@ struct InMemoryTaskStoreTests {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata()
 
-        _ = try await store.createTask(metadata: metadata, taskId: "task-1")
+        _ = try await store.createTask(metadata: metadata, taskId: "task-1", sessionId: defaultSessionId)
 
         await #expect(throws: MCPError.self) {
-            _ = try await store.createTask(metadata: metadata, taskId: "task-1")
+            _ = try await store.createTask(metadata: metadata, taskId: "task-1", sessionId: defaultSessionId)
         }
     }
 
     @Test("getTask returns created task")
     func getTaskReturnsCreatedTask() async throws {
         let store = InMemoryTaskStore()
-        let created = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        let created = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
-        let retrieved = await store.getTask(taskId: "task-123")
+        let retrieved = await store.getTask(taskId: "task-123", sessionId: defaultSessionId)
 
         #expect(retrieved?.taskId == created.taskId)
         #expect(retrieved?.status == created.status)
@@ -754,7 +756,7 @@ struct InMemoryTaskStoreTests {
     func getTaskReturnsNilForNonExistent() async {
         let store = InMemoryTaskStore()
 
-        let result = await store.getTask(taskId: "non-existent")
+        let result = await store.getTask(taskId: "non-existent", sessionId: defaultSessionId)
 
         #expect(result == nil)
     }
@@ -762,9 +764,9 @@ struct InMemoryTaskStoreTests {
     @Test("updateTask changes status")
     func updateTaskChangesStatus() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
-        let updated = try await store.updateTask(taskId: "task-123", status: .completed, statusMessage: "Done")
+        let updated = try await store.updateTask(taskId: "task-123", status: .completed, statusMessage: "Done", sessionId: defaultSessionId)
 
         #expect(updated.status == .completed)
         #expect(updated.statusMessage == "Done")
@@ -773,14 +775,14 @@ struct InMemoryTaskStoreTests {
     @Test("updateTask throws when transitioning from terminal status")
     func updateTaskThrowsFromTerminalStatus() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
         // Complete the task
-        _ = try await store.updateTask(taskId: "task-123", status: .completed, statusMessage: nil)
+        _ = try await store.updateTask(taskId: "task-123", status: .completed, statusMessage: nil, sessionId: defaultSessionId)
 
         // Try to update again - should throw
         await #expect(throws: MCPError.self) {
-            _ = try await store.updateTask(taskId: "task-123", status: .working, statusMessage: nil)
+            _ = try await store.updateTask(taskId: "task-123", status: .working, statusMessage: nil, sessionId: defaultSessionId)
         }
     }
 
@@ -789,19 +791,19 @@ struct InMemoryTaskStoreTests {
         let store = InMemoryTaskStore()
 
         await #expect(throws: MCPError.self) {
-            _ = try await store.updateTask(taskId: "non-existent", status: .completed, statusMessage: nil)
+            _ = try await store.updateTask(taskId: "non-existent", status: .completed, statusMessage: nil, sessionId: defaultSessionId)
         }
     }
 
     @Test("storeResult and getResult work correctly")
     func storeAndGetResult() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
         let result: Value = .object(["data": .string("test result")])
-        try await store.storeResult(taskId: "task-123", result: result)
+        try await store.storeResult(taskId: "task-123", result: result, sessionId: defaultSessionId)
 
-        let retrieved = await store.getResult(taskId: "task-123")
+        let retrieved = await store.getResult(taskId: "task-123", sessionId: defaultSessionId)
 
         #expect(retrieved?.objectValue?["data"]?.stringValue == "test result")
     }
@@ -809,21 +811,21 @@ struct InMemoryTaskStoreTests {
     @Test("getResult returns nil when no result stored")
     func getResultReturnsNilWhenNoResult() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
-        let result = await store.getResult(taskId: "task-123")
+        let result = await store.getResult(taskId: "task-123", sessionId: defaultSessionId)
 
         #expect(result == nil)
     }
 
-    @Test("listTasks returns all tasks")
+    @Test("listTasks returns all tasks for session")
     func listTasksReturnsAllTasks() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1")
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2")
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-3")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-3", sessionId: defaultSessionId)
 
-        let result = await store.listTasks(cursor: nil)
+        let result = await store.listTasks(cursor: nil, sessionId: defaultSessionId)
 
         #expect(result.tasks.count == 3)
     }
@@ -834,21 +836,21 @@ struct InMemoryTaskStoreTests {
 
         // Create 5 tasks
         for i in 1 ... 5 {
-            _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-\(i)")
+            _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-\(i)", sessionId: defaultSessionId)
         }
 
         // First page
-        let page1Result = await store.listTasks(cursor: nil)
+        let page1Result = await store.listTasks(cursor: nil, sessionId: defaultSessionId)
         #expect(page1Result.tasks.count == 2)
         #expect(page1Result.nextCursor != nil)
 
         // Second page
-        let page2Result = await store.listTasks(cursor: page1Result.nextCursor)
+        let page2Result = await store.listTasks(cursor: page1Result.nextCursor, sessionId: defaultSessionId)
         #expect(page2Result.tasks.count == 2)
         #expect(page2Result.nextCursor != nil)
 
         // Third page
-        let page3Result = await store.listTasks(cursor: page2Result.nextCursor)
+        let page3Result = await store.listTasks(cursor: page2Result.nextCursor, sessionId: defaultSessionId)
         #expect(page3Result.tasks.count == 1)
         #expect(page3Result.nextCursor == nil)
     }
@@ -856,12 +858,12 @@ struct InMemoryTaskStoreTests {
     @Test("deleteTask removes task")
     func deleteTaskRemovesTask() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
-        let deleted = await store.deleteTask(taskId: "task-123")
+        let deleted = await store.deleteTask(taskId: "task-123", sessionId: defaultSessionId)
         #expect(deleted == true)
 
-        let result = await store.getTask(taskId: "task-123")
+        let result = await store.getTask(taskId: "task-123", sessionId: defaultSessionId)
         #expect(result == nil)
     }
 
@@ -869,7 +871,7 @@ struct InMemoryTaskStoreTests {
     func deleteTaskReturnsFalseForNonExistent() async {
         let store = InMemoryTaskStore()
 
-        let deleted = await store.deleteTask(taskId: "non-existent")
+        let deleted = await store.deleteTask(taskId: "non-existent", sessionId: defaultSessionId)
 
         #expect(deleted == false)
     }
@@ -877,7 +879,7 @@ struct InMemoryTaskStoreTests {
     @Test("waitForUpdate and notifyUpdate work together")
     func waitForUpdateAndNotifyUpdate() async throws {
         let store = InMemoryTaskStore()
-        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123")
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
         // Start waiting in a separate task
         let waitTask = Task {
@@ -894,6 +896,161 @@ struct InMemoryTaskStoreTests {
         // Wait should complete
         let result = try await waitTask.value
         #expect(result == true)
+    }
+}
+
+// MARK: - Session Isolation Tests
+
+@Suite("InMemoryTaskStore Session Isolation Tests")
+struct InMemoryTaskStoreSessionIsolationTests {
+    let sessionA = "session-a"
+    let sessionB = "session-b"
+
+    @Test("getTask returns nil for another session's task")
+    func getTaskCrossSessionReturnsNil() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        let result = await store.getTask(taskId: "task-1", sessionId: sessionB)
+        #expect(result == nil)
+    }
+
+    @Test("getTask returns task for owning session")
+    func getTaskSameSessionReturnsTask() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        let result = await store.getTask(taskId: "task-1", sessionId: sessionA)
+        #expect(result != nil)
+        #expect(result?.taskId == "task-1")
+    }
+
+    @Test("updateTask fails for another session's task with opaque error")
+    func updateTaskCrossSessionFails() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        // Error should say "not found", not reveal that the task belongs to another session
+        do {
+            _ = try await store.updateTask(taskId: "task-1", status: .completed, statusMessage: nil, sessionId: sessionB)
+            Issue.record("Expected MCPError to be thrown")
+        } catch let error as MCPError {
+            #expect(error.message.contains("not found"))
+        }
+    }
+
+    @Test("storeResult fails for another session's task with opaque error")
+    func storeResultCrossSessionFails() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        // Error should say "not found", not reveal that the task belongs to another session
+        do {
+            try await store.storeResult(taskId: "task-1", result: .string("data"), sessionId: sessionB)
+            Issue.record("Expected MCPError to be thrown")
+        } catch let error as MCPError {
+            #expect(error.message.contains("not found"))
+        }
+    }
+
+    @Test("getResult returns nil for another session's task")
+    func getResultCrossSessionReturnsNil() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+        try await store.storeResult(taskId: "task-1", result: .string("secret"), sessionId: sessionA)
+
+        let result = await store.getResult(taskId: "task-1", sessionId: sessionB)
+        #expect(result == nil)
+    }
+
+    @Test("listTasks only returns tasks for the requesting session")
+    func listTasksSessionIsolation() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-task-1", sessionId: sessionA)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-task-2", sessionId: sessionA)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "b-task-1", sessionId: sessionB)
+
+        let sessionATasks = await store.listTasks(cursor: nil, sessionId: sessionA)
+        #expect(sessionATasks.tasks.count == 2)
+        #expect(sessionATasks.tasks.allSatisfy { $0.taskId.hasPrefix("a-task") })
+
+        let sessionBTasks = await store.listTasks(cursor: nil, sessionId: sessionB)
+        #expect(sessionBTasks.tasks.count == 1)
+        #expect(sessionBTasks.tasks[0].taskId == "b-task-1")
+    }
+
+    @Test("deleteTask fails for another session's task")
+    func deleteTaskCrossSessionFails() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        let deleted = await store.deleteTask(taskId: "task-1", sessionId: sessionB)
+        #expect(deleted == false)
+
+        // Task should still exist for session A
+        let task = await store.getTask(taskId: "task-1", sessionId: sessionA)
+        #expect(task != nil)
+    }
+
+    @Test("Cross-session access is indistinguishable from non-existent task")
+    func crossSessionAccessOpaqueFailure() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
+
+        // Accessing another session's task should look identical to a non-existent task
+        let crossSessionGet = await store.getTask(taskId: "task-1", sessionId: sessionB)
+        let nonExistentGet = await store.getTask(taskId: "no-such-task", sessionId: sessionA)
+        #expect(crossSessionGet == nil)
+        #expect(nonExistentGet == nil)
+
+        let crossSessionResult = await store.getResult(taskId: "task-1", sessionId: sessionB)
+        let nonExistentResult = await store.getResult(taskId: "no-such-task", sessionId: sessionA)
+        #expect(crossSessionResult == nil)
+        #expect(nonExistentResult == nil)
+
+        let crossSessionDelete = await store.deleteTask(taskId: "task-1", sessionId: sessionB)
+        let nonExistentDelete = await store.deleteTask(taskId: "no-such-task", sessionId: sessionA)
+        #expect(crossSessionDelete == false)
+        #expect(nonExistentDelete == false)
+    }
+
+    @Test("Task IDs are globally unique across sessions")
+    func taskIdsGloballyUnique() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "shared-id", sessionId: sessionA)
+
+        // Another session cannot create a task with the same ID,
+        // since task IDs are globally unique in the flat storage
+        await #expect(throws: MCPError.self) {
+            _ = try await store.createTask(metadata: TaskMetadata(), taskId: "shared-id", sessionId: sessionB)
+        }
+    }
+
+    @Test("listTasks pagination respects session isolation")
+    func listTasksPaginationWithSessionIsolation() async throws {
+        let store = InMemoryTaskStore(pageSize: 2)
+
+        // Create tasks for two sessions
+        for i in 1 ... 4 {
+            _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-\(i)", sessionId: sessionA)
+        }
+        for i in 1 ... 2 {
+            _ = try await store.createTask(metadata: TaskMetadata(), taskId: "b-\(i)", sessionId: sessionB)
+        }
+
+        // Session A should paginate over its 4 tasks
+        let page1 = await store.listTasks(cursor: nil, sessionId: sessionA)
+        #expect(page1.tasks.count == 2)
+        #expect(page1.nextCursor != nil)
+
+        let page2 = await store.listTasks(cursor: page1.nextCursor, sessionId: sessionA)
+        #expect(page2.tasks.count == 2)
+        #expect(page2.nextCursor == nil)
+
+        // Session B should see only its 2 tasks in one page
+        let sessionBPage = await store.listTasks(cursor: nil, sessionId: sessionB)
+        #expect(sessionBPage.tasks.count == 2)
+        #expect(sessionBPage.nextCursor == nil)
     }
 }
 

@@ -71,6 +71,9 @@ public final class ServerTaskContext: Sendable {
     /// The message queue for side-channel communication.
     private let queue: any TaskMessageQueue
 
+    /// The session that owns this task.
+    private let sessionId: String
+
     /// Client capabilities for checking support.
     private let clientCapabilities: Client.Capabilities?
 
@@ -98,12 +101,14 @@ public final class ServerTaskContext: Sendable {
     ///   - task: The task to manage
     ///   - store: The task store for persistence
     ///   - queue: The message queue for side-channel communication
+    ///   - sessionId: The session that owns this task
     ///   - clientCapabilities: Client capabilities for checking support
     ///   - server: Optional server reference for task-augmented requests
     public init(
         task: MCPTask,
         store: any TaskStore,
         queue: any TaskMessageQueue,
+        sessionId: String,
         clientCapabilities: Client.Capabilities? = nil,
         server: Server? = nil
     ) {
@@ -114,6 +119,7 @@ public final class ServerTaskContext: Sendable {
         #endif
         self.store = store
         self.queue = queue
+        self.sessionId = sessionId
         self.clientCapabilities = clientCapabilities
         self.server = server
     }
@@ -148,7 +154,8 @@ public final class ServerTaskContext: Sendable {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .working,
-            statusMessage: message
+            statusMessage: message,
+            sessionId: sessionId
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -169,7 +176,8 @@ public final class ServerTaskContext: Sendable {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .inputRequired,
-            statusMessage: message
+            statusMessage: message,
+            sessionId: sessionId
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -186,11 +194,12 @@ public final class ServerTaskContext: Sendable {
     ///   - notify: Whether to send a `TaskStatusNotification` to the client (default: true)
     /// - Throws: Error if the task cannot be completed
     public func complete(result: Value, notify: Bool = true) async throws {
-        try await store.storeResult(taskId: taskId, result: result)
+        try await store.storeResult(taskId: taskId, result: result, sessionId: sessionId)
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .completed,
-            statusMessage: nil
+            statusMessage: nil,
+            sessionId: sessionId
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -226,7 +235,8 @@ public final class ServerTaskContext: Sendable {
         let updatedTask = try await store.updateTask(
             taskId: taskId,
             status: .failed,
-            statusMessage: error
+            statusMessage: error,
+            sessionId: sessionId
         )
         state.withLock { $0.task = updatedTask }
         if notify {
