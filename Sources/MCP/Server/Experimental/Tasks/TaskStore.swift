@@ -7,24 +7,34 @@ import Foundation
 /// This abstraction allows pluggable task storage implementations
 /// (in-memory, database, distributed cache, etc.).
 ///
+/// All methods require a `sessionId` parameter for session isolation.
+/// Tasks created by one session are not accessible to other sessions.
+///
 /// All methods are async to support various backends.
 ///
 /// - Important: This is an experimental API that may change without notice.
 public protocol TaskStore: Sendable {
     /// Create a new task with the given metadata.
     ///
+    /// The task is bound to the specified session for isolation purposes.
+    ///
     /// - Parameters:
     ///   - metadata: Task metadata (TTL, etc.)
     ///   - taskId: Optional task ID. If nil, implementation should generate one.
+    ///   - sessionId: The session that owns this task.
     /// - Returns: The created Task with status `working`
     /// - Throws: Error if taskId already exists
-    func createTask(metadata: TaskMetadata, taskId: String?) async throws -> MCPTask
+    func createTask(metadata: TaskMetadata, taskId: String?, sessionId: String) async throws -> MCPTask
 
     /// Get a task by ID.
     ///
-    /// - Parameter taskId: The task identifier
-    /// - Returns: The Task, or nil if not found
-    func getTask(taskId: String) async -> MCPTask?
+    /// Returns nil if the task does not exist or is not accessible by the given session.
+    ///
+    /// - Parameters:
+    ///   - taskId: The task identifier
+    ///   - sessionId: The requesting session's identifier.
+    /// - Returns: The Task, or nil if not found or not accessible by this session
+    func getTask(taskId: String, sessionId: String) async -> MCPTask?
 
     /// Update a task's status and/or message.
     ///
@@ -32,35 +42,50 @@ public protocol TaskStore: Sendable {
     ///   - taskId: The task identifier
     ///   - status: New status (if changing)
     ///   - statusMessage: New status message (if changing)
+    ///   - sessionId: The requesting session's identifier.
     /// - Returns: The updated Task
-    /// - Throws: Error if task not found or if attempting to transition from a terminal status
-    func updateTask(taskId: String, status: TaskStatus?, statusMessage: String?) async throws -> MCPTask
+    /// - Throws: Error if task not found, not accessible by this session,
+    ///   or if attempting to transition from a terminal status
+    func updateTask(taskId: String, status: TaskStatus?, statusMessage: String?, sessionId: String) async throws -> MCPTask
 
     /// Store the result for a task.
     ///
     /// - Parameters:
     ///   - taskId: The task identifier
     ///   - result: The result to store
-    /// - Throws: Error if task not found
-    func storeResult(taskId: String, result: Value) async throws
+    ///   - sessionId: The requesting session's identifier.
+    /// - Throws: Error if task not found or not accessible by this session
+    func storeResult(taskId: String, result: Value, sessionId: String) async throws
 
     /// Get the stored result for a task.
     ///
-    /// - Parameter taskId: The task identifier
-    /// - Returns: The stored result, or nil if not available
-    func getResult(taskId: String) async -> Value?
+    /// Returns nil if the task does not exist or is not accessible by the given session.
+    ///
+    /// - Parameters:
+    ///   - taskId: The task identifier
+    ///   - sessionId: The requesting session's identifier.
+    /// - Returns: The stored result, or nil if not available or not accessible by this session
+    func getResult(taskId: String, sessionId: String) async -> Value?
 
     /// List tasks with pagination.
     ///
-    /// - Parameter cursor: Optional cursor for pagination
+    /// Only returns tasks belonging to the specified session.
+    ///
+    /// - Parameters:
+    ///   - cursor: Optional cursor for pagination
+    ///   - sessionId: The requesting session's identifier.
     /// - Returns: The list result containing tasks and optional next cursor.
-    func listTasks(cursor: String?) async -> ListTasks.Result
+    func listTasks(cursor: String?, sessionId: String) async -> ListTasks.Result
 
     /// Delete a task.
     ///
-    /// - Parameter taskId: The task identifier
-    /// - Returns: True if deleted, false if not found
-    func deleteTask(taskId: String) async -> Bool
+    /// Returns false if the task does not exist or is not accessible by the given session.
+    ///
+    /// - Parameters:
+    ///   - taskId: The task identifier
+    ///   - sessionId: The requesting session's identifier.
+    /// - Returns: True if deleted, false if not found or not accessible by this session
+    func deleteTask(taskId: String, sessionId: String) async -> Bool
 
     /// Wait for an update to the specified task.
     ///
@@ -106,6 +131,8 @@ public actor InMemoryTaskStore: TaskStore {
     private struct StoredTask {
         var task: MCPTask
         var result: Value?
+        /// The session that owns this task.
+        var sessionId: String
         /// Time when this task should be removed (nil = never)
         var expiresAt: Date?
     }
@@ -153,6 +180,20 @@ public actor InMemoryTaskStore: TaskStore {
         }
     }
 
+    /// Retrieve a stored task, enforcing session ownership and expiry.
+    ///
+    /// Returns nil if the task does not exist, belongs to a different session,
+    /// or has expired. Expired tasks are removed from storage on access.
+    private func getStoredTask(taskId: String, sessionId: String) -> StoredTask? {
+        guard let stored = tasks[taskId] else { return nil }
+        if isExpired(stored) {
+            tasks.removeValue(forKey: taskId)
+            return nil
+        }
+        guard stored.sessionId == sessionId else { return nil }
+        return stored
+    }
+
     /// Generate a unique task ID using UUID.
     private func generateTaskId() -> String {
         UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
@@ -163,7 +204,7 @@ public actor InMemoryTaskStore: TaskStore {
         ISO8601DateFormatter().string(from: Date())
     }
 
-    public func createTask(metadata: TaskMetadata, taskId: String?) async throws -> MCPTask {
+    public func createTask(metadata: TaskMetadata, taskId: String?, sessionId: String) async throws -> MCPTask {
         cleanUpExpired()
 
         let id = taskId ?? generateTaskId()
@@ -185,19 +226,20 @@ public actor InMemoryTaskStore: TaskStore {
         tasks[id] = StoredTask(
             task: task,
             result: nil,
+            sessionId: sessionId,
             expiresAt: calculateExpiry(ttl: metadata.ttl)
         )
 
         return task
     }
 
-    public func getTask(taskId: String) async -> MCPTask? {
+    public func getTask(taskId: String, sessionId: String) async -> MCPTask? {
         cleanUpExpired()
-        return tasks[taskId]?.task
+        return getStoredTask(taskId: taskId, sessionId: sessionId)?.task
     }
 
-    public func updateTask(taskId: String, status: TaskStatus?, statusMessage: String?) async throws -> MCPTask {
-        guard var stored = tasks[taskId] else {
+    public func updateTask(taskId: String, status: TaskStatus?, statusMessage: String?, sessionId: String) async throws -> MCPTask {
+        guard var stored = getStoredTask(taskId: taskId, sessionId: sessionId) else {
             throw MCPError.invalidParams("Task with ID \(taskId) not found")
         }
 
@@ -229,8 +271,8 @@ public actor InMemoryTaskStore: TaskStore {
         return stored.task
     }
 
-    public func storeResult(taskId: String, result: Value) async throws {
-        guard var stored = tasks[taskId] else {
+    public func storeResult(taskId: String, result: Value, sessionId: String) async throws {
+        guard var stored = getStoredTask(taskId: taskId, sessionId: sessionId) else {
             throw MCPError.invalidParams("Task with ID \(taskId) not found")
         }
 
@@ -241,14 +283,14 @@ public actor InMemoryTaskStore: TaskStore {
         await notifyUpdate(taskId: taskId)
     }
 
-    public func getResult(taskId: String) async -> Value? {
-        tasks[taskId]?.result
+    public func getResult(taskId: String, sessionId: String) async -> Value? {
+        getStoredTask(taskId: taskId, sessionId: sessionId)?.result
     }
 
-    public func listTasks(cursor: String?) async -> ListTasks.Result {
+    public func listTasks(cursor: String?, sessionId: String) async -> ListTasks.Result {
         cleanUpExpired()
 
-        let allTaskIds = Array(tasks.keys).sorted()
+        let allTaskIds = tasks.filter { $0.value.sessionId == sessionId }.keys.sorted()
 
         var startIndex = 0
         if let cursor {
@@ -269,8 +311,12 @@ public actor InMemoryTaskStore: TaskStore {
         return ListTasks.Result(tasks: pageTasks, nextCursor: nextCursor)
     }
 
-    public func deleteTask(taskId: String) async -> Bool {
-        tasks.removeValue(forKey: taskId) != nil
+    public func deleteTask(taskId: String, sessionId: String) async -> Bool {
+        guard getStoredTask(taskId: taskId, sessionId: sessionId) != nil else {
+            return false
+        }
+        tasks.removeValue(forKey: taskId)
+        return true
     }
 
     /// Clear all tasks (useful for testing or graceful shutdown).

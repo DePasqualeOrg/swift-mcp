@@ -161,6 +161,7 @@ public final class TaskSupport: Sendable {
     /// - Parameters:
     ///   - metadata: The task metadata from the request
     ///   - taskId: Optional specific task ID (generated if nil)
+    ///   - sessionId: The session that owns this task.
     ///   - modelImmediateResponse: Optional immediate feedback for the model
     ///   - clientCapabilities: Optional client capabilities for mid-task elicitation/sampling
     ///   - server: Optional server reference for task-augmented requests (elicitAsTask, createMessageAsTask)
@@ -170,19 +171,21 @@ public final class TaskSupport: Sendable {
     public func runTask(
         metadata: TaskMetadata,
         taskId: String? = nil,
+        sessionId: String,
         modelImmediateResponse: String? = nil,
         clientCapabilities: Client.Capabilities? = nil,
         server: Server? = nil,
         work: @escaping @Sendable (ServerTaskContext) async throws -> CallTool.Result
     ) async throws -> CreateTaskResult {
         // Create the task
-        let task = try await store.createTask(metadata: metadata, taskId: taskId)
+        let task = try await store.createTask(metadata: metadata, taskId: taskId, sessionId: sessionId)
 
         // Create the context
         let context = ServerTaskContext(
             task: task,
             store: store,
             queue: queue,
+            sessionId: sessionId,
             clientCapabilities: clientCapabilities,
             server: server
         )
@@ -201,7 +204,8 @@ public final class TaskSupport: Sendable {
                     _ = try? await store.updateTask(
                         taskId: context.taskId,
                         status: .cancelled,
-                        statusMessage: "Cancelled"
+                        statusMessage: "Cancelled",
+                        sessionId: sessionId
                     )
                 }
             } catch {
@@ -233,24 +237,41 @@ extension Server {
         registerDefaultTaskHandlers(taskSupport)
     }
 
+    /// Extract and validate the session ID from a request context.
+    ///
+    /// Task operations require a session ID for scoping. Transports that do not
+    /// provide session IDs (e.g., stdio) are not compatible with task support.
+    private static func requireSessionId(_ context: RequestHandlerContext) throws -> String {
+        guard let sessionId = context.sessionId else {
+            throw MCPError.internalError(
+                "Task operations require a session ID, but the current transport does not provide one. "
+                    + "Use a transport with session support (e.g., HTTP with session management)."
+            )
+        }
+        return sessionId
+    }
+
     /// Register default handlers for task operations.
     private func registerDefaultTaskHandlers(_ taskSupport: TaskSupport) {
         // tasks/get - Get task status
-        withRequestHandler(GetTask.self) { params, _ in
-            guard let task = await taskSupport.store.getTask(taskId: params.taskId) else {
+        withRequestHandler(GetTask.self) { params, context in
+            let sessionId = try Self.requireSessionId(context)
+            guard let task = await taskSupport.store.getTask(taskId: params.taskId, sessionId: sessionId) else {
                 throw MCPError.invalidParams("Task not found: \(params.taskId)")
             }
             return GetTask.Result(task: task)
         }
 
         // tasks/list - List all tasks
-        withRequestHandler(ListTasks.self) { params, _ in
-            await taskSupport.store.listTasks(cursor: params.cursor)
+        withRequestHandler(ListTasks.self) { params, context in
+            let sessionId = try Self.requireSessionId(context)
+            return await taskSupport.store.listTasks(cursor: params.cursor, sessionId: sessionId)
         }
 
         // tasks/cancel - Cancel a running task
-        withRequestHandler(CancelTask.self) { params, _ in
-            guard let task = await taskSupport.store.getTask(taskId: params.taskId) else {
+        withRequestHandler(CancelTask.self) { params, context in
+            let sessionId = try Self.requireSessionId(context)
+            guard let task = await taskSupport.store.getTask(taskId: params.taskId, sessionId: sessionId) else {
                 throw MCPError.invalidParams("Task not found: \(params.taskId)")
             }
 
@@ -264,7 +285,8 @@ extension Server {
             let updatedTask = try await taskSupport.store.updateTask(
                 taskId: params.taskId,
                 status: .cancelled,
-                statusMessage: "Cancelled by client request"
+                statusMessage: "Cancelled by client request",
+                sessionId: sessionId
             )
 
             // Clean up any queued messages for this task
@@ -276,8 +298,10 @@ extension Server {
         // tasks/result - Get task result (with blocking until terminal)
         // Uses TaskResultHandler to deliver queued messages (elicitation/sampling)
         withRequestHandler(GetTaskPayload.self) { params, context in
-            try await taskSupport.resultHandler.handle(
+            let sessionId = try Self.requireSessionId(context)
+            return try await taskSupport.resultHandler.handle(
                 taskId: params.taskId,
+                sessionId: sessionId,
                 sendMessage: { data in try await context.sendData(data) }
             )
         }
