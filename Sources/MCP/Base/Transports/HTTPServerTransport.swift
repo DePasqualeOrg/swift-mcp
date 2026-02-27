@@ -253,7 +253,7 @@ public actor HTTPServerTransport: Transport {
             default:
                 return createJsonErrorResponse(
                     status: 405,
-                    code: ErrorCode.connectionClosed,
+                    code: ErrorCode.invalidRequest,
                     message: "Method not allowed",
                     extraHeaders: [HTTPHeader.allow: "GET, POST, DELETE"]
                 )
@@ -272,7 +272,7 @@ public actor HTTPServerTransport: Transport {
             guard acceptHeader.contains("application/json") else {
                 return createJsonErrorResponse(
                     status: 406,
-                    code: ErrorCode.connectionClosed,
+                    code: ErrorCode.invalidRequest,
                     message: "Not Acceptable: Client must accept application/json"
                 )
             }
@@ -281,7 +281,7 @@ public actor HTTPServerTransport: Transport {
             guard acceptHeader.contains("application/json"), acceptHeader.contains("text/event-stream") else {
                 return createJsonErrorResponse(
                     status: 406,
-                    code: ErrorCode.connectionClosed,
+                    code: ErrorCode.invalidRequest,
                     message: "Not Acceptable: Client must accept both application/json and text/event-stream"
                 )
             }
@@ -292,7 +292,7 @@ public actor HTTPServerTransport: Transport {
         guard contentType.contains("application/json") else {
             return createJsonErrorResponse(
                 status: 415,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Unsupported Media Type: Content-Type must be application/json"
             )
         }
@@ -380,7 +380,7 @@ public actor HTTPServerTransport: Transport {
                     )
                     return createJsonErrorResponse(
                         status: 500,
-                        code: ErrorCode.connectionClosed,
+                        code: ErrorCode.internalError,
                         message: "Internal error: Invalid session ID generated"
                     )
                 }
@@ -488,7 +488,7 @@ public actor HTTPServerTransport: Transport {
         // Stream closed without yielding a response - return error
         return createJsonErrorResponse(
             status: 503,
-            code: ErrorCode.connectionClosed,
+            code: ErrorCode.internalError,
             message: "Service Unavailable: No response received"
         )
     }
@@ -568,7 +568,7 @@ public actor HTTPServerTransport: Transport {
         guard acceptHeader.contains("text/event-stream") else {
             return createJsonErrorResponse(
                 status: 406,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Not Acceptable: Client must accept text/event-stream"
             )
         }
@@ -594,7 +594,7 @@ public actor HTTPServerTransport: Transport {
         if streamMapping[standaloneSseStreamId] != nil {
             return createJsonErrorResponse(
                 status: 409,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Conflict: Only one SSE stream is allowed per session"
             )
         }
@@ -636,7 +636,7 @@ public actor HTTPServerTransport: Transport {
         guard options.sessionIdGenerator != nil else {
             return createJsonErrorResponse(
                 status: 405,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Method Not Allowed: Session management is not enabled",
                 extraHeaders: [HTTPHeader.allow: "GET, POST"]
             )
@@ -752,7 +752,7 @@ public actor HTTPServerTransport: Transport {
             // Use 421 Misdirected Request for Host header issues
             return createJsonErrorResponse(
                 status: 421,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Misdirected Request: Missing Host header"
             )
         }
@@ -769,7 +769,7 @@ public actor HTTPServerTransport: Transport {
             // Use 421 Misdirected Request for Host header issues
             return createJsonErrorResponse(
                 status: 421,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Misdirected Request: Host header not allowed"
             )
         }
@@ -787,7 +787,7 @@ public actor HTTPServerTransport: Transport {
                 )
                 return createJsonErrorResponse(
                     status: 403,
-                    code: ErrorCode.connectionClosed,
+                    code: ErrorCode.invalidRequest,
                     message: "Forbidden: Origin not allowed"
                 )
             }
@@ -841,7 +841,7 @@ public actor HTTPServerTransport: Transport {
         guard initialized else {
             return createJsonErrorResponse(
                 status: 400,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Bad Request: Server not initialized"
             )
         }
@@ -866,7 +866,7 @@ public actor HTTPServerTransport: Transport {
         guard let requestSessionId else {
             return createJsonErrorResponse(
                 status: 400,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Bad Request: \(HTTPHeader.sessionId) header is required"
             )
         }
@@ -875,7 +875,7 @@ public actor HTTPServerTransport: Transport {
         guard requestSessionId == sessionId else {
             return createJsonErrorResponse(
                 status: 404,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Session not found"
             )
         }
@@ -901,7 +901,7 @@ public actor HTTPServerTransport: Transport {
             guard Self.supportedProtocolVersions.contains(version) else {
                 return createJsonErrorResponse(
                     status: 400,
-                    code: ErrorCode.connectionClosed,
+                    code: ErrorCode.invalidRequest,
                     message:
                     "Bad Request: Unsupported protocol version: \(version) (supported: \(Self.supportedProtocolVersions.joined(separator: ", ")))"
                 )
@@ -1044,7 +1044,7 @@ public actor HTTPServerTransport: Transport {
         guard let streamId = await eventStore.streamIdForEventId(lastEventId) else {
             return createJsonErrorResponse(
                 status: 400,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Invalid event ID format"
             )
         }
@@ -1053,7 +1053,7 @@ public actor HTTPServerTransport: Transport {
         if streamMapping[streamId] != nil {
             return createJsonErrorResponse(
                 status: 409,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.invalidRequest,
                 message: "Conflict: Stream already has an active connection"
             )
         }
@@ -1100,7 +1100,7 @@ public actor HTTPServerTransport: Transport {
             streamContinuation.finish()
             return createJsonErrorResponse(
                 status: 500,
-                code: ErrorCode.connectionClosed,
+                code: ErrorCode.internalError,
                 message: "Error replaying events"
             )
         }

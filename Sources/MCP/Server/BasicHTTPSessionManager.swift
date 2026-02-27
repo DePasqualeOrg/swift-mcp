@@ -131,10 +131,6 @@ public actor BasicHTTPSessionManager {
                     message: "Bad Request: Mcp-Session-Id header required"
                 )
             }
-            // Use invalidRequest (-32600) for manager-level session lookup failures.
-            // HTTPServerTransport currently uses connectionClosed (-32000) for transport-level
-            // validation, but the spec does not prescribe a specific code here and Python's
-            // streamable HTTP server pattern uses INVALID_REQUEST for this scenario.
             return jsonErrorResponse(
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
