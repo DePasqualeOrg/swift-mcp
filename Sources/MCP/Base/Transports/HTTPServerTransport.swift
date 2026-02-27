@@ -1178,16 +1178,7 @@ public actor HTTPServerTransport: Transport {
         message: String,
         extraHeaders: [String: String] = [:]
     ) -> HTTPResponse {
-        let error: [String: Any] = [
-            "jsonrpc": "2.0",
-            "error": [
-                "code": code,
-                "message": message,
-            ],
-            "id": NSNull(),
-        ]
-
-        let body = (try? JSONSerialization.data(withJSONObject: error)) ?? Data()
+        let body = (try? JSONRPCErrorResponse(code: code, message: message).encoded()) ?? Data()
 
         var headers = sessionHeaders()
         headers[HTTPHeader.contentType] = "application/json"

@@ -254,18 +254,7 @@ public actor BasicHTTPSessionManager {
         message: String,
         extraHeaders: [String: String] = [:]
     ) -> HTTPResponse {
-        let payload: [String: Any] = [
-            "jsonrpc": "2.0",
-            "error": [
-                "code": code,
-                "message": message,
-            ],
-            "id": NSNull(),
-        ]
-
-        let body =
-            (try? JSONSerialization.data(withJSONObject: payload))
-                ?? Data("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal Error\"},\"id\":null}".utf8)
+        let body = (try? JSONRPCErrorResponse(code: code, message: message).encoded()) ?? Data()
 
         var headers = extraHeaders
         headers[HTTPHeader.contentType] = "application/json"
