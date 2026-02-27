@@ -246,4 +246,15 @@ public extension Transport {
     func setProtocolVersion(_: String) async {
         // Default no-op implementation for transports that don't need version headers
     }
+
+    /// Sets the supported protocol versions on the transport.
+    ///
+    /// HTTP server transports override this to validate the `MCP-Protocol-Version`
+    /// header against the configured list. Called by the server during `start()`
+    /// and by the client during `connect()`.
+    ///
+    /// - Parameter versions: Supported protocol versions, ordered by preference
+    func setSupportedProtocolVersions(_: [String]) async {
+        // Default no-op implementation for transports that don't need version validation
+    }
 }

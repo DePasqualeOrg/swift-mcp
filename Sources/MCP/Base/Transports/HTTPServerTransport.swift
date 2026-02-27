@@ -82,6 +82,11 @@ public actor HTTPServerTransport: Transport {
     /// The negotiated protocol version, set after initialization
     private var negotiatedProtocolVersion: String?
 
+    /// Supported protocol versions for header validation.
+    /// Initialized to `Version.supported` and can be overridden via
+    /// `setSupportedProtocolVersions()` when the server passes its configuration.
+    private var supportedProtocolVersions: [String] = Version.supported
+
     // Configuration
     private let options: HTTPServerTransportOptions
 
@@ -125,6 +130,10 @@ public actor HTTPServerTransport: Transport {
     }
 
     // MARK: - Transport Protocol
+
+    public func setSupportedProtocolVersions(_ versions: [String]) async {
+        supportedProtocolVersions = versions
+    }
 
     /// Starts the transport.
     /// This is required by the Transport interface but is a no-op for HTTP transports
@@ -883,27 +892,17 @@ public actor HTTPServerTransport: Transport {
         return nil
     }
 
-    /// Supported protocol versions for header validation.
-    /// This is more lenient than Version.supported - it accepts headers from clients
-    /// even if we don't fully implement all features of that version yet.
-    private static let supportedProtocolVersions = [
-        Version.v2024_11_05,
-        Version.v2025_03_26,
-        Version.v2025_06_18,
-        Version.v2025_11_25,
-    ]
-
     private func validateProtocolVersion(_ request: HTTPRequest) -> HTTPResponse? {
         let protocolVersion = request.header(HTTPHeader.protocolVersion)
 
         // If header is present, validate it
         if let version = protocolVersion {
-            guard Self.supportedProtocolVersions.contains(version) else {
+            guard supportedProtocolVersions.contains(version) else {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.invalidRequest,
                     message:
-                    "Bad Request: Unsupported protocol version: \(version) (supported: \(Self.supportedProtocolVersions.joined(separator: ", ")))"
+                    "Bad Request: Unsupported protocol version: \(version) (supported: \(supportedProtocolVersions.joined(separator: ", ")))"
                 )
             }
         }

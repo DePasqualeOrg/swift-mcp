@@ -144,6 +144,23 @@ public actor Server: ProtocolLayer {
         /// Set to `false` for lenient behavior that allows requests before initialization.
         /// This may be useful for non-compliant clients but can lead to undefined behavior.
         public var strict: Bool
+
+        /// Protocol versions supported by this server, ordered by preference.
+        ///
+        /// The first element is the preferred version, used as the fallback when the
+        /// client's requested version is not supported. Defaults to `Version.supported`.
+        ///
+        /// - Precondition: Must not be empty.
+        public var supportedProtocolVersions: [String]
+
+        public init(
+            strict: Bool = true,
+            supportedProtocolVersions: [String] = Version.supported
+        ) {
+            precondition(!supportedProtocolVersions.isEmpty, "supportedProtocolVersions must not be empty")
+            self.strict = strict
+            self.supportedProtocolVersions = supportedProtocolVersions
+        }
     }
 
     /// Implementation information
@@ -290,7 +307,7 @@ public actor Server: ProtocolLayer {
     /// The server capabilities
     public var capabilities: Capabilities
     /// The server configuration
-    public var configuration: Configuration
+    public let configuration: Configuration
 
     /// Experimental APIs for tasks and other features.
     ///
@@ -391,6 +408,7 @@ public actor Server: ProtocolLayer {
         initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)? = nil
     ) async throws {
         registerDefaultHandlers(initializeHook: initializeHook)
+        await transport.setSupportedProtocolVersions(configuration.supportedProtocolVersions)
         try await transport.connect()
 
         // Cache logger for protocol conformance (avoids async access)
@@ -584,8 +602,10 @@ public actor Server: ProtocolLayer {
 
             // Perform version negotiation
             let clientRequestedVersion = params.protocolVersion
-            let negotiatedProtocolVersion = Version.negotiate(
-                clientRequestedVersion: clientRequestedVersion)
+            let supportedVersions = await configuration.supportedProtocolVersions
+            let negotiatedProtocolVersion = supportedVersions.contains(clientRequestedVersion)
+                ? clientRequestedVersion
+                : supportedVersions[0]
 
             // Set initial state with the negotiated protocol version
             await setInitialState(

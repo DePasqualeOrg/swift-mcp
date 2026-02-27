@@ -25,8 +25,12 @@ public enum Version {
 
     // MARK: - Computed Properties
 
-    /// All protocol versions supported by this implementation.
-    public static let supported: Set<String> = [
+    /// All protocol versions supported by this implementation, ordered latest-first.
+    ///
+    /// The first element is the preferred version: the client sends it in the
+    /// initialize request, and the server uses it as a fallback when the client's
+    /// requested version is not supported.
+    public static let supported: [String] = [
         v2025_11_25,
         v2025_06_18,
         v2025_03_26,
@@ -34,7 +38,7 @@ public enum Version {
     ]
 
     /// The latest protocol version supported by this implementation.
-    public static let latest = v2025_11_25
+    public static var latest: String { supported[0] }
 
     /// The default protocol version assumed when no `MCP-Protocol-Version` header is received.
     ///
@@ -43,15 +47,4 @@ public enum Version {
     /// by relying on the protocol version negotiated during initialization - the server **SHOULD**
     /// assume protocol version `2025-03-26`."
     public static let defaultNegotiated = v2025_03_26
-
-    /// Negotiates the protocol version based on the client's request and server's capabilities.
-    /// - Parameter clientRequestedVersion: The protocol version requested by the client.
-    /// - Returns: The negotiated protocol version. If the client's requested version is supported,
-    ///            that version is returned. Otherwise, the server's latest supported version is returned.
-    static func negotiate(clientRequestedVersion: String) -> String {
-        if supported.contains(clientRequestedVersion) {
-            return clientRequestedVersion
-        }
-        return latest
-    }
 }
