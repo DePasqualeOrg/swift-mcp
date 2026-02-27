@@ -190,8 +190,22 @@ public actor Client: ProtocolLayer {
         /// servers, though this may lead to undefined behavior.
         public var strict: Bool
 
-        public init(strict: Bool = false) {
+        /// Protocol versions supported by this client, ordered by preference.
+        ///
+        /// The first element is the preferred version, sent in the initialize request.
+        /// The server's response is validated against this list. Defaults to
+        /// `Version.supported`.
+        ///
+        /// - Precondition: Must not be empty.
+        public var supportedProtocolVersions: [String]
+
+        public init(
+            strict: Bool = false,
+            supportedProtocolVersions: [String] = Version.supported
+        ) {
+            precondition(!supportedProtocolVersions.isEmpty, "supportedProtocolVersions must not be empty")
             self.strict = strict
+            self.supportedProtocolVersions = supportedProtocolVersions
         }
     }
 
@@ -340,7 +354,7 @@ public actor Client: ProtocolLayer {
     /// The client capabilities
     public var capabilities: Client.Capabilities
     /// The client configuration
-    public var configuration: Configuration
+    public let configuration: Configuration
 
     /// Experimental APIs for tasks and other features.
     ///
@@ -477,6 +491,7 @@ public actor Client: ProtocolLayer {
         // Lock handler registration after first connection
         registeredHandlers.isLocked = true
 
+        await transport.setSupportedProtocolVersions(configuration.supportedProtocolVersions)
         try await transport.connect()
         protocolLogger = await transport.logger
 
@@ -712,9 +727,10 @@ public actor Client: ProtocolLayer {
 
     /// Internal initialization implementation
     func _initialize() async throws -> Initialize.Result {
+        let supportedVersions = configuration.supportedProtocolVersions
         let request = Initialize.request(
             .init(
-                protocolVersion: Version.latest,
+                protocolVersion: supportedVersions[0],
                 capabilities: capabilities,
                 clientInfo: clientInfo
             ))
@@ -723,11 +739,11 @@ public actor Client: ProtocolLayer {
 
         // Per MCP spec: "If the client does not support the version in the
         // server's response, it SHOULD disconnect."
-        guard Version.supported.contains(result.protocolVersion) else {
+        guard supportedVersions.contains(result.protocolVersion) else {
             await disconnect()
             throw MCPError.invalidRequest(
                 "Server responded with unsupported protocol version: \(result.protocolVersion). "
-                    + "Supported versions: \(Version.supported.sorted().joined(separator: ", "))"
+                    + "Supported versions: \(supportedVersions.joined(separator: ", "))"
             )
         }
 
