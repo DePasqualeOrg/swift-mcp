@@ -631,4 +631,75 @@ struct ResourceTemplateMatchingTests {
         let vars = template.match("http://example.com/test.txt")
         #expect(vars == nil)
     }
+
+    @Test("Percent-encoded space (%20) is decoded in template variables")
+    func percentEncodedSpace() {
+        let template = ManagedResourceTemplate(
+            uriTemplate: "file:///{path}",
+            name: "file"
+        ) { uri, _ in
+            .text("content", uri: uri)
+        }
+
+        let vars = template.match("file:///hello%20world.txt")
+        #expect(vars?["path"] == "hello world.txt")
+    }
+
+    @Test("Percent-encoded slash (%2F) is decoded in template variables")
+    func percentEncodedSlash() {
+        // %2F matches within a single path segment because the literal characters
+        // '%', '2', 'F' are not '/', so [^/]+ accepts them. After extraction the
+        // handler receives the decoded '/'.
+        let template = ManagedResourceTemplate(
+            uriTemplate: "repo://{owner}/{name}",
+            name: "repo"
+        ) { uri, _ in
+            .text("content", uri: uri)
+        }
+
+        let vars = template.match("repo://acme/my%2Frepo")
+        #expect(vars?["name"] == "my/repo")
+        #expect(vars?["owner"] == "acme")
+    }
+
+    @Test("Unicode percent-encoded characters are decoded in template variables")
+    func unicodePercentEncoded() {
+        let template = ManagedResourceTemplate(
+            uriTemplate: "file:///{path}",
+            name: "file"
+        ) { uri, _ in
+            .text("content", uri: uri)
+        }
+
+        // café encoded as caf%C3%A9 (UTF-8 percent-encoding)
+        let vars = template.match("file:///caf%C3%A9.txt")
+        #expect(vars?["path"] == "café.txt")
+    }
+
+    @Test("Multiple percent-encoded variables are each decoded independently")
+    func multiplePercentEncodedVariables() {
+        let template = ManagedResourceTemplate(
+            uriTemplate: "doc://{author}/{title}",
+            name: "doc"
+        ) { uri, _ in
+            .text("content", uri: uri)
+        }
+
+        let vars = template.match("doc://Jane%20Doe/My%20Book")
+        #expect(vars?["author"] == "Jane Doe")
+        #expect(vars?["title"] == "My Book")
+    }
+
+    @Test("Variables without percent-encoding are unchanged")
+    func noPercentEncoding() {
+        let template = ManagedResourceTemplate(
+            uriTemplate: "file:///{path}",
+            name: "file"
+        ) { uri, _ in
+            .text("content", uri: uri)
+        }
+
+        let vars = template.match("file:///plain.txt")
+        #expect(vars?["path"] == "plain.txt")
+    }
 }
