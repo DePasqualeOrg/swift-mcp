@@ -11,8 +11,13 @@ import Logging
 enum ServerCapabilityHelpers {
     /// Merge auto-detected capabilities with explicit base capabilities.
     ///
+    /// This performs two steps:
+    /// 1. Creates capability objects (with `listChanged: true`) for registered
+    ///    features that don't already have an explicit capability object.
+    /// 2. Defaults any `nil` `listChanged` field to `true` within existing
+    ///    capability objects, preserving explicit `false`.
+    ///
     /// Explicit base capabilities take precedence where provided.
-    /// Auto-detection only fills in `nil` fields.
     ///
     /// - Parameters:
     ///   - base: Base capabilities (explicit overrides from initializer).
@@ -28,7 +33,7 @@ enum ServerCapabilityHelpers {
     ) -> Server.Capabilities {
         var capabilities = base
 
-        // Auto-detect only fills in nil fields; explicit overrides win
+        // Auto-detect: create capability objects for registered features
         if capabilities.tools == nil, hasTools {
             capabilities.tools = .init(listChanged: true)
         }
@@ -37,6 +42,20 @@ enum ServerCapabilityHelpers {
         }
         if capabilities.prompts == nil, hasPrompts {
             capabilities.prompts = .init(listChanged: true)
+        }
+
+        // Default nil listChanged to true, preserving explicit false.
+        // Without this, a user providing e.g. Server.Capabilities(tools: .init())
+        // would under-advertise: the client would receive {"tools": {}} instead
+        // of {"tools": {"listChanged": true}}.
+        if capabilities.tools?.listChanged == nil {
+            capabilities.tools?.listChanged = true
+        }
+        if capabilities.resources?.listChanged == nil {
+            capabilities.resources?.listChanged = true
+        }
+        if capabilities.prompts?.listChanged == nil {
+            capabilities.prompts?.listChanged = true
         }
 
         return capabilities

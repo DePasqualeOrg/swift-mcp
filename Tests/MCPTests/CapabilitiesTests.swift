@@ -924,6 +924,158 @@ struct TasksCapabilityEncodingTests {
     }
 }
 
+// MARK: - Server Capability Merge Tests
+
+@Suite("Server Capability Merge Tests")
+struct ServerCapabilityMergeTests {
+    @Test("Auto-detects tools capability when not provided")
+    func autoDetectsTools() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(),
+            hasTools: true,
+            hasResources: false,
+            hasPrompts: false
+        )
+        #expect(result.tools != nil)
+        #expect(result.tools?.listChanged == true)
+    }
+
+    @Test("Auto-detects resources capability when not provided")
+    func autoDetectsResources() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(),
+            hasTools: false,
+            hasResources: true,
+            hasPrompts: false
+        )
+        #expect(result.resources != nil)
+        #expect(result.resources?.subscribe == false)
+        #expect(result.resources?.listChanged == true)
+    }
+
+    @Test("Auto-detects prompts capability when not provided")
+    func autoDetectsPrompts() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(),
+            hasTools: false,
+            hasResources: false,
+            hasPrompts: true
+        )
+        #expect(result.prompts != nil)
+        #expect(result.prompts?.listChanged == true)
+    }
+
+    @Test("Defaults nil listChanged to true for tools")
+    func defaultsNilListChangedForTools() {
+        // User provides tools capability object but omits listChanged
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(tools: .init()),
+            hasTools: true,
+            hasResources: false,
+            hasPrompts: false
+        )
+        #expect(result.tools?.listChanged == true)
+    }
+
+    @Test("Defaults nil listChanged to true for resources")
+    func defaultsNilListChangedForResources() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(resources: .init()),
+            hasTools: false,
+            hasResources: true,
+            hasPrompts: false
+        )
+        #expect(result.resources?.listChanged == true)
+    }
+
+    @Test("Defaults nil listChanged to true for prompts")
+    func defaultsNilListChangedForPrompts() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(prompts: .init()),
+            hasTools: false,
+            hasResources: false,
+            hasPrompts: true
+        )
+        #expect(result.prompts?.listChanged == true)
+    }
+
+    @Test("Preserves explicit listChanged false for tools")
+    func preservesExplicitFalseForTools() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(tools: .init(listChanged: false)),
+            hasTools: true,
+            hasResources: false,
+            hasPrompts: false
+        )
+        #expect(result.tools?.listChanged == false)
+    }
+
+    @Test("Preserves explicit listChanged false for resources")
+    func preservesExplicitFalseForResources() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(resources: .init(listChanged: false)),
+            hasTools: false,
+            hasResources: true,
+            hasPrompts: false
+        )
+        #expect(result.resources?.listChanged == false)
+    }
+
+    @Test("Preserves explicit listChanged false for prompts")
+    func preservesExplicitFalseForPrompts() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(prompts: .init(listChanged: false)),
+            hasTools: false,
+            hasResources: false,
+            hasPrompts: true
+        )
+        #expect(result.prompts?.listChanged == false)
+    }
+
+    @Test("Preserves explicit listChanged true")
+    func preservesExplicitTrue() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(
+                prompts: .init(listChanged: true),
+                tools: .init(listChanged: true)
+            ),
+            hasTools: true,
+            hasResources: false,
+            hasPrompts: true
+        )
+        #expect(result.tools?.listChanged == true)
+        #expect(result.prompts?.listChanged == true)
+    }
+
+    @Test("Does not create capability objects when feature is absent")
+    func doesNotCreateWhenFeatureAbsent() {
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(),
+            hasTools: false,
+            hasResources: false,
+            hasPrompts: false
+        )
+        #expect(result.tools == nil)
+        #expect(result.resources == nil)
+        #expect(result.prompts == nil)
+    }
+
+    @Test("Defaults nil listChanged even when feature has no handlers")
+    func defaultsListChangedWhenCapabilityProvidedWithoutFeature() {
+        // User explicitly provides capability object even though no handlers are registered.
+        // The nil-defaulting applies to any existing capability object.
+        let result = ServerCapabilityHelpers.merge(
+            base: .init(tools: .init()),
+            hasTools: false,
+            hasResources: false,
+            hasPrompts: false
+        )
+        // Capability object was provided, so it's preserved, and listChanged gets defaulted
+        #expect(result.tools != nil)
+        #expect(result.tools?.listChanged == true)
+    }
+}
+
 // MARK: - Notification Capability Validation Tests
 
 @Suite("Notification Capability Validation Tests")
