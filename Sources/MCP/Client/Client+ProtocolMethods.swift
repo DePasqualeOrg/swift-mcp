@@ -24,6 +24,10 @@ public extension Client {
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing prompts and optional next cursor.
     func listPrompts(cursor: String? = nil) async throws -> ListPrompts.Result {
+        if !configuration.strict, let caps = serverCapabilities, caps.prompts == nil {
+            logger?.debug("Server does not support prompts, returning empty list")
+            return ListPrompts.Result(prompts: [])
+        }
         try validateServerCapability(\.prompts, "Prompts")
         let request: Request<ListPrompts> = if let cursor {
             ListPrompts.request(.init(cursor: cursor))
@@ -50,6 +54,10 @@ public extension Client {
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing resources and optional next cursor.
     func listResources(cursor: String? = nil) async throws -> ListResources.Result {
+        if !configuration.strict, let caps = serverCapabilities, caps.resources == nil {
+            logger?.debug("Server does not support resources, returning empty list")
+            return ListResources.Result(resources: [])
+        }
         try validateServerCapability(\.resources, "Resources")
         let request: Request<ListResources> = if let cursor {
             ListResources.request(.init(cursor: cursor))
@@ -84,6 +92,10 @@ public extension Client {
     func listResourceTemplates(cursor: String? = nil) async throws
         -> ListResourceTemplates.Result
     {
+        if !configuration.strict, let caps = serverCapabilities, caps.resources == nil {
+            logger?.debug("Server does not support resources, returning empty template list")
+            return ListResourceTemplates.Result(templates: [])
+        }
         try validateServerCapability(\.resources, "Resources")
         let request: Request<ListResourceTemplates> = if let cursor {
             ListResourceTemplates.request(.init(cursor: cursor))
@@ -104,6 +116,10 @@ public extension Client {
     /// - Parameter cursor: Optional cursor for pagination.
     /// - Returns: The list result containing tools and optional next cursor.
     func listTools(cursor: String? = nil) async throws -> ListTools.Result {
+        if !configuration.strict, let caps = serverCapabilities, caps.tools == nil {
+            logger?.debug("Server does not support tools, returning empty list")
+            return ListTools.Result(tools: [])
+        }
         try validateServerCapability(\.tools, "Tools")
         let request: Request<ListTools> = if let cursor {
             ListTools.request(.init(cursor: cursor))

@@ -225,13 +225,12 @@ struct ClientTests {
         try await Task.sleep(for: .milliseconds(50))
     }
 
-    @Test("Non-strict configuration - capabilities check")
-    func testNonStrictConfiguration() async throws {
+    @Test("Non-strict mode returns empty lists when server lacks capabilities")
+    func testNonStrictReturnsEmptyLists() async throws {
         let transport = MockTransport()
-        let config = Client.Configuration.default
-        let client = Client(name: "TestClient", version: "1.0", configuration: config)
+        let client = Client(name: "TestClient", version: "1.0", configuration: .default)
 
-        // Set up a task to handle the initialize response
+        // Connect with empty capabilities (no tools, prompts, or resources)
         let initTask = Task {
             try await Task.sleep(for: .milliseconds(10))
             if let lastMessage = await transport.sentMessages.last,
@@ -252,68 +251,34 @@ struct ClientTests {
         }
 
         try await client.connect(transport: transport)
-
-        // Make sure init task is complete
         initTask.cancel()
 
-        // Wait a bit for any setup to complete
-        try await Task.sleep(for: .milliseconds(10))
+        let promptsResult = try await client.listPrompts()
+        #expect(promptsResult.prompts.isEmpty)
+        #expect(promptsResult.nextCursor == nil)
 
-        // Send the listPrompts request and immediately provide an error response
-        let promptsTask = Task {
-            do {
-                // Start the request
-                try await Task.sleep(for: .seconds(1))
+        let resourcesResult = try await client.listResources()
+        #expect(resourcesResult.resources.isEmpty)
+        #expect(resourcesResult.nextCursor == nil)
 
-                // Get the last sent message and extract the request ID
-                if let lastMessage = await transport.sentMessages.last,
-                   let data = lastMessage.data(using: .utf8),
-                   let decodedRequest = try? JSONDecoder().decode(
-                       Request<ListPrompts>.self, from: data
-                   )
-                {
-                    // Create an error response with the same ID
-                    let errorResponse = Response<ListPrompts>(
-                        id: decodedRequest.id,
-                        error: MCPError.methodNotFound("Test: Prompts capability not available")
-                    )
-                    try await transport.queue(response: errorResponse)
+        let templatesResult = try await client.listResourceTemplates()
+        #expect(templatesResult.templates.isEmpty)
+        #expect(templatesResult.nextCursor == nil)
 
-                    // Try the request now that we have a response queued
-                    do {
-                        _ = try await client.listPrompts()
-                        #expect(Bool(false), "Expected listPrompts to fail in non-strict mode")
-                    } catch let error as MCPError {
-                        if case MCPError.methodNotFound = error {
-                            #expect(Bool(true))
-                        } else {
-                            #expect(Bool(false), "Expected methodNotFound error, got \(error)")
-                        }
-                    } catch {
-                        #expect(Bool(false), "Expected MCP.Error")
-                    }
-                }
-            } catch {
-                // Ignore task cancellation
-                if !(error is CancellationError) {
-                    throw error
-                }
-            }
+        let toolsResult = try await client.listTools()
+        #expect(toolsResult.tools.isEmpty)
+        #expect(toolsResult.nextCursor == nil)
+
+        // Verify no list requests were sent to the server (only the initialize request)
+        let sentMessages = await transport.sentMessages
+        let listRequests = sentMessages.filter { message in
+            message.contains("prompts/list")
+                || message.contains("resources/list")
+                || message.contains("resources/templates/list")
+                || message.contains("tools/list")
         }
+        #expect(listRequests.isEmpty, "No list requests should be sent when server lacks capabilities")
 
-        // Wait for the task to complete or timeout
-        let timeoutTask = Task {
-            try await Task.sleep(for: .milliseconds(500))
-            promptsTask.cancel()
-        }
-
-        // Wait for the task to complete
-        _ = await promptsTask.result
-
-        // Cancel the timeout task
-        timeoutTask.cancel()
-
-        // Disconnect client
         await client.disconnect()
     }
 
