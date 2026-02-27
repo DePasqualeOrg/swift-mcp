@@ -75,7 +75,8 @@ public protocol TaskStore: Sendable {
     ///   - cursor: Optional cursor for pagination
     ///   - sessionId: The requesting session's identifier.
     /// - Returns: The list result containing tasks and optional next cursor.
-    func listTasks(cursor: String?, sessionId: String) async -> ListTasks.Result
+    /// - Throws: Error if the cursor is invalid (e.g., the task it references was deleted).
+    func listTasks(cursor: String?, sessionId: String) async throws -> ListTasks.Result
 
     /// Delete a task.
     ///
@@ -287,16 +288,17 @@ public actor InMemoryTaskStore: TaskStore {
         getStoredTask(taskId: taskId, sessionId: sessionId)?.result
     }
 
-    public func listTasks(cursor: String?, sessionId: String) async -> ListTasks.Result {
+    public func listTasks(cursor: String?, sessionId: String) async throws -> ListTasks.Result {
         cleanUpExpired()
 
         let allTaskIds = tasks.filter { $0.value.sessionId == sessionId }.keys.sorted()
 
         var startIndex = 0
         if let cursor {
-            if let index = allTaskIds.firstIndex(of: cursor) {
-                startIndex = index + 1
+            guard let index = allTaskIds.firstIndex(of: cursor) else {
+                throw MCPError.invalidParams("Invalid cursor: \(cursor)")
             }
+            startIndex = index + 1
         }
 
         let pageTaskIds = Array(allTaskIds.dropFirst(startIndex).prefix(pageSize))
