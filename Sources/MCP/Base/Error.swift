@@ -633,6 +633,39 @@ extension MCPError: Equatable {
     }
 }
 
+// MARK: - JSONRPCErrorResponse
+
+/// A JSON-RPC 2.0 error response for transport-level errors.
+///
+/// Transport-level errors (e.g., invalid headers, missing session ID) occur before a valid
+/// request is parsed, so the response must have `"id": null` per JSON-RPC 2.0. This struct
+/// encodes the error envelope with a null `id` using `Codable`, replacing the previous
+/// pattern of `JSONSerialization` + `NSNull`.
+public struct JSONRPCErrorResponse: Encodable {
+    private let jsonrpc = "2.0"
+    private let error: MCPError
+
+    public init(code: Int, message: String) {
+        error = .serverError(code: code, message: message)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case jsonrpc, error, id
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(jsonrpc, forKey: .jsonrpc)
+        try container.encode(error, forKey: .error)
+        try container.encodeNil(forKey: .id)
+    }
+
+    /// Encodes this error response to JSON `Data`.
+    public func encoded() throws -> Data {
+        try JSONEncoder().encode(self)
+    }
+}
+
 // MARK: Hashable
 
 extension MCPError: Hashable {

@@ -361,18 +361,7 @@ func mcpErrorResponse(
     let contentTypeName = HTTPField.Name(HTTPHeader.contentType)!
     headers[contentTypeName] = "application/json"
 
-    let payload: [String: Any] = [
-        "jsonrpc": "2.0",
-        "error": [
-            "code": code,
-            "message": message,
-        ],
-        "id": NSNull(),
-    ]
-
-    let bodyData =
-        (try? JSONSerialization.data(withJSONObject: payload))
-            ?? Data("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal Error\"},\"id\":null}".utf8)
+    let bodyData = (try? JSONRPCErrorResponse(code: code, message: message).encoded()) ?? Data()
 
     return Response(
         status: status,
