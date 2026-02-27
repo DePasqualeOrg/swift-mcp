@@ -825,7 +825,7 @@ struct InMemoryTaskStoreTests {
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-3", sessionId: defaultSessionId)
 
-        let result = await store.listTasks(cursor: nil, sessionId: defaultSessionId)
+        let result = try await store.listTasks(cursor: nil, sessionId: defaultSessionId)
 
         #expect(result.tasks.count == 3)
     }
@@ -840,19 +840,65 @@ struct InMemoryTaskStoreTests {
         }
 
         // First page
-        let page1Result = await store.listTasks(cursor: nil, sessionId: defaultSessionId)
+        let page1Result = try await store.listTasks(cursor: nil, sessionId: defaultSessionId)
         #expect(page1Result.tasks.count == 2)
         #expect(page1Result.nextCursor != nil)
 
         // Second page
-        let page2Result = await store.listTasks(cursor: page1Result.nextCursor, sessionId: defaultSessionId)
+        let page2Result = try await store.listTasks(cursor: page1Result.nextCursor, sessionId: defaultSessionId)
         #expect(page2Result.tasks.count == 2)
         #expect(page2Result.nextCursor != nil)
 
         // Third page
-        let page3Result = await store.listTasks(cursor: page2Result.nextCursor, sessionId: defaultSessionId)
+        let page3Result = try await store.listTasks(cursor: page2Result.nextCursor, sessionId: defaultSessionId)
         #expect(page3Result.tasks.count == 1)
         #expect(page3Result.nextCursor == nil)
+    }
+
+    @Test("listTasks throws invalidParams on invalid cursor")
+    func listTasksThrowsOnInvalidCursor() async throws {
+        let store = InMemoryTaskStore()
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
+
+        do {
+            _ = try await store.listTasks(cursor: "nonexistent-cursor", sessionId: defaultSessionId)
+            Issue.record("Expected listTasks to throw for invalid cursor")
+        } catch {
+            guard case let MCPError.invalidParams(message) = error else {
+                Issue.record("Expected MCPError.invalidParams, got \(error)")
+                return
+            }
+            #expect(message?.contains("Invalid cursor") == true)
+            #expect(message?.contains("nonexistent-cursor") == true)
+        }
+    }
+
+    @Test("listTasks throws when cursor task is deleted between pages")
+    func listTasksThrowsOnDeletedCursorTask() async throws {
+        let store = InMemoryTaskStore(pageSize: 1)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
+        _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
+
+        // Get first page — cursor points to task-1
+        let page1 = try await store.listTasks(cursor: nil, sessionId: defaultSessionId)
+        let staleCursor = try #require(page1.nextCursor)
+
+        // Delete the task that the cursor points to
+        let deleted = await store.deleteTask(taskId: staleCursor, sessionId: defaultSessionId)
+        #expect(deleted)
+
+        // Using the stale cursor should throw invalidParams
+        do {
+            _ = try await store.listTasks(cursor: staleCursor, sessionId: defaultSessionId)
+            Issue.record("Expected listTasks to throw for stale cursor")
+        } catch {
+            guard case let MCPError.invalidParams(message) = error else {
+                Issue.record("Expected MCPError.invalidParams, got \(error)")
+                return
+            }
+            #expect(message?.contains("Invalid cursor") == true)
+            #expect(message?.contains(staleCursor) == true)
+        }
     }
 
     @Test("deleteTask removes task")
@@ -970,11 +1016,11 @@ struct InMemoryTaskStoreSessionIsolationTests {
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-task-2", sessionId: sessionA)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "b-task-1", sessionId: sessionB)
 
-        let sessionATasks = await store.listTasks(cursor: nil, sessionId: sessionA)
+        let sessionATasks = try await store.listTasks(cursor: nil, sessionId: sessionA)
         #expect(sessionATasks.tasks.count == 2)
         #expect(sessionATasks.tasks.allSatisfy { $0.taskId.hasPrefix("a-task") })
 
-        let sessionBTasks = await store.listTasks(cursor: nil, sessionId: sessionB)
+        let sessionBTasks = try await store.listTasks(cursor: nil, sessionId: sessionB)
         #expect(sessionBTasks.tasks.count == 1)
         #expect(sessionBTasks.tasks[0].taskId == "b-task-1")
     }
@@ -1039,16 +1085,16 @@ struct InMemoryTaskStoreSessionIsolationTests {
         }
 
         // Session A should paginate over its 4 tasks
-        let page1 = await store.listTasks(cursor: nil, sessionId: sessionA)
+        let page1 = try await store.listTasks(cursor: nil, sessionId: sessionA)
         #expect(page1.tasks.count == 2)
         #expect(page1.nextCursor != nil)
 
-        let page2 = await store.listTasks(cursor: page1.nextCursor, sessionId: sessionA)
+        let page2 = try await store.listTasks(cursor: page1.nextCursor, sessionId: sessionA)
         #expect(page2.tasks.count == 2)
         #expect(page2.nextCursor == nil)
 
         // Session B should see only its 2 tasks in one page
-        let sessionBPage = await store.listTasks(cursor: nil, sessionId: sessionB)
+        let sessionBPage = try await store.listTasks(cursor: nil, sessionId: sessionB)
         #expect(sessionBPage.tasks.count == 2)
         #expect(sessionBPage.nextCursor == nil)
     }

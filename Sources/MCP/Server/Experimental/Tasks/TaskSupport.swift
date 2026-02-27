@@ -265,7 +265,7 @@ extension Server {
         // tasks/list - List all tasks
         withRequestHandler(ListTasks.self) { params, context in
             let sessionId = try Self.requireSessionId(context)
-            return await taskSupport.store.listTasks(cursor: params.cursor, sessionId: sessionId)
+            return try await taskSupport.store.listTasks(cursor: params.cursor, sessionId: sessionId)
         }
 
         // tasks/cancel - Cancel a running task
