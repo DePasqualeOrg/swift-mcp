@@ -14,10 +14,11 @@ struct ServerFallbackHandlerTests {
     func testFallbackRequestHandlerCalledForUnknownMethod() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
+        // Server advertises both tools and prompts capabilities
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(prompts: .init(), tools: .init())
         )
 
         // Track which methods the fallback handler received
@@ -34,7 +35,7 @@ struct ServerFallbackHandlerTests {
             throw MCPError.methodNotFound("No handler for: \(request.method)")
         }
 
-        // Register ListTools to satisfy capability but not other methods
+        // Register ListTools to satisfy capability but not ListPrompts
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [])
         }
@@ -44,7 +45,7 @@ struct ServerFallbackHandlerTests {
         let client = Client(name: "TestClient", version: "1.0.0")
         try await client.connect(transport: clientTransport)
 
-        // Try to call a method that doesn't have a specific handler
+        // Try to call listPrompts which has no specific handler but server advertises prompts capability
         do {
             _ = try await client.listPrompts()
             Issue.record("Expected methodNotFound error")
