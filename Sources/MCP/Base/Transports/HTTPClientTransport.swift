@@ -100,8 +100,15 @@ public actor HTTPClientTransport: Transport {
     /// Closure to modify requests before they are sent
     private let requestModifier: (URLRequest) -> URLRequest
 
-    /// OAuth provider for automatic token management (reserved for future OAuth implementation)
+    /// OAuth provider for automatic token management
     private let authProvider: (any OAuthClientProvider)?
+
+    /// Per-request auth retry state, passed through the send→retry call chain
+    /// so that concurrent sends don't share mutable state.
+    private struct AuthRetryState {
+        var hasCompletedAuth = false
+        var lastUpscopingHeader: String?
+    }
 
     private var isConnected = false
     private let messageStream: AsyncThrowingStream<TransportMessage, Swift.Error>
@@ -172,8 +179,7 @@ public actor HTTPClientTransport: Transport {
     ///   - requestModifier: Optional closure to customize requests before they are sent (default: no modification)
     ///   - authProvider: Optional OAuth provider for automatic token management.
     ///     When provided, the transport will use the provider to obtain Bearer tokens
-    ///     and handle 401 responses. This parameter is reserved for future OAuth
-    ///     implementation and is not currently used.
+    ///     and handle 401 responses automatically.
     ///   - logger: Optional logger instance for transport events
     ///
     /// - Note: On Linux, the `configuration:` parameter is not available because
@@ -219,8 +225,7 @@ public actor HTTPClientTransport: Transport {
     ///   - requestModifier: Optional closure to customize requests before they are sent (default: no modification)
     ///   - authProvider: Optional OAuth provider for automatic token management.
     ///     When provided, the transport will use the provider to obtain Bearer tokens
-    ///     and handle 401 responses. This parameter is reserved for future OAuth
-    ///     implementation and is not currently used.
+    ///     and handle 401 responses automatically.
     ///   - logger: Optional logger instance for transport events
     public init(
         endpoint: URL,
@@ -435,6 +440,11 @@ public actor HTTPClientTransport: Transport {
             throw MCPError.internalError("Transport not connected")
         }
 
+        var authState = AuthRetryState()
+        try await performSend(data: data, expectsContentType: expectsContentType, authState: &authState)
+    }
+
+    private func performSend(data: Data, expectsContentType: Bool, authState: inout AuthRetryState) async throws {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.addValue("application/json, text/event-stream", forHTTPHeaderField: HTTPHeader.accept)
@@ -451,18 +461,128 @@ public actor HTTPClientTransport: Transport {
             request.addValue(protocolVersion, forHTTPHeaderField: HTTPHeader.protocolVersion)
         }
 
-        // Apply request modifier
+        // Apply auth provider (sets Bearer token if available)
+        try await applyAuth(to: &request)
+
+        // Apply request modifier (can override auth headers if needed)
         request = requestModifier(request)
 
-        #if os(Linux)
-        // Linux implementation using data(for:) instead of bytes(for:)
-        let (responseData, response) = try await session.data(for: request)
-        try await processResponse(response: response, data: responseData, expectsContentType: expectsContentType)
-        #else
-        // macOS and other platforms with bytes(for:) support
-        let (responseStream, response) = try await session.bytes(for: request)
-        try await processResponse(response: response, stream: responseStream, expectsContentType: expectsContentType)
-        #endif
+        do {
+            #if os(Linux)
+            let (responseData, response) = try await session.data(for: request)
+            try await processResponse(response: response, data: responseData, expectsContentType: expectsContentType)
+            #else
+            let (responseStream, response) = try await session.bytes(for: request)
+            try await processResponse(response: response, stream: responseStream, expectsContentType: expectsContentType)
+            #endif
+        } catch let authError as AuthenticationRequiredError {
+            try await handleUnauthorized(
+                response: authError.response,
+                data: data,
+                expectsContentType: expectsContentType,
+                authState: &authState
+            )
+        } catch let scopeError as InsufficientScopeError {
+            try await handleInsufficientScope(
+                response: scopeError.response,
+                data: data,
+                expectsContentType: expectsContentType,
+                authState: &authState
+            )
+        }
+    }
+
+    /// Handles a 401 response by delegating to the auth provider and retrying once.
+    private func handleUnauthorized(
+        response: HTTPURLResponse,
+        data: Data,
+        expectsContentType: Bool,
+        authState: inout AuthRetryState
+    ) async throws {
+        guard let authProvider else {
+            throw MCPError.internalError("Authentication required")
+        }
+
+        // Prevent infinite retry loops: only retry auth once per send() call
+        if authState.hasCompletedAuth {
+            logger.warning("Server returned 401 after successful authentication")
+            throw MCPError.internalError("Authentication required (retry failed)")
+        }
+
+        // Parse WWW-Authenticate header for auth context
+        let wwwAuth = response.value(forHTTPHeaderField: "WWW-Authenticate")
+        let challenge = wwwAuth.flatMap { parseBearerChallenge($0) }
+
+        let context = UnauthorizedContext(
+            resourceMetadataURL: challenge?.resourceMetadataURL,
+            scope: challenge?.scope,
+            wwwAuthenticate: wwwAuth
+        )
+
+        logger.debug("Handling 401 with auth provider", metadata: [
+            "hasResourceMetadata": "\(context.resourceMetadataURL != nil)",
+            "hasScope": "\(context.scope != nil)",
+        ])
+
+        // Delegate to auth provider to perform authorization
+        _ = try await authProvider.handleUnauthorized(context: context)
+        authState.hasCompletedAuth = true
+
+        // Retry the request with new tokens
+        try await performSend(data: data, expectsContentType: expectsContentType, authState: &authState)
+    }
+
+    /// Handles a 403 response by checking for `insufficient_scope` and
+    /// re-authorizing with the new scope if applicable.
+    private func handleInsufficientScope(
+        response: HTTPURLResponse,
+        data: Data,
+        expectsContentType: Bool,
+        authState: inout AuthRetryState
+    ) async throws {
+        guard let authProvider else {
+            throw MCPError.internalError("Access forbidden")
+        }
+
+        // Don't retry if we just completed an auth flow (prevents 401→403→retry chains)
+        if authState.hasCompletedAuth {
+            logger.warning("Server returned 403 after successful authentication")
+            throw MCPError.internalError("Access forbidden (insufficient scope after authentication)")
+        }
+
+        // Parse WWW-Authenticate to check for insufficient_scope
+        let wwwAuth = response.value(forHTTPHeaderField: "WWW-Authenticate")
+        let challenge = wwwAuth.flatMap { parseBearerChallenge($0) }
+
+        // Only handle insufficient_scope errors; other 403s are not retryable
+        guard challenge?.error == "insufficient_scope" else {
+            throw MCPError.internalError("Access forbidden")
+        }
+
+        // Loop prevention: if the server returns the same WWW-Authenticate
+        // header as the previous 403, stop retrying
+        if let wwwAuth, let lastHeader = authState.lastUpscopingHeader, wwwAuth == lastHeader {
+            logger.warning("Server returned same insufficient_scope challenge after re-authorization")
+            throw MCPError.internalError("Access forbidden (scope step-up failed)")
+        }
+        authState.lastUpscopingHeader = wwwAuth
+
+        let context = UnauthorizedContext(
+            resourceMetadataURL: challenge?.resourceMetadataURL,
+            scope: challenge?.scope,
+            wwwAuthenticate: wwwAuth
+        )
+
+        logger.debug("Handling 403 insufficient_scope with auth provider", metadata: [
+            "scope": "\(context.scope ?? "nil")",
+        ])
+
+        // Re-authorize with the new scope
+        _ = try await authProvider.handleUnauthorized(context: context)
+        authState.hasCompletedAuth = true
+
+        // Retry the request with new tokens
+        try await performSend(data: data, expectsContentType: expectsContentType, authState: &authState)
     }
 
     /// Checks if the given data represents a JSON-RPC request.
@@ -628,6 +748,29 @@ public actor HTTPClientTransport: Transport {
     }
     #endif
 
+    // MARK: - Auth Helpers
+
+    /// Applies the auth provider's Bearer token to a request, if an auth provider is configured.
+    private func applyAuth(to request: inout URLRequest) async throws {
+        guard let authProvider else { return }
+        if let tokens = try await authProvider.tokens() {
+            request.setValue("Bearer \(tokens.accessToken)", forHTTPHeaderField: "Authorization")
+        }
+    }
+
+    /// Thrown internally when the server returns 401 so `performSend` can intercept and retry.
+    private struct AuthenticationRequiredError: Error {
+        let response: HTTPURLResponse
+    }
+
+    /// Thrown internally when the server returns 403 with `insufficient_scope`
+    /// so `performSend` can intercept and attempt scope step-up.
+    private struct InsufficientScopeError: Error {
+        let response: HTTPURLResponse
+    }
+
+    // MARK: - HTTP Response Processing
+
     // Common HTTP response handling for all platforms
     //
     // Note: The MCP spec recommends auto-detecting legacy SSE servers by falling back
@@ -644,9 +787,17 @@ public actor HTTPClientTransport: Transport {
                 throw MCPError.internalError("Bad request")
 
             case 401:
+                // When an auth provider is configured, throw an internal error that
+                // performSend() can catch to trigger the auth flow and retry.
+                if authProvider != nil {
+                    throw AuthenticationRequiredError(response: response)
+                }
                 throw MCPError.internalError("Authentication required")
 
             case 403:
+                if authProvider != nil {
+                    throw InsufficientScopeError(response: response)
+                }
                 throw MCPError.internalError("Access forbidden")
 
             case 404:
@@ -895,7 +1046,10 @@ public actor HTTPClientTransport: Transport {
             logger.debug("Resuming SSE stream", metadata: ["lastEventId": "\(eventId)"])
         }
 
-        // Apply request modifier
+        // Apply auth provider (sets Bearer token if available)
+        try await applyAuth(to: &request)
+
+        // Apply request modifier (can override auth headers if needed)
         request = requestModifier(request)
 
         logger.debug("Starting SSE connection")

@@ -225,6 +225,8 @@ let transport = HTTPClientTransport(
 try await client.connect(transport: transport)
 ```
 
+For OAuth-protected servers, pass an `authProvider` to the transport. See <doc:client-auth> for details.
+
 See <doc:transports> for all available transport options.
 
 ### Client Capabilities

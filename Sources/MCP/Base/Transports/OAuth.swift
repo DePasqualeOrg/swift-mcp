@@ -4,16 +4,9 @@ import Foundation
 
 // MARK: - OAuth Support
 
-//
 // This file provides the foundational types for OAuth 2.0 support in HTTP transports.
-// The full OAuth implementation (discovery, PKCE, token exchange, provider implementations)
-// will be added later.
-//
-// Current status:
-// - OAuthTokens: Complete (matches RFC 6749)
-// - UnauthorizedContext: Complete (for 401 handling)
-// - OAuthClientProvider: Protocol defined, no implementations yet
-// - HTTPClientTransport.authProvider: Parameter added, not yet wired up
+// Additional OAuth components (discovery, PKCE, token exchange, client authentication)
+// are in the Auth/ directory.
 
 // MARK: - OAuth Types
 
@@ -38,18 +31,23 @@ public struct OAuthTokens: Sendable, Codable, Equatable {
     /// The refresh token for obtaining new access tokens.
     public let refreshToken: String?
 
+    /// The ID token, if the authorization server is also an OpenID Connect provider.
+    public let idToken: String?
+
     public init(
         accessToken: String,
         tokenType: String = "Bearer",
         expiresIn: Int? = nil,
         scope: String? = nil,
-        refreshToken: String? = nil
+        refreshToken: String? = nil,
+        idToken: String? = nil
     ) {
         self.accessToken = accessToken
         self.tokenType = tokenType
         self.expiresIn = expiresIn
         self.scope = scope
         self.refreshToken = refreshToken
+        self.idToken = idToken
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -58,6 +56,25 @@ public struct OAuthTokens: Sendable, Codable, Equatable {
         case expiresIn = "expires_in"
         case scope
         case refreshToken = "refresh_token"
+        case idToken = "id_token"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        accessToken = try container.decode(String.self, forKey: .accessToken)
+        let rawTokenType = try container.decode(String.self, forKey: .tokenType)
+        // Normalize per RFC 6750 §4 (case-insensitive)
+        guard rawTokenType.lowercased() == "bearer" else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .tokenType, in: container,
+                debugDescription: "Unsupported token_type \"\(rawTokenType)\"; expected \"Bearer\""
+            )
+        }
+        tokenType = "Bearer"
+        expiresIn = try container.decodeIfPresent(Int.self, forKey: .expiresIn)
+        scope = try container.decodeIfPresent(String.self, forKey: .scope)
+        refreshToken = try container.decodeIfPresent(String.self, forKey: .refreshToken)
+        idToken = try container.decodeIfPresent(String.self, forKey: .idToken)
     }
 }
 

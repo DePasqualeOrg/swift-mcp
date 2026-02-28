@@ -649,12 +649,12 @@ struct HTTPClientTransportTests {
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
-            // Server accepts the notification with 202 and no response body
+            // Per MCP spec, notifications receive 202 Accepted with no body and no Content-Type
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 202, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [:]
             )!
-            return (response, Data()) // Empty body for 202 Accepted
+            return (response, Data())
         }
 
         let transport = HTTPClientTransport(
@@ -1289,10 +1289,10 @@ struct HTTPClientTransportTests {
                 )!
                 return (httpResponse, responseData)
             } else if method == "notifications/initialized" {
-                // Ignore initialized notifications
+                // Per MCP spec, notifications receive 202 Accepted with no body and no Content-Type
                 let httpResponse = HTTPURLResponse(
-                    url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                    headerFields: [HTTPHeader.contentType: "application/json"]
+                    url: testEndpoint, statusCode: 202, httpVersion: "HTTP/1.1",
+                    headerFields: [:]
                 )!
                 return (httpResponse, Data())
             } else {
