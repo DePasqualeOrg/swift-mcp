@@ -345,7 +345,8 @@ public struct ManagedResourceTemplate: Sendable {
         var variables: [String: String] = [:]
         for name in extractVariableNames() {
             if let range = Range(match.range(withName: name), in: uri) {
-                variables[name] = String(uri[range])
+                let raw = String(uri[range])
+                variables[name] = raw.removingPercentEncoding ?? raw
             }
         }
         return variables
