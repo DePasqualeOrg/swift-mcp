@@ -384,9 +384,24 @@ public actor MCPServer {
             return ListResourceTemplates.Result(templates: templates)
         }
 
-        await session.withRequestHandler(ReadResource.self) { [resourceRegistry] request, _ in
-            let contents = try await resourceRegistry.read(uri: request.uri)
-            return ReadResource.Result(contents: [contents])
+        await session.withRequestHandler(ReadResource.self) { [resourceRegistry, weak session] request, _ in
+            do {
+                let contents = try await resourceRegistry.read(uri: request.uri)
+                return ReadResource.Result(contents: [contents])
+            } catch let error as MCPError
+                where error.code == ErrorCode.resourceNotFound || error.code == ErrorCode.invalidParams
+            {
+                // Registry errors (not found, disabled) only contain the URI,
+                // which the client already knows.
+                throw error
+            } catch {
+                let logger = await session?.logger
+                logger?.error(
+                    "Error reading resource",
+                    metadata: ["uri": "\(request.uri)", "error": "\(error)"]
+                )
+                throw MCPError.internalError("Error reading resource \(request.uri)")
+            }
         }
 
         // Prompts
@@ -395,16 +410,29 @@ public actor MCPServer {
             return ListPrompts.Result(prompts: prompts)
         }
 
-        await session.withRequestHandler(GetPrompt.self) { [promptRegistry] request, handlerContext in
+        await session.withRequestHandler(GetPrompt.self) { [promptRegistry, weak session] request, handlerContext in
             let context = HandlerContext(
                 handlerContext: handlerContext,
                 progressToken: request._meta?.progressToken
             )
-            return try await promptRegistry.getPrompt(
-                request.name,
-                arguments: request.arguments,
-                context: context
-            )
+            do {
+                return try await promptRegistry.getPrompt(
+                    request.name,
+                    arguments: request.arguments,
+                    context: context
+                )
+            } catch let error as MCPError where error.code == ErrorCode.invalidParams {
+                // Registry errors (unknown prompt, disabled) only contain the
+                // prompt name, which the client already knows.
+                throw error
+            } catch {
+                let logger = await session?.logger
+                logger?.error(
+                    "Error getting prompt",
+                    metadata: ["name": "\(request.name)", "error": "\(error)"]
+                )
+                throw MCPError.internalError("Error getting prompt \(request.name)")
+            }
         }
     }
 
