@@ -625,6 +625,44 @@ public actor Client: ProtocolLayer {
         cleanUpOnUnexpectedDisconnect()
     }
 
+    /// Handle messages that could not be decoded as any known JSON-RPC type.
+    ///
+    /// Unlike the server (which sends a parse error response back to the client),
+    /// the client fails the pending request that the malformed message was likely
+    /// a response to. If no request ID can be extracted from the raw data, all
+    /// pending requests are failed, since the connection state is likely compromised.
+    package func handleUnknownMessage(_ data: Data, context _: MessageMetadata?) async {
+        let parseError = MCPError.parseError("Invalid message format")
+
+        // Try to extract a request ID from raw JSON (mirrors Server.handleUnknownMessage)
+        if let json = try? JSONDecoder().decode([String: Value].self, from: data),
+           let idValue = json["id"]
+        {
+            var requestId: RequestId?
+            if let strValue = idValue.stringValue {
+                requestId = .string(strValue)
+            } else if let intValue = idValue.intValue {
+                requestId = .number(intValue)
+            }
+
+            if let requestId {
+                logger?.error(
+                    "Received malformed response",
+                    metadata: ["requestId": "\(requestId)"]
+                )
+                if cancelProtocolPendingRequest(id: requestId, error: parseError) {
+                    return
+                }
+                // ID extracted but didn't match any pending request. This could mean
+                // the response arrived after timeout cleanup, or that the connection
+                // is in a bad state. Err on the side of caution and fail all.
+            }
+        }
+
+        logger?.error("Received unrecoverable malformed message, failing all pending requests")
+        failAllProtocolPendingRequests(with: parseError)
+    }
+
     /// Intercept a response before pending request matching.
     package func interceptResponse(_ response: AnyResponse) async {
         guard let id = response.id else { return }
