@@ -121,4 +121,94 @@ struct ResponseTests {
             #expect(Bool(false), "Expected success result")
         }
     }
+
+    // MARK: - Null/Missing ID Tests
+
+    @Test("Error response with null id decodes successfully")
+    func errorResponseWithNullId() throws {
+        let jsonString = """
+        {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
+        """
+        let data = jsonString.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
+
+        #expect(decoded.id == nil)
+        if case let .failure(error) = decoded.result {
+            #expect(error.code == ErrorCode.invalidRequest)
+        } else {
+            Issue.record("Expected error result")
+        }
+    }
+
+    @Test("Error response with missing id decodes successfully")
+    func errorResponseWithMissingId() throws {
+        let jsonString = """
+        {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"}}
+        """
+        let data = jsonString.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
+
+        #expect(decoded.id == nil)
+        if case let .failure(error) = decoded.result {
+            #expect(error.code == ErrorCode.parseError)
+        } else {
+            Issue.record("Expected error result")
+        }
+    }
+
+    @Test("Response with nil id roundtrips through encode/decode")
+    func nilIdResponseRoundtrip() throws {
+        let error = MCPError.internalError("Something went wrong")
+        let response = Response<TestMethod>(id: nil, error: error)
+
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+
+        let data = try encoder.encode(response)
+        let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
+
+        #expect(decoded.id == nil)
+        if case let .failure(decodedError) = decoded.result {
+            #expect(decodedError.code == ErrorCode.internalError)
+        } else {
+            Issue.record("Expected error result")
+        }
+
+        // Verify the encoded JSON omits the id field entirely
+        let json = try decoder.decode([String: Value].self, from: data)
+        #expect(json["id"] == nil)
+    }
+
+    @Test("Normal error response with valid id is unchanged")
+    func normalErrorResponseWithValidId() throws {
+        let jsonString = """
+        {"jsonrpc":"2.0","id":"req-123","error":{"code":-32601,"message":"Method not found"}}
+        """
+        let data = jsonString.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
+
+        #expect(decoded.id == .string("req-123"))
+        if case let .failure(error) = decoded.result {
+            #expect(error.code == ErrorCode.methodNotFound)
+        } else {
+            Issue.record("Expected error result")
+        }
+    }
+
+    @Test("RequestId no longer decodes null values")
+    func requestIdRejectsNull() throws {
+        let jsonString = "null"
+        let data = jsonString.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        #expect(throws: DecodingError.self) {
+            _ = try decoder.decode(RequestId.self, from: data)
+        }
+    }
 }

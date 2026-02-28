@@ -56,9 +56,6 @@ extension RequestId: Codable {
             self = .string(string)
         } else if let number = try? container.decode(Int.self) {
             self = .number(number)
-        } else if container.decodeNil() {
-            // Handle unspecified/null IDs as empty string
-            self = .string("")
         } else {
             throw DecodingError.dataCorruptedError(
                 in: container, debugDescription: "ID must be string or number"

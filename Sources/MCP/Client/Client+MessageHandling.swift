@@ -35,7 +35,9 @@ extension Client {
     /// until the task completes.
     func checkForTaskResponse(response: Response<AnyMethod>, value: [String: Value]) async {
         // Check if we have a progress token for this request
-        guard let progressToken = progressToken(forRequestId: response.id) else { return }
+        guard let id = response.id,
+              let progressToken = progressToken(forRequestId: id)
+        else { return }
 
         // Check if response has task.taskId (CreateTaskResult pattern)
         guard let taskValue = value["task"],

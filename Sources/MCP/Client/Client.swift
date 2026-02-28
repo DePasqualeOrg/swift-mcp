@@ -627,10 +627,11 @@ public actor Client: ProtocolLayer {
 
     /// Intercept a response before pending request matching.
     package func interceptResponse(_ response: AnyResponse) async {
+        guard let id = response.id else { return }
         if case let .success(value) = response.result,
            case let .object(resultObject) = value
         {
-            await checkForTaskResponse(response: Response<AnyMethod>(id: response.id, result: value), value: resultObject)
+            await checkForTaskResponse(response: Response<AnyMethod>(id: id, result: value), value: resultObject)
         }
     }
 

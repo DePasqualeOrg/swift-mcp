@@ -19,6 +19,8 @@ actor TestProtocolActor: ProtocolLayer {
     var receivedNotifications: [AnyMessage] = []
     /// Whether the connection close handler was called.
     var connectionClosedCalled = false
+    /// Track null-id error responses.
+    var nullIdErrors: [AnyResponse] = []
 
     package func handleIncomingRequest(_ request: AnyRequest, data _: Data, context _: MessageMetadata?) async {
         receivedRequests.append(request)
@@ -35,6 +37,10 @@ actor TestProtocolActor: ProtocolLayer {
     package func interceptResponse(_: AnyResponse) async {}
 
     package func handleUnknownMessage(_: Data, context _: MessageMetadata?) async {}
+
+    package func handleNullIdError(_ response: AnyResponse) async {
+        nullIdErrors.append(response)
+    }
 }
 
 /// Tests for the ProtocolLayer protocol and its extension methods.
@@ -133,6 +139,134 @@ struct ProtocolTests {
         let notifications = await proto.receivedNotifications
         #expect(!notifications.isEmpty, "Notification handler should have been invoked")
         #expect(notifications.first?.method == InitializedNotification.name, "Method should match")
+
+        await proto.stopProtocol()
+    }
+
+    // MARK: - Null/Missing ID Error Response Tests
+
+    @Test("Error response with null id reaches handleNullIdError")
+    func nullIdErrorReachesHandler() async throws {
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+
+        let proto = TestProtocolActor()
+        try await proto.startProtocol(transport: serverTransport)
+        try await clientTransport.connect()
+
+        // Send a JSON-RPC error response with "id": null
+        let jsonString = """
+        {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
+        """
+        try await clientTransport.send(jsonString.data(using: .utf8)!)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        let errors = await proto.nullIdErrors
+        #expect(errors.count == 1)
+        #expect(errors.first?.id == nil)
+        if case let .failure(error) = errors.first?.result {
+            #expect(error.code == ErrorCode.invalidRequest)
+        } else {
+            Issue.record("Expected error result")
+        }
+
+        await proto.stopProtocol()
+    }
+
+    @Test("Error response with missing id reaches handleNullIdError")
+    func missingIdErrorReachesHandler() async throws {
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+
+        let proto = TestProtocolActor()
+        try await proto.startProtocol(transport: serverTransport)
+        try await clientTransport.connect()
+
+        // Send a JSON-RPC error response without an id field
+        let jsonString = """
+        {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"}}
+        """
+        try await clientTransport.send(jsonString.data(using: .utf8)!)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        let errors = await proto.nullIdErrors
+        #expect(errors.count == 1)
+        #expect(errors.first?.id == nil)
+        if case let .failure(error) = errors.first?.result {
+            #expect(error.code == ErrorCode.parseError)
+        } else {
+            Issue.record("Expected error result")
+        }
+
+        await proto.stopProtocol()
+    }
+
+    @Test("Error response with valid id reaches pending request, not handleNullIdError")
+    func validIdErrorReachesPendingRequest() async throws {
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+
+        let proto = TestProtocolActor()
+        try await proto.startProtocol(transport: serverTransport)
+        try await clientTransport.connect()
+
+        // Register a pending request
+        let requestId: RequestId = .string("req-42")
+        let stream = await proto.registerProtocolPendingRequest(id: requestId)
+
+        // Send a JSON-RPC error response with the matching id
+        let jsonString = """
+        {"jsonrpc":"2.0","id":"req-42","error":{"code":-32601,"message":"Method not found"}}
+        """
+        try await clientTransport.send(jsonString.data(using: .utf8)!)
+
+        // The pending request stream should receive the error
+        do {
+            for try await _ in stream {
+                Issue.record("Stream should not yield a value for an error response")
+            }
+            Issue.record("Stream should have thrown")
+        } catch let error as MCPError {
+            #expect(error.code == ErrorCode.methodNotFound)
+        }
+
+        // handleNullIdError should NOT have been called
+        let nullErrors = await proto.nullIdErrors
+        #expect(nullErrors.isEmpty)
+
+        await proto.stopProtocol()
+    }
+
+    @Test("Batch with null-id error routes null-id items to handleNullIdError")
+    func batchWithNullIdError() async throws {
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+
+        let proto = TestProtocolActor()
+        try await proto.startProtocol(transport: serverTransport)
+        try await clientTransport.connect()
+
+        // Register a pending request for the valid-id response
+        let requestId: RequestId = .string("req-1")
+        let stream = await proto.registerProtocolPendingRequest(id: requestId)
+
+        // Send a batch with one valid-id response and one null-id error
+        let jsonString = """
+        [
+            {"jsonrpc":"2.0","id":"req-1","result":{}},
+            {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
+        ]
+        """
+        try await clientTransport.send(jsonString.data(using: .utf8)!)
+
+        // The valid-id response should resolve the pending request
+        for try await _ in stream {
+            break
+        }
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        // The null-id error should reach handleNullIdError
+        let nullErrors = await proto.nullIdErrors
+        #expect(nullErrors.count == 1)
 
         await proto.stopProtocol()
     }
