@@ -255,18 +255,21 @@ final class AnyRequestHandler: RequestHandlerBox, @unchecked Sendable {
 // MARK: -
 
 /// A response message.
+///
+/// The `id` is optional to support JSON-RPC error responses with null or missing `id`,
+/// as allowed by the MCP schema (where `id` is not a required field on `JSONRPCErrorResponse`).
 public struct Response<M: Method>: Hashable, Identifiable, Codable, Sendable {
-    /// The response ID.
-    public let id: RequestId
+    /// The response ID, or `nil` for error responses with null/missing `id`.
+    public let id: RequestId?
     /// The response result.
     public let result: Swift.Result<M.Result, MCPError>
 
-    public init(id: RequestId, result: M.Result) {
+    public init(id: RequestId?, result: M.Result) {
         self.id = id
         self.result = .success(result)
     }
 
-    public init(id: RequestId, error: MCPError) {
+    public init(id: RequestId?, error: MCPError) {
         self.id = id
         result = .failure(error)
     }
@@ -278,7 +281,7 @@ public struct Response<M: Method>: Hashable, Identifiable, Codable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(jsonrpc, forKey: .jsonrpc)
-        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(id, forKey: .id)
         switch result {
             case let .success(result):
                 try container.encode(result, forKey: .result)
@@ -295,7 +298,7 @@ public struct Response<M: Method>: Hashable, Identifiable, Codable, Sendable {
                 forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version"
             )
         }
-        id = try container.decode(ID.self, forKey: .id)
+        id = try container.decodeIfPresent(RequestId.self, forKey: .id)
         if let result = try? container.decode(M.Result.self, forKey: .result) {
             self.result = .success(result)
         } else if let error = try? container.decode(MCPError.self, forKey: .error) {

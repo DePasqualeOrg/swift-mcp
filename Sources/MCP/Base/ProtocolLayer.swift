@@ -111,6 +111,13 @@ package protocol ProtocolLayer: Actor {
     /// Handle a message that could not be decoded as any known JSON-RPC type.
     /// Default implementation logs a warning.
     func handleUnknownMessage(_ data: Data, context: MessageMetadata?) async
+
+    /// Handle an error response with null or missing `id`.
+    ///
+    /// Per the MCP schema, `id` is not required on `JSONRPCErrorResponse`. Such errors
+    /// cannot be correlated with a pending request. The default implementation logs the
+    /// error code and message.
+    func handleNullIdError(_ response: AnyResponse) async
 }
 
 // MARK: - Default Implementations for Customization Points
@@ -141,6 +148,19 @@ package extension ProtocolLayer {
     /// Default: log a warning.
     func handleUnknownMessage(_: Data, context _: MessageMetadata?) async {
         protocolLogger?.warning("Unknown message type received")
+    }
+
+    /// Default: log the error.
+    func handleNullIdError(_ response: AnyResponse) async {
+        switch response.result {
+            case let .failure(error):
+                protocolLogger?.error(
+                    "Received error response with null/missing id",
+                    metadata: ["error": "\(error)"]
+                )
+            case .success:
+                protocolLogger?.warning("Received success response with null/missing id (schema violation)")
+        }
     }
 }
 
@@ -265,14 +285,22 @@ package extension ProtocolLayer {
         // Try as batch of responses
         if let responses = try? decoder.decode([AnyResponse].self, from: data) {
             for response in responses {
-                await handleResponse(response)
+                if response.id != nil {
+                    await handleResponse(response)
+                } else {
+                    await handleNullIdError(response)
+                }
             }
             return
         }
 
         // Try as single response
         if let response = try? decoder.decode(AnyResponse.self, from: data) {
-            await handleResponse(response)
+            if response.id != nil {
+                await handleResponse(response)
+            } else {
+                await handleNullIdError(response)
+            }
             return
         }
 
@@ -292,8 +320,17 @@ package extension ProtocolLayer {
         await handleUnknownMessage(data, context: context)
     }
 
-    /// Handle a response message.
+    /// Handle a response message with a non-nil ID.
+    ///
+    /// Callers must ensure `response.id` is non-nil before calling this method.
+    /// Null-id responses are routed to `handleNullIdError(_:)` instead.
     private func handleResponse(_ response: AnyResponse) async {
+        guard let id = response.id else {
+            assertionFailure("handleResponse called with null-id response")
+            protocolLogger?.error("handleResponse called with null-id response")
+            return
+        }
+
         // Call response interceptor first
         await interceptResponse(response)
 
@@ -301,9 +338,9 @@ package extension ProtocolLayer {
         for router in protocolState.responseRouters {
             let handled: Bool = switch response.result {
                 case let .success(value):
-                    await router.routeResponse(requestId: response.id, response: value)
+                    await router.routeResponse(requestId: id, response: value)
                 case let .failure(error):
-                    await router.routeError(requestId: response.id, error: error)
+                    await router.routeError(requestId: id, error: error)
             }
             if handled {
                 return
@@ -311,8 +348,8 @@ package extension ProtocolLayer {
         }
 
         // Check pending requests
-        guard let pending = protocolState.pendingRequests.removeValue(forKey: response.id) else {
-            protocolLogger?.warning("Received response for unknown request", metadata: ["id": "\(response.id)"])
+        guard let pending = protocolState.pendingRequests.removeValue(forKey: id) else {
+            protocolLogger?.warning("Received response for unknown request", metadata: ["id": "\(id)"])
             return
         }
 
