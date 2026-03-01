@@ -68,7 +68,7 @@ struct ConfigurableProtocolVersionsTests {
     func negotiationUsesConfiguredVersions() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
-        // Both sides configured with a restricted set — only older versions
+        // Both sides configured with a restricted set – only older versions
         let sharedVersions = [Version.v2025_03_26, Version.v2024_11_05]
 
         let server = Server(
@@ -143,7 +143,7 @@ struct ConfigurableProtocolVersionsTests {
         }
         try await server.start(transport: serverTransport)
 
-        // Client only supports the standard versions — server's fallback isn't in its list
+        // Client only supports the standard versions – server's fallback isn't in its list
         let client = Client(name: "TestClient", version: "1.0")
 
         await #expect(throws: MCPError.self) {

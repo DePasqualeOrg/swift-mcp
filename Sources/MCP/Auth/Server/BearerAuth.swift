@@ -105,7 +105,7 @@ public func authenticateRequest(
         }
     }
 
-    // Check audience (RFC 8707) — the token's resource must match this server.
+    // Check audience (RFC 8707) – the token's resource must match this server.
     // If the token has a resource claim, validate it. If the claim is present
     // but not a valid URL, reject the token rather than silently skipping validation.
     if let tokenResource = authInfo.resource {

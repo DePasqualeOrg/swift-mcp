@@ -3,7 +3,7 @@
 /// Application-provided token validator for MCP server auth.
 ///
 /// The SDK calls ``verifyToken(_:)`` to validate bearer tokens extracted from
-/// incoming requests. The application decides the validation strategy — JWT
+/// incoming requests. The application decides the validation strategy – JWT
 /// verification, token introspection, database lookup, or any other approach.
 ///
 /// The SDK handles audience validation separately: ``verifyToken(_:)`` returns

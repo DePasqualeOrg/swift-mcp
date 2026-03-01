@@ -174,6 +174,17 @@ func handleURLElicitation(_ params: ElicitRequestURLParams) async throws -> Elic
 }
 ```
 
+## Elicitation Complete Notification
+
+For URL mode elicitation, the server sends an ``ElicitationCompleteNotification`` when the external flow finishes. Register a notification handler to react to completion:
+
+```swift
+await client.onNotification(ElicitationCompleteNotification.self) { message in
+    let elicitationId = message.params.elicitationId
+    // Dismiss the browser or update UI to reflect completion
+}
+```
+
 ## User Actions
 
 The ``ElicitResult`` action indicates how the user responded:

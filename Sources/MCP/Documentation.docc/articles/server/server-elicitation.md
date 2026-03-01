@@ -168,6 +168,14 @@ try await context.elicitUrl(
 
 Use this for OAuth flows or any process that requires visiting an external website.
 
+### Signaling Completion
+
+After the external flow finishes (e.g., the user completes OAuth), send an ``ElicitationCompleteNotification`` so the client can dismiss the browser or update its UI:
+
+```swift
+try await context.sendElicitationComplete(elicitationId: elicitationId)
+```
+
 ## Handling Responses
 
 Check how the user responded:

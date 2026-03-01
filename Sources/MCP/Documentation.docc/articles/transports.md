@@ -81,7 +81,7 @@ When streaming is enabled, the transport monitors the SSE event stream independe
 - ``EventStreamStatus/reconnecting``: The event stream has disconnected and the transport is retrying.
 - ``EventStreamStatus/failed``: The transport has exhausted all reconnection attempts for the event stream.
 
-Event stream disruptions don't prevent POST-based requests (like tool calls) from succeeding — the two channels are independent.
+Event stream disruptions don't prevent POST-based requests (like tool calls) from succeeding – the two channels are independent.
 
 ### Using MCPClient
 

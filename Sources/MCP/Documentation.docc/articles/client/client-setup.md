@@ -13,7 +13,7 @@ This guide covers both approaches.
 
 ## MCPClient (Recommended)
 
-``MCPClient`` manages the connection lifecycle for you. It wraps ``Client`` and adds automatic reconnection with exponential backoff, health monitoring via periodic pings, and transparent retry on recoverable errors like session expiration and connection loss. These features work with any transport — for example, if a stdio server process crashes, ``MCPClient`` re-invokes the transport factory to spawn a new process and reconnect.
+``MCPClient`` manages the connection lifecycle for you. It wraps ``Client`` and adds automatic reconnection with exponential backoff, health monitoring via periodic pings, and transparent retry on recoverable errors like session expiration and connection loss. These features work with any transport – for example, if a stdio server process crashes, ``MCPClient`` re-invokes the transport factory to spawn a new process and reconnect.
 
 ### Creating an MCPClient
 
@@ -25,7 +25,7 @@ let mcpClient = MCPClient(name: "MyApp", version: "1.0.0")
 
 ### Connecting
 
-Connect using a transport factory — a closure that creates a fresh transport instance. The factory is re-invoked on each reconnection attempt because transports cannot be reused after disconnection:
+Connect using a transport factory – a closure that creates a fresh transport instance. The factory is re-invoked on each reconnection attempt because transports cannot be reused after disconnection:
 
 ```swift
 // HTTP
@@ -124,7 +124,7 @@ When the transport is an ``HTTPClientTransport``, ``MCPClient`` additionally hoo
 - **Session expiration detection**: If the SSE event stream receives a 404, ``MCPClient`` proactively triggers reconnection before your next call fails.
 - **Event stream status monitoring**: Track the health of the SSE event stream via ``MCPClient/onEventStreamStatusChanged``. See ``EventStreamStatus``.
 
-These callbacks are set up automatically — no extra configuration is needed.
+These callbacks are set up automatically – no extra configuration is needed.
 
 ## Client (Low-Level)
 
@@ -278,7 +278,7 @@ let client = Client(
         sampling: .init(context: .init(), tools: .init()),
         // Experimental capabilities (cannot be auto-detected)
         experimental: ["customFeature": ["enabled": .bool(true)]]
-        // roots: nil — will be auto-detected from handler
+        // roots: nil – will be auto-detected from handler
     )
 )
 
@@ -326,6 +326,40 @@ await client.disconnect()
 
 This cancels all pending requests and closes the connection.
 
+## Ping
+
+Send a ping to verify the connection is alive:
+
+```swift
+try await client.ping()
+```
+
+``MCPClient`` also supports ping directly, and uses it internally for periodic health monitoring. Configure the health check interval via ``MCPClient/ReconnectionOptions/healthCheckInterval``:
+
+```swift
+let mcpClient = MCPClient(
+    name: "MyApp",
+    version: "1.0.0",
+    reconnectionOptions: .init(healthCheckInterval: .seconds(30))
+)
+
+// Manual ping
+try await mcpClient.ping()
+```
+
+## Protocol Version Negotiation
+
+During connection, the client and server negotiate a protocol version. The client sends its preferred version (the latest it supports) in the initialize request. If the server supports that version, it is used; otherwise the server responds with its own preferred version.
+
+This happens automatically – no configuration is needed. After connecting, you can check the negotiated version:
+
+```swift
+let result = try await client.connect(transport: transport)
+print("Negotiated version: \(result.protocolVersion)")  // e.g. "2025-11-25"
+```
+
+The SDK supports all protocol versions from `2024-11-05` through `2025-11-25`. See ``Version/supported`` for the full list.
+
 ## Error Handling
 
 > Note: When using ``MCPClient``, session expiration, connection closed, and transport errors are handled automatically via reconnection and retry. The error cases below are most relevant when using ``Client`` directly.
@@ -340,7 +374,7 @@ do {
         case .connectionClosed:
             print("Connection closed")
         case .sessionExpired:
-            print("Session expired — reconnect to the server")
+            print("Session expired – reconnect to the server")
         case .requestTimeout(let timeout, let message):
             print("Timeout after \(timeout): \(message ?? "")")
         case .methodNotFound(let method):

@@ -734,7 +734,7 @@ public actor Server: ProtocolLayer {
     }
 
     /// Called when the connection closes unexpectedly.
-    /// The `onDisconnect` callback is not called here — it fires through `protocolState.onClose`
+    /// The `onDisconnect` callback is not called here – it fires through `protocolState.onClose`
     /// when the protocol layer transitions to `.disconnected`, ensuring it only fires once.
     package func handleConnectionClosed() async {
         // Cancel all in-flight request handlers

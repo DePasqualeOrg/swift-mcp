@@ -70,7 +70,7 @@ struct Search {
 
 The `title` parameter provides a user-facing label for display in UIs. If omitted, the property name is used as the default.
 
-> Note: Parameter titles are included in the tool's `inputSchema` as standard JSON Schema `title` properties. Client applications can use these for form labels, documentation, or other display purposes, but they're optional metadata — clients that don't look for them simply ignore them.
+> Note: Parameter titles are included in the tool's `inputSchema` as standard JSON Schema `title` properties. Client applications can use these for form labels, documentation, or other display purposes, but they're optional metadata – clients that don't look for them simply ignore them.
 
 ### Supported Parameter Types
 
@@ -418,10 +418,10 @@ try await server.register(
 
 When the annotations array is empty (the default), MCP implicit defaults apply:
 
-- `readOnlyHint: false` — tool may modify state
-- `destructiveHint: true` — tool may destroy data
-- `idempotentHint: false` — repeated calls may have different effects
-- `openWorldHint: true` — tool interacts with external systems
+- `readOnlyHint: false` – tool may modify state
+- `destructiveHint: true` – tool may destroy data
+- `idempotentHint: false` – repeated calls may have different effects
+- `openWorldHint: true` – tool interacts with external systems
 
 ## Response Content Types
 

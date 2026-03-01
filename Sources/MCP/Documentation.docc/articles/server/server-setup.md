@@ -164,6 +164,16 @@ struct MyServer {
 }
 ```
 
+## Ping
+
+The server automatically handles incoming ping requests. Clients use ping to verify the connection is alive.
+
+## Protocol Version Negotiation
+
+During initialization, the server negotiates a protocol version with the client. If the server supports the client's requested version, it uses that version; otherwise it responds with its own preferred version (the latest it supports).
+
+This happens automatically – no configuration is needed. When using the low-level ``Server`` API, the negotiated version is available after initialization via ``Server/protocolVersion``.
+
 ## Low-Level Server API
 
 For scenarios requiring custom request handling, direct protocol access, or mixing high-level registration with manual handlers, see <doc:server-advanced>.
