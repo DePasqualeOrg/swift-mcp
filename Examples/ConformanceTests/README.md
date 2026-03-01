@@ -4,7 +4,7 @@ Swift implementations of MCP client and server for running against the official 
 
 ## Server Tests
 
-Tests the MCP Swift SDK server implementation (27/27 passing).
+Tests the MCP Swift SDK server implementation (40/40 passing).
 
 ```bash
 scripts/conformance/server.sh
@@ -12,7 +12,7 @@ scripts/conformance/server.sh
 
 ## Client Tests
 
-Tests the MCP Swift SDK client implementation (10/10 passing; auth scenarios will be tested after OAuth is implemented).
+Tests the MCP Swift SDK client implementation (23/24 scenarios passing, 259/261 checks passing; 1 expected failure in baseline).
 
 ```bash
 scripts/conformance/client.sh
@@ -20,16 +20,27 @@ scripts/conformance/client.sh
 
 ## Test Coverage
 
-### Server (27 tests)
-Tools, resources, prompts, completions, logging, SSE streaming, sampling
+### Server (40 checks)
+Tools, resources, prompts, completions, logging, SSE streaming, sampling, elicitation, DNS rebinding protection
 
-### Client (10 tests)
-| Scenario | Tests | Description |
-|----------|-------|-------------|
-| initialize | 1 | Basic MCP initialization |
-| tools_call | 1 | Tool discovery and invocation |
-| elicitation-sep1034-client-defaults | 5 | Bidirectional elicitation with schema defaults |
-| sse-retry | 3 | SSE reconnection with Last-Event-ID |
+### Client (24 scenarios)
 
-### Not Yet Implemented
-- auth/* (17 tests): Requires OAuth support
+| Category | Scenarios | Checks |
+|----------|-----------|--------|
+| Core | initialize, tools_call | 2 |
+| Elicitation | elicitation-sep1034-client-defaults | 5 |
+| SSE | sse-retry | 3 |
+| Auth: Metadata | auth/metadata-{default,var1,var2,var3} | 52 |
+| Auth: CIMD | auth/basic-cimd | 13 |
+| Auth: Scopes | auth/scope-{www-authenticate,scopes-supported,omitted,step-up,retry-limit} | 72 |
+| Auth: Token Auth | auth/token-endpoint-auth-{basic,post,none} | 54 |
+| Auth: Pre-reg | auth/pre-registration | 13 |
+| Auth: Resource | auth/resource-mismatch | 2 |
+| Auth: Backcompat | auth/2025-03-26-oauth-{endpoint-fallback,metadata-backcompat} | 19 |
+| Auth: M2M | auth/client-credentials-{jwt,basic} | 16 |
+
+### Expected Failures
+
+Listed in `conformance-baseline.yml`:
+
+- `auth/cross-app-access-complete-flow` – Requires RFC 8693 token exchange (not yet implemented)

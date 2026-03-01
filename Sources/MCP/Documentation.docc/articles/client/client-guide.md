@@ -18,3 +18,4 @@ An MCP client connects to servers to access their capabilities. This guide cover
 - <doc:client-roots>
 - <doc:client-tasks>
 - <doc:client-advanced>
+- <doc:client-auth>

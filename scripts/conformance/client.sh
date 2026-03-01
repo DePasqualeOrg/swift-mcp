@@ -6,34 +6,13 @@ cd "$(dirname "$0")/../../Examples/ConformanceTests"
 echo "Building ConformanceClient..."
 swift build --product ConformanceClient
 
-SCENARIOS=(
-    "initialize"
-    "tools_call"
-    "elicitation-sep1034-client-defaults"
-    "sse-retry"
-)
+# Use the pre-built binary directly instead of "swift run" to avoid
+# build-graph checks on each of the parallel invocations.
+CLIENT_BIN="$(swift build --product ConformanceClient --show-bin-path)/ConformanceClient"
 
-PASSED=0
-FAILED=0
-
-for scenario in "${SCENARIOS[@]}"; do
-    echo ""
-    echo "Running scenario: $scenario"
-    echo "----------------------------------------"
-    if npx @modelcontextprotocol/conformance client \
-        --command "swift run ConformanceClient" \
-        --scenario "$scenario"; then
-        ((PASSED++))
-    else
-        ((FAILED++))
-    fi
-done
-
-echo ""
-echo "========================================"
-echo "Results: $PASSED passed, $FAILED failed"
-echo "========================================"
-
-if [ $FAILED -gt 0 ]; then
-    exit 1
-fi
+echo "Running all client conformance tests..."
+npx @modelcontextprotocol/conformance client \
+    --command "$CLIENT_BIN" \
+    --suite all \
+    --timeout 60000 \
+    --expected-failures conformance-baseline.yml

@@ -13,6 +13,8 @@ var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "603.0.0"),
     .package(url: "https://github.com/swiftlang/swift-docc", branch: "main"),
     .package(url: "https://github.com/swiftlang/swift-docc-plugin", branch: "main"),
+    // Cross-platform crypto (Linux only; Apple platforms use CryptoKit)
+    .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
     // Test-only dependency for real HTTP testing
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
 ]
@@ -26,6 +28,10 @@ var targetDependencies: [Target.Dependency] = [
         condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS, .watchOS, .macCatalyst])
     ),
     .product(name: "JSONSchema", package: "swift-json-schema"),
+    .product(
+        name: "Crypto", package: "swift-crypto",
+        condition: .when(platforms: [.linux])
+    ),
 ]
 
 // Macro dependencies

@@ -18,3 +18,4 @@ An MCP server exposes capabilities that clients can discover and use. This guide
 - <doc:server-roots>
 - <doc:server-tasks>
 - <doc:server-advanced>
+- <doc:server-auth>

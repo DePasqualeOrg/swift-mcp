@@ -60,6 +60,10 @@ let transport = HTTPClientTransport(
 )
 ```
 
+### Authentication
+
+`HTTPClientTransport` supports OAuth 2.0 authentication through the `authProvider` parameter, which handles discovery, token refresh, and 401/403 retry automatically. For simple static tokens or API keys, use `requestModifier` instead. See <doc:client-auth> for details.
+
 ### Session Management
 
 The transport automatically handles session IDs and protocol version headers:
@@ -180,6 +184,10 @@ For simpler deployments without session tracking:
 ```swift
 let transport = HTTPServerTransport()  // No session management
 ```
+
+### Authentication
+
+For OAuth-protected servers, validate bearer tokens before passing requests to the transport using `authenticateRequest(_:config:)`. The SDK provides helpers for token validation, Protected Resource Metadata endpoints, and scope enforcement. See <doc:server-auth> for details.
 
 ### Handling HTTP Requests
 

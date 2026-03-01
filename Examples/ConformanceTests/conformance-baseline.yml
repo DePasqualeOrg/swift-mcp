@@ -1,0 +1,16 @@
+# Expected conformance test failures.
+# The conformance runner treats these as known issues (exit 0).
+# If a test listed here starts passing, the runner fails (update the baseline).
+
+client:
+  # Requires RFC 8693 token exchange (SEP-990 Enterprise Managed OAuth),
+  # which is not yet implemented.
+  - auth/cross-app-access-complete-flow
+
+  # We require Protected Resource Metadata (RFC 9728) to provide the
+  # authorization server URL rather than supporting the 2025-03-26 spec's
+  # origin-based fallback. The fallback has no authoritative issuer source,
+  # making issuer validation (RFC 8414 §3) impossible and enabling metadata
+  # injection attacks.
+  - auth/2025-03-26-oauth-metadata-backcompat
+  - auth/2025-03-26-oauth-endpoint-fallback

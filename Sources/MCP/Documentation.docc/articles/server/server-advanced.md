@@ -398,6 +398,8 @@ await server.withRequestHandler(CallTool.self) { params, context in
 }
 ```
 
+See <doc:server-auth> for full server-side auth setup.
+
 ## Fallback Handlers
 
 Fallback handlers intercept requests and notifications that don't have a specific handler registered.
