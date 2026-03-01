@@ -5,13 +5,7 @@
 
 [**Documentation**](https://swiftpackageindex.com/DePasqualeOrg/swift-mcp/main/documentation/mcp)
 
-This package, which builds on the [official](https://github.com/modelcontextprotocol/swift-sdk) but incomplete Swift SDK for MCP, includes functionality that has not yet been fully vetted. Feedback on anything that can be improved is welcome.
-
-All of the functionality from protocol version 2025-11-25 has been implemented here, except for:
-
-- OAuth
-
-This package also resolves [bugs and spec compliance issues](https://github.com/modelcontextprotocol/swift-sdk/pull/175#issuecomment-3718183682) in the official SDK.
+This package began as a fork of the [official](https://github.com/modelcontextprotocol/swift-sdk) but incomplete Swift SDK for MCP. It implements all features from MCP protocol version 2025-11-25.
 
 ## Guides
 
@@ -23,6 +17,16 @@ This package also resolves [bugs and spec compliance issues](https://github.com/
 
 - [Hummingbird](Examples/HummingbirdIntegration/)
 - [Vapor](Examples/VaporIntegration/)
+
+## Update Policy
+
+This package follows semantic versioning. Breaking changes are only introduced in major versions. After a new major release, the previous major version will receive bug fixes and security updates for at least 3 months.
+
+Package dependencies are kept up to date as needed for compatibility and security.
+
+## Roadmap
+
+This package fully implements MCP protocol version 2025-11-25 and passes all required [conformance tests](https://github.com/modelcontextprotocol/conformance). Future spec versions will be implemented as they are released.
 
 ## References
 

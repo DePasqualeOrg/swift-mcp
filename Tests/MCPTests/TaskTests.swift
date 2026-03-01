@@ -879,7 +879,7 @@ struct InMemoryTaskStoreTests {
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
 
-        // Get first page — cursor points to task-1
+        // Get first page – cursor points to task-1
         let page1 = try await store.listTasks(cursor: nil, sessionId: defaultSessionId)
         let staleCursor = try #require(page1.nextCursor)
 

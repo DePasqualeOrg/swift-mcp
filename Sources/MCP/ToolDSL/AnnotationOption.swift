@@ -7,10 +7,10 @@
 /// destructive tools).
 ///
 /// When the `annotations` array is empty (the default), MCP implicit defaults apply:
-/// - `readOnlyHint: false` — tool may modify state
-/// - `destructiveHint: true` — tool may destroy data
-/// - `idempotentHint: false` — repeated calls may have different effects
-/// - `openWorldHint: true` — tool interacts with external systems
+/// - `readOnlyHint: false` – tool may modify state
+/// - `destructiveHint: true` – tool may destroy data
+/// - `idempotentHint: false` – repeated calls may have different effects
+/// - `openWorldHint: true` – tool interacts with external systems
 ///
 /// Example:
 /// ```swift

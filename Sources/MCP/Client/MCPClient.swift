@@ -114,7 +114,7 @@ public actor MCPClient {
     /// Use this to register notification/request handlers before calling `connect()`,
     /// or to access protocol methods not wrapped by `MCPClient`.
     ///
-    /// Handlers registered on this client survive reconnection — the same `Client`
+    /// Handlers registered on this client survive reconnection – the same `Client`
     /// instance is reused across reconnections with fresh transports.
     public nonisolated let client: Client
 
@@ -232,7 +232,7 @@ public actor MCPClient {
         // Register ToolListChangedNotification handler once, before first connection.
         // When the server signals that its tool list has changed, we refresh the list
         // and surface the update through the same onToolsChanged callback used after
-        // reconnection — so consumers get a single callback for both cases.
+        // reconnection – so consumers get a single callback for both cases.
         if !toolListChangedHandlerRegistered {
             toolListChangedHandlerRegistered = true
             await client.onNotification(ToolListChangedNotification.self) { [weak self] _ in
@@ -550,7 +550,7 @@ public actor MCPClient {
         guard state == .connected else { return }
         logger.info("Session expiration detected via transport callback, triggering reconnection")
 
-        // Fire-and-forget reconnection — callers will discover the new connection
+        // Fire-and-forget reconnection – callers will discover the new connection
         // on their next operation, or get an error if reconnection fails
         if reconnectionTask == nil {
             reconnectionTask = Task {
