@@ -602,7 +602,7 @@ public actor Server: ProtocolLayer {
 
             // Perform version negotiation
             let clientRequestedVersion = params.protocolVersion
-            let supportedVersions = await configuration.supportedProtocolVersions
+            let supportedVersions = configuration.supportedProtocolVersions
             let negotiatedProtocolVersion = supportedVersions.contains(clientRequestedVersion)
                 ? clientRequestedVersion
                 : supportedVersions[0]
