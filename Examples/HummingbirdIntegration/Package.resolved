@@ -1,5 +1,5 @@
 {
-  "originHash" : "6e195967fb65405cea73fd5bebe27163ba86af50fcdda39e0266ea0df2f70c7c",
+  "originHash" : "77dc64b3389ae998fb290287832133bba98cef29567e6a4ad7810b569e9bc318",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "5dd84c7bb48b348751d7bbe7ba94a17bafdcef37",
         "version" : "1.30.2"
-      }
-    },
-    {
-      "identity" : "eventsource",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattt/eventsource.git",
-      "state" : {
-        "revision" : "ca2a9d90cbe49e09b92f4b6ebd922c03ebea51d0",
-        "version" : "1.3.0"
       }
     },
     {
@@ -96,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "6f70fa9eab24c1fd982af18c281c4525d05e3095",
-        "version" : "4.2.0"
+        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
+        "version" : "3.15.1"
       }
     },
     {

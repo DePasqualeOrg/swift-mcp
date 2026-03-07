@@ -1,5 +1,5 @@
 {
-  "originHash" : "1caebd944f34776e9d2c41dcec389fb4290e2e9ba9dd0725a31964a54e984d30",
+  "originHash" : "1509f9d2d64559d85efe27a82244ba3d4553882e84c8c9e3ee7c150863330c31",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "4b99975677236d13f0754339864e5360142ff5a1",
         "version" : "1.30.3"
-      }
-    },
-    {
-      "identity" : "eventsource",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattt/eventsource.git",
-      "state" : {
-        "revision" : "ca2a9d90cbe49e09b92f4b6ebd922c03ebea51d0",
-        "version" : "1.3.0"
       }
     },
     {
@@ -287,6 +278,15 @@
       "state" : {
         "revision" : "1de37290c0ab3c5a96028e0f02911b672fd42348",
         "version" : "2.9.1"
+      }
+    },
+    {
+      "identity" : "swift-sse",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DePasqualeOrg/swift-sse",
+      "state" : {
+        "revision" : "c8e3f1a5d4cdf708c891bae1f2a975519627b65c",
+        "version" : "0.1.0"
       }
     },
     {

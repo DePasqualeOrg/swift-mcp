@@ -8,7 +8,7 @@ import PackageDescription
 var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/apple/swift-system.git", from: "1.0.0"),
     .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
-    .package(url: "https://github.com/mattt/eventsource.git", from: "1.1.0"),
+    .package(url: "https://github.com/DePasqualeOrg/swift-sse", .upToNextMinor(from: "0.1.0")),
     .package(url: "https://github.com/ajevans99/swift-json-schema", from: "0.2.1"),
     .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "603.0.0"),
     .package(url: "https://github.com/swiftlang/swift-docc", branch: "main"),
@@ -23,10 +23,7 @@ var dependencies: [Package.Dependency] = [
 var targetDependencies: [Target.Dependency] = [
     .product(name: "SystemPackage", package: "swift-system"),
     .product(name: "Logging", package: "swift-log"),
-    .product(
-        name: "EventSource", package: "eventsource",
-        condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS, .watchOS, .macCatalyst])
-    ),
+    .product(name: "SSE", package: "swift-sse"),
     .product(name: "JSONSchema", package: "swift-json-schema"),
     .product(
         name: "Crypto", package: "swift-crypto",

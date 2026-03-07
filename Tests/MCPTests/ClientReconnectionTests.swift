@@ -24,7 +24,7 @@ import FoundationNetworking
 /// Possible solutions for future implementation:
 /// 1. Create a custom URLProtocol that supports async stream injection
 /// 2. Use a real local HTTP server in tests (like TypeScript does with node's http.Server)
-/// 3. Test at a lower level by mocking the EventSource directly
+/// 3. Test at a lower level by mocking the SSE byte stream or parser boundaries directly
 ///
 /// Tests pending implementation:
 /// - `should reconnect a GET-initiated notification stream that fails`

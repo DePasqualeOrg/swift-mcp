@@ -3,10 +3,7 @@
 
 import Foundation
 import Logging
-
-#if !os(Linux)
-import EventSource
-#endif
+import SSE
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -45,13 +42,14 @@ public enum EventStreamStatus: Sendable, Equatable {
 ///
 /// ## Linux Platform Limitations
 ///
-/// SSE functionality is unavailable on Linux because `URLSession.AsyncBytes` is not yet
+/// True SSE streaming is limited on Linux because `URLSession.AsyncBytes` is not yet
 /// implemented in swift-corelibs-foundation (see [swift#57548](https://github.com/swiftlang/swift/issues/57548)).
 ///
-/// **What works:** HTTP POST requests and JSON responses (tool calls, resource reads, prompts).
+/// **What works:** HTTP POST requests, JSON responses, and buffered parsing of finite SSE responses.
 ///
-/// **What doesn't work:** Server-initiated push notifications, streaming responses, and
-/// stream resumability. On Linux, set `streaming: false` to avoid warnings.
+/// **What doesn't work yet:** long-lived GET SSE connections, server-initiated push notifications,
+/// and automatic stream resumability. On Linux, `streaming: true` still logs a warning because the
+/// background SSE listener cannot be established.
 ///
 /// ## Example Usage
 ///
@@ -609,6 +607,14 @@ public actor HTTPClientTransport: Transport {
         let data: Data
     }
 
+    /// Describes how SSE processing ended so callers can decide whether to reconnect.
+    private enum SSEStreamDisposition {
+        /// The stream completed and no automatic reconnect should be attempted.
+        case finished
+        /// The stream ended before a terminal response and should be re-established.
+        case reconnect
+    }
+
     /// Processes a JSON-RPC message, detecting if it's a response and optionally remapping its ID.
     ///
     /// Per JSON-RPC 2.0 spec:
@@ -683,8 +689,44 @@ public actor HTTPClientTransport: Transport {
 
         // Process response based on content type
         if contentType.contains("text/event-stream") {
-            logger.warning("SSE responses aren't fully supported on Linux")
-            messageContinuation.yield(TransportMessage(data: data))
+            logger.warning("Linux SSE responses are buffered before parsing; long-lived streaming remains unsupported")
+
+            for block in Parser.parseBlocks(data) {
+                logger.trace(
+                    "SSE block received",
+                    metadata: [
+                        "type": "\(block.dispatchedEvent?.eventType ?? "none")",
+                        "id": "\(block.id ?? "none")",
+                        "retry": "\(block.retry.map(String.init) ?? "none")",
+                    ]
+                )
+
+                if let eventId = block.id {
+                    lastEventId = eventId
+                    onResumptionToken?(eventId)
+                }
+
+                if let retryMs = block.retry {
+                    serverRetryDelay = TimeInterval(retryMs) / 1000.0
+                    logger.debug(
+                        "Server retry directive received",
+                        metadata: ["retryMs": "\(retryMs)"]
+                    )
+                }
+
+                guard let event = block.dispatchedEvent else {
+                    continue
+                }
+
+                if event.data.isEmpty {
+                    continue
+                }
+
+                if let eventData = event.data.data(using: .utf8) {
+                    let processed = processJSONRPCMessage(eventData, originalRequestId: nil)
+                    messageContinuation.yield(TransportMessage(data: processed.data))
+                }
+            }
         } else if contentType.contains("application/json") {
             logger.trace("Received JSON response", metadata: ["size": "\(data.count)"])
             messageContinuation.yield(TransportMessage(data: data))
@@ -724,7 +766,7 @@ public actor HTTPClientTransport: Transport {
             // For SSE response from POST, isReconnectable is false initially
             // but can become reconnectable after receiving a priming event
             logger.trace("Received SSE response, processing in streaming task")
-            try await processSSE(stream, isReconnectable: false)
+            _ = try await processSSE(stream, isReconnectable: false)
         } else if contentType.contains("application/json") {
             // For JSON responses, collect and deliver the data
             var buffer = Data()
@@ -939,13 +981,46 @@ public actor HTTPClientTransport: Transport {
         // Retry loop for connection drops with exponential backoff
         while isConnected, !Task.isCancelled {
             do {
-                try await connectToEventStream()
-                // Reset attempt counter on successful connection
-                reconnectionAttempt = 0
-                // Signal reconnection if we were previously disconnected
-                if eventStreamDisconnectedFired {
-                    eventStreamDisconnectedFired = false
-                    await onEventStreamStatusChanged?(.connected)
+                switch try await connectToEventStream() {
+                    case .finished:
+                        // Reset attempt counter on a cleanly completed stream.
+                        reconnectionAttempt = 0
+                        // Signal reconnection if we were previously disconnected.
+                        if eventStreamDisconnectedFired {
+                            eventStreamDisconnectedFired = false
+                            await onEventStreamStatusChanged?(.connected)
+                        }
+                        return
+
+                    case .reconnect:
+                        // Graceful EOF before a terminal response should be treated like
+                        // any other stream disruption and go through the backoff path.
+                        if !eventStreamDisconnectedFired {
+                            eventStreamDisconnectedFired = true
+                            await onEventStreamStatusChanged?(.reconnecting)
+                        }
+
+                        if reconnectionAttempt >= reconnectionOptions.maxRetries {
+                            logger.error(
+                                "Maximum reconnection attempts exceeded",
+                                metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"]
+                            )
+                            await onEventStreamStatusChanged?(.failed)
+                            break
+                        }
+
+                        let delay = getNextReconnectionDelay()
+                        reconnectionAttempt += 1
+
+                        logger.debug(
+                            "Scheduling reconnection",
+                            metadata: [
+                                "attempt": "\(reconnectionAttempt)",
+                                "delay": "\(delay)s",
+                            ]
+                        )
+
+                        try? await Task.sleep(for: .seconds(delay))
                 }
             } catch {
                 if !Task.isCancelled {
@@ -1021,8 +1096,8 @@ public actor HTTPClientTransport: Transport {
     private func connectToEventStream(
         resumptionToken: String? = nil,
         originalRequestId: RequestId? = nil
-    ) async throws {
-        guard isConnected else { return }
+    ) async throws -> SSEStreamDisposition {
+        guard isConnected else { return .finished }
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "GET"
@@ -1090,7 +1165,7 @@ public actor HTTPClientTransport: Transport {
             logger.debug("Session ID received", metadata: ["sessionID": "\(newSessionID)"])
         }
 
-        try await processSSE(stream, isReconnectable: true, originalRequestId: originalRequestId)
+        return try await processSSE(stream, isReconnectable: true, originalRequestId: originalRequestId)
     }
 
     /// Processes an SSE byte stream, extracting events and delivering them
@@ -1107,7 +1182,7 @@ public actor HTTPClientTransport: Transport {
         _ stream: URLSession.AsyncBytes,
         isReconnectable: Bool,
         originalRequestId: RequestId? = nil
-    ) async throws {
+    ) async throws -> SSEStreamDisposition {
         // Track whether we've received a priming event (event with ID)
         // Per spec, server SHOULD send a priming event with ID before closing
         var hasPrimingEvent = false
@@ -1117,21 +1192,21 @@ public actor HTTPClientTransport: Transport {
         var receivedResponse = false
 
         do {
-            for try await event in stream.events {
+            for try await block in stream.sseBlocks {
                 // Check if task has been cancelled
                 if Task.isCancelled { break }
 
                 logger.trace(
-                    "SSE event received",
+                    "SSE block received",
                     metadata: [
-                        "type": "\(event.event ?? "message")",
-                        "id": "\(event.id ?? "none")",
-                        "retry": "\(event.retry.map(String.init) ?? "none")",
+                        "type": "\(block.dispatchedEvent?.eventType ?? "none")",
+                        "id": "\(block.id ?? "none")",
+                        "retry": "\(block.retry.map(String.init) ?? "none")",
                     ]
                 )
 
                 // Update last event ID if provided
-                if let eventId = event.id {
+                if let eventId = block.id {
                     lastEventId = eventId
                     // Mark that we've received a priming event - stream is now resumable
                     hasPrimingEvent = true
@@ -1140,12 +1215,16 @@ public actor HTTPClientTransport: Transport {
                 }
 
                 // Handle server-provided retry directive (in milliseconds, convert to seconds)
-                if let retryMs = event.retry {
+                if let retryMs = block.retry {
                     serverRetryDelay = TimeInterval(retryMs) / 1000.0
                     logger.debug(
                         "Server retry directive received",
                         metadata: ["retryMs": "\(retryMs)"]
                     )
+                }
+
+                guard let event = block.dispatchedEvent else {
+                    continue
                 }
 
                 // Skip events with no data (priming events, keep-alives)
@@ -1184,8 +1263,13 @@ public actor HTTPClientTransport: Transport {
                 // schedule reconnection via GET (per MCP spec: "Resumption is always via HTTP GET").
                 if !isReconnectable, hasPrimingEvent {
                     schedulePostSSEReconnection()
+                    return .finished
                 }
+
+                return .reconnect
             }
+
+            return .finished
         } catch {
             logger.error("Error processing SSE events: \(error)")
 
@@ -1195,6 +1279,7 @@ public actor HTTPClientTransport: Transport {
                !Task.isCancelled
             {
                 schedulePostSSEReconnection()
+                return .finished
             } else {
                 throw error
             }
@@ -1249,7 +1334,7 @@ public actor HTTPClientTransport: Transport {
                 guard await isConnected, !Task.isCancelled else { return }
 
                 do {
-                    try await connectToEventStream(resumptionToken: eventId)
+                    _ = try await connectToEventStream(resumptionToken: eventId)
                     // Success - connectToEventStream handles SSE processing
                     // Reset attempt counter on success
                     await resetReconnectionAttempt()
@@ -1298,7 +1383,7 @@ public actor HTTPClientTransport: Transport {
         #if os(Linux)
         logger.warning("resumeStream is not supported on Linux (SSE not available)")
         #else
-        try await connectToEventStream(resumptionToken: lastEventId, originalRequestId: originalRequestId)
+        _ = try await connectToEventStream(resumptionToken: lastEventId, originalRequestId: originalRequestId)
         #endif
     }
 

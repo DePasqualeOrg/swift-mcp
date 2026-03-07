@@ -1549,6 +1549,54 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
+    @Test("State-only SSE event ID updates resumption state", .httpClientTransportSetup)
+    func testStateOnlyEventIdStoredForResumption() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+
+        let transport = HTTPClientTransport(
+            endpoint: testEndpoint,
+            configuration: configuration,
+            streaming: true,
+            sseInitializationTimeout: 1,
+            logger: nil
+        )
+
+        MockURLProtocol.requestHandlerStorage.setHandler {
+            [testEndpoint] (_: URLRequest) in
+            let response = HTTPURLResponse(
+                url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
+                headerFields: [
+                    HTTPHeader.contentType: "text/plain",
+                    HTTPHeader.sessionId: "test-session-state-only-id",
+                ]
+            )!
+            return (response, Data())
+        }
+
+        try await transport.connect()
+        try await transport.send(Data())
+
+        let sseWithStateOnlyId = "id: state-only-789\n\n"
+        let sseData = sseWithStateOnlyId.data(using: .utf8)!
+
+        MockURLProtocol.requestHandlerStorage.setHandler {
+            [testEndpoint, sseData] (_: URLRequest) in
+            let response = HTTPURLResponse(
+                url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
+                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+            )!
+            return (response, sseData)
+        }
+
+        try await Task.sleep(for: .milliseconds(200))
+
+        let lastEventId = await transport.lastReceivedEventId
+        #expect(lastEventId == "state-only-789")
+
+        await transport.disconnect()
+    }
+
     @Test("SSE priming event with empty data does not throw", .httpClientTransportSetup)
     func testPrimingEventEmptyDataNoError() async throws {
         // TypeScript SDK test: 'should not throw JSON parse error on priming events with empty data'
@@ -1793,38 +1841,34 @@ struct HTTPClientTransportTests {
             logger: nil
         )
 
-        // Set up handler for initial POST
+        // Use a combined handler so the background GET stream cannot race ahead
+        // of the SSE setup and consume the initial POST handler instead.
+        let sseWithError =
+            "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32600,\"message\":\"Invalid request\"}}\n\n"
+        let sseData = sseWithError.data(using: .utf8)!
+
         MockURLProtocol.requestHandlerStorage.setHandler {
-            [testEndpoint] (_: URLRequest) in
-            let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [
-                    HTTPHeader.contentType: "text/plain",
-                    HTTPHeader.sessionId: "test-session-error",
-                ]
-            )!
-            return (response, Data())
+            [testEndpoint, sseData] (request: URLRequest) in
+            if request.httpMethod == "GET" {
+                let response = HTTPURLResponse(
+                    url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
+                    headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                )!
+                return (response, sseData)
+            } else {
+                let response = HTTPURLResponse(
+                    url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
+                    headerFields: [
+                        HTTPHeader.contentType: "text/plain",
+                        HTTPHeader.sessionId: "test-session-error",
+                    ]
+                )!
+                return (response, Data())
+            }
         }
 
         try await transport.connect()
         try await transport.send(Data())
-
-        // SSE stream with an error response
-        let sseWithError = """
-        id: evt-1
-        data: {"jsonrpc":"2.0","id":1,"error":{"code":-32600,"message":"Invalid request"}}
-
-        """
-        let sseData = sseWithError.data(using: .utf8)!
-
-        MockURLProtocol.requestHandlerStorage.setHandler {
-            [testEndpoint, sseData] (_: URLRequest) in
-            let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
-            )!
-            return (response, sseData)
-        }
 
         try await Task.sleep(for: .milliseconds(200))
 
@@ -1875,11 +1919,8 @@ struct HTTPClientTransportTests {
 
         // SSE stream with a response that has a DIFFERENT ID than the original request
         // The server sends id: "server-generated-id" but our original request had id: "original-req-42"
-        let sseWithDifferentId = """
-        id: evt-1
-        data: {"jsonrpc":"2.0","id":"server-generated-id","result":{"status":"ok"}}
-
-        """
+        let sseWithDifferentId =
+            "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"server-generated-id\",\"result\":{\"status\":\"ok\"}}\n\n"
         let sseData = sseWithDifferentId.data(using: .utf8)!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -1943,11 +1984,8 @@ struct HTTPClientTransportTests {
         try await transport.connect()
 
         // SSE stream with a response that has id: 999 (different from original)
-        let sseWithDifferentId = """
-        id: evt-1
-        data: {"jsonrpc":"2.0","id":999,"result":{"value":42}}
-
-        """
+        let sseWithDifferentId =
+            "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":999,\"result\":{\"value\":42}}\n\n"
         let sseData = sseWithDifferentId.data(using: .utf8)!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -2011,11 +2049,8 @@ struct HTTPClientTransportTests {
         try await transport.connect()
 
         // SSE stream with a response
-        let sseResponse = """
-        id: evt-1
-        data: {"jsonrpc":"2.0","id":"original-id","result":{"status":"ok"}}
-
-        """
+        let sseResponse =
+            "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"original-id\",\"result\":{\"status\":\"ok\"}}\n\n"
         let sseData = sseResponse.data(using: .utf8)!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -2079,11 +2114,8 @@ struct HTTPClientTransportTests {
         try await transport.connect()
 
         // SSE stream with an ERROR response that has a different ID
-        let sseWithError = """
-        id: evt-1
-        data: {"jsonrpc":"2.0","id":"server-error-id","error":{"code":-32600,"message":"Invalid request"}}
-
-        """
+        let sseWithError =
+            "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"server-error-id\",\"error\":{\"code\":-32600,\"message\":\"Invalid request\"}}\n\n"
         let sseData = sseWithError.data(using: .utf8)!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
