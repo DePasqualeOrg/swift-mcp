@@ -55,11 +55,9 @@ public func shouldUseCIMD(
 /// the authorization server fetches and validates the metadata document
 /// at the URL when the client presents it.
 ///
-/// - Parameters:
-///   - url: The client metadata document URL (becomes the `client_id`)
-///   - redirectURIs: Redirect URIs from the client's metadata (inherited)
+/// - Parameter url: The client metadata document URL (becomes the `client_id`)
 /// - Returns: Client information with the URL as `client_id`
-public func clientInfoFromMetadataURL(_ url: URL, redirectURIs _: [URL]?) -> OAuthClientInformation {
+public func clientInfoFromMetadataURL(_ url: URL) -> OAuthClientInformation {
     OAuthClientInformation(clientId: url.absoluteString)
 }
 

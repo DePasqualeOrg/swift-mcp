@@ -103,9 +103,21 @@ public enum ResourceURL {
 
     /// Selects the resource URL to include in authorization and token requests.
     ///
-    /// If Protected Resource Metadata was discovered and its `resource` field is a
-    /// valid parent of the server URL (per hierarchical matching), use the PRM's
-    /// resource. Otherwise, use the canonical form of the server URL.
+    /// The resource URL is always included (non-optional return type). The
+    /// 2025-11-25 spec requires it unconditionally ("MUST be included in both
+    /// authorization requests and token requests"). Older spec versions
+    /// (2025-03-26) don't mention it, but sending it is not a violation --
+    /// RFC 6749 requires authorization servers to ignore unrecognized
+    /// parameters, and including it enables audience binding (RFC 8707),
+    /// which is strictly more secure.
+    ///
+    /// The Python and TypeScript SDKs conditionally omit the resource
+    /// parameter for backwards compatibility with older servers. We always
+    /// include it as the safer default.
+    ///
+    /// If Protected Resource Metadata was discovered and its `resource` field
+    /// is a valid parent of the server URL (per hierarchical matching), use
+    /// the PRM's resource. Otherwise, use the canonical form of the server URL.
     ///
     /// - Parameters:
     ///   - serverURL: The MCP server URL
@@ -125,19 +137,6 @@ public enum ResourceURL {
         }
 
         return canonical
-    }
-
-    /// Per the MCP spec (2025-11-25), clients MUST include the `resource`
-    /// parameter in authorization, token exchange, and token refresh requests.
-    ///
-    /// This method always returns `true`. It exists as a named function to
-    /// document the spec requirement and to serve as an extension point if
-    /// future specs introduce conditions under which it should be omitted.
-    public static func shouldIncludeResource(
-        protectedResourceMetadata _: ProtectedResourceMetadata?,
-        protocolVersion _: String?
-    ) -> Bool {
-        true
     }
 
     /// Returns the origin (scheme, host, port) of a URL, stripping the path,

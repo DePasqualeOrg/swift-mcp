@@ -1838,7 +1838,7 @@ struct ClientRegistrationTests {
     @Test("CIMD client info uses URL as client_id")
     func cimdClientInfo() {
         let url = URL(string: "https://example.com/.well-known/client")!
-        let info = clientInfoFromMetadataURL(url, redirectURIs: [URL(string: "http://127.0.0.1/callback")!])
+        let info = clientInfoFromMetadataURL(url)
         #expect(info.clientId == "https://example.com/.well-known/client")
     }
 
@@ -1966,25 +1966,6 @@ struct ResourceParameterTests {
         let serverURL = URL(string: "https://API.Example.com:443/mcp")!
         let result = ResourceURL.selectResourceURL(serverURL: serverURL, protectedResourceMetadata: nil)
         #expect(result.absoluteString == "https://api.example.com/mcp")
-    }
-
-    @Test("shouldIncludeResource always returns true per MCP spec 2025-11-25")
-    func includeResourceAlways() {
-        // With PRM
-        let prm = ProtectedResourceMetadata(
-            resource: URL(string: "https://example.com")!,
-            authorizationServers: []
-        )
-        #expect(ResourceURL.shouldIncludeResource(protectedResourceMetadata: prm, protocolVersion: nil))
-
-        // Without PRM, with version
-        #expect(ResourceURL.shouldIncludeResource(protectedResourceMetadata: nil, protocolVersion: "2025-06-18"))
-
-        // Without PRM, without version
-        #expect(ResourceURL.shouldIncludeResource(protectedResourceMetadata: nil, protocolVersion: nil))
-
-        // Without PRM, old version
-        #expect(ResourceURL.shouldIncludeResource(protectedResourceMetadata: nil, protocolVersion: "2025-03-26"))
     }
 
     @Test("originURL strips path and query")

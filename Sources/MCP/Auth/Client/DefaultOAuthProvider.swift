@@ -350,7 +350,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
            let metadataURL = clientMetadataURL,
            shouldUseCIMD(serverMetadata: asMetadata, clientMetadataURL: metadataURL)
         {
-            clientInfo = clientInfoFromMetadataURL(metadataURL, redirectURIs: clientMetadata.redirectURIs)
+            clientInfo = clientInfoFromMetadataURL(metadataURL)
         } else {
             // DCR (RFC 7591)
             let regEndpoint = try registrationEndpoint(from: asMetadata, authServerURL: authServerURL)
