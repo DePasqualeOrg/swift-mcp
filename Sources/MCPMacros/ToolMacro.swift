@@ -502,7 +502,13 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             let baseType = param.typeName
             let schemaType = getJSONSchemaType(for: baseType)
 
-            propEntries.append("\"type\": .string(\"\(schemaType)\")")
+            // Use nullable type for optional params and default params in strict mode
+            if param.isOptional || (toolInfo.strictSchema && param.hasDefault) {
+                propEntries.append(
+                    "\"type\": .array([.string(\"\(schemaType)\"), .string(\"null\")])")
+            } else {
+                propEntries.append("\"type\": .string(\"\(schemaType)\")")
+            }
 
             if let title = param.title {
                 propEntries.append("\"title\": .string(\"\(title)\")")
@@ -545,10 +551,15 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         let propertiesStr = propertiesEntries.joined(separator: ", ")
 
-        // Required fields: non-optional without defaults
-        let requiredFields = toolInfo.parameters
-            .filter { !$0.isOptional && !$0.hasDefault }
-            .map { ".string(\"\($0.jsonKey)\")" }
+        // Required fields
+        let requiredFields: [String] = if toolInfo.strictSchema {
+            // Strict mode: all properties must be required (optionality expressed via nullable types)
+            toolInfo.parameters.map { ".string(\"\($0.jsonKey)\")" }
+        } else {
+            toolInfo.parameters
+                .filter { !$0.isOptional && !$0.hasDefault }
+                .map { ".string(\"\($0.jsonKey)\")" }
+        }
         let requiredStr = requiredFields.joined(separator: ", ")
 
         // Handle empty properties - use [:] for empty dictionary literal
@@ -606,9 +617,9 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     "_instance.\(prop) = _args[\"\(key)\"].flatMap(\(type).init(parameterValue:))"
                 )
             } else if param.hasDefault {
-                // Has default: only use default if key is absent; throw if wrong type
+                // Has default: only use default if key is absent or null; throw if wrong type
                 parseStatements.append(
-                    "if let _value = _args[\"\(key)\"] { guard let _parsed = \(type)(parameterValue: _value) else { throw MCPError.internalError(\"Invalid type for '\(key)' - expected \(type)\") }; _instance.\(prop) = _parsed }"
+                    "if let _value = _args[\"\(key)\"], !_value.isNull { guard let _parsed = \(type)(parameterValue: _value) else { throw MCPError.internalError(\"Invalid type for '\(key)' - expected \(type)\") }; _instance.\(prop) = _parsed }"
                 )
             } else {
                 // Required: guard and throw - generate two separate statements
