@@ -286,6 +286,28 @@ struct StrictTool {
     }
 }
 
+/// Tool with strict schema, optional, and default parameters
+@Tool
+struct StrictToolWithOptionals {
+    static let name = "strict_optionals"
+    static let description = "Strict tool with optional and default parameters"
+    static let strictSchema = true
+
+    @Parameter(description: "Required input")
+    var input: String
+
+    @Parameter(description: "Optional filter")
+    var filter: String?
+
+    @Parameter(description: "Page size", minimum: 1, maximum: 100)
+    var pageSize: Int = 25
+
+    func perform(context _: HandlerContext) async throws -> String {
+        let filterStr = filter ?? "none"
+        return "input=\(input) filter=\(filterStr) pageSize=\(pageSize)"
+    }
+}
+
 /// Tool with perform() that doesn't require HandlerContext
 @Tool
 struct SimplePerformTool {
@@ -454,13 +476,19 @@ struct ToolSpecConformanceTests {
     @Test("toolDefinition handles optional parameters")
     func toolDefinitionOptionalParameters() {
         let definition = GreetTool.toolDefinition
+        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let required = definition.inputSchema.objectValue?["required"]?.arrayValue ?? []
 
-        // Required parameter should be in required array
+        // Required parameter should be in required array with non-nullable type
         #expect(required.contains(.string("name")))
+        let nameSchema = properties?["name"]?.objectValue
+        #expect(nameSchema?["type"]?.stringValue == "string")
 
-        // Optional parameter should not be in required array
+        // Optional parameter should not be in required array and should have nullable type
         #expect(!required.contains(.string("prefix")))
+        let prefixSchema = properties?["prefix"]?.objectValue
+        let prefixType = prefixSchema?["type"]?.arrayValue
+        #expect(prefixType == [.string("string"), .string("null")])
     }
 
     @Test("toolDefinition handles array parameters")
@@ -501,6 +529,41 @@ struct ToolSpecConformanceTests {
         let nonStrictDefinition = EchoTool.toolDefinition
         let nonStrictAdditionalProps = nonStrictDefinition.inputSchema.objectValue?["additionalProperties"]
         #expect(nonStrictAdditionalProps == nil)
+    }
+
+    @Test("strict schema puts all parameters in required and uses nullable types for optional/default params")
+    func toolDefinitionStrictSchemaOptionals() {
+        let definition = StrictToolWithOptionals.toolDefinition
+        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
+        let required = definition.inputSchema.objectValue?["required"]?.arrayValue ?? []
+
+        // All parameters must be in required array for strict mode
+        #expect(required.contains(.string("input")))
+        #expect(required.contains(.string("filter")))
+        #expect(required.contains(.string("pageSize")))
+
+        // Required param: non-nullable type
+        let inputSchema = properties?["input"]?.objectValue
+        #expect(inputSchema?["type"]?.stringValue == "string")
+
+        // Optional param: nullable type
+        let filterSchema = properties?["filter"]?.objectValue
+        #expect(filterSchema?["type"]?.arrayValue == [.string("string"), .string("null")])
+
+        // Default param in strict mode: nullable type (model sends null to use default)
+        let pageSizeSchema = properties?["pageSize"]?.objectValue
+        #expect(pageSizeSchema?["type"]?.arrayValue == [.string("integer"), .string("null")])
+        #expect(pageSizeSchema?["default"]?.intValue == 25)
+    }
+
+    @Test("non-strict schema does not make default params nullable")
+    func toolDefinitionNonStrictDefaultParams() {
+        let definition = PaginatedListTool.toolDefinition
+        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
+
+        // Default params in non-strict mode: non-nullable type
+        let pageSizeSchema = properties?["pageSize"]?.objectValue
+        #expect(pageSizeSchema?["type"]?.stringValue == "integer")
     }
 
     @Test("toolDefinition handles nested array parameters")
@@ -669,6 +732,15 @@ struct ParseMethodTests {
         #expect(tool.prefix == nil)
     }
 
+    @Test("parse handles optional parameter when null")
+    func parseOptionalParameterNull() throws {
+        let args: [String: Value] = ["name": .string("Bob"), "prefix": .null]
+        let tool = try GreetTool.parse(from: args)
+
+        #expect(tool.name == "Bob")
+        #expect(tool.prefix == nil)
+    }
+
     @Test("parse uses default values when parameter is absent")
     func parseDefaultValues() throws {
         let args: [String: Value] = [:]
@@ -689,6 +761,19 @@ struct ParseMethodTests {
 
         #expect(tool.pageSize == 50)
         #expect(tool.page == 3)
+    }
+
+    @Test("parse uses default values when parameter is null")
+    func parseDefaultValuesNull() throws {
+        let args: [String: Value] = [
+            "pageSize": .null,
+            "page": .null,
+        ]
+        let tool = try PaginatedListTool.parse(from: args)
+
+        // Null should be treated as absent, using the default values
+        #expect(tool.pageSize == 25)
+        #expect(tool.page == 1)
     }
 
     @Test("parse throws error when default parameter has wrong type")
