@@ -12,10 +12,6 @@ import Logging
 /// ## Limitations
 ///
 /// This manager is intentionally minimal and does NOT provide:
-/// - **Session timeouts or idle cleanup**: Sessions remain in memory until explicitly
-///   closed via DELETE request or `closeAll()`. If clients disconnect without sending
-///   DELETE (e.g., crash, network failure), sessions leak until `maxSessions` is reached.
-///   For production, implement periodic cleanup of stale sessions.
 /// - **Persistence**: Sessions are lost on restart.
 /// - **Distributed session storage**: No Redis, database, or shared storage support.
 /// - **Authentication**: No auth middleware integration.
@@ -69,6 +65,9 @@ public actor BasicHTTPSessionManager {
     /// Whether to use JSON response mode instead of SSE.
     private let enableJsonResponse: Bool
 
+    /// Idle timeout for sessions.
+    private let sessionIdleTimeout: Duration?
+
     /// Active sessions keyed by session ID.
     private var sessions: [String: Session] = [:]
 
@@ -87,6 +86,8 @@ public actor BasicHTTPSessionManager {
     ///   - maxSessions: Maximum number of concurrent sessions (default: 100).
     ///   - sessionIdGenerator: Function to generate session IDs (default: UUID strings).
     ///   - enableJsonResponse: Whether to use JSON response mode instead of SSE (default: false).
+    ///   - sessionIdleTimeout: How long a session can be idle before automatic cleanup.
+    ///     Defaults to 30 minutes. Set to `nil` to disable.
     ///   - logger: Optional logger for session events (default: creates one with label "mcp.session-manager").
     public init(
         server: MCPServer,
@@ -95,6 +96,7 @@ public actor BasicHTTPSessionManager {
         maxSessions: Int = 100,
         sessionIdGenerator: (@Sendable () -> String)? = nil,
         enableJsonResponse: Bool = false,
+        sessionIdleTimeout: Duration? = .seconds(1800),
         logger: Logger? = nil
     ) {
         self.logger = logger ?? Logger(label: "mcp.session-manager")
@@ -104,6 +106,7 @@ public actor BasicHTTPSessionManager {
         self.maxSessions = maxSessions
         self.sessionIdGenerator = sessionIdGenerator ?? { UUID().uuidString }
         self.enableJsonResponse = enableJsonResponse
+        self.sessionIdleTimeout = sessionIdleTimeout
     }
 
     /// Handles an incoming HTTP request.
@@ -163,7 +166,8 @@ public actor BasicHTTPSessionManager {
                 onSessionClosed: { [weak self] sid in
                     await self?.removeSession(sid)
                 },
-                enableJsonResponse: enableJsonResponse
+                enableJsonResponse: enableJsonResponse,
+                sessionIdleTimeout: sessionIdleTimeout
             )
         )
 
@@ -213,22 +217,9 @@ public actor BasicHTTPSessionManager {
 
     /// Removes a session by ID, closing its transport and stopping its server.
     ///
-    /// Use this to manually clean up stale sessions that weren't properly closed
-    /// by clients. For example, implement a periodic cleanup task:
-    ///
-    /// ```swift
-    /// // Track last activity time separately
-    /// var lastActivity: [String: Date] = [:]
-    ///
-    /// // Periodic cleanup
-    /// for sessionId in await sessionManager.sessionIds {
-    ///     if let lastSeen = lastActivity[sessionId],
-    ///        Date().timeIntervalSince(lastSeen) > 3600 {
-    ///         await sessionManager.removeSession(sessionId)
-    ///         lastActivity.removeValue(forKey: sessionId)
-    ///     }
-    /// }
-    /// ```
+    /// This is called automatically when a session's idle timeout expires or when a
+    /// client sends a DELETE request. It can also be called manually to force-remove
+    /// a session.
     ///
     /// - Parameter sessionId: The session ID to remove.
     /// - Returns: `true` if the session was found and removed, `false` if not found.

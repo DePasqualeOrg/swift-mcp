@@ -172,10 +172,13 @@ let transport = HTTPServerTransport(
         onSessionClosed: { sessionId in
             print("Session ended: \(sessionId)")
             await sessionManager.remove(sessionId)
-        }
+        },
+        sessionIdleTimeout: .seconds(1800)
     )
 )
 ```
+
+Set `sessionIdleTimeout` to automatically terminate sessions that stop sending requests. Most MCP clients don't send a DELETE request when they disconnect, so without an idle timeout, orphaned sessions accumulate until the server runs out of capacity. The `onSessionClosed` callback fires for both idle expiry and explicit DELETE.
 
 ### Stateless Mode
 
@@ -236,7 +239,7 @@ See the [integration examples](https://github.com/DePasqualeOrg/swift-mcp/tree/m
 
 ## BasicHTTPSessionManager
 
-For simple demos and testing, `BasicHTTPSessionManager` handles session lifecycle automatically:
+For simple demos and testing, `BasicHTTPSessionManager` handles session lifecycle automatically, including idle session cleanup:
 
 ```swift
 let mcpServer = MCPServer(name: "my-server", version: "1.0.0")

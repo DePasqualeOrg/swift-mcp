@@ -96,6 +96,10 @@ public actor HTTPServerTransport: Transport {
     private var requestToStreamMapping: [RequestId: String] = [:]
     private var requestResponseMap: [RequestId: Data] = [:]
 
+    // Idle timeout tracking
+    private var lastActivityTime: ContinuousClock.Instant = .now
+    private var idleTimerTask: Task<Void, Never>?
+
     // Standalone SSE stream ID for GET requests
     private let standaloneSseStreamId = "_GET_stream"
 
@@ -143,6 +147,10 @@ public actor HTTPServerTransport: Transport {
             throw MCPError.internalError("Transport already started")
         }
         started = true
+
+        if options.sessionIdleTimeout != nil, options.sessionIdGenerator == nil {
+            logger.warning("sessionIdleTimeout has no effect in stateless mode (no sessionIdGenerator)")
+        }
     }
 
     /// Disconnects and closes the transport.
@@ -237,6 +245,8 @@ public actor HTTPServerTransport: Transport {
     ///   - authInfo: Authentication information for this request (from middleware)
     /// - Returns: An HTTP response
     public func handleRequest(_ request: HTTPRequest, authInfo: AuthInfo? = nil) async -> HTTPResponse {
+        lastActivityTime = .now
+
         // Check if transport has been terminated (applies to all modes)
         // Per spec: server MUST respond to requests after termination with 404 Not Found
         if terminated {
@@ -401,6 +411,8 @@ public actor HTTPServerTransport: Transport {
                 if let sessionId, let callback = options.onSessionInitialized {
                     await callback(sessionId)
                 }
+
+                startIdleTimer()
             } else {
                 initialized = true
             }
@@ -671,10 +683,58 @@ public actor HTTPServerTransport: Transport {
         return HTTPResponse(statusCode: 200, headers: sessionHeaders())
     }
 
+    // MARK: - Idle Timeout
+
+    /// Starts a background task that terminates the session after a period of inactivity.
+    /// Only applies in stateful mode when `sessionIdleTimeout` is configured.
+    private func startIdleTimer() {
+        guard let timeout = options.sessionIdleTimeout else { return }
+
+        idleTimerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let remaining = await remainingIdleTime(timeout: timeout)
+                if remaining > .zero {
+                    try? await Task.sleep(for: remaining)
+                    continue
+                }
+                await handleIdleTimeout()
+                return
+            }
+        }
+    }
+
+    /// Returns the time remaining before the idle timeout expires.
+    private func remainingIdleTime(timeout: Duration) -> Duration {
+        let elapsed = ContinuousClock.now - lastActivityTime
+        return timeout - elapsed
+    }
+
+    /// Called when the idle timeout fires. Notifies the embedding server
+    /// and closes the transport so subsequent requests get 404.
+    private func handleIdleTimeout() async {
+        guard !terminated else { return }
+        logger.info("Session \(sessionId ?? "unknown") idle timeout expired")
+        if let sessionId, let callback = options.onSessionClosed {
+            await callback(sessionId)
+        }
+        await close()
+    }
+
     // MARK: - Close
 
     /// Closes the transport and all active streams.
+    ///
+    /// Safe to call multiple times; subsequent calls are no-ops.
+    /// Callers that represent session termination (DELETE, idle timeout) are responsible
+    /// for firing `onSessionClosed` before calling this method.
     public func close() async {
+        // Cancel idle timer if running
+        idleTimerTask?.cancel()
+        idleTimerTask = nil
+
+        guard !terminated else { return }
+
         // Mark session as terminated so subsequent requests are rejected with 404
         terminated = true
 

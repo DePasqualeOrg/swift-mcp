@@ -127,12 +127,28 @@ public struct HTTPServerTransportOptions: Sendable {
     /// See ``DNSRebindingProtection`` for detailed documentation on when to use each setting.
     public var dnsRebindingProtection: DNSRebindingProtection
 
+    /// How long a session can be idle before the server terminates it.
+    ///
+    /// When set, the transport tracks the time of the last received request.
+    /// If no request arrives within this duration, the transport closes itself
+    /// and fires ``onSessionClosed``.
+    ///
+    /// Only new incoming HTTP requests reset the idle timer. Long-running tool
+    /// executions and open SSE streams do not count as activity. Set this value
+    /// longer than the maximum expected tool execution time to avoid terminating
+    /// sessions with in-flight work.
+    ///
+    /// Recommended value: 1800 seconds (30 minutes).
+    /// Only applies in stateful mode (when ``sessionIdGenerator`` is set).
+    /// If `nil`, sessions never expire automatically.
+    public var sessionIdleTimeout: Duration?
+
     /// Creates transport options.
     ///
     /// DNS rebinding protection defaults to `.localhost()`, appropriate for MCP servers
     /// running on user machines. For cloud deployments, set `dnsRebindingProtection: .none`.
     ///
-    /// - Note: For explicit bind address configuration, use ``forBindAddress(host:port:sessionIdGenerator:onSessionInitialized:onSessionClosed:enableJsonResponse:eventStore:retryInterval:dnsRebindingProtection:)``
+    /// - Note: For explicit bind address configuration, use ``forBindAddress(host:port:sessionIdGenerator:onSessionInitialized:onSessionClosed:enableJsonResponse:eventStore:retryInterval:dnsRebindingProtection:sessionIdleTimeout:)``
     ///   which auto-configures protection based on the address.
     public init(
         sessionIdGenerator: (@Sendable () -> String)? = nil,
@@ -141,7 +157,8 @@ public struct HTTPServerTransportOptions: Sendable {
         enableJsonResponse: Bool = false,
         eventStore: EventStore? = nil,
         retryInterval: Int? = nil,
-        dnsRebindingProtection: DNSRebindingProtection = .localhost()
+        dnsRebindingProtection: DNSRebindingProtection = .localhost(),
+        sessionIdleTimeout: Duration? = nil
     ) {
         self.sessionIdGenerator = sessionIdGenerator
         self.onSessionInitialized = onSessionInitialized
@@ -150,6 +167,7 @@ public struct HTTPServerTransportOptions: Sendable {
         self.eventStore = eventStore
         self.retryInterval = retryInterval
         self.dnsRebindingProtection = dnsRebindingProtection
+        self.sessionIdleTimeout = sessionIdleTimeout
     }
 
     /// Creates options with DNS rebinding protection configured for the bind address.
@@ -196,6 +214,7 @@ public struct HTTPServerTransportOptions: Sendable {
     ///   - eventStore: Event store for resumability support
     ///   - retryInterval: Retry interval in milliseconds for SSE
     ///   - dnsRebindingProtection: Override the auto-configured protection settings
+    ///   - sessionIdleTimeout: How long a session can be idle before automatic termination. If nil, sessions never expire.
     /// - Returns: Configured transport options
     public static func forBindAddress(
         host: String,
@@ -206,7 +225,8 @@ public struct HTTPServerTransportOptions: Sendable {
         enableJsonResponse: Bool = false,
         eventStore: EventStore? = nil,
         retryInterval: Int? = nil,
-        dnsRebindingProtection: DNSRebindingProtection? = nil
+        dnsRebindingProtection: DNSRebindingProtection? = nil,
+        sessionIdleTimeout: Duration? = nil
     ) -> HTTPServerTransportOptions {
         // Auto-configure protection based on bind address if not explicitly provided
         let effectiveProtection = dnsRebindingProtection ?? DNSRebindingProtection.forBindAddress(host: host, port: port)
@@ -218,7 +238,8 @@ public struct HTTPServerTransportOptions: Sendable {
             enableJsonResponse: enableJsonResponse,
             eventStore: eventStore,
             retryInterval: retryInterval,
-            dnsRebindingProtection: effectiveProtection
+            dnsRebindingProtection: effectiveProtection,
+            sessionIdleTimeout: sessionIdleTimeout
         )
     }
 }

@@ -15,7 +15,8 @@ private func testTransport(
     onSessionClosed: (@Sendable (String) async -> Void)? = nil,
     enableJsonResponse: Bool = false,
     eventStore: EventStore? = nil,
-    retryInterval: Int? = nil
+    retryInterval: Int? = nil,
+    sessionIdleTimeout: Duration? = nil
 ) -> HTTPServerTransport {
     HTTPServerTransport(
         options: .init(
@@ -25,7 +26,8 @@ private func testTransport(
             enableJsonResponse: enableJsonResponse,
             eventStore: eventStore,
             retryInterval: retryInterval,
-            dnsRebindingProtection: .none
+            dnsRebindingProtection: .none,
+            sessionIdleTimeout: sessionIdleTimeout
         )
     )
 }
@@ -2511,5 +2513,230 @@ struct HTTPServerTransportTests {
         // Should only have 1 message (the regular one), not the priming event
         #expect(replayedMessages.count == 1, "Should only replay regular messages, not priming events")
         #expect(!replayedMessages.contains { $0.isEmpty }, "Should not contain empty (priming) events")
+    }
+}
+
+// MARK: - Session Idle Timeout Tests
+
+@Suite("Session Idle Timeout Tests")
+struct SessionIdleTimeoutTests {
+    @Test("Session expires after idle timeout")
+    func sessionExpiresAfterIdleTimeout() async throws {
+        actor ClosedState {
+            var closedSessionId: String?
+            func markClosed(_ id: String) { closedSessionId = id }
+            func getClosedSessionId() -> String? { closedSessionId }
+        }
+        let state = ClosedState()
+
+        let transport = testTransport(
+            sessionIdGenerator: { "idle-test-session" },
+            onSessionClosed: { id in await state.markClosed(id) },
+            sessionIdleTimeout: .milliseconds(100)
+        )
+        try await transport.connect()
+
+        // Initialize the session
+        let initRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializeRequest().data(using: .utf8)
+        )
+        let initResponse = await transport.handleRequest(initRequest)
+        #expect(initResponse.statusCode == 200)
+
+        // Wait for idle timeout to fire
+        try await Task.sleep(for: .milliseconds(250))
+
+        // Session should have been closed
+        let closedId = await state.getClosedSessionId()
+        #expect(closedId == "idle-test-session")
+
+        // Subsequent requests should get 404
+        let postRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+                HTTPHeader.sessionId: "idle-test-session",
+            ],
+            body: TestPayloads.pingRequest().data(using: .utf8)
+        )
+        let response = await transport.handleRequest(postRequest)
+        #expect(response.statusCode == 404)
+    }
+
+    @Test("Activity resets the idle timer")
+    func activityResetsIdleTimer() async throws {
+        actor ClosedState {
+            var closed = false
+            func markClosed() { closed = true }
+            func isClosed() -> Bool { closed }
+        }
+        let state = ClosedState()
+
+        let transport = testTransport(
+            sessionIdGenerator: { "active-session" },
+            onSessionClosed: { _ in await state.markClosed() },
+            sessionIdleTimeout: .milliseconds(200)
+        )
+        try await transport.connect()
+
+        // Initialize
+        let initRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializeRequest().data(using: .utf8)
+        )
+        _ = await transport.handleRequest(initRequest)
+
+        // Send requests at intervals shorter than the timeout to keep the session alive
+        for _ in 0 ..< 4 {
+            try await Task.sleep(for: .milliseconds(100))
+            let notification = HTTPRequest(
+                method: "POST",
+                headers: [
+                    HTTPHeader.accept: "application/json, text/event-stream",
+                    HTTPHeader.contentType: "application/json",
+                    HTTPHeader.sessionId: "active-session",
+                ],
+                body: TestPayloads.initializedNotification().data(using: .utf8)
+            )
+            _ = await transport.handleRequest(notification)
+        }
+
+        // Session should still be alive (total elapsed ~400ms, but timer kept resetting)
+        let closed = await state.isClosed()
+        #expect(closed == false)
+
+        // Now wait for the timeout to actually fire
+        try await Task.sleep(for: .milliseconds(350))
+        let closedAfterIdle = await state.isClosed()
+        #expect(closedAfterIdle == true)
+    }
+
+    @Test("DELETE before timeout cancels timer cleanly")
+    func deleteBeforeTimeoutCancelsTimer() async throws {
+        actor ClosedState {
+            var callCount = 0
+            func increment() { callCount += 1 }
+            func getCount() -> Int { callCount }
+        }
+        let state = ClosedState()
+
+        let transport = testTransport(
+            sessionIdGenerator: { "delete-test-session" },
+            onSessionClosed: { _ in await state.increment() },
+            sessionIdleTimeout: .milliseconds(200)
+        )
+        try await transport.connect()
+
+        // Initialize
+        let initRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializeRequest().data(using: .utf8)
+        )
+        _ = await transport.handleRequest(initRequest)
+
+        // DELETE immediately
+        let deleteRequest = HTTPRequest(
+            method: "DELETE",
+            headers: [HTTPHeader.sessionId: "delete-test-session"]
+        )
+        let response = await transport.handleRequest(deleteRequest)
+        #expect(response.statusCode == 200)
+
+        // Wait past the original timeout
+        try await Task.sleep(for: .milliseconds(350))
+
+        // onSessionClosed should have been called exactly once (from DELETE, not from idle timeout)
+        let count = await state.getCount()
+        #expect(count == 1)
+    }
+
+    @Test("Idle timeout is no-op in stateless mode")
+    func idleTimeoutNoOpInStatelessMode() async throws {
+        // Stateless mode (no sessionIdGenerator) with a timeout set
+        let transport = testTransport(
+            sessionIdleTimeout: .milliseconds(100)
+        )
+        try await transport.connect()
+
+        // Initialize
+        let initRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializeRequest().data(using: .utf8)
+        )
+        let initResponse = await transport.handleRequest(initRequest)
+        #expect(initResponse.statusCode == 200)
+
+        // Wait past the timeout
+        try await Task.sleep(for: .milliseconds(250))
+
+        // Transport should still be alive (no session to expire)
+        let terminated = await transport.sessionId
+        // In stateless mode, sessionId is always nil, but the transport should not be terminated
+        #expect(terminated == nil)
+
+        // Sending another request should still work
+        let notification = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializedNotification().data(using: .utf8)
+        )
+        let response = await transport.handleRequest(notification)
+        #expect(response.statusCode == 202)
+    }
+
+    @Test("Idle timeout is no-op when nil")
+    func idleTimeoutNoOpWhenNil() async throws {
+        actor ClosedState {
+            var closed = false
+            func markClosed() { closed = true }
+            func isClosed() -> Bool { closed }
+        }
+        let state = ClosedState()
+
+        let transport = testTransport(
+            sessionIdGenerator: { "no-timeout-session" },
+            onSessionClosed: { _ in await state.markClosed() }
+            // sessionIdleTimeout defaults to nil
+        )
+        try await transport.connect()
+
+        // Initialize
+        let initRequest = HTTPRequest(
+            method: "POST",
+            headers: [
+                HTTPHeader.accept: "application/json, text/event-stream",
+                HTTPHeader.contentType: "application/json",
+            ],
+            body: TestPayloads.initializeRequest().data(using: .utf8)
+        )
+        _ = await transport.handleRequest(initRequest)
+
+        // Wait a reasonable amount of time
+        try await Task.sleep(for: .milliseconds(200))
+
+        // Session should not have been closed
+        let closed = await state.isClosed()
+        #expect(closed == false)
     }
 }

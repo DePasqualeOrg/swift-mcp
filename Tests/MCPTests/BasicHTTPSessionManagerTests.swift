@@ -200,6 +200,25 @@ struct BasicHTTPSessionManagerTests {
         await manager.closeAll()
         #expect(await manager.sessionCount == 0)
     }
+
+    @Test("Session is removed after idle timeout expires")
+    func sessionRemovedAfterIdleTimeout() async throws {
+        let manager = makeSessionManager(sessionIdleTimeout: .milliseconds(100))
+
+        let initRequest = TestPayloads.postRequest(
+            body: TestPayloads.initializeRequest(id: "init-idle")
+        )
+        let response = await manager.handleRequest(initRequest)
+        #expect(response.statusCode == 200)
+        #expect(await manager.sessionCount == 1)
+
+        // Wait for idle timeout
+        try await Task.sleep(for: .milliseconds(250))
+
+        #expect(await manager.sessionCount == 0)
+
+        await manager.closeAll()
+    }
 }
 
 private func withSessionManager<T>(
@@ -243,7 +262,8 @@ private func assertJSONRPCError(
 
 private func makeSessionManager(
     maxSessions: Int = 100,
-    sessionIdGenerator: (@Sendable () -> String)? = nil
+    sessionIdGenerator: (@Sendable () -> String)? = nil,
+    sessionIdleTimeout: Duration? = nil
 ) -> BasicHTTPSessionManager {
     let server = MCPServer(name: "basic-http-session-manager-tests", version: "1.0.0")
     return BasicHTTPSessionManager(
@@ -251,6 +271,7 @@ private func makeSessionManager(
         host: "0.0.0.0",
         port: 8080,
         maxSessions: maxSessions,
-        sessionIdGenerator: sessionIdGenerator
+        sessionIdGenerator: sessionIdGenerator,
+        sessionIdleTimeout: sessionIdleTimeout
     )
 }
