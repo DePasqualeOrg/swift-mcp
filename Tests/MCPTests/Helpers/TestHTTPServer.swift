@@ -11,7 +11,6 @@ import Hummingbird
 import HummingbirdTesting
 import Logging
 import NIOCore
-import NIOFoundationCompat
 import ServiceLifecycle
 
 @testable import MCP
@@ -168,7 +167,7 @@ actor TestHTTPServer {
         let body: Data?
         var collected = try await request.body.collect(upTo: 10 * 1024 * 1024) // 10MB limit
         if collected.readableBytes > 0 {
-            body = collected.readData(length: collected.readableBytes)
+            body = collected.getBytes(at: collected.readerIndex, length: collected.readableBytes).map { Data($0) }
         } else {
             body = nil
         }
