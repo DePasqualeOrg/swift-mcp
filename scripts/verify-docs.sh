@@ -3,12 +3,16 @@
 
 cd "$(dirname "$0")/.."
 
+# Discover library product targets from Package.swift, skipping test/macro/executable targets
 TARGETS=$(swift package dump-package | python3 -c "
 import json, sys
 pkg = json.load(sys.stdin)
-for t in pkg['targets']:
-    if t['type'] == 'regular':
-        print(t['name'])
+targets = set()
+for p in pkg['products']:
+    if p['type'].get('library') is not None:
+        targets.update(p['targets'])
+for t in sorted(targets):
+    print(t)
 ")
 
 if [ -z "$TARGETS" ]; then
