@@ -1,31 +1,34 @@
 #!/bin/bash
 # Verify documentation builds without warnings
 
-set -e
 cd "$(dirname "$0")/.."
 
-ALLOW_WARNINGS=false
-if [[ "$1" == "--allow-warnings" ]]; then
-    ALLOW_WARNINGS=true
+TARGETS=$(swift package dump-package | python3 -c "
+import json, sys
+pkg = json.load(sys.stdin)
+for t in pkg['targets']:
+    if t['type'] == 'regular':
+        print(t['name'])
+")
+
+if [ -z "$TARGETS" ]; then
+    echo "No targets found."
+    exit 1
 fi
 
-echo "Building documentation..."
+FAILED=0
 
-if [[ "$ALLOW_WARNINGS" == true ]]; then
-    # Run and capture output, showing warnings but not failing
-    OUTPUT=$(swift package generate-documentation --target MCP 2>&1) || true
-    echo "$OUTPUT"
-
-    WARNING_COUNT=$(echo "$OUTPUT" | grep -c "warning:" || true)
-    if [[ "$WARNING_COUNT" -gt 0 ]]; then
-        echo ""
-        echo "Found $WARNING_COUNT warning(s)."
-    else
-        echo ""
-        echo "No warnings found."
+while IFS= read -r TARGET; do
+    echo "Building documentation for $TARGET..."
+    if ! swift package generate-documentation --target "$TARGET" --warnings-as-errors; then
+        FAILED=1
     fi
-else
-    swift package generate-documentation --target MCP --warnings-as-errors
+    echo ""
+done <<< "$TARGETS"
+
+if [ "$FAILED" -ne 0 ]; then
+    echo "Documentation build failed with warnings."
+    exit 1
 fi
 
-echo "Documentation build complete."
+echo "All documentation builds passed."
