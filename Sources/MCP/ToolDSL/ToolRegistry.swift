@@ -221,7 +221,7 @@ public actor ToolRegistry {
             switch entry.kind {
                 case let .dsl(toolType):
                     let instance = try toolType.parse(from: arguments)
-                    let output = try await instance.perform(context: context)
+                    let output = try await instance._perform(context: context)
                     return try output.toCallToolResult()
 
                 case let .closure(_, handler):

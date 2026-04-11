@@ -33,21 +33,50 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
         let structName = structDecl.name.text
 
+        // Determine access level from the struct declaration
+        let accessLevel = structDecl.modifiers.first(where: {
+            $0.name.text == "public" || $0.name.text == "package" || $0.name.text == "internal"
+        })?.name.text
+        let accessPrefix = accessLevel.map { "\($0) " } ?? ""
+
         // Extract tool metadata
         let toolInfo = try extractToolInfo(from: structDecl, context: context)
 
         // Generate members
         var members: [DeclSyntax] = []
 
+        // Generate default annotations if the struct doesn't declare one
+        if toolInfo.annotations.isEmpty {
+            let hasAnnotationsProperty = structDecl.memberBlock.members.contains { member in
+                guard let varDecl = member.decl.as(VariableDeclSyntax.self),
+                      varDecl.modifiers.contains(where: { $0.name.text == "static" })
+                else { return false }
+                return varDecl.bindings.contains { binding in
+                    binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "annotations"
+                }
+            }
+            if !hasAnnotationsProperty {
+                members.append("""
+                static let annotations: [AnnotationOption] = []
+                """)
+            }
+        }
+
         // Generate init()
         members.append("""
-        public init() {}
+        \(raw: accessPrefix)init() {}
         """)
 
-        // Generate bridging perform(context:) if user wrote perform() without context
-        if !toolInfo.hasContextParameter {
+        // Generate _perform(context:) bridging to the user's perform() or perform(context:)
+        if toolInfo.hasContextParameter {
             members.append("""
-            public func perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
+            \(raw: accessPrefix)func _perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
+                try await perform(context: context)
+            }
+            """)
+        } else {
+            members.append("""
+            \(raw: accessPrefix)func _perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
                 try await perform()
             }
             """)
@@ -56,12 +85,13 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         // Generate toolDefinition
         let toolDefinitionDecl = generateToolDefinition(
             structName: structName,
-            toolInfo: toolInfo
+            toolInfo: toolInfo,
+            accessPrefix: accessPrefix
         )
         members.append(toolDefinitionDecl)
 
         // Generate parse(from:)
-        let parseDecl = generateParseMethod(toolInfo: toolInfo)
+        let parseDecl = generateParseMethod(toolInfo: toolInfo, accessPrefix: accessPrefix)
         members.append(parseDecl)
 
         return members
@@ -490,7 +520,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     private static func generateToolDefinition(
         structName _: String,
-        toolInfo: ToolInfo
+        toolInfo: ToolInfo,
+        accessPrefix: String
     ) -> DeclSyntax {
         // Generate properties for each parameter
         var propertiesEntries: [String] = []
@@ -580,7 +611,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         let schemaLiteral = schemaEntries.joined(separator: ",\n                    ")
 
         return """
-        public static var toolDefinition: MCP.Tool {
+        \(raw: accessPrefix)static var toolDefinition: MCP.Tool {
             MCP.Tool(
                 name: name,
                 description: description,
@@ -594,11 +625,11 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         """
     }
 
-    private static func generateParseMethod(toolInfo: ToolInfo) -> DeclSyntax {
+    private static func generateParseMethod(toolInfo: ToolInfo, accessPrefix: String) -> DeclSyntax {
         // For tools with no parameters, generate a simple parse method
         if toolInfo.parameters.isEmpty {
             return """
-            public static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+            \(raw: accessPrefix)static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
                 Self()
             }
             """
@@ -633,7 +664,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         let statements = parseStatements.joined(separator: "\n    ")
 
         return """
-        public static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+        \(raw: accessPrefix)static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
             var _instance = Self()
             let _args = arguments ?? [:]
             \(raw: statements)

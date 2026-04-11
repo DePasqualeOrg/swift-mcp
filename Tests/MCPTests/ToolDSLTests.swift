@@ -964,7 +964,7 @@ struct ToolExecutionTests {
         let tool = try EchoTool.parse(from: args)
         let context = createMockContext()
 
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result == "Echo: Test message")
     }
 
@@ -978,7 +978,7 @@ struct ToolExecutionTests {
         let tool = try CalculatorTool.parse(from: args)
         let context = createMockContext()
 
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result == "Result: 50.0")
     }
 
@@ -989,13 +989,13 @@ struct ToolExecutionTests {
         // Without optional
         let args1: [String: Value] = ["name": .string("World")]
         let tool1 = try GreetTool.parse(from: args1)
-        let result1 = try await tool1.perform(context: context)
+        let result1 = try await tool1._perform(context: context)
         #expect(result1 == "Hello, World!")
 
         // With optional
         let args2: [String: Value] = ["name": .string("World"), "prefix": .string("Greetings")]
         let tool2 = try GreetTool.parse(from: args2)
-        let result2 = try await tool2.perform(context: context)
+        let result2 = try await tool2._perform(context: context)
         #expect(result2 == "Greetings, World!")
     }
 
@@ -1007,7 +1007,7 @@ struct ToolExecutionTests {
         let tool = try ProcessItemsTool.parse(from: args)
         let context = createMockContext()
 
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result == "Processed 3 items: apple, banana, cherry")
     }
 
@@ -1020,7 +1020,7 @@ struct ToolExecutionTests {
         let tool = try CreateTaskTool.parse(from: args)
         let context = createMockContext()
 
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result == "Created task 'Important task' with priority: critical")
     }
 
@@ -1031,7 +1031,7 @@ struct ToolExecutionTests {
         let context = createMockContext()
 
         // Tools with perform() should work with the bridging perform(context:)
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result == "Processed: test input")
     }
 
@@ -1041,7 +1041,7 @@ struct ToolExecutionTests {
         let tool = try SimplePerformStructuredTool.parse(from: args)
         let context = createMockContext()
 
-        let result = try await tool.perform(context: context)
+        let result = try await tool._perform(context: context)
         #expect(result.query == "search term")
         #expect(result.totalCount == 5)
         #expect(result.items == ["a", "b", "c"])

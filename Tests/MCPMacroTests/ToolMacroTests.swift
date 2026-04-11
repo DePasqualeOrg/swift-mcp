@@ -220,5 +220,292 @@ final class ToolMacroTests: XCTestCase {
             macros: testMacros
         )
     }
+
+    // MARK: - Access Level Propagation Tests
+
+    func testPublicStructGeneratesPublicMembers() throws {
+        assertMacroExpansion(
+            """
+            @Tool
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+            }
+            """,
+            expandedSource: """
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+
+                static let annotations: [AnnotationOption] = []
+
+                public init() {
+                }
+
+                public func _perform(context: HandlerContext) async throws -> String {
+                    try await perform()
+                }
+
+                public static var toolDefinition: MCP.Tool {
+                    MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object([
+                            "type": .string("object"),
+                                    "properties": .object([:]),
+                                    "required": .array([])
+                        ]),
+                        outputSchema: outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                public static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension MyTool: MCP.ToolSpec, Sendable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+
+    func testPublicStructWithAnnotations() throws {
+        assertMacroExpansion(
+            """
+            @Tool
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+                static let annotations: [AnnotationOption] = [.readOnly, .title("My Tool")]
+
+                func perform() async throws -> String {
+                    "done"
+                }
+            }
+            """,
+            expandedSource: """
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+                static let annotations: [AnnotationOption] = [.readOnly, .title("My Tool")]
+
+                func perform() async throws -> String {
+                    "done"
+                }
+
+                public init() {
+                }
+
+                public func _perform(context: HandlerContext) async throws -> String {
+                    try await perform()
+                }
+
+                public static var toolDefinition: MCP.Tool {
+                    MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object([
+                            "type": .string("object"),
+                                    "properties": .object([:]),
+                                    "required": .array([])
+                        ]),
+                        outputSchema: outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                public static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension MyTool: MCP.ToolSpec, Sendable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+
+    func testInternalStructGeneratesInternalMembers() throws {
+        assertMacroExpansion(
+            """
+            @Tool
+            struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+            }
+            """,
+            expandedSource: """
+            struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+
+                static let annotations: [AnnotationOption] = []
+
+                init() {
+                }
+
+                func _perform(context: HandlerContext) async throws -> String {
+                    try await perform()
+                }
+
+                static var toolDefinition: MCP.Tool {
+                    MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object([
+                            "type": .string("object"),
+                                    "properties": .object([:]),
+                                    "required": .array([])
+                        ]),
+                        outputSchema: outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension MyTool: MCP.ToolSpec, Sendable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+
+    func testPackageStructGeneratesPackageMembers() throws {
+        assertMacroExpansion(
+            """
+            @Tool
+            package struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+            }
+            """,
+            expandedSource: """
+            package struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform() async throws -> String {
+                    "done"
+                }
+
+                static let annotations: [AnnotationOption] = []
+
+                package init() {
+                }
+
+                package func _perform(context: HandlerContext) async throws -> String {
+                    try await perform()
+                }
+
+                package static var toolDefinition: MCP.Tool {
+                    MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object([
+                            "type": .string("object"),
+                                    "properties": .object([:]),
+                                    "required": .array([])
+                        ]),
+                        outputSchema: outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                package static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension MyTool: MCP.ToolSpec, Sendable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+
+    func testPublicStructWithPerformContext() throws {
+        assertMacroExpansion(
+            """
+            @Tool
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform(context: HandlerContext) async throws -> String {
+                    "done"
+                }
+            }
+            """,
+            expandedSource: """
+            public struct MyTool {
+                static let name = "my_tool"
+                static let description = "A tool"
+
+                func perform(context: HandlerContext) async throws -> String {
+                    "done"
+                }
+
+                static let annotations: [AnnotationOption] = []
+
+                public init() {
+                }
+
+                public func _perform(context: HandlerContext) async throws -> String {
+                    try await perform(context: context)
+                }
+
+                public static var toolDefinition: MCP.Tool {
+                    MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object([
+                            "type": .string("object"),
+                                    "properties": .object([:]),
+                                    "required": .array([])
+                        ]),
+                        outputSchema: outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                public static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension MyTool: MCP.ToolSpec, Sendable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
 }
 #endif

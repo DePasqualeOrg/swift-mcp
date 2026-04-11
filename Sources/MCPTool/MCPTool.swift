@@ -186,7 +186,7 @@ public extension Parameter {
 ///     }
 /// }
 /// ```
-@attached(member, names: named(toolDefinition), named(parse), named(init), named(perform))
+@attached(member, names: named(toolDefinition), named(parse), named(init), named(_perform), named(annotations))
 @attached(extension, conformances: ToolSpec, Sendable)
 public macro Tool() = #externalMacro(module: "MCPMacros", type: "ToolMacro")
 
