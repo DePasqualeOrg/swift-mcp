@@ -53,6 +53,16 @@
 ///     }
 /// }
 /// ```
+///
+/// ## Error Messages
+///
+/// `perform()` can throw errors for validation beyond JSON Schema constraints
+/// (e.g., semantic validation, business rules, or format checks).
+///
+/// For clear, actionable error messages that help models self-correct, use types
+/// conforming to `LocalizedError`. Without it, the model sees generic messages like
+/// `"The operation couldn't be completed."` which aren't helpful for recovery. The
+/// error's `localizedDescription` is returned to the client with `isError: true`.
 public protocol ToolSpec: Sendable {
     /// The result type returned by `perform(context:)`.
     associatedtype Output: ToolOutput
