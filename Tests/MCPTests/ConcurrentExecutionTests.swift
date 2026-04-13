@@ -402,4 +402,222 @@ struct ConcurrentExecutionTests {
             Issue.record("Expected text content from tool B")
         }
     }
+
+    /// Wall-clock regression guard for the protocol message loop.
+    ///
+    /// Fires N tool calls whose handlers sleep for D seconds, then asserts
+    /// total wall-clock is close to D rather than N·D. If the message loop
+    /// ever re-serializes (e.g. by dropping the `TaskGroup` dispatch), this
+    /// test is the one that catches it — the other concurrency tests block
+    /// on events and would deadlock rather than measure overlap.
+    ///
+    /// `handlerCount` is tuned so that a partial-serialization regression
+    /// (e.g. k-at-a-time with k < N) visibly exceeds the bound: with N=10
+    /// and D=1s, fully parallel is ≈ 1s, 2-at-a-time is ≈ 5s, 5-at-a-time
+    /// is ≈ 2s. The 2·D bound catches anything worse than roughly
+    /// half-parallel.
+    @Test("Parallel tool calls complete in approximately one handler duration",
+          .timeLimit(.minutes(1)))
+    func parallelToolCallsWallClockOverlaps() async throws {
+        let handlerCount = 10
+        let handlerDuration: Duration = .seconds(1)
+
+        let server = Server(
+            name: "ParallelThroughputServer",
+            version: "1.0.0",
+            capabilities: .init(tools: .init())
+        )
+
+        await server.withRequestHandler(ListTools.self) { _, _ in
+            ListTools.Result(tools: [
+                Tool(name: "sleep", description: "Sleeps for a fixed duration",
+                     inputSchema: ["type": "object"]),
+            ])
+        }
+
+        await server.withRequestHandler(CallTool.self) { _, _ in
+            try await Task.sleep(for: handlerDuration)
+            return CallTool.Result(content: [.text("slept")])
+        }
+
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+        let client = Client(name: "ParallelThroughputClient", version: "1.0")
+
+        try await server.start(transport: serverTransport)
+        try await client.connect(transport: clientTransport)
+
+        let start = ContinuousClock.now
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for _ in 0 ..< handlerCount {
+                group.addTask {
+                    _ = try await client.send(CallTool.request(.init(name: "sleep", arguments: nil)))
+                }
+            }
+            try await group.waitForAll()
+        }
+        let elapsed = ContinuousClock.now - start
+
+        let upperBound: Duration = handlerDuration * 2
+        let lowerBound: Duration = handlerDuration * 9 / 10
+        #expect(elapsed < upperBound,
+                "\(handlerCount) parallel handlers should complete in ~\(handlerDuration), not \(handlerCount)×. Elapsed: \(elapsed)")
+        #expect(elapsed >= lowerBound,
+                "Handler should actually sleep; elapsed \(elapsed) < \(lowerBound) suggests the handler did not run its sleep.")
+    }
+
+    /// Drain-on-shutdown: in-flight handlers must be cancelled before
+    /// `server.stop()` returns.
+    ///
+    /// Scope note: the cancellation here is delivered by `Server.stop()`'s
+    /// own iteration over `inFlightHandlerTasks`, not by the TaskGroup's
+    /// cancellation propagation inside `startProtocolMessageLoop`. This test
+    /// guards the public `stop()` contract and would catch a regression that
+    /// drops the `inFlightHandlerTasks` cancel loop or fails to call
+    /// `stopProtocol()`. A regression that only dropped `group.waitForAll()`
+    /// from the message loop would not be caught here — the dispatch shims
+    /// are too short to exercise it.
+    @Test("Server stop cancels in-flight handlers and drains them",
+          .timeLimit(.minutes(1)))
+    func serverStopCancelsAndDrainsInFlightHandlers() async throws {
+        let handlerStarted = AsyncEvent()
+        let handlerObservedCancellation = AsyncEvent()
+
+        let server = Server(
+            name: "DrainOnShutdownServer",
+            version: "1.0.0",
+            capabilities: .init(tools: .init())
+        )
+
+        await server.withRequestHandler(ListTools.self) { _, _ in
+            ListTools.Result(tools: [
+                Tool(name: "block", description: "Blocks forever until cancelled",
+                     inputSchema: ["type": "object"]),
+            ])
+        }
+
+        await server.withRequestHandler(CallTool.self) { _, _ in
+            await handlerStarted.signal()
+            do {
+                try await Task.sleep(for: .seconds(300))
+            } catch {
+                // Task.sleep throws CancellationError on cancel — surface it.
+                if Task.isCancelled {
+                    await handlerObservedCancellation.signal()
+                }
+                throw error
+            }
+            return CallTool.Result(content: [.text("unreachable")])
+        }
+
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+        let client = Client(name: "DrainOnShutdownClient", version: "1.0")
+
+        try await server.start(transport: serverTransport)
+        try await client.connect(transport: clientTransport)
+
+        // Fire a call that will block in the handler. We don't await its result
+        // — the server will cancel it during stop().
+        let blockedTask = Task {
+            try await client.send(CallTool.request(.init(name: "block", arguments: nil)))
+        }
+
+        await handlerStarted.wait()
+
+        // Shut the server down. This must cancel the in-flight handler task
+        // and not return until the TaskGroup has drained.
+        await server.stop()
+
+        // Handler should observe cancellation.
+        await handlerObservedCancellation.wait()
+
+        #expect(await handlerObservedCancellation.isSignaled,
+                "In-flight handler must observe Task.isCancelled when the server stops")
+
+        // Clean up the blocked client task (its response will come back as an
+        // error once the connection is closed, or it will simply fail).
+        blockedTask.cancel()
+        _ = try? await blockedTask.value
+    }
+
+    /// Regression guard for the `.connected` state guard in
+    /// `Server.handleIncomingRequest`. Under parallel dispatch, a shim for
+    /// a second request arriving while `server.stop()` is in progress could
+    /// repopulate `inFlightHandlerTasks` after the stop-time clear — the
+    /// new unstructured handler Task would then escape both TaskGroup
+    /// cancellation (it's unstructured) and the stop-time cancel loop
+    /// (already ran).
+    ///
+    /// The `.connected` guard prevents this: once the Server actor flips to
+    /// `.disconnecting` (synchronously in `stopProtocol`), any dispatch shim
+    /// that subsequently runs sees the state and drops the request instead
+    /// of registering a new handler.
+    ///
+    /// Scope: this test cannot determine from the client side whether a
+    /// particular second-request arrived before or after the state flip, so
+    /// it asserts only the stable post-stop invariant: the in-flight map
+    /// must be empty. A regression that removes the guard or moves the
+    /// state flip after the loop drain would reliably fail this assertion
+    /// because late shims would register into the already-cleared map.
+    @Test("Server.stop leaves inFlightHandlerTasks empty under parallel dispatch",
+          .timeLimit(.minutes(1)))
+    func serverStopLeavesInFlightMapEmpty() async throws {
+        let firstHandlerStarted = AsyncEvent()
+        let firstHandlerCanFinish = AsyncEvent()
+
+        let server = Server(
+            name: "DisconnectingGuardServer",
+            version: "1.0.0",
+            capabilities: .init(tools: .init())
+        )
+
+        await server.withRequestHandler(ListTools.self) { _, _ in
+            ListTools.Result(tools: [
+                Tool(name: "first", description: "Blocks until released",
+                     inputSchema: ["type": "object"]),
+                Tool(name: "second", description: "Arrives during stop",
+                     inputSchema: ["type": "object"]),
+            ])
+        }
+
+        await server.withRequestHandler(CallTool.self) { request, _ in
+            if request.name == "first" {
+                await firstHandlerStarted.signal()
+                await firstHandlerCanFinish.wait()
+                return CallTool.Result(content: [.text("first-ok")])
+            } else {
+                return CallTool.Result(content: [.text("second-ok")])
+            }
+        }
+
+        let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
+        let client = Client(name: "DisconnectingGuardClient", version: "1.0")
+
+        try await server.start(transport: serverTransport)
+        try await client.connect(transport: clientTransport)
+
+        // Fire the first (blocking) call so stop() has something to cancel
+        // and drain.
+        let firstTask = Task {
+            try? await client.send(CallTool.request(.init(name: "first", arguments: nil)))
+        }
+        await firstHandlerStarted.wait()
+
+        let stopTask = Task { await server.stop() }
+
+        // Fire a second call during stop. Its dispatch shim may or may not
+        // beat the state flip — that's intentionally nondeterministic. The
+        // test only asserts the post-stop invariant below.
+        let secondTask = Task {
+            try? await client.send(CallTool.request(.init(name: "second", arguments: nil)))
+        }
+
+        await firstHandlerCanFinish.signal()
+        _ = await stopTask.value
+        _ = await firstTask.value
+        _ = await secondTask.value
+
+        let inFlightAfterStop = await server.registeredHandlers.inFlightHandlerTasks.count
+        #expect(inFlightAfterStop == 0,
+                "inFlightHandlerTasks must be empty after server.stop() returns. Got: \(inFlightAfterStop)")
+    }
 }

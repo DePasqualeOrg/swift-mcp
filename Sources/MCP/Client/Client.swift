@@ -611,6 +611,14 @@ public actor Client: ProtocolLayer {
     // MARK: - ProtocolLayer
 
     /// Handle an incoming request from the peer (server→client).
+    ///
+    /// No `.connected` guard here (unlike `Server.handleIncomingRequest`):
+    /// Client runs server-initiated requests (sampling, elicitation,
+    /// roots/list) inline without spawning an unstructured handler Task or
+    /// registering into a task map. The Server-side register-after-clear
+    /// concern does not apply. If a request arrives during disconnect, the
+    /// handler runs to completion and any response write into a closing
+    /// transport fails gracefully at the transport layer.
     package func handleIncomingRequest(_ request: AnyRequest, data _: Data, context _: MessageMetadata?) async {
         await handleIncomingRequest(request)
     }

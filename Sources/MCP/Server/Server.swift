@@ -698,7 +698,24 @@ public actor Server: ProtocolLayer {
 
     /// Handle an incoming request from the client.
     /// Spawns handler in a separate Task to avoid blocking the message loop.
+    ///
+    /// Messages that arrive after the protocol has flipped to `.disconnecting`
+    /// are dropped so `stop()` cannot leak an uncancelled handler. The order
+    /// is: `Server.stop()` clears `inFlightHandlerTasks` and then enters
+    /// `stopProtocol`, which flips the state **synchronously on the Server
+    /// actor** before releasing it at `await loopTask?.value`. Any dispatch
+    /// shim that then runs on the actor sees `.disconnecting` and this guard
+    /// fires — otherwise it would register a new handler Task into the
+    /// already-cleared map, escaping both TaskGroup cancellation (the handler
+    /// is an unstructured child of this function, not the loop group) and
+    /// the stop-time cancel loop (already ran).
+    ///
+    /// TOCTOU: no `await` between the guard and `trackInFlightRequest`, so
+    /// the actor is held across the entire body — the state cannot flip
+    /// mid-registration.
     package func handleIncomingRequest(_ request: AnyRequest, data _: Data, context messageContext: MessageMetadata?) async {
+        guard case .connected = protocolState.connectionState else { return }
+
         let requestId = request.id
         let handlerTask = Task { [weak self, messageContext] in
             guard let self else { return }
