@@ -250,21 +250,80 @@ package extension ProtocolLayer {
     // MARK: Message Loop
 
     /// Start the message receive loop.
+    ///
+    /// Requests and responses are dispatched as child tasks so the loop can
+    /// pull the next message while prior handlers are still running. This
+    /// matches the TypeScript and Python SDKs and lets concurrency-capable
+    /// tool layers (e.g. bounded worker pools) actually receive overlapping
+    /// requests. Parallelism is unbounded at the SDK layer — back-pressure
+    /// belongs in the transport and in application handlers, not here.
+    ///
+    /// Notifications are dispatched **inline** (not into the group). The
+    /// inline `await` releases the loop task's executor, giving
+    /// already-enqueued child tasks a scheduling opportunity to reach the
+    /// Server actor before the notification's own hop is enqueued. This is
+    /// a best-effort ordering hint, not a guarantee — the actor executor is
+    /// not strictly FIFO and task priorities may reorder. The residual race
+    /// — an inline `cancelled(N)` reaching the actor before N's dispatch
+    /// shim — resolves to the spec-allowed no-op in `cancelInFlightRequest`
+    /// and mirrors TypeScript/Python SDK behavior in practice.
+    ///
+    /// Structured concurrency is preserved: `TaskGroup` propagates cancel
+    /// from the outer `messageLoopTask` to every in-flight dispatch shim, and
+    /// `waitForAll()` drains them before `handleMessageLoopEnded` runs.
     private func startProtocolMessageLoop() {
         guard let transport = protocolState.transport else { return }
 
         protocolState.messageLoopTask = Task { [weak self] in
-            do {
-                let stream = await transport.receive()
-                for try await transportMessage in stream {
-                    guard !Task.isCancelled else { break }
-                    await self?.handleTransportMessage(transportMessage)
+            await withTaskGroup(of: Void.self) { group in
+                do {
+                    let stream = await transport.receive()
+                    for try await transportMessage in stream {
+                        guard !Task.isCancelled else { break }
+                        if Self.isNotificationEnvelope(transportMessage.data) {
+                            await self?.handleTransportMessage(transportMessage)
+                        } else {
+                            guard let self else { break }
+                            group.addTask {
+                                await self.handleTransportMessage(transportMessage)
+                            }
+                        }
+                    }
+                } catch {
+                    await self?.handleMessageLoopError(error)
                 }
-            } catch {
-                await self?.handleMessageLoopError(error)
+                await group.waitForAll()
             }
             await self?.handleMessageLoopEnded()
         }
+    }
+
+    /// Envelope classifier used on the message loop to decide whether a
+    /// message should be dispatched in parallel or serialized inline.
+    ///
+    /// A JSON-RPC notification has a `method` and no `id`; requests and
+    /// responses always carry an `id`. For batches (JSON arrays), a
+    /// pure-notification batch is also inlined so batch-wrapped cancels
+    /// preserve the same ordering guarantee as unwrapped ones. Mixed
+    /// batches and malformed messages fall through to the parallel path
+    /// where existing decode logic handles them.
+    ///
+    /// Cost note: this parses the full JSON once here and the message is
+    /// re-parsed inside `handleTransportMessage`. For typical MCP workloads
+    /// (small messages, modest rate) the overhead is negligible. If profile
+    /// pressure ever shows up here, the fix is to thread the decoded result
+    /// through to `handleTransportMessage` instead of a cheap sniff.
+    private static func isNotificationEnvelope(_ data: Data) -> Bool {
+        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+            return false
+        }
+        if let dict = object as? [String: Any] {
+            return dict["method"] != nil && dict["id"] == nil
+        }
+        if let array = object as? [[String: Any]], !array.isEmpty {
+            return array.allSatisfy { $0["method"] != nil && $0["id"] == nil }
+        }
+        return false
     }
 
     /// Handle a message from the transport.
