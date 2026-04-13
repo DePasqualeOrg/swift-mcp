@@ -2,6 +2,7 @@
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDePasqualeOrg%2Fswift-mcp%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/DePasqualeOrg/swift-mcp)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FDePasqualeOrg%2Fswift-mcp%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/DePasqualeOrg/swift-mcp)
+[![SafeSkill 92/100](https://img.shields.io/badge/SafeSkill-92%2F100_Verified%20Safe-brightgreen)](https://safeskill.dev/scan/depasqualeorg-swift-mcp)
 
 [**Documentation**](https://swiftpackageindex.com/DePasqualeOrg/swift-mcp/main/documentation/mcp)
 
