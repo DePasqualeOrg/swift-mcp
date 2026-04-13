@@ -109,10 +109,10 @@ struct ProtocolTests {
         try await clientTransport.send(data)
 
         // Wait for handler to be invoked
-        try await Task.sleep(for: .milliseconds(100))
+        let arrived = await pollUntil { await !proto.receivedRequests.isEmpty }
+        #expect(arrived, "Handler should have been invoked")
 
         let requests = await proto.receivedRequests
-        #expect(!requests.isEmpty, "Handler should have been invoked")
         #expect(requests.first?.method == Ping.name, "Method should be ping")
 
         await proto.stopProtocol()
@@ -159,7 +159,7 @@ struct ProtocolTests {
         """
         try await clientTransport.send(jsonString.data(using: .utf8)!)
 
-        try await Task.sleep(for: .milliseconds(100))
+        _ = await pollUntil { await proto.nullIdErrors.count == 1 }
 
         let errors = await proto.nullIdErrors
         #expect(errors.count == 1)
@@ -187,7 +187,7 @@ struct ProtocolTests {
         """
         try await clientTransport.send(jsonString.data(using: .utf8)!)
 
-        try await Task.sleep(for: .milliseconds(100))
+        _ = await pollUntil { await proto.nullIdErrors.count == 1 }
 
         let errors = await proto.nullIdErrors
         #expect(errors.count == 1)
@@ -641,7 +641,7 @@ struct ResponseRouterTests {
         let data = try encoder.encode(response)
         try await clientTransport.send(data)
 
-        try await Task.sleep(for: .milliseconds(100))
+        _ = await pollUntil { await routedResponses.value.contains(.number(42)) }
 
         let routed = await routedResponses.value
         #expect(routed.contains(.number(42)), "Router should have received the response")
@@ -797,7 +797,7 @@ struct UnknownMessageHandlingTests {
         try await clientTransport.send(invalidMessage)
 
         // Wait for message to be processed
-        try await Task.sleep(for: .milliseconds(100))
+        _ = await pollUntil { await unknownMessageReceived.wasReceived }
 
         let received = await unknownMessageReceived.wasReceived
         #expect(received, "handleUnknownMessage should have been called for invalid message")
@@ -819,7 +819,7 @@ struct UnknownMessageHandlingTests {
         let emptyMessage = "{}".data(using: .utf8)!
         try await clientTransport.send(emptyMessage)
 
-        try await Task.sleep(for: .milliseconds(100))
+        _ = await pollUntil { await unknownMessageReceived.wasReceived }
 
         let received = await unknownMessageReceived.wasReceived
         #expect(received, "Empty JSON should trigger unknown message handler")
@@ -846,18 +846,14 @@ struct ResponseHandlingEdgeCaseTests {
         let data = try encoder.encode(response)
         try await clientTransport.send(data)
 
-        // Wait for message to be processed
-        try await Task.sleep(for: .milliseconds(100))
-
-        // The test passes if we get here without crashing
-        // The protocol should log a warning but continue functioning
-
-        // Verify protocol is still functional by sending a valid request
+        // The protocol should log a warning but continue functioning.
+        // Verify it is still functional by sending a valid request.
         let request = Request<Ping>(id: .number(1), method: Ping.name, params: Ping.Parameters())
         let requestData = try encoder.encode(request)
         try await clientTransport.send(requestData)
 
-        try await Task.sleep(for: .milliseconds(50))
+        let arrived = await pollUntil { await proto.receivedRequests.count == 1 }
+        #expect(arrived, "Protocol should still process valid requests after unknown response")
 
         let requests = await proto.receivedRequests
         #expect(requests.count == 1, "Protocol should still process valid requests after unknown response")

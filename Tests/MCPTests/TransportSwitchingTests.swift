@@ -155,11 +155,8 @@ struct TransportSwitchingTests {
         await transportA.queue(data: pingJSON.data(using: .utf8)!)
 
         // Wait for the handler to be called
-        try await Task.sleep(for: .milliseconds(50))
-
-        // Verify handler was called
-        let wasCalled = await control.handlerWasCalled
-        #expect(wasCalled == true, "Handler should have been called")
+        let wasCalled = await pollUntil { await control.handlerWasCalled }
+        #expect(wasCalled, "Handler should have been called")
 
         // 3. While A's request is processing, switch to transport B
         // This simulates another client connecting and reassigning server.connection
