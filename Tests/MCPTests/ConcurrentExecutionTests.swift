@@ -1,8 +1,7 @@
 // Copyright © Anthony DePasquale
 
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests that verify server handlers execute concurrently.
 ///
@@ -18,7 +17,6 @@ import Testing
 ///
 /// If handlers ran sequentially, the first handler would block forever
 /// waiting for an event that the second handler (which never starts) should signal.
-@Suite("Concurrent Execution Tests")
 struct ConcurrentExecutionTests {
     // MARK: - Helper Types
 
@@ -34,9 +32,10 @@ struct ConcurrentExecutionTests {
     /// - Both tools complete
     ///
     /// If execution were sequential, the sleep tool would block forever.
-    @Test("Tool calls execute concurrently on server",
-          .timeLimit(.minutes(1)))
-    func toolCallsExecuteConcurrently() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Tool calls execute concurrently on server`() async throws {
         let event = AsyncEvent()
         let toolStarted = AsyncEvent()
         let callOrder = CallOrderTracker()
@@ -44,7 +43,7 @@ struct ConcurrentExecutionTests {
         let server = Server(
             name: "ConcurrentToolServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -96,7 +95,7 @@ struct ConcurrentExecutionTests {
         let events = await callOrder.events
         #expect(
             events == ["waiting_for_event", "trigger_started", "trigger_end", "tool_end"],
-            "Expected concurrent execution order, but got: \(events)"
+            "Expected concurrent execution order, but got: \(events)",
         )
     }
 
@@ -108,9 +107,10 @@ struct ConcurrentExecutionTests {
     /// - "sleep" tool starts and waits on an event
     /// - resource read starts (proves concurrency), signals the event
     /// - Both complete
-    @Test("Tool and resource calls execute concurrently on server",
-          .timeLimit(.minutes(1)))
-    func toolAndResourceCallsExecuteConcurrently() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Tool and resource calls execute concurrently on server`() async throws {
         let event = AsyncEvent()
         let toolStarted = AsyncEvent()
         let callOrder = CallOrderTracker()
@@ -118,7 +118,7 @@ struct ConcurrentExecutionTests {
         let server = Server(
             name: "ConcurrentMixedServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(), tools: .init())
+            capabilities: .init(resources: .init(), tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -181,7 +181,7 @@ struct ConcurrentExecutionTests {
         let events = await callOrder.events
         #expect(
             events == ["waiting_for_event", "resource_end", "tool_end"],
-            "Expected concurrent execution order, but got: \(events)"
+            "Expected concurrent execution order, but got: \(events)",
         )
     }
 
@@ -189,9 +189,10 @@ struct ConcurrentExecutionTests {
     ///
     /// Pattern: Start N tools that all wait on a shared event, then signal it once.
     /// If sequential, only the first would run and block forever.
-    @Test("Multiple concurrent tool calls all execute in parallel",
-          .timeLimit(.minutes(1)))
-    func multipleConcurrentToolCallsExecuteInParallel() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Multiple concurrent tool calls all execute in parallel`() async throws {
         let event = AsyncEvent()
         let startedCount = CallCounter()
         let expectedConcurrency = 5
@@ -199,7 +200,7 @@ struct ConcurrentExecutionTests {
         let server = Server(
             name: "ParallelToolServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -240,7 +241,7 @@ struct ConcurrentExecutionTests {
         let started = await startedCount.value
         #expect(
             started == expectedConcurrency,
-            "All \(expectedConcurrency) handlers should have started concurrently, but only \(started) started"
+            "All \(expectedConcurrency) handlers should have started concurrently, but only \(started) started",
         )
 
         // Signal the event to let all handlers complete
@@ -258,16 +259,17 @@ struct ConcurrentExecutionTests {
     /// - Start a "failing" tool and a "succeeding" tool concurrently
     /// - The failing tool throws after the succeeding tool starts (proving concurrency)
     /// - The succeeding tool completes normally despite the other tool's failure
-    @Test("Concurrent tool error does not affect other tool calls",
-          .timeLimit(.minutes(1)))
-    func concurrentToolErrorDoesNotAffectOthers() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Concurrent tool error does not affect other tool calls`() async throws {
         let succeedingToolStarted = AsyncEvent()
         let succeedingToolCanFinish = AsyncEvent()
 
         let server = Server(
             name: "ErrorIsolationServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -322,7 +324,7 @@ struct ConcurrentExecutionTests {
         let succeedResult = try await succeedingTask.value
         #expect(
             succeedResult.content.first != nil,
-            "Succeeding tool should complete normally despite concurrent failure"
+            "Succeeding tool should complete normally despite concurrent failure",
         )
         if case let .text(text, _, _) = succeedResult.content.first {
             #expect(text == "success")
@@ -336,9 +338,10 @@ struct ConcurrentExecutionTests {
     /// - Cancel the first tool call's task
     /// - Signal the second tool to finish
     /// - Verify the second tool completes normally
-    @Test("Cancelling one tool call does not affect others",
-          .timeLimit(.minutes(1)))
-    func cancellingOneToolCallDoesNotAffectOthers() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Cancelling one tool call does not affect others`() async throws {
         let toolAStarted = AsyncEvent()
         let toolBStarted = AsyncEvent()
         let toolBCanFinish = AsyncEvent()
@@ -346,7 +349,7 @@ struct ConcurrentExecutionTests {
         let server = Server(
             name: "CancellationIsolationServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -416,16 +419,17 @@ struct ConcurrentExecutionTests {
     /// and D=1s, fully parallel is ≈ 1s, 2-at-a-time is ≈ 5s, 5-at-a-time
     /// is ≈ 2s. The 2·D bound catches anything worse than roughly
     /// half-parallel.
-    @Test("Parallel tool calls complete in approximately one handler duration",
-          .timeLimit(.minutes(1)))
-    func parallelToolCallsWallClockOverlaps() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Parallel tool calls complete in approximately one handler duration`() async throws {
         let handlerCount = 10
         let handlerDuration: Duration = .seconds(1)
 
         let server = Server(
             name: "ParallelThroughputServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -476,16 +480,17 @@ struct ConcurrentExecutionTests {
     /// `stopProtocol()`. A regression that only dropped `group.waitForAll()`
     /// from the message loop would not be caught here — the dispatch shims
     /// are too short to exercise it.
-    @Test("Server stop cancels in-flight handlers and drains them",
-          .timeLimit(.minutes(1)))
-    func serverStopCancelsAndDrainsInFlightHandlers() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Server stop cancels in-flight handlers and drains them`() async throws {
         let handlerStarted = AsyncEvent()
         let handlerObservedCancellation = AsyncEvent()
 
         let server = Server(
             name: "DrainOnShutdownServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -558,16 +563,17 @@ struct ConcurrentExecutionTests {
     /// must be empty. A regression that removes the guard or moves the
     /// state flip after the loop drain would reliably fail this assertion
     /// because late shims would register into the already-cleared map.
-    @Test("Server.stop leaves inFlightHandlerTasks empty under parallel dispatch",
-          .timeLimit(.minutes(1)))
-    func serverStopLeavesInFlightMapEmpty() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Server.stop leaves inFlightHandlerTasks empty under parallel dispatch`() async throws {
         let firstHandlerStarted = AsyncEvent()
         let firstHandlerCanFinish = AsyncEvent()
 
         let server = Server(
             name: "DisconnectingGuardServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in

@@ -121,7 +121,7 @@ public struct ExperimentalServerTasks: Sendable {
     /// - Throws: MCPError or DecodingError if the result cannot be decoded
     public func getClientTaskResult<T: Decodable & Sendable>(
         _ taskId: String,
-        as type: T.Type
+        as type: T.Type,
     ) async throws -> T {
         try await server.getClientTaskResultAs(taskId: taskId, type: type)
     }
@@ -201,7 +201,7 @@ public struct ExperimentalServerTasks: Sendable {
     /// - Throws: MCPError or DecodingError if the result cannot be decoded
     public func pollClientTaskResult<T: Decodable & Sendable>(
         _ taskId: String,
-        as type: T.Type
+        as type: T.Type,
     ) async throws -> T {
         // Poll until terminal
         for try await _ in pollClientTask(taskId) {

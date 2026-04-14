@@ -1,21 +1,18 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
-
 @testable import MCP
+import Testing
 
-@Suite("Response Tests")
 struct ResponseTests {
     struct TestMethod: Method {
-        struct Parameters: Codable, Hashable, Sendable {
+        struct Parameters: Codable, Hashable {
             let value: String
         }
 
-        struct Result: Codable, Hashable, Sendable {
+        struct Result: Codable, Hashable {
             let success: Bool
         }
 
@@ -26,8 +23,8 @@ struct ResponseTests {
         static let name = "empty.method"
     }
 
-    @Test("Success response initialization and encoding")
-    func testSuccessResponse() throws {
+    @Test
+    func `Success response initialization and encoding`() throws {
         let id: RequestId = "test-id"
         let result = TestMethod.Result(success: true)
         let response = Response<TestMethod>(id: id, result: result)
@@ -45,8 +42,8 @@ struct ResponseTests {
         }
     }
 
-    @Test("Error response initialization and encoding")
-    func testErrorResponse() throws {
+    @Test
+    func `Error response initialization and encoding`() throws {
         let id: RequestId = "test-id"
         let error = MCPError.parseError(nil)
         let response = Response<TestMethod>(id: id, error: error)
@@ -67,8 +64,8 @@ struct ResponseTests {
         }
     }
 
-    @Test("Error response with detail")
-    func testErrorResponseWithDetail() throws {
+    @Test
+    func `Error response with detail`() throws {
         let id: RequestId = "test-id"
         let error = MCPError.parseError("Invalid syntax")
         let response = Response<TestMethod>(id: id, error: error)
@@ -83,14 +80,15 @@ struct ResponseTests {
             #expect(decodedError.code == ErrorCode.parseError)
             #expect(
                 decodedError.localizedDescription
-                    == "Parse error: Invalid JSON: Invalid syntax")
+                    == "Parse error: Invalid JSON: Invalid syntax",
+            )
         } else {
             #expect(Bool(false), "Expected error result")
         }
     }
 
-    @Test("Empty result response encoding")
-    func testEmptyResultResponseEncoding() throws {
+    @Test
+    func `Empty result response encoding`() throws {
         let response = EmptyMethod.response(id: "test-id")
 
         let encoder = JSONEncoder()
@@ -103,13 +101,13 @@ struct ResponseTests {
         #expect(decoded.id == response.id)
     }
 
-    @Test("Empty result response decoding")
-    func testEmptyResultResponseDecoding() throws {
+    @Test
+    func `Empty result response decoding`() throws {
         // Create a minimal JSON string
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","result":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Response<EmptyMethod>.self, from: data)
@@ -124,12 +122,12 @@ struct ResponseTests {
 
     // MARK: - Null/Missing ID Tests
 
-    @Test("Error response with null id decodes successfully")
-    func errorResponseWithNullId() throws {
+    @Test
+    func `Error response with null id decodes successfully`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
@@ -142,12 +140,12 @@ struct ResponseTests {
         }
     }
 
-    @Test("Error response with missing id decodes successfully")
-    func errorResponseWithMissingId() throws {
+    @Test
+    func `Error response with missing id decodes successfully`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
@@ -160,8 +158,8 @@ struct ResponseTests {
         }
     }
 
-    @Test("Response with nil id roundtrips through encode/decode")
-    func nilIdResponseRoundtrip() throws {
+    @Test
+    func `Response with nil id roundtrips through encode/decode`() throws {
         let error = MCPError.internalError("Something went wrong")
         let response = Response<TestMethod>(id: nil, error: error)
 
@@ -183,12 +181,12 @@ struct ResponseTests {
         #expect(json["id"] == nil)
     }
 
-    @Test("Normal error response with valid id is unchanged")
-    func normalErrorResponseWithValidId() throws {
+    @Test
+    func `Normal error response with valid id is unchanged`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":"req-123","error":{"code":-32601,"message":"Method not found"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Response<TestMethod>.self, from: data)
@@ -201,10 +199,10 @@ struct ResponseTests {
         }
     }
 
-    @Test("RequestId no longer decodes null values")
-    func requestIdRejectsNull() throws {
+    @Test
+    func `RequestId no longer decodes null values`() throws {
         let jsonString = "null"
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         #expect(throws: DecodingError.self) {

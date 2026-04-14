@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for additional server functionality.
 ///
@@ -27,18 +26,16 @@ import Testing
 ///    TypeScript callbacks can throw because JavaScript functions can always throw.
 ///    This is a language difference - Swift callbacks cannot throw by design.
 ///    If error handling is needed, Swift users should handle errors inside the callback itself.
-@Suite("Additional Server Tests")
 struct AdditionalServerTests {
     // MARK: - Test Helpers
 
     /// Creates a configured MCP Server with tools for testing
     func createTestServer() -> Server {
-        let server = Server(
+        Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
-        return server
     }
 
     /// Sets up tool handlers on the server
@@ -51,7 +48,7 @@ struct AdditionalServerTests {
                     inputSchema: [
                         "type": "object",
                         "properties": ["name": ["type": "string"]],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -69,15 +66,15 @@ struct AdditionalServerTests {
 
     // MARK: - 5.1 Response routing with concurrent requests
 
-    @Test("Response messages are sent to the connection that sent the request")
-    func responseRoutingWithConcurrentRequests() async throws {
+    @Test
+    func `Response messages are sent to the connection that sent the request`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -90,7 +87,7 @@ struct AdditionalServerTests {
         let callToolRequest = TestPayloads.callToolRequest(
             id: "req-2",
             name: "greet",
-            arguments: ["name": "Connection2"]
+            arguments: ["name": "Connection2"],
         )
 
         // Send requests concurrently
@@ -118,15 +115,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Multiple sequential requests maintain isolation")
-    func multipleSequentialRequestsMaintainIsolation() async throws {
+    @Test
+    func `Multiple sequential requests maintain isolation`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -175,15 +172,15 @@ struct AdditionalServerTests {
 
     // MARK: - 5.2 Error data in parse error response
 
-    @Test("Include error data in parse error response for invalid JSON")
-    func includeErrorDataInParseErrorResponse() async throws {
+    @Test
+    func `Include error data in parse error response for invalid JSON`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -200,7 +197,7 @@ struct AdditionalServerTests {
                 HTTPHeader.sessionId: sessionId,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
             ],
-            body: "{ invalid json }".data(using: .utf8)
+            body: "{ invalid json }".data(using: .utf8),
         )
         let response = await transport.handleRequest(invalidJSONRequest)
 
@@ -213,15 +210,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Include error data for invalid JSON-RPC messages")
-    func includeErrorDataForInvalidJSONRPCMessages() async throws {
+    @Test
+    func `Include error data for invalid JSON-RPC messages`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -246,15 +243,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Reject requests to uninitialized server")
-    func rejectRequestsToUninitializedServer() async throws {
+    @Test
+    func `Reject requests to uninitialized server`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -270,15 +267,15 @@ struct AdditionalServerTests {
 
     // MARK: - Additional Edge Cases
 
-    @Test("Empty batch request returns appropriate response")
-    func emptyBatchRequestReturnsAppropriateResponse() async throws {
+    @Test
+    func `Empty batch request returns appropriate response`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -296,15 +293,15 @@ struct AdditionalServerTests {
         #expect(response.statusCode == 202, "Empty batch should return 202 (no requests to respond to)")
     }
 
-    @Test("Notifications in batch don't generate individual responses")
-    func notificationsInBatchDontGenerateResponses() async throws {
+    @Test
+    func `Notifications in batch don't generate individual responses`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -330,15 +327,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Batch requests work for protocol versions before 2025-06-18")
-    func batchRequestsWorkForOlderProtocolVersions() async throws {
+    @Test
+    func `Batch requests work for protocol versions before 2025-06-18`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -371,15 +368,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Batch requests rejected for protocol versions >= 2025-06-18")
-    func batchRequestsRejectedForNewerProtocolVersions() async throws {
+    @Test
+    func `Batch requests rejected for protocol versions >= 2025-06-18`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -406,15 +403,15 @@ struct AdditionalServerTests {
         }
     }
 
-    @Test("Keep stream open after sending server notifications")
-    func keepStreamOpenAfterNotifications() async throws {
+    @Test
+    func `Keep stream open after sending server notifications`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         let sessionId = UUID().uuidString
 
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -429,7 +426,7 @@ struct AdditionalServerTests {
                 HTTPHeader.accept: "text/event-stream",
                 HTTPHeader.sessionId: sessionId,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
-            ]
+            ],
         )
         let response = await transport.handleRequest(getRequest)
 
@@ -440,7 +437,7 @@ struct AdditionalServerTests {
         let notification = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
         """
-        try await transport.send(notification.data(using: .utf8)!)
+        try await transport.send(#require(notification.data(using: .utf8)))
 
         // Stream should still be open (we just verify the transport is still functional)
         // We can't easily verify the stream is still open, but we can verify transport works
@@ -453,12 +450,17 @@ struct AdditionalServerTests {
 
     // MARK: - Session Callback Tests
 
-    @Test("Async onSessionInitialized callback is called")
-    func asyncOnSessionInitializedCallbackIsCalled() async throws {
+    @Test
+    func `Async onSessionInitialized callback is called`() async throws {
         actor CallbackTracker {
             var events: [String] = []
-            func add(_ event: String) { events.append(event) }
-            func getEvents() -> [String] { events }
+            func add(_ event: String) {
+                events.append(event)
+            }
+
+            func getEvents() -> [String] {
+                events
+            }
         }
 
         let tracker = CallbackTracker()
@@ -470,8 +472,8 @@ struct AdditionalServerTests {
                 onSessionInitialized: { id in
                     await tracker.add("initialized:\(id)")
                 },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         let server = createTestServer()
@@ -490,12 +492,17 @@ struct AdditionalServerTests {
         #expect(events.contains("initialized:\(sessionId)"), "onSessionInitialized should be called with session ID")
     }
 
-    @Test("Async onSessionClosed callback is called on DELETE")
-    func asyncOnSessionClosedCallbackIsCalledOnDelete() async throws {
+    @Test
+    func `Async onSessionClosed callback is called on DELETE`() async throws {
         actor CallbackTracker {
             var events: [String] = []
-            func add(_ event: String) { events.append(event) }
-            func getEvents() -> [String] { events }
+            func add(_ event: String) {
+                events.append(event)
+            }
+
+            func getEvents() -> [String] {
+                events
+            }
         }
 
         let tracker = CallbackTracker()
@@ -507,8 +514,8 @@ struct AdditionalServerTests {
                 onSessionClosed: { id in
                     await tracker.add("closed:\(id)")
                 },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         let server = createTestServer()
@@ -524,7 +531,7 @@ struct AdditionalServerTests {
             headers: [
                 HTTPHeader.sessionId: sessionId,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
-            ]
+            ],
         )
         let deleteResponse = await transport.handleRequest(deleteRequest)
 
@@ -537,12 +544,17 @@ struct AdditionalServerTests {
         #expect(events.contains("closed:\(sessionId)"), "onSessionClosed should be called with session ID")
     }
 
-    @Test("Both async callbacks work together")
-    func bothAsyncCallbacksWorkTogether() async throws {
+    @Test
+    func `Both async callbacks work together`() async throws {
         actor CallbackTracker {
             var events: [String] = []
-            func add(_ event: String) { events.append(event) }
-            func getEvents() -> [String] { events }
+            func add(_ event: String) {
+                events.append(event)
+            }
+
+            func getEvents() -> [String] {
+                events
+            }
         }
 
         let tracker = CallbackTracker()
@@ -557,8 +569,8 @@ struct AdditionalServerTests {
                 onSessionClosed: { id in
                     await tracker.add("closed:\(id)")
                 },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         let server = createTestServer()
@@ -581,7 +593,7 @@ struct AdditionalServerTests {
             headers: [
                 HTTPHeader.sessionId: sessionId,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
-            ]
+            ],
         )
         let deleteResponse = await transport.handleRequest(deleteRequest)
         #expect(deleteResponse.statusCode == 200)
@@ -594,12 +606,17 @@ struct AdditionalServerTests {
         #expect(events.count == 2, "Should have exactly 2 events")
     }
 
-    @Test("onSessionClosed called with correct session ID for multiple sessions")
-    func onSessionClosedCalledWithCorrectSessionIdForMultipleSessions() async throws {
+    @Test
+    func `onSessionClosed called with correct session ID for multiple sessions`() async throws {
         actor CallbackTracker {
             var closedSessions: [String] = []
-            func add(_ sessionId: String) { closedSessions.append(sessionId) }
-            func getSessions() -> [String] { closedSessions }
+            func add(_ sessionId: String) {
+                closedSessions.append(sessionId)
+            }
+
+            func getSessions() -> [String] {
+                closedSessions
+            }
         }
 
         let tracker = CallbackTracker()
@@ -612,8 +629,8 @@ struct AdditionalServerTests {
                 onSessionClosed: { id in
                     await tracker.add(id)
                 },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         let server1 = createTestServer()
@@ -627,8 +644,8 @@ struct AdditionalServerTests {
                 onSessionClosed: { id in
                     await tracker.add(id)
                 },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         let server2 = createTestServer()
@@ -651,7 +668,7 @@ struct AdditionalServerTests {
             headers: [
                 HTTPHeader.sessionId: sessionId1,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
-            ]
+            ],
         )
         let deleteResponse1 = await transport1.handleRequest(deleteRequest1)
         #expect(deleteResponse1.statusCode == 200)
@@ -668,7 +685,7 @@ struct AdditionalServerTests {
             headers: [
                 HTTPHeader.sessionId: sessionId2,
                 HTTPHeader.protocolVersion: Version.v2024_11_05,
-            ]
+            ],
         )
         let deleteResponse2 = await transport2.handleRequest(deleteRequest2)
         #expect(deleteResponse2.statusCode == 200)

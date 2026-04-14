@@ -97,7 +97,7 @@ public actor BasicHTTPSessionManager {
         sessionIdGenerator: (@Sendable () -> String)? = nil,
         enableJsonResponse: Bool = false,
         sessionIdleTimeout: Duration? = .seconds(1800),
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         self.logger = logger ?? Logger(label: "mcp.session-manager")
         mcpServer = server
@@ -131,13 +131,13 @@ public actor BasicHTTPSessionManager {
                 return jsonErrorResponse(
                     statusCode: 400,
                     code: ErrorCode.invalidRequest,
-                    message: "Bad Request: Mcp-Session-Id header required"
+                    message: "Bad Request: Mcp-Session-Id header required",
                 )
             }
             return jsonErrorResponse(
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
 
@@ -147,7 +147,7 @@ public actor BasicHTTPSessionManager {
                 statusCode: 503,
                 code: ErrorCode.internalError,
                 message: "Service Unavailable: Maximum sessions reached",
-                extraHeaders: ["retry-after": "60"]
+                extraHeaders: ["retry-after": "60"],
             )
         }
 
@@ -167,8 +167,8 @@ public actor BasicHTTPSessionManager {
                     await self?.removeSession(sid)
                 },
                 enableJsonResponse: enableJsonResponse,
-                sessionIdleTimeout: sessionIdleTimeout
-            )
+                sessionIdleTimeout: sessionIdleTimeout,
+            ),
         )
 
         // Store session before starting to avoid race conditions
@@ -186,7 +186,7 @@ public actor BasicHTTPSessionManager {
             return jsonErrorResponse(
                 statusCode: 500,
                 code: ErrorCode.internalError,
-                message: "Internal Error: Failed to start session"
+                message: "Internal Error: Failed to start session",
             )
         }
 
@@ -239,7 +239,7 @@ public actor BasicHTTPSessionManager {
         statusCode: Int,
         code: Int,
         message: String,
-        extraHeaders: [String: String] = [:]
+        extraHeaders: [String: String] = [:],
     ) -> HTTPResponse {
         let body = (try? JSONRPCErrorResponse(code: code, message: message).encoded()) ?? Data()
 

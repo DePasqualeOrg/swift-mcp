@@ -42,11 +42,11 @@ public func defaultHTTPRequestHandler(_ request: URLRequest) async throws -> (Da
 public func discoverProtectedResourceMetadata(
     serverURL: URL,
     wwwAuthenticateResourceMetadataURL: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async -> ProtectedResourceMetadata? {
     let urls = buildProtectedResourceMetadataDiscoveryURLs(
         serverURL: serverURL,
-        wwwAuthenticateURL: wwwAuthenticateResourceMetadataURL
+        wwwAuthenticateURL: wwwAuthenticateResourceMetadataURL,
     )
 
     for url in urls {
@@ -72,7 +72,7 @@ public func discoverProtectedResourceMetadata(
 /// - Returns: Ordered list of discovery URLs to try
 public func buildProtectedResourceMetadataDiscoveryURLs(
     serverURL: URL,
-    wwwAuthenticateURL: URL? = nil
+    wwwAuthenticateURL: URL? = nil,
 ) -> [URL] {
     var urls: [URL] = []
 
@@ -117,7 +117,7 @@ private enum PRMFetchResult {
 /// Fetches and parses Protected Resource Metadata from a single URL.
 private func fetchProtectedResourceMetadata(
     url: URL,
-    httpClient: HTTPRequestHandler
+    httpClient: HTTPRequestHandler,
 ) async -> PRMFetchResult {
     do {
         var request = URLRequest(url: url)
@@ -128,7 +128,7 @@ private func fetchProtectedResourceMetadata(
 
         if response.statusCode == 200 {
             if let metadata = try? JSONDecoder().decode(
-                ProtectedResourceMetadata.self, from: data
+                ProtectedResourceMetadata.self, from: data,
             ) {
                 return .success(metadata)
             }
@@ -167,7 +167,7 @@ private func fetchProtectedResourceMetadata(
 /// - SeeAlso: [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)
 public func discoverAuthorizationServerMetadata(
     authServerURL: URL,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async -> OAuthMetadata? {
     let urls = buildAuthorizationServerMetadataDiscoveryURLs(authServerURL: authServerURL)
 
@@ -246,7 +246,7 @@ private enum MetadataFetchResult {
 /// Fetches and parses Authorization Server Metadata from a single URL.
 private func fetchAuthorizationServerMetadata(
     url: URL,
-    httpClient: HTTPRequestHandler
+    httpClient: HTTPRequestHandler,
 ) async -> MetadataFetchResult {
     do {
         var request = URLRequest(url: url)
@@ -300,10 +300,12 @@ func validateEndpointURL(_ url: URL) throws {
                 return
             }
             throw OAuthError.discoveryFailed(
-                "HTTP endpoint URLs are only allowed for localhost: \(url)")
+                "HTTP endpoint URLs are only allowed for localhost: \(url)",
+            )
         default:
             throw OAuthError.discoveryFailed(
-                "Endpoint URL has disallowed scheme '\(scheme)': \(url)")
+                "Endpoint URL has disallowed scheme '\(scheme)': \(url)",
+            )
     }
 }
 
@@ -327,7 +329,8 @@ func validateIssuer(_ metadata: OAuthMetadata, authServerURL: URL) throws {
 
     guard normalizedIssuer == normalizedExpected else {
         throw OAuthError.discoveryFailed(
-            "AS metadata issuer \"\(issuer)\" does not match expected \"\(expected)\"")
+            "AS metadata issuer \"\(issuer)\" does not match expected \"\(expected)\"",
+        )
     }
 }
 

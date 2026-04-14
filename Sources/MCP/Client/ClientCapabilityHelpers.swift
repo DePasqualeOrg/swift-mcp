@@ -18,7 +18,7 @@ enum ClientCapabilityHelpers {
     /// - Returns: The merged capabilities.
     static func merge(
         inferred: Client.Capabilities,
-        explicit: Client.Capabilities?
+        explicit: Client.Capabilities?,
     ) -> Client.Capabilities {
         guard let explicit else { return inferred }
 
@@ -63,22 +63,22 @@ enum ClientCapabilityHelpers {
     static func validate(
         _ capabilities: Client.Capabilities,
         handlers: ClientHandlerRegistry,
-        logger: Logger?
+        logger: Logger?,
     ) {
         // Check for capabilities advertised without handlers
         if capabilities.sampling != nil, handlers.requestHandlers[ClientSamplingRequest.name] == nil {
             logger?.warning(
-                "Sampling capability will be advertised but no handler is registered"
+                "Sampling capability will be advertised but no handler is registered",
             )
         }
         if capabilities.elicitation != nil, handlers.requestHandlers[Elicit.name] == nil {
             logger?.warning(
-                "Elicitation capability will be advertised but no handler is registered"
+                "Elicitation capability will be advertised but no handler is registered",
             )
         }
         if capabilities.roots != nil, handlers.requestHandlers[ListRoots.name] == nil {
             logger?.warning(
-                "Roots capability will be advertised but no handler is registered"
+                "Roots capability will be advertised but no handler is registered",
             )
         }
 
@@ -86,17 +86,17 @@ enum ClientCapabilityHelpers {
         // These handlers will never be invoked because the capability isn't advertised
         if handlers.requestHandlers[ClientSamplingRequest.name] != nil, capabilities.sampling == nil {
             logger?.warning(
-                "Sampling handler registered but capability not advertised - handler won't be invoked"
+                "Sampling handler registered but capability not advertised - handler won't be invoked",
             )
         }
         if handlers.requestHandlers[Elicit.name] != nil, capabilities.elicitation == nil {
             logger?.warning(
-                "Elicitation handler registered but capability not advertised - handler won't be invoked"
+                "Elicitation handler registered but capability not advertised - handler won't be invoked",
             )
         }
         if handlers.requestHandlers[ListRoots.name] != nil, capabilities.roots == nil {
             logger?.warning(
-                "Roots handler registered but capability not advertised - handler won't be invoked"
+                "Roots handler registered but capability not advertised - handler won't be invoked",
             )
         }
     }

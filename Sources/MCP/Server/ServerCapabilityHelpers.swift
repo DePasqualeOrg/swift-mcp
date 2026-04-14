@@ -29,7 +29,7 @@ enum ServerCapabilityHelpers {
         base: Server.Capabilities,
         hasTools: Bool,
         hasResources: Bool,
-        hasPrompts: Bool
+        hasPrompts: Bool,
     ) -> Server.Capabilities {
         var capabilities = base
 
@@ -78,22 +78,22 @@ enum ServerCapabilityHelpers {
     static func validate(
         _ capabilities: Server.Capabilities,
         handlers: ServerHandlerRegistry,
-        logger: Logger?
+        logger: Logger?,
     ) {
         // Check for capabilities advertised without handlers
         if capabilities.tools != nil, handlers.methodHandlers[CallTool.name] == nil {
             logger?.warning(
-                "Tools capability will be advertised but no tools/call handler is registered"
+                "Tools capability will be advertised but no tools/call handler is registered",
             )
         }
         if capabilities.resources != nil, handlers.methodHandlers[ReadResource.name] == nil {
             logger?.warning(
-                "Resources capability will be advertised but no resources/read handler is registered"
+                "Resources capability will be advertised but no resources/read handler is registered",
             )
         }
         if capabilities.prompts != nil, handlers.methodHandlers[GetPrompt.name] == nil {
             logger?.warning(
-                "Prompts capability will be advertised but no prompts/get handler is registered"
+                "Prompts capability will be advertised but no prompts/get handler is registered",
             )
         }
 
@@ -101,17 +101,17 @@ enum ServerCapabilityHelpers {
         // These handlers exist but clients won't know the feature is available
         if handlers.methodHandlers[CallTool.name] != nil, capabilities.tools == nil {
             logger?.warning(
-                "Tools handler registered but capability not advertised - clients won't discover tools"
+                "Tools handler registered but capability not advertised - clients won't discover tools",
             )
         }
         if handlers.methodHandlers[ReadResource.name] != nil, capabilities.resources == nil {
             logger?.warning(
-                "Resources handler registered but capability not advertised - clients won't discover resources"
+                "Resources handler registered but capability not advertised - clients won't discover resources",
             )
         }
         if handlers.methodHandlers[GetPrompt.name] != nil, capabilities.prompts == nil {
             logger?.warning(
-                "Prompts handler registered but capability not advertised - clients won't discover prompts"
+                "Prompts handler registered but capability not advertised - clients won't discover prompts",
             )
         }
     }

@@ -8,7 +8,9 @@
 /// A coding key that can represent any string key.
 public struct AnyCodingKey: CodingKey {
     public var stringValue: String
-    public var intValue: Int? { nil }
+    public var intValue: Int? {
+        nil
+    }
 
     public init?(stringValue: String) {
         self.stringValue = stringValue
@@ -33,7 +35,7 @@ public enum ExtraFieldsDecoder {
     /// - Returns: A dictionary of extra fields, or nil if empty
     public static func decode(
         from decoder: Decoder,
-        knownKeys: Set<String>
+        knownKeys: Set<String>,
     ) throws -> [String: Value]? {
         let container = try decoder.container(keyedBy: AnyCodingKey.self)
         var extra: [String: Value] = [:]
@@ -57,7 +59,7 @@ public enum ExtraFieldsEncoder {
     ///   - encoder: The encoder to write to
     public static func encode(
         _ extraFields: [String: Value]?,
-        to encoder: Encoder
+        to encoder: Encoder,
     ) throws {
         guard let extra = extraFields else { return }
         var container = encoder.container(keyedBy: AnyCodingKey.self)
@@ -103,7 +105,7 @@ public extension ResultWithExtraFields {
     static func decodeExtraFields(from decoder: Decoder) throws -> [String: Value]? {
         try ExtraFieldsDecoder.decode(
             from: decoder,
-            knownKeys: Set(ResultCodingKeys.allCases.map { $0.rawValue })
+            knownKeys: Set(ResultCodingKeys.allCases.map { $0.rawValue }),
         )
     }
 

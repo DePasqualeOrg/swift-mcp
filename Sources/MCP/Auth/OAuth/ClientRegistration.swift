@@ -38,7 +38,7 @@ public func isValidCIMDURL(_ url: URL) -> Bool {
 /// - Returns: `true` if CIMD should be used
 public func shouldUseCIMD(
     serverMetadata: OAuthMetadata,
-    clientMetadataURL: URL?
+    clientMetadataURL: URL?,
 ) -> Bool {
     guard serverMetadata.clientIdMetadataDocumentSupported == true else {
         return false
@@ -79,7 +79,7 @@ public func clientInfoFromMetadataURL(_ url: URL) -> OAuthClientInformation {
 public func registerClient(
     clientMetadata: OAuthClientMetadata,
     registrationEndpoint: URL,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthClientInformation {
     var request = URLRequest(url: registrationEndpoint)
     request.httpMethod = "POST"
@@ -96,14 +96,16 @@ public func registerClient(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.registrationFailed(
-            "Registration endpoint returned HTTP \(response.statusCode)")
+            "Registration endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
         return try JSONDecoder().decode(OAuthClientInformation.self, from: data)
     } catch {
         throw OAuthError.registrationFailed(
-            "Invalid registration response: \(error.localizedDescription)")
+            "Invalid registration response: \(error.localizedDescription)",
+        )
     }
 }
 
@@ -122,12 +124,13 @@ public func registerClient(
 ///   include a registration endpoint
 public func registrationEndpoint(
     from metadata: OAuthMetadata?,
-    authServerURL: URL
+    authServerURL: URL,
 ) throws -> URL {
     if let metadata {
         guard let endpoint = metadata.registrationEndpoint else {
             throw OAuthError.registrationFailed(
-                "Authorization server does not support dynamic client registration")
+                "Authorization server does not support dynamic client registration",
+            )
         }
         return endpoint
     }

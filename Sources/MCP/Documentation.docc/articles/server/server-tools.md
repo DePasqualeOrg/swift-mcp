@@ -82,7 +82,8 @@ Built-in parameter types include:
 - **Optional**: `T?` where T is any supported type
 - **Array**: `[T]` where T is any supported type
 - **Dictionary**: `[String: T]` where T is any supported type
-- **Enums**: String enums conforming to ``ToolEnum``
+- **Enums**: String-raw enums annotated with `@Schemable`, or richer enums with associated values
+- **Custom types**: Any Swift type annotated with `@Schemable` (from `JSONSchemaBuilder`)
 
 ### Optional Parameters
 
@@ -195,16 +196,16 @@ struct SendNotifications {
 
 ### Enum Parameters
 
-Use ``ToolEnum`` for string enums with automatic schema generation:
+Use `@Schemable` on a string-raw enum for automatic schema generation:
 
 ```swift
-// ToolEnum requires RawRepresentable with String and CaseIterable
-// Swift auto-synthesizes both for simple enums
-enum Priority: String, ToolEnum {
+@Schemable
+enum Priority: String, CaseIterable {
     case low, medium, high, urgent
 }
 
-enum OutputFormat: String, ToolEnum {
+@Schemable
+enum OutputFormat: String, CaseIterable {
     case json, xml, csv, yaml
 }
 
@@ -594,5 +595,3 @@ For advanced use cases like custom request handling or mixing with other handler
 - ``MCPServer``
 - ``Tool``
 - ``ToolSpec``
-- ``ParameterValue``
-- ``ToolEnum``

@@ -22,7 +22,7 @@ extension Server {
         guard await connection.supportsServerToClientRequests else {
             throw MCPError.invalidRequest(
                 "Server-to-client requests are not supported by this transport. " +
-                    "The transport does not support bidirectional communication."
+                    "The transport does not support bidirectional communication.",
             )
         }
 
@@ -60,7 +60,7 @@ extension Server {
                 metadata: [
                     "id": "\(requestId)",
                     "reason": "\(reason ?? "none")",
-                ]
+                ],
             )
         }
         // Per spec: MAY ignore if request is unknown - no error needed
@@ -190,7 +190,7 @@ extension Server {
     /// that have a `default` value defined in the schema.
     private func applyElicitationDefaults(
         from schema: ElicitationSchema,
-        to content: inout [String: ElicitValue]
+        to content: inout [String: ElicitValue],
     ) {
         for (key, property) in schema.properties {
             // Skip if content already has this key

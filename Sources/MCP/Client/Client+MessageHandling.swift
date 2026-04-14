@@ -57,14 +57,14 @@ extension Client {
             metadata: [
                 "taskId": "\(taskId)",
                 "progressToken": "\(progressToken)",
-            ]
+            ],
         )
     }
 
     func handleMessage(_ message: Message<AnyNotification>) async {
         logger?.trace(
             "Processing notification",
-            metadata: ["method": "\(message.method)"]
+            metadata: ["method": "\(message.method)"],
         )
 
         // Check if this is a task status notification and clean up progress handlers
@@ -123,7 +123,7 @@ extension Client {
             metadata: [
                 "method": "\(request.method)",
                 "id": "\(request.id)",
-            ]
+            ],
         )
 
         // --- Pre-dispatch validation ---
@@ -152,17 +152,17 @@ extension Client {
         } else if let fallbackHandler = registeredHandlers.fallbackRequestHandler {
             logger?.debug(
                 "Using fallback handler for server request",
-                metadata: ["method": "\(request.method)"]
+                metadata: ["method": "\(request.method)"],
             )
             handler = fallbackHandler
         } else {
             logger?.warning(
                 "No handler registered for server request",
-                metadata: ["method": "\(request.method)"]
+                metadata: ["method": "\(request.method)"],
             )
             let response = AnyMethod.response(
                 id: request.id,
-                error: MCPError.methodNotFound("Client has no handler for: \(request.method)")
+                error: MCPError.methodNotFound("Client has no handler for: \(request.method)"),
             )
             await sendResponse(response)
             return
@@ -200,7 +200,7 @@ extension Client {
                 try await transport.send(requestData)
                 // Client doesn't support bidirectional requests from client handlers
                 throw MCPError.internalError("Client handlers cannot send requests")
-            }
+            },
         )
 
         // --- Execution with cancellation awareness ---
@@ -212,7 +212,7 @@ extension Client {
             if Task.isCancelled {
                 logger?.debug(
                     "Server request cancelled, suppressing response",
-                    metadata: ["id": "\(request.id)"]
+                    metadata: ["id": "\(request.id)"],
                 )
                 return
             }
@@ -222,7 +222,7 @@ extension Client {
             if Task.isCancelled {
                 logger?.debug(
                     "Server request cancelled during error handling, suppressing response",
-                    metadata: ["id": "\(request.id)"]
+                    metadata: ["id": "\(request.id)"],
                 )
                 return
             }
@@ -232,11 +232,11 @@ extension Client {
                 metadata: [
                     "method": "\(request.method)",
                     "error": "\(error)",
-                ]
+                ],
             )
             let errorResponse = AnyMethod.response(
                 id: request.id,
-                error: (error as? MCPError) ?? MCPError.internalError("An internal error occurred")
+                error: (error as? MCPError) ?? MCPError.internalError("An internal error occurred"),
             )
             await sendResponse(errorResponse)
         }
@@ -260,7 +260,7 @@ extension Client {
                     if capabilities.elicitation?.form == nil {
                         return Response(
                             id: request.id,
-                            error: .invalidParams("Client does not support form elicitation mode")
+                            error: .invalidParams("Client does not support form elicitation mode"),
                         )
                     }
                 case .url:
@@ -268,7 +268,7 @@ extension Client {
                     if capabilities.elicitation?.url == nil {
                         return Response(
                             id: request.id,
-                            error: .invalidParams("Client does not support URL elicitation mode")
+                            error: .invalidParams("Client does not support URL elicitation mode"),
                         )
                     }
             }
@@ -276,7 +276,7 @@ extension Client {
             // If we can't decode the params, let the normal handler deal with it
             logger?.warning(
                 "Failed to decode elicitation params for mode validation",
-                metadata: ["error": "\(error)"]
+                metadata: ["error": "\(error)"],
             )
         }
 
@@ -348,7 +348,7 @@ extension Client {
         } catch {
             logger?.error(
                 "Failed to send response to server",
-                metadata: ["error": "\(error)"]
+                metadata: ["error": "\(error)"],
             )
         }
     }
@@ -359,7 +359,7 @@ extension Client {
     /// Throws an error if the client is configured to be strict and the capability is not supported.
     func validateServerCapability(
         _ keyPath: KeyPath<Server.Capabilities, (some Any)?>,
-        _ name: String
+        _ name: String,
     )
         throws
     {

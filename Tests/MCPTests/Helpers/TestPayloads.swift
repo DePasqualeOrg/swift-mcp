@@ -1,7 +1,6 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-
 @testable import MCP
 
 /// Common JSON-RPC payloads used in tests.
@@ -23,7 +22,7 @@ enum TestPayloads {
         id: String = "1",
         protocolVersion: String = defaultVersion,
         clientName: String = "test",
-        clientVersion: String = "1.0"
+        clientVersion: String = "1.0",
     ) -> String {
         """
         {"jsonrpc":"2.0","method":"initialize","id":"\(id)","params":{"protocolVersion":"\(protocolVersion)","capabilities":{},"clientInfo":{"name":"\(clientName)","version":"\(clientVersion)"}}}
@@ -35,7 +34,7 @@ enum TestPayloads {
         id: String = "1",
         protocolVersion: String = defaultVersion,
         serverName: String = "test",
-        serverVersion: String = "1.0"
+        serverVersion: String = "1.0",
     ) -> String {
         """
         {"jsonrpc":"2.0","result":{"protocolVersion":"\(protocolVersion)","capabilities":{},"serverInfo":{"name":"\(serverName)","version":"\(serverVersion)"}},"id":"\(id)"}
@@ -64,7 +63,7 @@ enum TestPayloads {
     static func callToolRequest(
         id: String = "2",
         name: String,
-        arguments: [String: Any] = [:]
+        arguments: [String: Any] = [:],
     ) -> String {
         let argsJSON = arguments.isEmpty ? "{}" : serializeJSON(arguments)
         return """
@@ -141,7 +140,7 @@ extension TestPayloads {
         sessionId: String? = nil,
         protocolVersion: String = defaultVersion,
         lastEventId: String? = nil,
-        accept: String = "application/json, text/event-stream"
+        accept: String = "application/json, text/event-stream",
     ) -> HTTPRequest {
         var headers = [
             HTTPHeader.accept: accept,
@@ -157,7 +156,7 @@ extension TestPayloads {
         return HTTPRequest(
             method: "POST",
             headers: headers,
-            body: body.data(using: .utf8)
+            body: body.data(using: .utf8),
         )
     }
 
@@ -165,7 +164,7 @@ extension TestPayloads {
     static func getRequest(
         sessionId: String,
         protocolVersion: String = defaultVersion,
-        lastEventId: String? = nil
+        lastEventId: String? = nil,
     ) -> HTTPRequest {
         var headers = [
             HTTPHeader.accept: "text/event-stream",
@@ -178,14 +177,14 @@ extension TestPayloads {
         return HTTPRequest(
             method: "GET",
             headers: headers,
-            body: nil
+            body: nil,
         )
     }
 
     /// Creates an HTTP DELETE request for session termination.
     static func deleteRequest(
         sessionId: String,
-        protocolVersion: String = defaultVersion
+        protocolVersion: String = defaultVersion,
     ) -> HTTPRequest {
         HTTPRequest(
             method: "DELETE",
@@ -193,7 +192,7 @@ extension TestPayloads {
                 HTTPHeader.sessionId: sessionId,
                 HTTPHeader.protocolVersion: protocolVersion,
             ],
-            body: nil
+            body: nil,
         )
     }
 
@@ -202,7 +201,7 @@ extension TestPayloads {
         method: String,
         body: String? = nil,
         sessionId: String? = nil,
-        protocolVersion: String = defaultVersion
+        protocolVersion: String = defaultVersion,
     ) -> HTTPRequest {
         var headers = [
             HTTPHeader.accept: "application/json, text/event-stream",
@@ -215,7 +214,7 @@ extension TestPayloads {
         return HTTPRequest(
             method: method,
             headers: headers,
-            body: body?.data(using: .utf8)
+            body: body?.data(using: .utf8),
         )
     }
 }

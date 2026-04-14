@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-
 import struct Foundation.Data
+import Logging
 
 #if canImport(System)
 import System
@@ -69,7 +68,7 @@ public actor StdioTransport: Transport {
     public init(
         input: FileDescriptor = FileDescriptor.standardInput,
         output: FileDescriptor = FileDescriptor.standardOutput,
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         self.input = input
         self.output = output
@@ -77,7 +76,7 @@ public actor StdioTransport: Transport {
             logger
                 ?? Logger(
                     label: "mcp.transport.stdio",
-                    factory: { _ in SwiftLogNoOpLogHandler() }
+                    factory: { _ in SwiftLogNoOpLogHandler() },
                 )
 
         // Create message stream
@@ -128,7 +127,8 @@ public actor StdioTransport: Transport {
         #else
         // For platforms where non-blocking operations aren't supported
         throw MCPError.internalError(
-            "Setting non-blocking mode not supported on this platform")
+            "Setting non-blocking mode not supported on this platform",
+        )
         #endif
     }
 
@@ -175,7 +175,7 @@ public actor StdioTransport: Transport {
 
                     if !messageData.isEmpty {
                         logger.trace(
-                            "Message received", metadata: ["size": "\(messageData.count)"]
+                            "Message received", metadata: ["size": "\(messageData.count)"],
                         )
                         messageContinuation.yield(TransportMessage(data: Data(messageData)))
                     }

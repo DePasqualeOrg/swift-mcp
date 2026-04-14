@@ -17,7 +17,7 @@ extension String: PromptOutput {
     public func toGetPromptResult(description: String?) -> GetPrompt.Result {
         GetPrompt.Result(
             description: description,
-            messages: [.user(.text(self))]
+            messages: [.user(.text(self))],
         )
     }
 }
@@ -43,9 +43,9 @@ extension [Prompt.Message]: PromptOutput {
 /// - **Closure prompts**: Using explicit arguments for runtime-discovered prompts
 public actor PromptRegistry {
     /// Internal storage for prompts.
-    struct PromptEntry: Sendable {
+    struct PromptEntry {
         /// The kind of prompt registration.
-        enum Kind: Sendable {
+        enum Kind {
             /// A DSL-based prompt using @Prompt macro.
             case dsl(any PromptSpec.Type)
             /// A closure-based prompt with explicit handler.
@@ -93,7 +93,7 @@ public actor PromptRegistry {
     @discardableResult
     public func register<T: PromptSpec>(
         _ prompt: T.Type,
-        onListChanged: (@Sendable () async -> Void)? = nil
+        onListChanged: (@Sendable () async -> Void)? = nil,
     ) throws -> RegisteredPrompt {
         let definition = T.promptDefinition
         let name = definition.name
@@ -105,7 +105,7 @@ public actor PromptRegistry {
         prompts[name] = PromptEntry(
             kind: .dsl(prompt),
             definition: definition,
-            isEnabled: true
+            isEnabled: true,
         )
 
         return RegisteredPrompt(name: name, registry: self, onListChanged: onListChanged)
@@ -138,7 +138,7 @@ public actor PromptRegistry {
         description: String? = nil,
         arguments: [Prompt.Argument]? = nil,
         onListChanged: (@Sendable () async -> Void)? = nil,
-        handler: @escaping @Sendable ([String: String]?, HandlerContext) async throws -> [Prompt.Message]
+        handler: @escaping @Sendable ([String: String]?, HandlerContext) async throws -> [Prompt.Message],
     ) throws -> RegisteredPrompt {
         guard prompts[name] == nil else {
             throw MCPError.invalidParams("Prompt '\(name)' is already registered")
@@ -148,13 +148,13 @@ public actor PromptRegistry {
             name: name,
             title: title,
             description: description,
-            arguments: arguments
+            arguments: arguments,
         )
 
         prompts[name] = PromptEntry(
             kind: .closure(handler: handler),
             definition: definition,
-            isEnabled: true
+            isEnabled: true,
         )
 
         return RegisteredPrompt(name: name, registry: self, onListChanged: onListChanged)
@@ -180,7 +180,7 @@ public actor PromptRegistry {
     public func getPrompt(
         _ name: String,
         arguments: [String: String]?,
-        context: HandlerContext
+        context: HandlerContext,
     ) async throws -> GetPrompt.Result {
         guard let entry = prompts[name] else {
             throw MCPError.invalidParams("Unknown prompt: \(name)")

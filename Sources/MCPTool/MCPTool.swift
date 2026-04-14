@@ -20,6 +20,7 @@
 //
 // For prompts, use MCPPrompt instead which provides @Prompt and @Argument.
 
+import JSONSchemaBuilder
 import MCP
 
 // MARK: - Parameter Property Wrapper
@@ -55,8 +56,19 @@ import MCP
 /// }
 /// ```
 @propertyWrapper
-public struct Parameter<Value: ParameterValue>: Sendable {
-    public var wrappedValue: Value
+public struct Parameter<Value: Schemable & Sendable>: Sendable {
+    private var _storage: Value?
+
+    /// The current value of the parameter.
+    ///
+    /// Reading traps if the generated `parse(from:)` hasn't populated this
+    /// parameter yet. In normal `@Tool` usage, parse is always called before
+    /// any read, so this trap is only reachable by manually instantiating the
+    /// tool struct and reading an unparsed parameter.
+    public var wrappedValue: Value {
+        get { _storage! }
+        set { _storage = newValue }
+    }
 
     /// The JSON key used in the schema and argument parsing.
     /// If nil, the Swift property name is used.
@@ -102,9 +114,9 @@ public struct Parameter<Value: ParameterValue>: Sendable {
         minLength: Int? = nil,
         maxLength: Int? = nil,
         minimum: Double? = nil,
-        maximum: Double? = nil
+        maximum: Double? = nil,
     ) {
-        self.wrappedValue = wrappedValue
+        _storage = wrappedValue
         self.key = key
         self.title = title
         self.description = description
@@ -117,6 +129,18 @@ public struct Parameter<Value: ParameterValue>: Sendable {
 
 public extension Parameter where Value: ExpressibleByNilLiteral {
     /// Creates an optional parameter with the specified metadata and constraints.
+    ///
+    /// Use this initializer for optional parameters that don't require a value.
+    /// The wrapped value defaults to nil.
+    ///
+    /// - Parameters:
+    ///   - key: The JSON key (defaults to property name).
+    ///   - title: A user-facing title for display in UIs.
+    ///   - description: A description of the parameter.
+    ///   - minLength: Minimum string length.
+    ///   - maxLength: Maximum string length.
+    ///   - minimum: Minimum numeric value.
+    ///   - maximum: Maximum numeric value.
     init(
         key: String? = nil,
         title: String? = nil,
@@ -124,9 +148,9 @@ public extension Parameter where Value: ExpressibleByNilLiteral {
         minLength: Int? = nil,
         maxLength: Int? = nil,
         minimum: Double? = nil,
-        maximum: Double? = nil
+        maximum: Double? = nil,
     ) {
-        wrappedValue = nil
+        _storage = Value(nilLiteral: ())
         self.key = key
         self.title = title
         self.description = description
@@ -139,6 +163,18 @@ public extension Parameter where Value: ExpressibleByNilLiteral {
 
 public extension Parameter {
     /// Creates a required parameter with the specified metadata and constraints.
+    ///
+    /// The storage starts empty; the generated `parse(from:)` populates it
+    /// before any read.
+    ///
+    /// - Parameters:
+    ///   - key: The JSON key (defaults to property name).
+    ///   - title: A user-facing title for display in UIs.
+    ///   - description: A description of the parameter.
+    ///   - minLength: Minimum string length.
+    ///   - maxLength: Maximum string length.
+    ///   - minimum: Minimum numeric value.
+    ///   - maximum: Maximum numeric value.
     init(
         key: String? = nil,
         title: String? = nil,
@@ -146,9 +182,9 @@ public extension Parameter {
         minLength: Int? = nil,
         maxLength: Int? = nil,
         minimum: Double? = nil,
-        maximum: Double? = nil
+        maximum: Double? = nil,
     ) {
-        wrappedValue = Value.placeholderValue
+        _storage = nil
         self.key = key
         self.title = title
         self.description = description

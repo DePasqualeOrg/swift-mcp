@@ -152,7 +152,7 @@ public enum MCPError: Swift.Error, Sendable {
     /// ```
     public static func urlElicitationRequired(
         elicitations: [ElicitRequestURLParams],
-        message: String? = nil
+        message: String? = nil,
     ) -> MCPError {
         let msg = message ?? "URL elicitation\(elicitations.count > 1 ? "s" : "") required"
         return .urlElicitationRequired(message: msg, elicitations: elicitations)
@@ -461,8 +461,8 @@ extension MCPError: Codable {
                     NSError(
                         domain: "org.jsonrpc.error",
                         code: code,
-                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
-                    )
+                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString],
+                    ),
                 )
             case ErrorCode.requestCancelled:
                 // Extract reason from data if present
@@ -571,8 +571,8 @@ extension MCPError: Codable {
                     NSError(
                         domain: "org.jsonrpc.error",
                         code: code,
-                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString]
-                    )
+                        userInfo: [NSLocalizedDescriptionKey: underlyingErrorString],
+                    ),
                 )
             case ErrorCode.requestCancelled:
                 // Extract reason from data if present

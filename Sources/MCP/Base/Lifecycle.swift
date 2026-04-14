@@ -22,7 +22,7 @@ public enum Initialize: Method {
             protocolVersion: String = Version.latest,
             capabilities: Client.Capabilities,
             clientInfo: Client.Info,
-            _meta: RequestMeta? = nil
+            _meta: RequestMeta? = nil,
         ) {
             self.protocolVersion = protocolVersion
             self.capabilities = capabilities
@@ -67,7 +67,7 @@ public enum Initialize: Method {
             serverInfo: Server.Info,
             instructions: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.protocolVersion = protocolVersion
             self.capabilities = capabilities

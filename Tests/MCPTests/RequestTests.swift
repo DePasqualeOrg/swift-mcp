@@ -1,21 +1,18 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
-
 @testable import MCP
+import Testing
 
-@Suite("Request Tests")
 struct RequestTests {
     struct TestMethod: Method {
-        struct Parameters: Codable, Hashable, Sendable {
+        struct Parameters: Codable, Hashable {
             let value: String
         }
 
-        struct Result: Codable, Hashable, Sendable {
+        struct Result: Codable, Hashable {
             let success: Bool
         }
 
@@ -26,8 +23,8 @@ struct RequestTests {
         static let name = "empty.method"
     }
 
-    @Test("Request initialization with parameters")
-    func testRequestInitialization() throws {
+    @Test
+    func `Request initialization with parameters`() {
         let id: RequestId = 1
         let params = CallTool.Parameters(name: "test-tool")
         let request = Request<CallTool>(id: id, method: CallTool.name, params: params)
@@ -37,8 +34,8 @@ struct RequestTests {
         #expect(request.params.name == "test-tool")
     }
 
-    @Test("Request encoding and decoding")
-    func testRequestEncodingDecoding() throws {
+    @Test
+    func `Request encoding and decoding`() throws {
         let request = CallTool.request(id: 1, CallTool.Parameters(name: "test-tool"))
 
         let encoder = JSONEncoder()
@@ -52,8 +49,8 @@ struct RequestTests {
         #expect(decoded.params.name == request.params.name)
     }
 
-    @Test("Empty parameters request encoding")
-    func testEmptyParametersRequestEncoding() throws {
+    @Test
+    func `Empty parameters request encoding`() throws {
         let request = EmptyMethod.request(id: 1)
 
         let encoder = JSONEncoder()
@@ -67,13 +64,13 @@ struct RequestTests {
         #expect(decoded.method == request.method)
     }
 
-    @Test("Empty parameters request decoding")
-    func testEmptyParametersRequestDecoding() throws {
+    @Test
+    func `Empty parameters request decoding`() throws {
         // Create a minimal JSON string
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"empty.method"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<EmptyMethod>.self, from: data)
@@ -82,13 +79,13 @@ struct RequestTests {
         #expect(decoded.method == EmptyMethod.name)
     }
 
-    @Test("NotRequired parameters request decoding - with params")
-    func testNotRequiredParametersRequestDecodingWithParams() throws {
+    @Test
+    func `NotRequired parameters request decoding - with params`() throws {
         // Test decoding when params field is present
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<Ping>.self, from: data)
@@ -97,13 +94,13 @@ struct RequestTests {
         #expect(decoded.method == Ping.name)
     }
 
-    @Test("NotRequired parameters request decoding - without params")
-    func testNotRequiredParametersRequestDecodingWithoutParams() throws {
+    @Test
+    func `NotRequired parameters request decoding - without params`() throws {
         // Test decoding when params field is missing
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<Ping>.self, from: data)
@@ -112,13 +109,13 @@ struct RequestTests {
         #expect(decoded.method == Ping.name)
     }
 
-    @Test("NotRequired parameters request decoding - with null params")
-    func testNotRequiredParametersRequestDecodingWithNullParams() throws {
+    @Test
+    func `NotRequired parameters request decoding - with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<Ping>.self, from: data)
@@ -127,12 +124,12 @@ struct RequestTests {
         #expect(decoded.method == Ping.name)
     }
 
-    @Test("Required parameters request decoding - missing params")
-    func testRequiredParametersRequestDecodingMissingParams() throws {
+    @Test
+    func `Required parameters request decoding - missing params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"tools/call"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         #expect(throws: DecodingError.self) {
@@ -140,12 +137,12 @@ struct RequestTests {
         }
     }
 
-    @Test("Required parameters request decoding - null params")
-    func testRequiredParametersRequestDecodingNullParams() throws {
+    @Test
+    func `Required parameters request decoding - null params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"tools/call","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         #expect(throws: DecodingError.self) {
@@ -153,12 +150,12 @@ struct RequestTests {
         }
     }
 
-    @Test("Empty parameters request decoding - with null params")
-    func testEmptyParametersRequestDecodingNullParams() throws {
+    @Test
+    func `Empty parameters request decoding - with null params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"empty.method","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<EmptyMethod>.self, from: data)
@@ -167,12 +164,12 @@ struct RequestTests {
         #expect(decoded.method == EmptyMethod.name)
     }
 
-    @Test("Empty parameters request decoding - with empty object params")
-    func testEmptyParametersRequestDecodingEmptyParams() throws {
+    @Test
+    func `Empty parameters request decoding - with empty object params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"empty.method","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<EmptyMethod>.self, from: data)
@@ -181,8 +178,8 @@ struct RequestTests {
         #expect(decoded.method == EmptyMethod.name)
     }
 
-    @Test("Initialize request decoding - requires params")
-    func testInitializeRequestDecodingRequiresParams() throws {
+    @Test
+    func `Initialize request decoding - requires params`() throws {
         // Test missing params field
         let missingParams = """
         {"jsonrpc":"2.0","id":"test-id","method":"initialize"}
@@ -190,7 +187,7 @@ struct RequestTests {
         let decoder = JSONDecoder()
         #expect(throws: DecodingError.self) {
             _ = try decoder.decode(
-                Request<Initialize>.self, from: missingParams.data(using: .utf8)!
+                Request<Initialize>.self, from: #require(missingParams.data(using: .utf8)),
             )
         }
 
@@ -199,7 +196,7 @@ struct RequestTests {
         {"jsonrpc":"2.0","id":"test-id","method":"initialize","params":null}
         """
         #expect(throws: DecodingError.self) {
-            _ = try decoder.decode(Request<Initialize>.self, from: nullParams.data(using: .utf8)!)
+            _ = try decoder.decode(Request<Initialize>.self, from: #require(nullParams.data(using: .utf8)))
         }
 
         // Verify that empty object params works (since fields have defaults)
@@ -207,18 +204,18 @@ struct RequestTests {
         {"jsonrpc":"2.0","id":"test-id","method":"initialize","params":{}}
         """
         let decoded = try decoder.decode(
-            Request<Initialize>.self, from: emptyParams.data(using: .utf8)!
+            Request<Initialize>.self, from: #require(emptyParams.data(using: .utf8)),
         )
         #expect(decoded.params.protocolVersion == Version.latest)
         #expect(decoded.params.clientInfo.name == "unknown")
     }
 
-    @Test("Invalid parameters request decoding")
-    func testInvalidParametersRequestDecoding() throws {
+    @Test
+    func `Invalid parameters request decoding`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"invalid":"value"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         #expect(throws: DecodingError.self) {
@@ -226,8 +223,8 @@ struct RequestTests {
         }
     }
 
-    @Test("NotRequired parameters request decoding")
-    func testNotRequiredParametersRequestDecoding() throws {
+    @Test
+    func `NotRequired parameters request decoding`() throws {
         // Test with missing params
         let missingParams = """
         {"jsonrpc":"2.0","id":1,"method":"tools/list"}
@@ -235,7 +232,7 @@ struct RequestTests {
         let decoder = JSONDecoder()
         let decodedMissing = try decoder.decode(
             Request<ListTools>.self,
-            from: missingParams.data(using: .utf8)!
+            from: #require(missingParams.data(using: .utf8)),
         )
         #expect(decodedMissing.id == 1)
         #expect(decodedMissing.method == ListTools.name)
@@ -247,7 +244,7 @@ struct RequestTests {
         """
         let decodedNull = try decoder.decode(
             Request<ListTools>.self,
-            from: nullParams.data(using: .utf8)!
+            from: #require(nullParams.data(using: .utf8)),
         )
         #expect(decodedNull.params.cursor == nil)
 
@@ -257,7 +254,7 @@ struct RequestTests {
         """
         let decodedEmpty = try decoder.decode(
             Request<ListTools>.self,
-            from: emptyParams.data(using: .utf8)!
+            from: #require(emptyParams.data(using: .utf8)),
         )
         #expect(decodedEmpty.params.cursor == nil)
 
@@ -267,18 +264,18 @@ struct RequestTests {
         """
         let decodedWithCursor = try decoder.decode(
             Request<ListTools>.self,
-            from: withCursor.data(using: .utf8)!
+            from: #require(withCursor.data(using: .utf8)),
         )
         #expect(decodedWithCursor.params.cursor == "next-page")
     }
 
-    @Test("AnyRequest parameters request decoding - without params")
-    func testAnyRequestParametersRequestDecodingWithoutParams() throws {
+    @Test
+    func `AnyRequest parameters request decoding - without params`() throws {
         // Test decoding when params field is missing
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(AnyRequest.self, from: data)
@@ -287,13 +284,13 @@ struct RequestTests {
         #expect(decoded.method == Ping.name)
     }
 
-    @Test("AnyRequest parameters request decoding - with null params")
-    func testAnyRequestParametersRequestDecodingWithNullParams() throws {
+    @Test
+    func `AnyRequest parameters request decoding - with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<Ping>.self, from: data)
@@ -302,13 +299,13 @@ struct RequestTests {
         #expect(decoded.method == Ping.name)
     }
 
-    @Test("AnyRequest parameters request decoding - with empty params")
-    func testAnyRequestParametersRequestDecodingWithEmptyParams() throws {
+    @Test
+    func `AnyRequest parameters request decoding - with empty params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"ping","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<Ping>.self, from: data)

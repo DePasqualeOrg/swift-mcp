@@ -114,7 +114,7 @@ struct ConformanceClient {
             logger.info("Calling add_numbers tool...")
             let result = try await client.callTool(
                 name: "add_numbers",
-                arguments: ["a": 5, "b": 3]
+                arguments: ["a": 5, "b": 3],
             )
             logger.info("Tool result: \(result.content)")
         } else {
@@ -133,7 +133,7 @@ struct ConformanceClient {
 
         await client.withElicitationHandler(
             formMode: .enabled(applyDefaults: true),
-            urlMode: .enabled
+            urlMode: .enabled,
         ) { params, _ in
             switch params {
                 case let .form(formParams):
@@ -229,7 +229,7 @@ struct ConformanceClient {
                 }
                 try await storage.setClientInfo(OAuthClientInformation(
                     clientId: clientId,
-                    clientSecret: clientSecret
+                    clientSecret: clientSecret,
                 ))
                 logger.info("Pre-loaded client credentials: client_id=\(clientId), auth_method=\(authMethod)")
             }
@@ -241,7 +241,7 @@ struct ConformanceClient {
                 redirectURIs: [URL(string: "http://localhost:3000/callback")!],
                 grantTypes: ["authorization_code", "refresh_token"],
                 responseTypes: ["code"],
-                clientName: "conformance-client"
+                clientName: "conformance-client",
             ),
             storage: storage,
             redirectHandler: { url in
@@ -250,7 +250,7 @@ struct ConformanceClient {
             callbackHandler: {
                 try await callbackHandler.handleCallback()
             },
-            clientMetadataURL: URL(string: "https://conformance-test.local/client-metadata.json")
+            clientMetadataURL: URL(string: "https://conformance-test.local/client-metadata.json"),
         )
 
         try await runAuthSession(serverURL: serverURL, authProvider: provider)
@@ -271,7 +271,7 @@ struct ConformanceClient {
             serverURL: serverURL,
             clientId: clientId,
             clientSecret: clientSecret,
-            storage: InMemoryTokenStorage()
+            storage: InMemoryTokenStorage(),
         )
 
         try await runAuthSession(serverURL: serverURL, authProvider: provider)
@@ -296,7 +296,7 @@ struct ConformanceClient {
             storage: InMemoryTokenStorage(),
             assertionProvider: { audience in
                 try signES256JWT(clientId: clientId, audience: audience, privateKey: privateKey)
-            }
+            },
         )
 
         try await runAuthSession(serverURL: serverURL, authProvider: provider)
@@ -307,7 +307,7 @@ struct ConformanceClient {
         let transport = HTTPClientTransport(
             endpoint: serverURL,
             streaming: false,
-            authProvider: authProvider
+            authProvider: authProvider,
         )
         let client = Client(name: "swift-conformance-client", version: "1.0.0")
 
@@ -375,7 +375,7 @@ final class ConformanceOAuthCallbackHandler: Sendable {
         let session = URLSession(
             configuration: .ephemeral,
             delegate: NoRedirectDelegate.shared,
-            delegateQueue: nil
+            delegateQueue: nil,
         )
 
         let request = URLRequest(url: authorizationURL)
@@ -387,7 +387,7 @@ final class ConformanceOAuthCallbackHandler: Sendable {
 
         guard (301 ... 308).contains(httpResponse.statusCode) else {
             throw ConformanceError.unexpectedResponse(
-                "Expected redirect, got \(httpResponse.statusCode)"
+                "Expected redirect, got \(httpResponse.statusCode)",
             )
         }
 
@@ -415,7 +415,7 @@ final class ConformanceOAuthCallbackHandler: Sendable {
     func handleCallback() async throws -> (code: String, state: String?) {
         guard let result = await state.load() else {
             throw ConformanceError.unexpectedResponse(
-                "No authorization code available – was handleRedirect called?"
+                "No authorization code available – was handleRedirect called?",
             )
         }
         return result
@@ -449,7 +449,7 @@ private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendab
         _: URLSession,
         task _: URLSessionTask,
         willPerformHTTPRedirection _: HTTPURLResponse,
-        newRequest _: URLRequest
+        newRequest _: URLRequest,
     ) async -> URLRequest? {
         nil
     }
@@ -465,7 +465,7 @@ private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendab
 func signES256JWT(
     clientId: String,
     audience: String,
-    privateKey: P256.Signing.PrivateKey
+    privateKey: P256.Signing.PrivateKey,
 ) throws -> String {
     let now = Int(Date().timeIntervalSince1970)
 

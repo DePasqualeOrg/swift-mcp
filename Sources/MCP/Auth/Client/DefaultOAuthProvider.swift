@@ -84,11 +84,11 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         redirectHandler: @Sendable @escaping (URL) async throws -> Void,
         callbackHandler: @Sendable @escaping () async throws -> (code: String, state: String?),
         clientMetadataURL: URL? = nil,
-        httpClient: HTTPRequestHandler? = nil
+        httpClient: HTTPRequestHandler? = nil,
     ) {
         precondition(
             clientMetadata.redirectURIs?.isEmpty == false,
-            "DefaultOAuthProvider requires at least one redirect URI in clientMetadata.redirectURIs"
+            "DefaultOAuthProvider requires at least one redirect URI in clientMetadata.redirectURIs",
         )
         self.serverURL = serverURL
         self.clientMetadata = clientMetadata
@@ -124,7 +124,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
     }
 
     public func handleUnauthorized(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         do {
             return try await performAuthorizationFlow(context: context)
@@ -164,7 +164,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         let authMethod = selectClientAuthenticationMethod(
             serverSupported: cachedASMetadata?.tokenEndpointAuthMethodsSupported,
             clientPreferred: clientMetadata.tokenEndpointAuthMethod,
-            hasClientSecret: clientInfo?.clientSecret != nil
+            hasClientSecret: clientInfo?.clientSecret != nil,
         )
 
         let tokenURL = tokenEndpoint(from: cachedASMetadata, authServerURL: cachedAuthServerURL ?? serverURL)
@@ -179,7 +179,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
                 clientAuthMethod: authMethod,
                 tokenEndpoint: tokenURL,
                 resource: resource,
-                httpClient: httpClient
+                httpClient: httpClient,
             )
 
             try await storeTokens(newTokens)
@@ -201,7 +201,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
     // MARK: - Authorization Flow
 
     private func performAuthorizationFlow(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         // 1. Discovery
         let (authServerURL, asMetadata) = try await performDiscovery(context: context)
@@ -221,7 +221,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
             wwwAuthenticateScope: context.scope,
             protectedResourceMetadata: cachedPRM,
             authServerMetadata: asMetadata,
-            clientMetadataScope: clientMetadata.scope
+            clientMetadataScope: clientMetadata.scope,
         )
 
         // 5. Resource selection (always included per MCP spec 2025-11-25)
@@ -239,7 +239,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
             codeChallenge: pkce.challenge,
             state: state,
             scope: scope,
-            resource: resource
+            resource: resource,
         )
 
         // 7. Redirect
@@ -257,7 +257,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         let authMethod = selectClientAuthenticationMethod(
             serverSupported: asMetadata?.tokenEndpointAuthMethodsSupported,
             clientPreferred: clientMetadata.tokenEndpointAuthMethod,
-            hasClientSecret: clientInfo.clientSecret != nil
+            hasClientSecret: clientInfo.clientSecret != nil,
         )
 
         let tokenURL = tokenEndpoint(from: asMetadata, authServerURL: authServerURL)
@@ -271,7 +271,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
             clientAuthMethod: authMethod,
             tokenEndpoint: tokenURL,
             resource: resource,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
 
         // 11. Store tokens
@@ -282,7 +282,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
     // MARK: - Discovery
 
     private func performDiscovery(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> (URL, OAuthMetadata?) {
         // Use cached discovery state if available
         if let authServerURL = cachedAuthServerURL {
@@ -293,7 +293,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         let prm = await discoverProtectedResourceMetadata(
             serverURL: serverURL,
             wwwAuthenticateResourceMetadataURL: context.resourceMetadataURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         cachedPRM = prm
 
@@ -311,7 +311,8 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         // validation impossible and enabling metadata injection attacks.
         guard let authServerURL = prm?.authorizationServers?.first else {
             throw OAuthError.discoveryFailed(
-                "Protected Resource Metadata did not provide an authorization server URL")
+                "Protected Resource Metadata did not provide an authorization server URL",
+            )
         }
         try validateEndpointURL(authServerURL)
         cachedAuthServerURL = authServerURL
@@ -319,7 +320,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         // AS metadata discovery
         let asMetadata = await discoverAuthorizationServerMetadata(
             authServerURL: authServerURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         if let asMetadata {
             try validateIssuer(asMetadata, authServerURL: authServerURL)
@@ -334,7 +335,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
 
     private func performRegistration(
         asMetadata: OAuthMetadata?,
-        authServerURL: URL
+        authServerURL: URL,
     ) async throws -> OAuthClientInformation {
         // Check storage first (unless client info was invalidated or the secret expired)
         if !clientInfoInvalidated, let existing = try await storage.getClientInfo(),
@@ -357,7 +358,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
             clientInfo = try await registerClient(
                 clientMetadata: clientMetadata,
                 registrationEndpoint: regEndpoint,
-                httpClient: httpClient
+                httpClient: httpClient,
             )
         }
 
@@ -375,7 +376,7 @@ public actor DefaultOAuthProvider: OAuthClientProvider {
         codeChallenge: String,
         state: String,
         scope: String?,
-        resource: URL?
+        resource: URL?,
     ) -> URL {
         guard var components = URLComponents(url: authorizationEndpoint, resolvingAgainstBaseURL: true)
         else {

@@ -30,7 +30,7 @@ import MCPTool
 struct ConformanceServer: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "MCP Conformance Test Server",
-        discussion: "Runs an MCP server with test fixtures for the conformance test suite."
+        discussion: "Runs an MCP server with test fixtures for the conformance test suite.",
     )
 
     @Option(name: .shortAndLong, help: "Port to listen on")
@@ -49,8 +49,8 @@ struct ConformanceServer: AsyncParsableCommand {
             capabilities: Server.Capabilities(
                 logging: .init(),
                 resources: .init(subscribe: true),
-                completions: .init()
-            )
+                completions: .init(),
+            ),
         )
 
         // Register test fixtures
@@ -83,7 +83,7 @@ struct ConformanceServer: AsyncParsableCommand {
         // Create and run application
         let app = Application(
             router: router,
-            configuration: .init(address: .hostname(host, port: port))
+            configuration: .init(address: .hostname(host, port: port)),
         )
 
         logger.info("Starting MCP conformance server on http://\(host):\(port)/mcp")
@@ -151,8 +151,8 @@ actor ConformanceSessionManager {
                     onSessionClosed: { [weak self] sessionId in
                         await self?.removeSession(sessionId)
                         self?.logger.info("Session closed: \(sessionId)")
-                    }
-                )
+                    },
+                ),
             )
 
             let server = await mcpServer.createSession()
@@ -167,19 +167,19 @@ actor ConformanceSessionManager {
         } else if sessionId != nil {
             return Response(
                 status: .notFound,
-                body: .init(byteBuffer: .init(string: "Session expired"))
+                body: .init(byteBuffer: .init(string: "Session expired")),
             )
         } else {
             return Response(
                 status: .badRequest,
-                body: .init(byteBuffer: .init(string: "Missing session ID"))
+                body: .init(byteBuffer: .init(string: "Missing session ID")),
             )
         }
 
         let mcpRequest = MCP.HTTPRequest(
             method: "POST",
             headers: extractHeaders(from: request),
-            body: data
+            body: data,
         )
 
         let mcpResponse = await transport.handleRequest(mcpRequest)
@@ -192,13 +192,13 @@ actor ConformanceSessionManager {
         else {
             return Response(
                 status: .badRequest,
-                body: .init(byteBuffer: .init(string: "Invalid or missing session ID"))
+                body: .init(byteBuffer: .init(string: "Invalid or missing session ID")),
             )
         }
 
         let mcpRequest = MCP.HTTPRequest(
             method: "GET",
-            headers: extractHeaders(from: request)
+            headers: extractHeaders(from: request),
         )
 
         let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -211,13 +211,13 @@ actor ConformanceSessionManager {
         else {
             return Response(
                 status: .notFound,
-                body: .init(byteBuffer: .init(string: "Session not found"))
+                body: .init(byteBuffer: .init(string: "Session not found")),
             )
         }
 
         let mcpRequest = MCP.HTTPRequest(
             method: "DELETE",
-            headers: extractHeaders(from: request)
+            headers: extractHeaders(from: request),
         )
 
         let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -260,7 +260,7 @@ actor ConformanceSessionManager {
     }
 }
 
-struct SSEResponseSequence: AsyncSequence, Sendable {
+struct SSEResponseSequence: AsyncSequence {
     typealias Element = ByteBuffer
     let stream: AsyncThrowingStream<Data, Error>
 
@@ -422,7 +422,7 @@ struct TestElicitation {
                 "username": .string(StringSchema()),
                 "email": .string(StringSchema()),
             ],
-            required: ["username", "email"]
+            required: ["username", "email"],
         )
         let result = try await context.elicit(message: message, requestedSchema: schema)
         return "Elicitation result: action=\(result.action.rawValue), content=\(String(describing: result.content))"
@@ -443,14 +443,14 @@ struct TestElicitationSEP1034Defaults {
                 "score": .number(NumberSchema(defaultValue: 95.5)),
                 "status": .untitledEnum(UntitledEnumSchema(
                     enumValues: ["active", "inactive", "pending"],
-                    defaultValue: "active"
+                    defaultValue: "active",
                 )),
                 "verified": .boolean(BooleanSchema(defaultValue: true)),
-            ]
+            ],
         )
         let result = try await context.elicit(
             message: "Please provide your information",
-            requestedSchema: schema
+            requestedSchema: schema,
         )
         return "Elicitation result: action=\(result.action.rawValue), content=\(String(describing: result.content))"
     }
@@ -466,34 +466,34 @@ struct TestElicitationSEP1330Enums {
         let schema = ElicitationSchema(
             properties: [
                 "untitledSingle": .untitledEnum(UntitledEnumSchema(
-                    enumValues: ["option1", "option2", "option3"]
+                    enumValues: ["option1", "option2", "option3"],
                 )),
                 "titledSingle": .titledEnum(TitledEnumSchema(
                     oneOf: [
                         TitledEnumOption(const: "opt1", title: "Option 1"),
                         TitledEnumOption(const: "opt2", title: "Option 2"),
                         TitledEnumOption(const: "opt3", title: "Option 3"),
-                    ]
+                    ],
                 )),
                 "legacyEnum": .legacyTitledEnum(LegacyTitledEnumSchema(
                     enumValues: ["val1", "val2", "val3"],
-                    enumNames: ["Value 1", "Value 2", "Value 3"]
+                    enumNames: ["Value 1", "Value 2", "Value 3"],
                 )),
                 "untitledMulti": .untitledMultiSelect(UntitledMultiSelectEnumSchema(
-                    enumValues: ["choice1", "choice2", "choice3"]
+                    enumValues: ["choice1", "choice2", "choice3"],
                 )),
                 "titledMulti": .titledMultiSelect(TitledMultiSelectEnumSchema(
                     options: [
                         TitledEnumOption(const: "sel1", title: "Selection 1"),
                         TitledEnumOption(const: "sel2", title: "Selection 2"),
                         TitledEnumOption(const: "sel3", title: "Selection 3"),
-                    ]
+                    ],
                 )),
-            ]
+            ],
         )
         let result = try await context.elicit(
             message: "Please select your preferences",
-            requestedSchema: schema
+            requestedSchema: schema,
         )
         return "Elicitation result: action=\(result.action.rawValue), content=\(String(describing: result.content))"
     }
@@ -511,7 +511,7 @@ struct TestSampling {
             messages: [
                 Sampling.Message(role: .user, content: .text("What is 2+2? Reply with just the number.")),
             ],
-            maxTokens: 100
+            maxTokens: 100,
         )
 
         // Return the result from the LLM
@@ -553,7 +553,7 @@ func registerTestResources(_ mcpServer: MCPServer) async throws {
         uri: "test://static-text",
         name: "Static Text Resource",
         description: "A static text resource for conformance testing",
-        mimeType: "text/plain"
+        mimeType: "text/plain",
     ) {
         .text("This is static text content for testing.", uri: "test://static-text", mimeType: "text/plain")
     }
@@ -562,7 +562,7 @@ func registerTestResources(_ mcpServer: MCPServer) async throws {
     try await mcpServer.registerResource(
         uri: "test://static-binary",
         name: "Static Binary Resource",
-        description: "A static binary resource for conformance testing"
+        description: "A static binary resource for conformance testing",
     ) {
         .binary(TestData.redPixelPNGData, uri: "test://static-binary", mimeType: "image/png")
     }
@@ -572,7 +572,7 @@ func registerTestResources(_ mcpServer: MCPServer) async throws {
         uriTemplate: "test://template/{id}/data",
         name: "Template Resource",
         description: "A dynamic resource template for conformance testing",
-        mimeType: "application/json"
+        mimeType: "application/json",
     ) { uri, variables in
         // Extract ID from URI or variables
         let id = variables["id"] ?? "unknown"
@@ -587,7 +587,7 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
     // Simple prompt without arguments
     try await mcpServer.registerPrompt(
         name: "test_simple_prompt",
-        description: "A simple prompt without arguments"
+        description: "A simple prompt without arguments",
     ) {
         [.user(.text("This is a simple test prompt message."))]
     }
@@ -599,7 +599,7 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
         arguments: [
             Prompt.Argument(name: "arg1", description: "First test argument", required: true),
             Prompt.Argument(name: "arg2", description: "Second test argument", required: true),
-        ]
+        ],
     ) { arguments, _ in
         let arg1 = arguments?["arg1"] ?? ""
         let arg2 = arguments?["arg2"] ?? ""
@@ -609,7 +609,7 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
     // Prompt with embedded resource
     try await mcpServer.registerPrompt(
         name: "test_prompt_with_embedded_resource",
-        description: "A prompt with embedded resource"
+        description: "A prompt with embedded resource",
     ) {
         [.user(.resource(uri: "test://static-text", mimeType: "text/plain", text: "Embedded text from resource"))]
     }
@@ -617,7 +617,7 @@ func registerTestPrompts(_ mcpServer: MCPServer) async throws {
     // Prompt with image
     try await mcpServer.registerPrompt(
         name: "test_prompt_with_image",
-        description: "A prompt with image content"
+        description: "A prompt with image content",
     ) {
         [.user(.image(data: TestData.redPixelPNGBase64, mimeType: "image/png"))]
     }

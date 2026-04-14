@@ -14,7 +14,7 @@ final class PromptMacroTests: XCTestCase {
 
     // MARK: - Compile-Time Validation Tests
 
-    func testMissingNameError() throws {
+    func testMissingNameError() {
         assertMacroExpansion(
             """
             @Prompt
@@ -38,11 +38,11 @@ final class PromptMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Prompt requires 'static let name: String' property", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testMissingDescriptionError() throws {
+    func testMissingDescriptionError() {
         assertMacroExpansion(
             """
             @Prompt
@@ -66,11 +66,11 @@ final class PromptMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Prompt requires 'static let description: String' property", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testNotAStructError() throws {
+    func testNotAStructError() {
         assertMacroExpansion(
             """
             @Prompt
@@ -88,7 +88,7 @@ final class PromptMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Prompt can only be applied to structs", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 }

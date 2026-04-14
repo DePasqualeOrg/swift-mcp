@@ -2,16 +2,14 @@
 
 import Foundation
 import Logging
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for the request capture pattern that ensures responses go to the correct transport
 /// even when the server's connection changes while a request is being processed.
 ///
 /// This is critical for HTTP transports where multiple clients can connect and the server's
 /// `connection` reference gets reassigned.
-@Suite("Transport Switching Tests")
 struct TransportSwitchingTests {
     /// Mock transport that tracks sent messages with their related request IDs
     actor TrackingMockTransport: Transport {
@@ -44,21 +42,21 @@ struct TransportSwitchingTests {
             self.logger = logger
         }
 
-        public func connect() async throws {
+        func connect() async throws {
             isConnected = true
         }
 
-        public func disconnect() async {
+        func disconnect() async {
             isConnected = false
             dataStreamContinuation?.finish()
             dataStreamContinuation = nil
         }
 
-        public func send(_ data: Data, options: TransportSendOptions) async throws {
+        func send(_ data: Data, options: TransportSendOptions) async throws {
             sentMessages.append(SentMessage(data: data, relatedRequestId: options.relatedRequestId))
         }
 
-        public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
+        func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
             AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
                 dataStreamContinuation = continuation
                 for message in dataToReceive {
@@ -86,8 +84,8 @@ struct TransportSwitchingTests {
         }
     }
 
-    @Test("Response goes to correct transport when connection changes during request handling")
-    func testResponseGoesToCorrectTransportWhenConnectionChanges() async throws {
+    @Test
+    func `Response goes to correct transport when connection changes during request handling`() async throws {
         // Create two transports (simulating two clients)
         let transportA = TrackingMockTransport(name: "TransportA")
         let transportB = TrackingMockTransport(name: "TransportB")
@@ -140,9 +138,10 @@ struct TransportSwitchingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         // Wait for initialization
         try await Task.sleep(for: .milliseconds(100))
@@ -152,7 +151,7 @@ struct TransportSwitchingTests {
         let pingJSON = """
         {"jsonrpc":"2.0","id":100,"method":"ping","params":{}}
         """
-        await transportA.queue(data: pingJSON.data(using: .utf8)!)
+        try await transportA.queue(data: #require(pingJSON.data(using: .utf8)))
 
         // Wait for the handler to be called
         let wasCalled = await pollUntil { await control.handlerWasCalled }
@@ -206,8 +205,8 @@ struct TransportSwitchingTests {
         await transportB.disconnect()
     }
 
-    @Test("Simple request routes correctly with relatedRequestId")
-    func testSimpleRequestRoutesCorrectly() async throws {
+    @Test
+    func `Simple request routes correctly with relatedRequestId`() async throws {
         let transportA = TrackingMockTransport(name: "TransportA")
 
         let server = Server(name: "TestServer", version: "1.0")
@@ -222,9 +221,10 @@ struct TransportSwitchingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
         try await Task.sleep(for: .milliseconds(100))
         await transportA.clearMessages()
 
@@ -232,7 +232,7 @@ struct TransportSwitchingTests {
         let pingJSON = """
         {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
         """
-        await transportA.queue(data: pingJSON.data(using: .utf8)!)
+        try await transportA.queue(data: #require(pingJSON.data(using: .utf8)))
 
         // Wait for response
         try await Task.sleep(for: .milliseconds(100))
@@ -257,8 +257,8 @@ struct TransportSwitchingTests {
         await transportA.disconnect()
     }
 
-    @Test("Batch response goes to correct transport")
-    func testBatchResponseGoesToCorrectTransport() async throws {
+    @Test
+    func `Batch response goes to correct transport`() async throws {
         let transportA = TrackingMockTransport(name: "TransportA")
 
         let server = Server(name: "TestServer", version: "1.0")
@@ -273,9 +273,10 @@ struct TransportSwitchingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
         try await Task.sleep(for: .milliseconds(100))
         await transportA.clearMessages()
 
@@ -286,7 +287,7 @@ struct TransportSwitchingTests {
             {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
         ]
         """
-        let batchData = batchJSON.data(using: .utf8)!
+        let batchData = try #require(batchJSON.data(using: .utf8))
         await transportA.queue(data: batchData)
 
         // Wait for response
@@ -310,8 +311,8 @@ struct TransportSwitchingTests {
         await transportA.disconnect()
     }
 
-    @Test("Error response goes to correct transport with relatedRequestId")
-    func testErrorResponseGoesToCorrectTransport() async throws {
+    @Test
+    func `Error response goes to correct transport with relatedRequestId`() async throws {
         let transportA = TrackingMockTransport(name: "TransportA")
 
         let server = Server(name: "TestServer", version: "1.0")
@@ -326,9 +327,10 @@ struct TransportSwitchingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
         try await Task.sleep(for: .milliseconds(100))
         await transportA.clearMessages()
 
@@ -336,7 +338,7 @@ struct TransportSwitchingTests {
         let unknownMethodJSON = """
         {"jsonrpc":"2.0","id":99,"method":"unknown/method","params":{}}
         """
-        await transportA.queue(data: unknownMethodJSON.data(using: .utf8)!)
+        try await transportA.queue(data: #require(unknownMethodJSON.data(using: .utf8)))
 
         // Wait for response
         try await Task.sleep(for: .milliseconds(100))
@@ -361,8 +363,8 @@ struct TransportSwitchingTests {
         await transportA.disconnect()
     }
 
-    @Test("Notifications sent via context include relatedRequestId")
-    func testNotificationsSentViaContextIncludeRelatedRequestId() async throws {
+    @Test
+    func `Notifications sent via context include relatedRequestId`() async throws {
         let transportA = TrackingMockTransport(name: "TransportA")
 
         let server = Server(name: "TestServer", version: "1.0")
@@ -370,7 +372,9 @@ struct TransportSwitchingTests {
         // Track when handler sends notification
         actor NotificationTracker {
             var notificationSent = false
-            func markSent() { notificationSent = true }
+            func markSent() {
+                notificationSent = true
+            }
         }
         let tracker = NotificationTracker()
 
@@ -394,9 +398,10 @@ struct TransportSwitchingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
         try await Task.sleep(for: .milliseconds(100))
         await transportA.clearMessages()
 
@@ -404,7 +409,7 @@ struct TransportSwitchingTests {
         let pingJSON = """
         {"jsonrpc":"2.0","id":42,"method":"ping","params":{}}
         """
-        await transportA.queue(data: pingJSON.data(using: .utf8)!)
+        try await transportA.queue(data: #require(pingJSON.data(using: .utf8)))
 
         // Wait for handler to execute
         try await Task.sleep(for: .milliseconds(200))

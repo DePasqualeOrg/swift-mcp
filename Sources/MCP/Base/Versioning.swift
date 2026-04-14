@@ -38,7 +38,9 @@ public enum Version {
     ]
 
     /// The latest protocol version supported by this implementation.
-    public static var latest: String { supported[0] }
+    public static var latest: String {
+        supported[0]
+    }
 
     /// The default protocol version assumed when no `MCP-Protocol-Version` header is received.
     ///

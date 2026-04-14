@@ -14,7 +14,7 @@ final class ToolMacroTests: XCTestCase {
 
     // MARK: - Compile-Time Validation Tests
 
-    func testMissingNameError() throws {
+    func testMissingNameError() {
         assertMacroExpansion(
             """
             @Tool
@@ -38,11 +38,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'static let name: String' property", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testMissingDescriptionError() throws {
+    func testMissingDescriptionError() {
         assertMacroExpansion(
             """
             @Tool
@@ -66,11 +66,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'static let description: String' property", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testNotAStructError() throws {
+    func testNotAStructError() {
         assertMacroExpansion(
             """
             @Tool
@@ -88,11 +88,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool can only be applied to structs", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testInvalidToolNameWithSpaces() throws {
+    func testInvalidToolNameWithSpaces() {
         assertMacroExpansion(
             """
             @Tool
@@ -118,11 +118,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "Invalid tool name: Tool name contains invalid characters: '  '. Only A-Z, a-z, 0-9, _, -, . are allowed", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testInvalidToolNameTooLong() throws {
+    func testInvalidToolNameTooLong() {
         let longName = String(repeating: "a", count: 129)
         assertMacroExpansion(
             """
@@ -149,11 +149,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "Invalid tool name: Tool name exceeds maximum length of 128 characters (got 129)", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testDuplicateAnnotationError() throws {
+    func testDuplicateAnnotationError() {
         assertMacroExpansion(
             """
             @Tool
@@ -181,11 +181,11 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "Duplicate annotation: readOnly", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testNonLiteralDefaultValueError() throws {
+    func testNonLiteralDefaultValueError() {
         assertMacroExpansion(
             """
             @Tool
@@ -217,13 +217,13 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "Parameter 'startDate' has a non-literal default value. Only literal values (numbers, strings, booleans) are supported. For complex defaults, make the parameter optional and handle the default in perform().", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
     // MARK: - Access Level Propagation Tests
 
-    func testPublicStructGeneratesPublicMembers() throws {
+    func testPublicStructGeneratesPublicMembers() {
         assertMacroExpansion(
             """
             @Tool
@@ -255,14 +255,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -276,11 +279,11 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testPublicStructWithAnnotations() throws {
+    func testPublicStructWithAnnotations() {
         assertMacroExpansion(
             """
             @Tool
@@ -312,14 +315,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -333,11 +339,11 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testInternalStructGeneratesInternalMembers() throws {
+    func testInternalStructGeneratesInternalMembers() {
         assertMacroExpansion(
             """
             @Tool
@@ -369,14 +375,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -390,11 +399,11 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testPackageStructGeneratesPackageMembers() throws {
+    func testPackageStructGeneratesPackageMembers() {
         assertMacroExpansion(
             """
             @Tool
@@ -426,14 +435,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 package static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -447,11 +459,11 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testPublicStructWithPerformContext() throws {
+    func testPublicStructWithPerformContext() {
         assertMacroExpansion(
             """
             @Tool
@@ -483,14 +495,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -504,7 +519,7 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -536,7 +551,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'perform()' to be marked 'async'", line: 6, column: 10),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -566,7 +581,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'perform()' to be marked 'throws'", line: 6, column: 10),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -594,7 +609,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'perform()' to return a value conforming to 'ToolOutput'", line: 6, column: 10),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -624,7 +639,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'perform()' to take no arguments besides an optional 'context: HandlerContext'. Use '@Parameter' properties on the struct to declare inputs.", line: 6, column: 17),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -654,7 +669,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "The 'context' parameter of 'perform()' must be of type 'HandlerContext' (or 'MCP.HandlerContext'); got 'Int'.", line: 6, column: 27),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -684,7 +699,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Tool requires 'perform()' to be an instance method, not static.", line: 6, column: 17),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -720,7 +735,7 @@ final class ToolMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@Parameter cannot be applied to static property 'shared'. Tool parameters must be instance properties.", line: 6, column: 5),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -763,7 +778,7 @@ final class ToolMacroTests: XCTestCase {
                 DiagnosticSpec(message: "Duplicate @Parameter key 'query'. Each @Parameter key must be unique.", line: 6, column: 5),
                 DiagnosticSpec(message: "Duplicate @Parameter key 'query'. Each @Parameter key must be unique.", line: 9, column: 5),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -799,14 +814,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -825,10 +843,10 @@ final class ToolMacroTests: XCTestCase {
                     message: "'perform()' has more restrictive access (private) than the enclosing struct (public). If the return type is similarly restricted, the generated '_perform()' bridge will fail to compile.",
                     line: 6,
                     column: 5,
-                    severity: .warning
+                    severity: .warning,
                 ),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -854,10 +872,10 @@ final class ToolMacroTests: XCTestCase {
                 DiagnosticSpec(
                     message: "@Tool requires a 'perform' method (e.g., 'func perform() async throws -> String')",
                     line: 1,
-                    column: 1
+                    column: 1,
                 ),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -894,14 +912,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -915,7 +936,7 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
@@ -954,14 +975,17 @@ final class ToolMacroTests: XCTestCase {
                 }
 
                 public static var toolDefinition: MCP.Tool {
-                    MCP.Tool(
+                    let _schema = (try? MCPTool.ToolMacroSupport.buildObjectSchema(
+                        parameters: []
+                    )) ?? [
+                        "type": .string("object"),
+                        "properties": .object([:]),
+                        "required": .array([]),
+                    ]
+                    return MCP.Tool(
                         name: name,
                         description: description,
-                        inputSchema: .object([
-                            "type": .string("object"),
-                                    "properties": .object([:]),
-                                    "required": .array([])
-                        ]),
+                        inputSchema: .object(_schema),
                         outputSchema: outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
@@ -975,7 +999,7 @@ final class ToolMacroTests: XCTestCase {
             extension MyTool: MCP.ToolSpec, Sendable {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 }

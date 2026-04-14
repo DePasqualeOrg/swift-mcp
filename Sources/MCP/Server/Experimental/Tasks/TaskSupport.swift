@@ -17,7 +17,7 @@ import Foundation
 /// - Throws: MCPError if the request is incompatible with the tool's task mode
 public func validateTaskMode(
     isTaskRequest: Bool,
-    taskSupport: Tool.Execution.TaskSupport?
+    taskSupport: Tool.Execution.TaskSupport?,
 ) throws {
     let mode = taskSupport ?? .forbidden
 
@@ -55,7 +55,7 @@ public func validateTaskMode(isTaskRequest: Bool, for tool: Tool) throws {
 /// - Returns: True if the client can use this tool
 public func canUseToolWithTaskMode(
     clientSupportsTask: Bool,
-    taskSupport: Tool.Execution.TaskSupport?
+    taskSupport: Tool.Execution.TaskSupport?,
 ) -> Bool {
     let mode = taskSupport ?? .forbidden
     switch mode {
@@ -115,7 +115,7 @@ public final class TaskSupport: Sendable {
     public static func inMemory() -> TaskSupport {
         TaskSupport(
             store: InMemoryTaskStore(),
-            queue: InMemoryTaskMessageQueue()
+            queue: InMemoryTaskMessageQueue(),
         )
     }
 
@@ -175,7 +175,7 @@ public final class TaskSupport: Sendable {
         modelImmediateResponse: String? = nil,
         clientCapabilities: Client.Capabilities? = nil,
         server: Server? = nil,
-        work: @escaping @Sendable (ServerTaskContext) async throws -> CallTool.Result
+        work: @escaping @Sendable (ServerTaskContext) async throws -> CallTool.Result,
     ) async throws -> CreateTaskResult {
         // Create the task
         let task = try await store.createTask(metadata: metadata, taskId: taskId, sessionId: sessionId)
@@ -187,7 +187,7 @@ public final class TaskSupport: Sendable {
             queue: queue,
             sessionId: sessionId,
             clientCapabilities: clientCapabilities,
-            server: server
+            server: server,
         )
 
         // Spawn the work in a background task
@@ -205,7 +205,7 @@ public final class TaskSupport: Sendable {
                         taskId: context.taskId,
                         status: .cancelled,
                         statusMessage: "Cancelled",
-                        sessionId: sessionId
+                        sessionId: sessionId,
                     )
                 }
             } catch {
@@ -245,7 +245,7 @@ extension Server {
         guard let sessionId = context.sessionId else {
             throw MCPError.internalError(
                 "Task operations require a session ID, but the current transport does not provide one. "
-                    + "Use a transport with session support (e.g., HTTP with session management)."
+                    + "Use a transport with session support (e.g., HTTP with session management).",
             )
         }
         return sessionId
@@ -286,7 +286,7 @@ extension Server {
                 taskId: params.taskId,
                 status: .cancelled,
                 statusMessage: "Cancelled by client request",
-                sessionId: sessionId
+                sessionId: sessionId,
             )
 
             // Clean up any queued messages for this task
@@ -302,7 +302,7 @@ extension Server {
             return try await taskSupport.resultHandler.handle(
                 taskId: params.taskId,
                 sessionId: sessionId,
-                sendMessage: { data in try await context.sendData(data) }
+                sendMessage: { data in try await context.sendData(data) },
             )
         }
     }

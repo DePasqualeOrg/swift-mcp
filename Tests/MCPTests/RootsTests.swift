@@ -1,12 +1,10 @@
 // Copyright © Anthony DePasquale
 
-import Logging
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
-
+import Logging
 @testable import MCP
+import Testing
 
 #if canImport(System)
 import System
@@ -14,16 +12,15 @@ import System
 @preconcurrency import SystemPackage
 #endif
 
-@Suite("Roots Tests")
 struct RootsTests {
-    @Test("Root encoding and decoding")
-    func testRootCoding() throws {
+    @Test
+    func `Root encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let root = Root(
             uri: "file:///home/user/projects/myproject",
-            name: "My Project"
+            name: "My Project",
         )
 
         let data = try encoder.encode(root)
@@ -33,15 +30,15 @@ struct RootsTests {
         #expect(decoded.name == "My Project")
     }
 
-    @Test("Root with metadata encoding and decoding")
-    func testRootWithMetadataCoding() throws {
+    @Test
+    func `Root with metadata encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let root = Root(
             uri: "file:///workspace/repo",
             name: "Repository",
-            _meta: ["version": "1.0", "type": "git"]
+            _meta: ["version": "1.0", "type": "git"],
         )
 
         let data = try encoder.encode(root)
@@ -53,8 +50,8 @@ struct RootsTests {
         #expect(decoded._meta?["type"]?.stringValue == "git")
     }
 
-    @Test("Root without optional fields")
-    func testRootWithoutOptionalFields() throws {
+    @Test
+    func `Root without optional fields`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -68,8 +65,8 @@ struct RootsTests {
         #expect(decoded._meta == nil)
     }
 
-    @Test("Root URI must start with file://")
-    func testRootURIPrecondition() {
+    @Test
+    func `Root URI must start with file://`() {
         // Valid URIs should work
         _ = Root(uri: "file:///valid/path")
         _ = Root(uri: "file:///")
@@ -80,8 +77,8 @@ struct RootsTests {
         // The precondition is enforced at runtime.
     }
 
-    @Test("Root decoding fails for invalid URI")
-    func testRootDecodingFailsForInvalidURI() throws {
+    @Test
+    func `Root decoding fails for invalid URI`() throws {
         let decoder = JSONDecoder()
 
         // http:// URI should fail
@@ -112,8 +109,8 @@ struct RootsTests {
         }
     }
 
-    @Test("Root Hashable conformance")
-    func testRootHashable() {
+    @Test
+    func `Root Hashable conformance`() {
         let root1 = Root(uri: "file:///path/a", name: "A")
         let root2 = Root(uri: "file:///path/a", name: "A")
         let root3 = Root(uri: "file:///path/b", name: "B")
@@ -127,23 +124,23 @@ struct RootsTests {
         #expect(set.count == 1)
     }
 
-    @Test("ListRoots request encoding")
-    func testListRootsRequestEncoding() throws {
+    @Test
+    func `ListRoots request encoding`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
         let request = ListRoots.request(id: .number(1))
 
         let data = try encoder.encode(request)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"method\":\"roots/list\""))
         #expect(json.contains("\"id\":1"))
         #expect(json.contains("\"jsonrpc\":\"2.0\""))
     }
 
-    @Test("ListRoots result encoding and decoding")
-    func testListRootsResultCoding() throws {
+    @Test
+    func `ListRoots result encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -164,14 +161,14 @@ struct RootsTests {
         #expect(decoded.roots[1].name == "Project 2")
     }
 
-    @Test("ListRoots result with metadata")
-    func testListRootsResultWithMetadata() throws {
+    @Test
+    func `ListRoots result with metadata`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let result = ListRoots.Result(
             roots: [Root(uri: "file:///path")],
-            _meta: ["cursor": "next-page-token"]
+            _meta: ["cursor": "next-page-token"],
         )
 
         let data = try encoder.encode(result)
@@ -181,8 +178,8 @@ struct RootsTests {
         #expect(decoded._meta?["cursor"]?.stringValue == "next-page-token")
     }
 
-    @Test("ListRoots result empty roots")
-    func testListRootsResultEmptyRoots() throws {
+    @Test
+    func `ListRoots result empty roots`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -194,29 +191,29 @@ struct RootsTests {
         #expect(decoded.roots.isEmpty)
     }
 
-    @Test("RootsListChangedNotification name")
-    func testRootsListChangedNotificationName() {
+    @Test
+    func `RootsListChangedNotification name`() {
         #expect(RootsListChangedNotification.name == "notifications/roots/list_changed")
     }
 
-    @Test("RootsListChangedNotification encoding")
-    func testRootsListChangedNotificationEncoding() throws {
+    @Test
+    func `RootsListChangedNotification encoding`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
         let notification = RootsListChangedNotification.message(.init())
 
         let data = try encoder.encode(notification)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"method\":\"notifications/roots/list_changed\""))
         #expect(json.contains("\"jsonrpc\":\"2.0\""))
     }
 
-    @Test("Client capabilities include roots")
-    func testClientCapabilitiesIncludeRoots() throws {
+    @Test
+    func `Client capabilities include roots`() throws {
         let capabilities = Client.Capabilities(
-            roots: .init(listChanged: true)
+            roots: .init(listChanged: true),
         )
 
         #expect(capabilities.roots != nil)
@@ -232,10 +229,10 @@ struct RootsTests {
         #expect(decoded.roots?.listChanged == true)
     }
 
-    @Test("Client capabilities roots without listChanged")
-    func testClientCapabilitiesRootsWithoutListChanged() throws {
+    @Test
+    func `Client capabilities roots without listChanged`() throws {
         let capabilities = Client.Capabilities(
-            roots: .init()
+            roots: .init(),
         )
 
         #expect(capabilities.roots != nil)
@@ -251,31 +248,31 @@ struct RootsTests {
         #expect(decoded.roots?.listChanged == nil)
     }
 
-    @Test("Root requiredURIPrefix constant")
-    func testRootRequiredURIPrefix() {
+    @Test
+    func `Root requiredURIPrefix constant`() {
         #expect(Root.requiredURIPrefix == "file://")
     }
 
-    @Test("Root JSON format matches MCP spec")
-    func testRootJSONFormat() throws {
+    @Test
+    func `Root JSON format matches MCP spec`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
         let root = Root(
             uri: "file:///home/user/projects/myproject",
-            name: "My Project"
+            name: "My Project",
         )
 
         let data = try encoder.encode(root)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Verify JSON structure matches MCP spec
         #expect(json.contains("\"uri\":\"file:///home/user/projects/myproject\""))
         #expect(json.contains("\"name\":\"My Project\""))
     }
 
-    @Test("ListRoots result decodes from TypeScript SDK format")
-    func testDecodesFromTypeScriptFormat() throws {
+    @Test
+    func `ListRoots result decodes from TypeScript SDK format`() throws {
         let decoder = JSONDecoder()
 
         let json = """
@@ -296,8 +293,8 @@ struct RootsTests {
         #expect(result.roots[0].name == "My Project")
     }
 
-    @Test("ListRoots result decodes from Python SDK format")
-    func testDecodesFromPythonFormat() throws {
+    @Test
+    func `ListRoots result decodes from Python SDK format`() throws {
         let decoder = JSONDecoder()
 
         // Python SDK may include _meta
@@ -327,42 +324,41 @@ struct RootsTests {
     }
 }
 
-@Suite("Roots Integration Tests")
 struct RootsIntegrationTests {
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testRootsCapabilitiesNegotiation() async throws {
+    func `roots capabilities negotiation`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.roots",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "RootsTestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Client with roots capability
         let client = Client(
             name: "RootsTestClient",
-            version: "1.0"
+            version: "1.0",
         )
         // Handler registration with listChanged auto-detects capability
         await client.withRootsHandler(listChanged: true) { _ in
@@ -387,33 +383,33 @@ struct RootsIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerListRootsFromClient() async throws {
+    func `server list roots from client`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.roots.list",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "RootsTestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Client with roots capability and handler
@@ -424,7 +420,7 @@ struct RootsIntegrationTests {
 
         let client = Client(
             name: "RootsTestClient",
-            version: "1.0"
+            version: "1.0",
         )
         await client.withRootsHandler(listChanged: true) { _ in
             expectedRoots
@@ -451,39 +447,39 @@ struct RootsIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerListRootsFailsWithoutCapability() async throws {
+    func `server list roots fails without capability`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.roots.nocap",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "RootsTestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Client WITHOUT roots capability
         let client = Client(
             name: "RootsTestClient",
-            version: "1.0"
+            version: "1.0",
         )
 
         try await server.start(transport: serverTransport)
@@ -503,27 +499,27 @@ struct RootsIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testClientSendRootsChanged() async throws {
+    func `client send roots changed`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.roots.changed",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         // Use a continuation to wait for notification
@@ -532,7 +528,7 @@ struct RootsIntegrationTests {
         let server = Server(
             name: "RootsTestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
         await server.onNotification(RootsListChangedNotification.self) { _ in
             notificationExpectation.continuation.yield()
@@ -542,7 +538,7 @@ struct RootsIntegrationTests {
         // Client with roots.listChanged capability
         let client = Client(
             name: "RootsTestClient",
-            version: "1.0"
+            version: "1.0",
         )
         await client.withRootsHandler(listChanged: true) { _ in
             [Root(uri: "file:///path")]
@@ -571,39 +567,39 @@ struct RootsIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testClientSendRootsChangedFailsWithoutCapability() async throws {
+    func `client send roots changed fails without capability`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.roots.changed.nocap",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "RootsTestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Client WITH roots capability but WITHOUT listChanged
         let client = Client(
             name: "RootsTestClient",
-            version: "1.0"
+            version: "1.0",
         )
         // Default listChanged is false
         await client.withRootsHandler { _ in

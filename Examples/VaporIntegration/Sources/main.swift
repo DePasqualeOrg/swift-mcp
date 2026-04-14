@@ -77,7 +77,7 @@ struct Add {
 /// Tools/resources/prompts are registered once and shared across all sessions.
 let mcpServer = MCPServer(
     name: "vapor-mcp-example",
-    version: "1.0.0"
+    version: "1.0.0",
 )
 
 /// Register tools using the high-level API
@@ -138,7 +138,7 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing request body",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
     let data = Data(buffer: bodyData)
@@ -161,7 +161,7 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
                 status: .serviceUnavailable,
                 message: "Server at capacity",
                 code: ErrorCode.internalError,
-                extraHeaders: headers
+                extraHeaders: headers,
             )
         }
 
@@ -181,8 +181,8 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
                 onSessionClosed: { sessionId in
                     await sessionManager.remove(sessionId)
                     req.logger.info("Session closed: \(sessionId)")
-                }
-            )
+                },
+            ),
         )
 
         // Create a new Server instance wired to the shared registries
@@ -191,7 +191,7 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
         // Store the session
         await sessionManager.store(
             ExampleSessionManager.Session(server: server, transport: newTransport),
-            forId: newSessionId
+            forId: newSessionId,
         )
         transport = newTransport
 
@@ -202,14 +202,14 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
         return mcpErrorResponse(
             status: .notFound,
             message: "Session expired. Try reconnecting.",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     } else {
         // No session ID and not an initialize request
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
@@ -217,7 +217,7 @@ func handlePost(_ req: Vapor.Request) async throws -> Vapor.Response {
     let mcpRequest = MCP.HTTPRequest(
         method: "POST",
         headers: extractHeaders(from: req),
-        body: data
+        body: data,
     )
 
     // Handle the request
@@ -233,20 +233,20 @@ func handleGet(_ req: Vapor.Request) async throws -> Vapor.Response {
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
     guard let session = await sessionManager.session(forId: sessionId) else {
         return mcpErrorResponse(
             status: .notFound,
             message: "Session not found",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
     let mcpRequest = MCP.HTTPRequest(
         method: "GET",
-        headers: extractHeaders(from: req)
+        headers: extractHeaders(from: req),
     )
 
     let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -260,20 +260,20 @@ func handleDelete(_ req: Vapor.Request) async throws -> Vapor.Response {
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
     guard let session = await sessionManager.session(forId: sessionId) else {
         return mcpErrorResponse(
             status: .notFound,
             message: "Session not found",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
     let mcpRequest = MCP.HTTPRequest(
         method: "DELETE",
-        headers: extractHeaders(from: req)
+        headers: extractHeaders(from: req),
     )
 
     let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -326,7 +326,7 @@ func buildVaporResponse(from mcpResponse: MCP.HTTPResponse, for req: Vapor.Reque
         return Vapor.Response(
             status: status,
             headers: headers,
-            body: .init(data: body)
+            body: .init(data: body),
         )
     } else {
         // No content (e.g., 202 Accepted for notifications)
@@ -338,7 +338,7 @@ func mcpErrorResponse(
     status: HTTPResponseStatus,
     message: String,
     code: Int = ErrorCode.internalError,
-    extraHeaders: HTTPHeaders = HTTPHeaders()
+    extraHeaders: HTTPHeaders = HTTPHeaders(),
 ) -> Vapor.Response {
     var headers = HTTPHeaders()
     for (name, value) in extraHeaders {
@@ -352,7 +352,7 @@ func mcpErrorResponse(
     return Vapor.Response(
         status: status,
         headers: headers,
-        body: .init(data: bodyData)
+        body: .init(data: bodyData),
     )
 }
 

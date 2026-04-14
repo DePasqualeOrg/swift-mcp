@@ -40,7 +40,7 @@ public struct OAuthTokens: Sendable, Codable, Equatable {
         expiresIn: Int? = nil,
         scope: String? = nil,
         refreshToken: String? = nil,
-        idToken: String? = nil
+        idToken: String? = nil,
     ) {
         self.accessToken = accessToken
         self.tokenType = tokenType
@@ -67,7 +67,7 @@ public struct OAuthTokens: Sendable, Codable, Equatable {
         guard rawTokenType.lowercased() == "bearer" else {
             throw DecodingError.dataCorruptedError(
                 forKey: .tokenType, in: container,
-                debugDescription: "Unsupported token_type \"\(rawTokenType)\"; expected \"Bearer\""
+                debugDescription: "Unsupported token_type \"\(rawTokenType)\"; expected \"Bearer\"",
             )
         }
         tokenType = "Bearer"
@@ -95,7 +95,7 @@ public struct UnauthorizedContext: Sendable {
     public init(
         resourceMetadataURL: URL? = nil,
         scope: String? = nil,
-        wwwAuthenticate: String? = nil
+        wwwAuthenticate: String? = nil,
     ) {
         self.resourceMetadataURL = resourceMetadataURL
         self.scope = scope

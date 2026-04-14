@@ -1,10 +1,9 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import MCPPrompt
 import Testing
-
-@testable import MCP
 
 // MARK: - Test Prompt Definitions
 
@@ -166,33 +165,32 @@ struct SimpleRenderSingleMessagePrompt {
 
 // MARK: - PromptSpec Conformance Tests
 
-@Suite("Prompt DSL - PromptSpec Conformance")
 struct PromptSpecConformanceTests {
-    @Test("@Prompt macro generates PromptSpec conformance")
-    func promptMacroGeneratesConformance() {
+    @Test
+    func `@Prompt macro generates PromptSpec conformance`() {
         let _: any PromptSpec.Type = GreetingPrompt.self
         let _: any PromptSpec.Type = InterviewPrompt.self
         let _: any PromptSpec.Type = SummarizePrompt.self
         let _: any PromptSpec.Type = CodeReviewPrompt.self
     }
 
-    @Test("Prompt with render() generates PromptSpec conformance")
-    func simpleRenderPromptGeneratesConformance() {
+    @Test
+    func `Prompt with render() generates PromptSpec conformance`() {
         // Verify that prompts with render() (no context) also conform to PromptSpec
         let _: any PromptSpec.Type = SimpleRenderPrompt.self
         let _: any PromptSpec.Type = SimpleRenderSingleMessagePrompt.self
     }
 
-    @Test("promptDefinition contains correct name and description")
-    func promptDefinitionBasics() {
+    @Test
+    func `promptDefinition contains correct name and description`() {
         let definition = GreetingPrompt.promptDefinition
 
         #expect(definition.name == "greeting")
         #expect(definition.description == "Greet a user by name")
     }
 
-    @Test("promptDefinition includes title when provided")
-    func promptDefinitionWithTitle() {
+    @Test
+    func `promptDefinition includes title when provided`() {
         let definition = BrainstormPrompt.promptDefinition
 
         #expect(definition.name == "brainstorm")
@@ -200,8 +198,8 @@ struct PromptSpecConformanceTests {
         #expect(definition.description == "Generate creative ideas")
     }
 
-    @Test("promptDefinition includes arguments")
-    func promptDefinitionArguments() {
+    @Test
+    func `promptDefinition includes arguments`() {
         let definition = GreetingPrompt.promptDefinition
 
         #expect(definition.arguments?.count == 1)
@@ -211,8 +209,8 @@ struct PromptSpecConformanceTests {
         #expect(arg?.required == true)
     }
 
-    @Test("promptDefinition handles multiple arguments")
-    func promptDefinitionMultipleArguments() {
+    @Test
+    func `promptDefinition handles multiple arguments`() {
         let definition = InterviewPrompt.promptDefinition
 
         #expect(definition.arguments?.count == 2)
@@ -226,8 +224,8 @@ struct PromptSpecConformanceTests {
         #expect(expArg?.required == true)
     }
 
-    @Test("promptDefinition handles optional arguments")
-    func promptDefinitionOptionalArguments() {
+    @Test
+    func `promptDefinition handles optional arguments`() {
         let definition = SummarizePrompt.promptDefinition
 
         #expect(definition.arguments?.count == 2)
@@ -239,8 +237,8 @@ struct PromptSpecConformanceTests {
         #expect(maxLengthArg?.required == false)
     }
 
-    @Test("promptDefinition respects custom keys")
-    func promptDefinitionCustomKeys() {
+    @Test
+    func `promptDefinition respects custom keys`() {
         let definition = CodeReviewPrompt.promptDefinition
 
         let sourceArg = definition.arguments?.first { $0.name == "source_code" }
@@ -251,15 +249,15 @@ struct PromptSpecConformanceTests {
         #expect(focusArg != nil)
     }
 
-    @Test("promptDefinition handles no arguments")
-    func promptDefinitionNoArguments() {
+    @Test
+    func `promptDefinition handles no arguments`() {
         let definition = SimpleGreetingPrompt.promptDefinition
 
         #expect(definition.arguments == nil || definition.arguments?.isEmpty == true)
     }
 
-    @Test("promptDefinition includes argument title")
-    func promptDefinitionArgumentTitle() {
+    @Test
+    func `promptDefinition includes argument title`() {
         let definition = BrainstormPrompt.promptDefinition
 
         let arg = definition.arguments?.first
@@ -269,18 +267,17 @@ struct PromptSpecConformanceTests {
 
 // MARK: - Parse Method Tests
 
-@Suite("Prompt DSL - Parse Method")
 struct PromptParseMethodTests {
-    @Test("parse extracts string argument")
-    func parseStringArgument() throws {
+    @Test
+    func `parse extracts string argument`() throws {
         let args = ["userName": "Alice"]
         let prompt = try GreetingPrompt.parse(from: args)
 
         #expect(prompt.userName == "Alice")
     }
 
-    @Test("parse extracts multiple arguments")
-    func parseMultipleArguments() throws {
+    @Test
+    func `parse extracts multiple arguments`() throws {
         let args: [String: String] = [
             "role": "Senior Developer",
             "experience": "5",
@@ -291,8 +288,8 @@ struct PromptParseMethodTests {
         #expect(prompt.experience == "5")
     }
 
-    @Test("parse handles optional argument when present")
-    func parseOptionalArgumentPresent() throws {
+    @Test
+    func `parse handles optional argument when present`() throws {
         let args: [String: String] = [
             "text": "This is a long document.",
             "maxLength": "100",
@@ -303,8 +300,8 @@ struct PromptParseMethodTests {
         #expect(prompt.maxLength == "100")
     }
 
-    @Test("parse handles optional argument when absent")
-    func parseOptionalArgumentAbsent() throws {
+    @Test
+    func `parse handles optional argument when absent`() throws {
         let args = ["text": "Short text"]
         let prompt = try SummarizePrompt.parse(from: args)
 
@@ -312,8 +309,8 @@ struct PromptParseMethodTests {
         #expect(prompt.maxLength == nil)
     }
 
-    @Test("parse respects custom keys")
-    func parseCustomKeys() throws {
+    @Test
+    func `parse respects custom keys`() throws {
         let args: [String: String] = [
             "source_code": "func hello() { print(\"Hello\") }",
             "review_focus": "error handling",
@@ -324,21 +321,21 @@ struct PromptParseMethodTests {
         #expect(prompt.reviewFocus == "error handling")
     }
 
-    @Test("parse works with no arguments")
-    func parseNoArguments() throws {
+    @Test
+    func `parse works with no arguments`() throws {
         let prompt = try SimpleGreetingPrompt.parse(from: nil)
         // Should not throw - prompt has no required arguments
         _ = prompt
     }
 
-    @Test("parse works with empty dictionary")
-    func parseEmptyDictionary() throws {
+    @Test
+    func `parse works with empty dictionary`() throws {
         let prompt = try SimpleGreetingPrompt.parse(from: [:])
         _ = prompt
     }
 
-    @Test("parse throws for missing required argument")
-    func parseMissingRequiredArgument() throws {
+    @Test
+    func `parse throws for missing required argument`() throws {
         let args: [String: String] = [:]
 
         #expect(throws: MCPError.self) {
@@ -346,8 +343,8 @@ struct PromptParseMethodTests {
         }
     }
 
-    @Test("parse throws for missing one of multiple required arguments")
-    func parseMissingOneRequired() throws {
+    @Test
+    func `parse throws for missing one of multiple required arguments`() throws {
         let args = ["role": "Developer"]
 
         #expect(throws: MCPError.self) {
@@ -358,7 +355,6 @@ struct PromptParseMethodTests {
 
 // MARK: - Render Execution Tests
 
-@Suite("Prompt DSL - Render Execution")
 struct RenderExecutionTests {
     func createMockContext() -> HandlerContext {
         let handlerContext = RequestHandlerContext(
@@ -373,13 +369,13 @@ struct RenderExecutionTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
 
-    @Test("render returns expected messages")
-    func renderReturnsMessages() async throws {
+    @Test
+    func `render returns expected messages`() async throws {
         let args = ["userName": "World"]
         let prompt = try GreetingPrompt.parse(from: args)
         let context = createMockContext()
@@ -395,8 +391,8 @@ struct RenderExecutionTests {
         }
     }
 
-    @Test("render handles optional argument in output")
-    func renderHandlesOptionalArgument() async throws {
+    @Test
+    func `render handles optional argument in output`() async throws {
         let context = createMockContext()
 
         // Without optional
@@ -422,8 +418,8 @@ struct RenderExecutionTests {
         }
     }
 
-    @Test("render returns multiple messages")
-    func renderReturnsMultipleMessages() async throws {
+    @Test
+    func `render returns multiple messages`() async throws {
         let args: [String: String] = [
             "source_code": "let x = 1",
             "review_focus": "best practices",
@@ -435,8 +431,8 @@ struct RenderExecutionTests {
         #expect(messages.count == 2)
     }
 
-    @Test("render with no arguments works")
-    func renderWithNoArgumentsWorks() async throws {
+    @Test
+    func `render with no arguments works`() async throws {
         let prompt = try SimpleGreetingPrompt.parse(from: nil)
         let context = createMockContext()
 
@@ -444,8 +440,8 @@ struct RenderExecutionTests {
         #expect(messages.count == 1)
     }
 
-    @Test("Prompt with render() works")
-    func simpleRenderPromptRender() async throws {
+    @Test
+    func `Prompt with render() works`() async throws {
         let args = ["input": "Hello simple render"]
         let prompt = try SimpleRenderPrompt.parse(from: args)
         let context = createMockContext()
@@ -461,8 +457,8 @@ struct RenderExecutionTests {
         }
     }
 
-    @Test("Prompt with render() and single message output")
-    func simpleRenderSingleMessagePromptRender() async throws {
+    @Test
+    func `Prompt with render() and single message output`() async throws {
         let args = ["message": "test message"]
         let prompt = try SimpleRenderSingleMessagePrompt.parse(from: args)
         let context = createMockContext()
@@ -479,10 +475,9 @@ struct RenderExecutionTests {
 
 // MARK: - PromptOutput Protocol Tests
 
-@Suite("Prompt DSL - PromptOutput Protocol")
 struct PromptOutputProtocolTests {
-    @Test("String conforms to PromptOutput")
-    func stringPromptOutput() {
+    @Test
+    func `String conforms to PromptOutput`() {
         let output: any PromptOutput = "Hello, World!"
         let result = output.toGetPromptResult(description: "Test")
 
@@ -496,8 +491,8 @@ struct PromptOutputProtocolTests {
         #expect(result.description == "Test")
     }
 
-    @Test("Prompt.Message conforms to PromptOutput")
-    func promptMessageOutput() {
+    @Test
+    func `Prompt.Message conforms to PromptOutput`() {
         let message = Prompt.Message.user(.text("Single message"))
         let result = message.toGetPromptResult(description: "Desc")
 
@@ -505,8 +500,8 @@ struct PromptOutputProtocolTests {
         #expect(result.description == "Desc")
     }
 
-    @Test("[Prompt.Message] conforms to PromptOutput")
-    func promptMessageArrayOutput() {
+    @Test
+    func `[Prompt.Message] conforms to PromptOutput`() {
         let messages: [Prompt.Message] = [
             .user(.text("First")),
             .assistant(.text("Second")),
@@ -520,7 +515,6 @@ struct PromptOutputProtocolTests {
 
 // MARK: - PromptRegistry Tests
 
-@Suite("Prompt DSL - PromptRegistry")
 struct PromptRegistryTests {
     func createMockContext() -> HandlerContext {
         let handlerContext = RequestHandlerContext(
@@ -535,13 +529,13 @@ struct PromptRegistryTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
 
-    @Test("PromptRegistry registers prompts via result builder")
-    func registersPromptsViaBuilder() async throws {
+    @Test
+    func `PromptRegistry registers prompts via result builder`() async {
         let registry = PromptRegistry {
             GreetingPrompt.self
             InterviewPrompt.self
@@ -555,8 +549,8 @@ struct PromptRegistryTests {
         #expect(names.contains("interview"))
     }
 
-    @Test("PromptRegistry registers prompts with register method")
-    func registersPromptsWithMethod() async throws {
+    @Test
+    func `PromptRegistry registers prompts with register method`() async throws {
         let registry = PromptRegistry()
         try await registry.register(GreetingPrompt.self)
         try await registry.register(SummarizePrompt.self)
@@ -565,8 +559,8 @@ struct PromptRegistryTests {
         #expect(prompts.count == 2)
     }
 
-    @Test("PromptRegistry hasPrompt returns correct value")
-    func hasPromptMethod() async throws {
+    @Test
+    func `PromptRegistry hasPrompt returns correct value`() async {
         let registry = PromptRegistry {
             GreetingPrompt.self
         }
@@ -578,8 +572,8 @@ struct PromptRegistryTests {
         #expect(hasUnknown == false)
     }
 
-    @Test("PromptRegistry listPrompts returns correct definitions")
-    func listPromptsReturnsDefinitions() async throws {
+    @Test
+    func `PromptRegistry listPrompts returns correct definitions`() async {
         let registry = PromptRegistry {
             BrainstormPrompt.self
         }
@@ -593,8 +587,8 @@ struct PromptRegistryTests {
         #expect(prompt.description == "Generate creative ideas")
     }
 
-    @Test("PromptRegistry getPrompt executes DSL prompt")
-    func getPromptExecutesDSL() async throws {
+    @Test
+    func `PromptRegistry getPrompt executes DSL prompt`() async throws {
         let registry = PromptRegistry {
             GreetingPrompt.self
         }
@@ -613,8 +607,8 @@ struct PromptRegistryTests {
         }
     }
 
-    @Test("PromptRegistry getPrompt throws for unknown prompt")
-    func getPromptThrowsForUnknown() async throws {
+    @Test
+    func `PromptRegistry getPrompt throws for unknown prompt`() async throws {
         let registry = PromptRegistry {
             GreetingPrompt.self
         }
@@ -626,8 +620,8 @@ struct PromptRegistryTests {
         }
     }
 
-    @Test("PromptRegistry registers closure-based prompts")
-    func registersClosurePrompts() async throws {
+    @Test
+    func `PromptRegistry registers closure-based prompts`() async throws {
         let registry = PromptRegistry()
 
         try await registry.register(
@@ -635,7 +629,7 @@ struct PromptRegistryTests {
             description: "A dynamically registered prompt",
             arguments: [
                 Prompt.Argument(name: "topic", description: "Discussion topic", required: true),
-            ]
+            ],
         ) { args, _ in
             let topic = args?["topic"] ?? "general"
             return [.user(.text("Let's discuss: \(topic)"))]
@@ -649,7 +643,7 @@ struct PromptRegistryTests {
         let result = try await registry.getPrompt(
             "dynamic_prompt",
             arguments: ["topic": "Swift"],
-            context: context
+            context: context,
         )
 
         #expect(result.messages[0].role == .user)
@@ -660,8 +654,8 @@ struct PromptRegistryTests {
         }
     }
 
-    @Test("PromptRegistry prevents duplicate registration")
-    func preventsDuplicateRegistration() async throws {
+    @Test
+    func `PromptRegistry prevents duplicate registration`() async throws {
         let registry = PromptRegistry()
         try await registry.register(GreetingPrompt.self)
 
@@ -673,7 +667,6 @@ struct PromptRegistryTests {
 
 // MARK: - Lifecycle Management Tests
 
-@Suite("Prompt DSL - Lifecycle Management")
 struct PromptLifecycleTests {
     func createMockContext() -> HandlerContext {
         let handlerContext = RequestHandlerContext(
@@ -688,13 +681,13 @@ struct PromptLifecycleTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
 
-    @Test("DSL prompt registration returns RegisteredPrompt")
-    func dslPromptReturnsRegisteredPrompt() async throws {
+    @Test
+    func `DSL prompt registration returns RegisteredPrompt`() async throws {
         let registry = PromptRegistry()
         let registered = try await registry.register(GreetingPrompt.self)
 
@@ -702,8 +695,8 @@ struct PromptLifecycleTests {
         #expect(await registered.isEnabled == true)
     }
 
-    @Test("DSL prompt can be disabled")
-    func dslPromptCanBeDisabled() async throws {
+    @Test
+    func `DSL prompt can be disabled`() async throws {
         let registry = PromptRegistry()
         let registered = try await registry.register(GreetingPrompt.self)
 
@@ -716,8 +709,8 @@ struct PromptLifecycleTests {
         #expect(prompts.isEmpty)
     }
 
-    @Test("DSL prompt can be re-enabled")
-    func dslPromptCanBeReEnabled() async throws {
+    @Test
+    func `DSL prompt can be re-enabled`() async throws {
         let registry = PromptRegistry()
         let registered = try await registry.register(GreetingPrompt.self)
 
@@ -731,8 +724,8 @@ struct PromptLifecycleTests {
         #expect(prompts.count == 1)
     }
 
-    @Test("DSL prompt can be removed")
-    func dslPromptCanBeRemoved() async throws {
+    @Test
+    func `DSL prompt can be removed`() async throws {
         let registry = PromptRegistry()
         let registered = try await registry.register(GreetingPrompt.self)
 
@@ -745,8 +738,8 @@ struct PromptLifecycleTests {
         #expect(prompts.isEmpty)
     }
 
-    @Test("Disabled DSL prompt rejects execution")
-    func disabledDslPromptRejectsExecution() async throws {
+    @Test
+    func `Disabled DSL prompt rejects execution`() async throws {
         let registry = PromptRegistry()
         let registered = try await registry.register(GreetingPrompt.self)
         await registered.disable()
@@ -759,8 +752,8 @@ struct PromptLifecycleTests {
         }
     }
 
-    @Test("Multiple DSL prompts have independent lifecycle")
-    func multiplePromptsIndependentLifecycle() async throws {
+    @Test
+    func `Multiple DSL prompts have independent lifecycle`() async throws {
         let registry = PromptRegistry()
         let greeting = try await registry.register(GreetingPrompt.self)
         let interview = try await registry.register(InterviewPrompt.self)
@@ -778,8 +771,8 @@ struct PromptLifecycleTests {
         #expect(prompts.first?.name == "interview")
     }
 
-    @Test("Prompts registered via result builder start enabled")
-    func resultBuilderPromptsStartEnabled() async throws {
+    @Test
+    func `Prompts registered via result builder start enabled`() async {
         let registry = PromptRegistry {
             GreetingPrompt.self
             InterviewPrompt.self
@@ -795,41 +788,40 @@ struct PromptLifecycleTests {
 
 // MARK: - Edge Cases
 
-@Suite("Prompt DSL - Edge Cases")
 struct PromptEdgeCaseTests {
-    @Test("Empty string argument is valid")
-    func emptyStringArgument() throws {
+    @Test
+    func `Empty string argument is valid`() throws {
         let args = ["userName": ""]
         let prompt = try GreetingPrompt.parse(from: args)
         #expect(prompt.userName == "")
     }
 
-    @Test("Unicode in arguments is preserved")
-    func unicodeArguments() throws {
+    @Test
+    func `Unicode in arguments is preserved`() throws {
         let unicodeName = "世界 \u{1F30D} مرحبا"
         let args: [String: String] = ["userName": unicodeName]
         let prompt = try GreetingPrompt.parse(from: args)
         #expect(prompt.userName == unicodeName)
     }
 
-    @Test("Special characters in arguments are preserved")
-    func specialCharacterArguments() throws {
+    @Test
+    func `Special characters in arguments are preserved`() throws {
         let specialText = "Line1\nLine2\tTabbed\"Quoted\""
         let args: [String: String] = ["userName": specialText]
         let prompt = try GreetingPrompt.parse(from: args)
         #expect(prompt.userName == specialText)
     }
 
-    @Test("Very long argument is handled")
-    func longArgument() throws {
+    @Test
+    func `Very long argument is handled`() throws {
         let longText = String(repeating: "a", count: 10000)
         let args: [String: String] = ["userName": longText]
         let prompt = try GreetingPrompt.parse(from: args)
         #expect(prompt.userName == longText)
     }
 
-    @Test("Arguments with nil dictionary")
-    func nilArgumentsDictionary() throws {
+    @Test
+    func `Arguments with nil dictionary`() throws {
         // SimpleGreetingPrompt has no required arguments
         let prompt = try SimpleGreetingPrompt.parse(from: nil)
         _ = prompt // Should not throw
@@ -838,10 +830,9 @@ struct PromptEdgeCaseTests {
 
 // MARK: - ArgumentValue Protocol Tests
 
-@Suite("Prompt DSL - ArgumentValue Protocol")
 struct ArgumentValueProtocolTests {
-    @Test("String ArgumentValue properties")
-    func stringArgumentValue() {
+    @Test
+    func `String ArgumentValue properties`() {
         #expect(String.isOptional == false)
 
         let value = String(argumentString: "hello")
@@ -851,14 +842,14 @@ struct ArgumentValueProtocolTests {
         #expect(nilValue == nil)
     }
 
-    @Test("Optional<String> ArgumentValue properties")
-    func optionalStringArgumentValue() {
+    @Test
+    func `Optional<String> ArgumentValue properties`() {
         #expect(String?.isOptional == true)
 
-        let value: String?? = Optional<String>(argumentString: "hello")
+        let value: String?? = String?(argumentString: "hello")
         #expect(value == "hello")
 
-        let nilValue: String?? = Optional<String>(argumentString: nil)
+        let nilValue: String?? = String?(argumentString: nil)
         #expect(nilValue == .some(nil))
     }
 }

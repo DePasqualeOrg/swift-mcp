@@ -3,14 +3,12 @@
 
 import Foundation
 import Logging
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("InMemory Transport Tests")
 struct InMemoryTransportTests {
-    @Test("Create connected pair")
-    func testCreateConnectedPair() async throws {
+    @Test
+    func `Create connected pair`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Verify both transports can be connected
@@ -22,8 +20,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Connect without pairing throws error")
-    func testConnectWithoutPairing() async throws {
+    @Test
+    func `Connect without pairing throws error`() async throws {
         let transport = InMemoryTransport()
 
         // Attempt to connect without pairing should throw
@@ -34,7 +32,7 @@ struct InMemoryTransportTests {
             if case let .internalError(message) = error {
                 #expect(
                     message
-                        == "Transport not paired. Use createConnectedPair() to create paired transports."
+                        == "Transport not paired. Use createConnectedPair() to create paired transports.",
                 )
             } else {
                 #expect(Bool(false), "Expected MCPError.internalError")
@@ -42,8 +40,8 @@ struct InMemoryTransportTests {
         }
     }
 
-    @Test("Multiple connect calls are idempotent")
-    func testMultipleConnectCalls() async throws {
+    @Test
+    func `Multiple connect calls are idempotent`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Connect multiple times should not throw
@@ -56,8 +54,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Send and receive messages")
-    func testSendAndReceiveMessages() async throws {
+    @Test
+    func `Send and receive messages`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -97,8 +95,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Bidirectional communication")
-    func testBidirectionalCommunication() async throws {
+    @Test
+    func `Bidirectional communication`() async throws {
         let (transport1, transport2) = await InMemoryTransport.createConnectedPair()
 
         try await transport1.connect()
@@ -132,10 +130,10 @@ struct InMemoryTransportTests {
         }
 
         // Send messages in both directions
-        try await transport1.send("From transport 1 - message 1".data(using: .utf8)!)
-        try await transport2.send("From transport 2 - message 1".data(using: .utf8)!)
-        try await transport1.send("From transport 1 - message 2".data(using: .utf8)!)
-        try await transport2.send("From transport 2 - message 2".data(using: .utf8)!)
+        try await transport1.send(#require("From transport 1 - message 1".data(using: .utf8)))
+        try await transport2.send(#require("From transport 2 - message 1".data(using: .utf8)))
+        try await transport1.send(#require("From transport 1 - message 2".data(using: .utf8)))
+        try await transport2.send(#require("From transport 2 - message 2".data(using: .utf8)))
 
         // Verify both sides received messages
         let messages1 = try await receive1Task.value
@@ -154,13 +152,13 @@ struct InMemoryTransportTests {
         await transport2.disconnect()
     }
 
-    @Test("Send without connection throws error")
-    func testSendWithoutConnection() async throws {
+    @Test
+    func `Send without connection throws error`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Try to send without connecting
         do {
-            try await clientTransport.send("test".data(using: .utf8)!)
+            try await clientTransport.send(#require("test".data(using: .utf8)))
             #expect(Bool(false), "Expected send to throw an error")
         } catch let error as MCPError {
             if case let .internalError(message) = error {
@@ -175,8 +173,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Disconnect stops message stream")
-    func testDisconnectStopsMessageStream() async throws {
+    @Test
+    func `Disconnect stops message stream`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -196,7 +194,7 @@ struct InMemoryTransportTests {
         }
 
         // Send a message
-        try await clientTransport.send("message".data(using: .utf8)!)
+        try await clientTransport.send(#require("message".data(using: .utf8)))
 
         // Give some time for message to be received
         try await Task.sleep(for: .milliseconds(100))
@@ -209,8 +207,8 @@ struct InMemoryTransportTests {
         #expect(messageCount >= 1)
     }
 
-    @Test("Peer disconnection handling")
-    func testPeerDisconnectionHandling() async throws {
+    @Test
+    func `Peer disconnection handling`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -237,8 +235,8 @@ struct InMemoryTransportTests {
         receiveTask.cancel()
     }
 
-    @Test("Multiple disconnects are safe")
-    func testMultipleDisconnects() async throws {
+    @Test
+    func `Multiple disconnects are safe`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -253,17 +251,17 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Message queueing before stream creation")
-    func testMessageQueueingBeforeStreamCreation() async throws {
+    @Test
+    func `Message queueing before stream creation`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
         try await serverTransport.connect()
 
         // Send messages before receive stream is created
-        try await clientTransport.send("message1".data(using: .utf8)!)
-        try await clientTransport.send("message2".data(using: .utf8)!)
-        try await clientTransport.send("message3".data(using: .utf8)!)
+        try await clientTransport.send(#require("message1".data(using: .utf8)))
+        try await clientTransport.send(#require("message2".data(using: .utf8)))
+        try await clientTransport.send(#require("message3".data(using: .utf8)))
 
         // Now create receive stream
         let messages = await serverTransport.receive()
@@ -288,8 +286,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Receive after disconnect returns completed stream")
-    func testReceiveAfterDisconnect() async throws {
+    @Test
+    func `Receive after disconnect returns completed stream`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -313,8 +311,8 @@ struct InMemoryTransportTests {
         await clientTransport.disconnect()
     }
 
-    @Test("Large message handling")
-    func testLargeMessageHandling() async throws {
+    @Test
+    func `Large message handling`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -343,8 +341,8 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Concurrent send operations")
-    func testConcurrentSendOperations() async throws {
+    @Test
+    func `Concurrent send operations`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         try await clientTransport.connect()
@@ -387,13 +385,14 @@ struct InMemoryTransportTests {
         await serverTransport.disconnect()
     }
 
-    @Test("Custom logger usage")
-    func testCustomLoggerUsage() async throws {
+    @Test
+    func `Custom logger usage`() async throws {
         // Create a custom logger (in real tests, you might use a test logger that captures output)
         let logger = Logger(label: "test.in-memory.transport")
 
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair(
-            logger: logger)
+            logger: logger,
+        )
 
         // Verify loggers are set correctly - when a custom logger is provided, it's used for both
         #expect(clientTransport.logger.label == "test.in-memory.transport")
@@ -403,7 +402,7 @@ struct InMemoryTransportTests {
         try await clientTransport.connect()
         try await serverTransport.connect()
 
-        try await clientTransport.send("test".data(using: .utf8)!)
+        try await clientTransport.send(#require("test".data(using: .utf8)))
 
         await clientTransport.disconnect()
         await serverTransport.disconnect()

@@ -50,7 +50,10 @@ public protocol Method: Sendable {
 
 /// Type-erased method for request/response handling.
 public struct AnyMethod: Method, Sendable {
-    public static var name: String { "" }
+    public static var name: String {
+        ""
+    }
+
     public typealias Parameters = Value
     public typealias Result = Value
 }
@@ -127,7 +130,7 @@ public extension Request {
         let version = try container.decode(String.self, forKey: .jsonrpc)
         guard version == jsonrpc else {
             throw DecodingError.dataCorruptedError(
-                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version"
+                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version",
             )
         }
         id = try container.decode(ID.self, forKey: .id)
@@ -145,8 +148,9 @@ public extension Request {
                 throw DecodingError.dataCorrupted(
                     DecodingError.Context(
                         codingPath: container.codingPath,
-                        debugDescription: "Failed to create default NotRequired parameters"
-                    ))
+                        debugDescription: "Failed to create default NotRequired parameters",
+                    ),
+                )
             }
         } else if let value = try? container.decode(M.Parameters.self, forKey: .params) {
             // If params exists and can be decoded, use it
@@ -162,15 +166,17 @@ public extension Request {
                 throw DecodingError.dataCorrupted(
                     DecodingError.Context(
                         codingPath: container.codingPath,
-                        debugDescription: "Missing required params field"
-                    ))
+                        debugDescription: "Missing required params field",
+                    ),
+                )
             }
         } else {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: container.codingPath,
-                    debugDescription: "Invalid params field"
-                ))
+                    debugDescription: "Invalid params field",
+                ),
+            )
         }
     }
 }
@@ -295,7 +301,7 @@ public struct Response<M: Method>: Hashable, Identifiable, Codable, Sendable {
         let version = try container.decode(String.self, forKey: .jsonrpc)
         guard version == jsonrpc else {
             throw DecodingError.dataCorruptedError(
-                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version"
+                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version",
             )
         }
         id = try container.decodeIfPresent(RequestId.self, forKey: .id)
@@ -307,8 +313,9 @@ public struct Response<M: Method>: Hashable, Identifiable, Codable, Sendable {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: container.codingPath,
-                    debugDescription: "Invalid response"
-                ))
+                    debugDescription: "Invalid response",
+                ),
+            )
         }
     }
 }
@@ -342,7 +349,10 @@ public protocol Notification: Hashable, Codable, Sendable {
 
 /// A type-erased notification for message handling.
 public struct AnyNotification: Notification, Sendable {
-    public static var name: String { "" }
+    public static var name: String {
+        ""
+    }
+
     public typealias Parameters = Value
 }
 
@@ -385,7 +395,7 @@ public struct Message<N: Notification>: NotificationMessageProtocol, Hashable, C
         let version = try container.decode(String.self, forKey: .jsonrpc)
         guard version == jsonrpc else {
             throw DecodingError.dataCorruptedError(
-                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version"
+                forKey: .jsonrpc, in: container, debugDescription: "Invalid JSON-RPC version",
             )
         }
         method = try container.decode(String.self, forKey: .method)
@@ -402,8 +412,9 @@ public struct Message<N: Notification>: NotificationMessageProtocol, Hashable, C
                 throw DecodingError.dataCorrupted(
                     DecodingError.Context(
                         codingPath: container.codingPath,
-                        debugDescription: "Failed to create default NotRequired parameters"
-                    ))
+                        debugDescription: "Failed to create default NotRequired parameters",
+                    ),
+                )
             }
         } else if let value = try? container.decode(N.Parameters.self, forKey: .params) {
             // If params exists and can be decoded, use it
@@ -419,15 +430,17 @@ public struct Message<N: Notification>: NotificationMessageProtocol, Hashable, C
                 throw DecodingError.dataCorrupted(
                     DecodingError.Context(
                         codingPath: container.codingPath,
-                        debugDescription: "Missing required params field"
-                    ))
+                        debugDescription: "Missing required params field",
+                    ),
+                )
             }
         } else {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: container.codingPath,
-                    debugDescription: "Invalid params field"
-                ))
+                    debugDescription: "Invalid params field",
+                ),
+            )
         }
     }
 }

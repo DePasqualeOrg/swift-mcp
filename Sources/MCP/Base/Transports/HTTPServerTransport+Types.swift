@@ -61,7 +61,7 @@ public struct AuthInfo: Hashable, Codable, Sendable {
         scopes: [String],
         expiresAt: Int? = nil,
         resource: String? = nil,
-        extra: [String: Value]? = nil
+        extra: [String: Value]? = nil,
     ) {
         self.token = token
         self.clientId = clientId
@@ -158,7 +158,7 @@ public struct HTTPServerTransportOptions: Sendable {
         eventStore: EventStore? = nil,
         retryInterval: Int? = nil,
         dnsRebindingProtection: DNSRebindingProtection = .localhost(),
-        sessionIdleTimeout: Duration? = nil
+        sessionIdleTimeout: Duration? = nil,
     ) {
         self.sessionIdGenerator = sessionIdGenerator
         self.onSessionInitialized = onSessionInitialized
@@ -226,7 +226,7 @@ public struct HTTPServerTransportOptions: Sendable {
         eventStore: EventStore? = nil,
         retryInterval: Int? = nil,
         dnsRebindingProtection: DNSRebindingProtection? = nil,
-        sessionIdleTimeout: Duration? = nil
+        sessionIdleTimeout: Duration? = nil,
     ) -> HTTPServerTransportOptions {
         // Auto-configure protection based on bind address if not explicitly provided
         let effectiveProtection = dnsRebindingProtection ?? DNSRebindingProtection.forBindAddress(host: host, port: port)
@@ -239,7 +239,7 @@ public struct HTTPServerTransportOptions: Sendable {
             eventStore: eventStore,
             retryInterval: retryInterval,
             dnsRebindingProtection: effectiveProtection,
-            sessionIdleTimeout: sessionIdleTimeout
+            sessionIdleTimeout: sessionIdleTimeout,
         )
     }
 }
@@ -435,7 +435,7 @@ public protocol EventStore: Sendable {
     /// - Returns: The stream ID for continued event delivery
     func replayEventsAfter(
         _ lastEventId: String,
-        send: @escaping @Sendable (String, Data) async throws -> Void
+        send: @escaping @Sendable (String, Data) async throws -> Void,
     ) async throws -> String
 }
 
@@ -484,7 +484,7 @@ public struct HTTPResponse: Sendable {
         statusCode: Int,
         headers: [String: String] = [:],
         body: Data? = nil,
-        stream: AsyncThrowingStream<Data, Swift.Error>? = nil
+        stream: AsyncThrowingStream<Data, Swift.Error>? = nil,
     ) {
         self.statusCode = statusCode
         self.headers = headers

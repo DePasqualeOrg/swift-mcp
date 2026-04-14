@@ -97,7 +97,7 @@ public actor InMemoryEventStore: EventStore {
             eventId: eventId,
             streamId: streamId,
             message: message,
-            timestamp: Date()
+            timestamp: Date(),
         )
 
         // Get or create the event list for this stream
@@ -142,7 +142,7 @@ public actor InMemoryEventStore: EventStore {
     /// - Throws: `EventStoreError.eventNotFound` if the event ID doesn't exist
     public func replayEventsAfter(
         _ lastEventId: String,
-        send: @escaping @Sendable (String, Data) async throws -> Void
+        send: @escaping @Sendable (String, Data) async throws -> Void,
     ) async throws -> String {
         // Look up the event in our index
         guard let lastEvent = eventIndex[lastEventId] else {

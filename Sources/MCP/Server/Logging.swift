@@ -91,7 +91,7 @@ public struct LogMessageNotification: Notification {
             level: LoggingLevel,
             logger: String? = nil,
             data: Value,
-            _meta: [String: Value]? = nil
+            _meta: [String: Value]? = nil,
         ) {
             self.level = level
             self.logger = logger

@@ -42,7 +42,9 @@ public struct UnitInterval: Hashable, Sendable {
     /// to be within the range [0, 1].
     ///
     /// - Returns: The double value between 0.0 and 1.0, inclusive
-    public var doubleValue: Double { value }
+    public var doubleValue: Double {
+        value
+    }
 }
 
 // MARK: - Comparable
@@ -56,7 +58,9 @@ extension UnitInterval: Comparable {
 // MARK: - CustomStringConvertible
 
 extension UnitInterval: CustomStringConvertible {
-    public var description: String { "\(value)" }
+    public var description: String {
+        "\(value)"
+    }
 }
 
 // MARK: - Codable
@@ -69,8 +73,8 @@ extension UnitInterval: Codable {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Value \(doubleValue) is not in range 0...1"
-                )
+                    debugDescription: "Value \(doubleValue) is not in range 0...1",
+                ),
             )
         }
         self = interval

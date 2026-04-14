@@ -6,9 +6,9 @@ extension Server {
     // MARK: - Request Handling
 
     /// A JSON-RPC batch containing multiple requests and/or notifications
-    struct Batch: Sendable {
+    struct Batch {
         /// An item in a JSON-RPC batch
-        enum Item: Sendable {
+        enum Item {
             case request(Request<AnyMethod>)
             case notification(Message<AnyNotification>)
         }
@@ -149,7 +149,7 @@ extension Server {
         guard let connection = context.capturedConnection else {
             logger?.warning(
                 "Cannot send response - connection was nil at request time",
-                metadata: ["requestId": "\(context.requestId)"]
+                metadata: ["requestId": "\(context.requestId)"],
             )
             return
         }
@@ -189,7 +189,7 @@ extension Server {
             authInfo: authInfo,
             requestInfo: requestInfo,
             closeResponseStream: closeResponseStream,
-            closeNotificationStream: closeNotificationStream
+            closeNotificationStream: closeNotificationStream,
         )
 
         // Check if this is a pre-processed error request (empty method)
@@ -197,7 +197,7 @@ extension Server {
             // This is a placeholder for an invalid request that couldn't be parsed in batch mode
             return AnyMethod.response(
                 id: request.id,
-                error: MCPError.invalidRequest("Invalid batch item format")
+                error: MCPError.invalidRequest("Invalid batch item format"),
             )
         }
 
@@ -206,7 +206,7 @@ extension Server {
             metadata: [
                 "method": "\(request.method)",
                 "id": "\(request.id)",
-            ]
+            ],
         )
 
         // Check initialization state for strict mode (matches Python SDK behavior).
@@ -239,7 +239,7 @@ extension Server {
         } else if let fallbackHandler = registeredHandlers.fallbackRequestHandler {
             logger?.debug(
                 "Using fallback handler for request",
-                metadata: ["method": "\(request.method)"]
+                metadata: ["method": "\(request.method)"],
             )
             handler = fallbackHandler
         } else {
@@ -291,7 +291,7 @@ extension Server {
                     relatedRequestId: context.requestId,
                     sendOverride: { data, relatedId in
                         try await capturedConnection.send(data, options: TransportSendOptions(relatedRequestId: relatedId))
-                    }
+                    },
                 )
             },
             sendData: { [context] data in
@@ -304,7 +304,7 @@ extension Server {
                 guard let self else { return true }
                 return await shouldSendLogMessage(at: level, forSession: context.sessionId)
             },
-            serverCapabilities: capabilities
+            serverCapabilities: capabilities,
         )
 
         do {
@@ -317,7 +317,7 @@ extension Server {
             if Task.isCancelled {
                 logger?.debug(
                     "Request cancelled, suppressing response",
-                    metadata: ["id": "\(request.id)"]
+                    metadata: ["id": "\(request.id)"],
                 )
                 return nil
             }
@@ -333,7 +333,7 @@ extension Server {
             if Task.isCancelled {
                 logger?.debug(
                     "Request cancelled during error handling, suppressing response",
-                    metadata: ["id": "\(request.id)"]
+                    metadata: ["id": "\(request.id)"],
                 )
                 return nil
             }
@@ -357,7 +357,7 @@ extension Server {
     func handleMessage(_ message: Message<AnyNotification>) async throws {
         logger?.trace(
             "Processing notification",
-            metadata: ["method": "\(message.method)"]
+            metadata: ["method": "\(message.method)"],
         )
 
         // Check initialization state for strict mode (matches Python SDK behavior).
@@ -366,7 +366,7 @@ extension Server {
             if message.method != InitializedNotification.name, !isInitialized {
                 logger?.warning(
                     "Ignoring notification before initialization",
-                    metadata: ["method": "\(message.method)"]
+                    metadata: ["method": "\(message.method)"],
                 )
                 return
             }
@@ -385,7 +385,7 @@ extension Server {
                     metadata: [
                         "method": "\(message.method)",
                         "error": "\(error)",
-                    ]
+                    ],
                 )
             }
         } else {
@@ -398,7 +398,7 @@ extension Server {
                         metadata: [
                             "method": "\(message.method)",
                             "error": "\(error)",
-                        ]
+                        ],
                     )
                 }
             }

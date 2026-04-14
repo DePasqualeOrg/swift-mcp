@@ -19,7 +19,7 @@ let package = Package(
                 .product(name: "MCP", package: "swift-mcp"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
-            path: "Sources/ConformanceClient"
+            path: "Sources/ConformanceClient",
         ),
         .executableTarget(
             name: "ConformanceServer",
@@ -29,7 +29,7 @@ let package = Package(
                 .product(name: "MCPTool", package: "swift-mcp"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
-            path: "Sources/ConformanceServer"
+            path: "Sources/ConformanceServer",
         ),
-    ]
+    ],
 )

@@ -3,9 +3,8 @@
 #if swift(>=6.1)
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Test Helpers
 
@@ -29,7 +28,7 @@ private func testConfig(
     verifier: @escaping @Sendable (String) async -> AuthInfo? = { _ in nil },
     scopesSupported: [String]? = nil,
     resourceName: String? = nil,
-    resourceDocumentation: URL? = nil
+    resourceDocumentation: URL? = nil,
 ) -> ServerAuthConfig {
     ServerAuthConfig(
         resource: resource,
@@ -37,7 +36,7 @@ private func testConfig(
         tokenVerifier: MockTokenVerifier(verifier),
         scopesSupported: scopesSupported,
         resourceName: resourceName,
-        resourceDocumentation: resourceDocumentation
+        resourceDocumentation: resourceDocumentation,
     )
 }
 
@@ -45,30 +44,29 @@ private func testConfig(
 private func validAuthInfo(
     token: String = "valid-token",
     resource: String? = "https://api.example.com/mcp",
-    expiresAt: Int? = nil
+    expiresAt: Int? = nil,
 ) -> AuthInfo {
     AuthInfo(
         token: token,
         clientId: "test-client",
         scopes: ["read", "write"],
         expiresAt: expiresAt ?? Int(Date().timeIntervalSince1970) + 3600,
-        resource: resource
+        resource: resource,
     )
 }
 
 // MARK: - Bearer Token Extraction Tests
 
-@Suite("Bearer token extraction")
 struct BearerTokenExtractionTests {
-    @Test("Valid bearer token is extracted and validated")
-    func validBearerToken() async {
+    @Test
+    func `Valid bearer token is extracted and validated`() async {
         let expectedAuthInfo = validAuthInfo()
         let config = testConfig { token in
             token == "valid-token" ? expectedAuthInfo : nil
         }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer valid-token"]
+            headers: ["Authorization": "Bearer valid-token"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -83,8 +81,8 @@ struct BearerTokenExtractionTests {
         }
     }
 
-    @Test("Missing Authorization header returns 401")
-    func missingAuthHeader() async {
+    @Test
+    func `Missing Authorization header returns 401`() async {
         let config = testConfig()
         let request = HTTPRequest(method: "GET", headers: [:])
 
@@ -101,12 +99,12 @@ struct BearerTokenExtractionTests {
         }
     }
 
-    @Test("Non-Bearer authorization scheme returns 401")
-    func nonBearerScheme() async {
+    @Test
+    func `Non-Bearer authorization scheme returns 401`() async {
         let config = testConfig()
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Basic dXNlcjpwYXNz"]
+            headers: ["Authorization": "Basic dXNlcjpwYXNz"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -119,12 +117,12 @@ struct BearerTokenExtractionTests {
         }
     }
 
-    @Test("Empty bearer token returns 401")
-    func emptyToken() async {
+    @Test
+    func `Empty bearer token returns 401`() async {
         let config = testConfig()
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer "]
+            headers: ["Authorization": "Bearer "],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -137,12 +135,12 @@ struct BearerTokenExtractionTests {
         }
     }
 
-    @Test("Malformed Authorization header returns 401")
-    func malformedHeader() async {
+    @Test
+    func `Malformed Authorization header returns 401`() async {
         let config = testConfig()
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "just-a-token-no-scheme"]
+            headers: ["Authorization": "just-a-token-no-scheme"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -155,15 +153,15 @@ struct BearerTokenExtractionTests {
         }
     }
 
-    @Test("Case-insensitive 'bearer' prefix is accepted")
-    func caseInsensitiveBearer() async {
+    @Test
+    func `Case-insensitive 'bearer' prefix is accepted`() async {
         let expectedAuthInfo = validAuthInfo()
         let config = testConfig { token in
             token == "valid-token" ? expectedAuthInfo : nil
         }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "bearer valid-token"]
+            headers: ["Authorization": "bearer valid-token"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -179,14 +177,13 @@ struct BearerTokenExtractionTests {
 
 // MARK: - Token Validation Tests
 
-@Suite("Token validation")
 struct TokenValidationTests {
-    @Test("TokenVerifier returning nil produces 401")
-    func verifierReturnsNil() async {
+    @Test
+    func `TokenVerifier returning nil produces 401`() async {
         let config = testConfig { _ in nil }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer unknown-token"]
+            headers: ["Authorization": "Bearer unknown-token"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -202,14 +199,14 @@ struct TokenValidationTests {
         }
     }
 
-    @Test("Expired token returns 401")
-    func expiredToken() async {
+    @Test
+    func `Expired token returns 401`() async {
         let pastTimestamp = Int(Date().timeIntervalSince1970) - 3600
         let expiredAuthInfo = validAuthInfo(expiresAt: pastTimestamp)
         let config = testConfig { _ in expiredAuthInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer expired-token"]
+            headers: ["Authorization": "Bearer expired-token"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -224,19 +221,19 @@ struct TokenValidationTests {
         }
     }
 
-    @Test("Token without expiration passes")
-    func noExpiration() async {
+    @Test
+    func `Token without expiration passes`() async {
         let authInfo = AuthInfo(
             token: "no-expiry",
             clientId: "test",
             scopes: ["read"],
             expiresAt: nil,
-            resource: "https://api.example.com/mcp"
+            resource: "https://api.example.com/mcp",
         )
         let config = testConfig { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer no-expiry"]
+            headers: ["Authorization": "Bearer no-expiry"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -252,17 +249,16 @@ struct TokenValidationTests {
 
 // MARK: - Audience Validation Tests
 
-@Suite("Audience validation")
 struct AudienceValidationTests {
-    @Test("Token for matching resource passes")
-    func matchingResource() async {
+    @Test
+    func `Token for matching resource passes`() async throws {
         let authInfo = validAuthInfo(resource: "https://api.example.com/mcp")
-        let config = testConfig(
-            resource: URL(string: "https://api.example.com/mcp")!
+        let config = try testConfig(
+            resource: #require(URL(string: "https://api.example.com/mcp")),
         ) { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer valid"]
+            headers: ["Authorization": "Bearer valid"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -275,15 +271,15 @@ struct AudienceValidationTests {
         }
     }
 
-    @Test("Token for hierarchically matching sub-path passes")
-    func hierarchicalMatch() async {
+    @Test
+    func `Token for hierarchically matching sub-path passes`() async throws {
         let authInfo = validAuthInfo(resource: "https://api.example.com/mcp/v1")
-        let config = testConfig(
-            resource: URL(string: "https://api.example.com/mcp")!
+        let config = try testConfig(
+            resource: #require(URL(string: "https://api.example.com/mcp")),
         ) { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer valid"]
+            headers: ["Authorization": "Bearer valid"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -296,15 +292,15 @@ struct AudienceValidationTests {
         }
     }
 
-    @Test("Token for different resource returns 401")
-    func differentResource() async {
+    @Test
+    func `Token for different resource returns 401`() async throws {
         let authInfo = validAuthInfo(resource: "https://other.example.com/api")
-        let config = testConfig(
-            resource: URL(string: "https://api.example.com/mcp")!
+        let config = try testConfig(
+            resource: #require(URL(string: "https://api.example.com/mcp")),
         ) { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer valid"]
+            headers: ["Authorization": "Bearer valid"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -319,13 +315,13 @@ struct AudienceValidationTests {
         }
     }
 
-    @Test("Token without resource claim passes (no audience restriction)")
-    func noResourceClaim() async {
+    @Test
+    func `Token without resource claim passes (no audience restriction)`() async {
         let authInfo = validAuthInfo(resource: nil)
         let config = testConfig { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer valid"]
+            headers: ["Authorization": "Bearer valid"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -338,19 +334,19 @@ struct AudienceValidationTests {
         }
     }
 
-    @Test("Token with empty resource string returns 401")
-    func emptyResourceString() async {
+    @Test
+    func `Token with empty resource string returns 401`() async {
         let authInfo = AuthInfo(
             token: "bad-resource",
             clientId: "test",
             scopes: ["read"],
             expiresAt: Int(Date().timeIntervalSince1970) + 3600,
-            resource: ""
+            resource: "",
         )
         let config = testConfig { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer bad-resource"]
+            headers: ["Authorization": "Bearer bad-resource"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -365,8 +361,8 @@ struct AudienceValidationTests {
         }
     }
 
-    @Test("Token with malformed resource (no scheme/host) fails audience check")
-    func malformedResource() async {
+    @Test
+    func `Token with malformed resource (no scheme/host) fails audience check`() async {
         // URL(string:) parses this but it has no scheme or host,
         // so ResourceURL.matches correctly rejects it
         let authInfo = AuthInfo(
@@ -374,12 +370,12 @@ struct AudienceValidationTests {
             clientId: "test",
             scopes: ["read"],
             expiresAt: Int(Date().timeIntervalSince1970) + 3600,
-            resource: "not-a-real-url"
+            resource: "not-a-real-url",
         )
         let config = testConfig { _ in authInfo }
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer bad-resource"]
+            headers: ["Authorization": "Bearer bad-resource"],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -397,12 +393,11 @@ struct AudienceValidationTests {
 
 // MARK: - WWW-Authenticate Header Tests
 
-@Suite("WWW-Authenticate header")
 struct WWWAuthenticateHeaderTests {
-    @Test("401 response includes error, description, and resource_metadata")
-    func headerFields() async {
-        let config = testConfig(
-            resource: URL(string: "https://api.example.com/mcp")!
+    @Test
+    func `401 response includes error, description, and resource_metadata`() async throws {
+        let config = try testConfig(
+            resource: #require(URL(string: "https://api.example.com/mcp")),
         )
         let request = HTTPRequest(method: "GET", headers: [:])
 
@@ -413,27 +408,27 @@ struct WWWAuthenticateHeaderTests {
             return
         }
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(wwwAuth.contains("Bearer"))
         #expect(wwwAuth.contains("error=\"invalid_token\""))
         #expect(wwwAuth.contains("error_description="))
         #expect(
             wwwAuth.contains(
-                "resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource/mcp\""
-            )
+                "resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource/mcp\"",
+            ),
         )
     }
 
-    @Test("buildWWWAuthenticateHeader constructs correct format")
-    func buildHeader() {
-        let prmURL = URL(
-            string: "https://api.example.com/.well-known/oauth-protected-resource/mcp"
-        )!
+    @Test
+    func `buildWWWAuthenticateHeader constructs correct format`() throws {
+        let prmURL = try #require(URL(
+            string: "https://api.example.com/.well-known/oauth-protected-resource/mcp",
+        ))
 
         let header = buildWWWAuthenticateHeader(
             error: "invalid_token",
             description: "Token has expired",
-            resourceMetadataURL: prmURL
+            resourceMetadataURL: prmURL,
         )
 
         #expect(header.hasPrefix("Bearer "))
@@ -441,45 +436,45 @@ struct WWWAuthenticateHeaderTests {
         #expect(header.contains("error_description=\"Token has expired\""))
         #expect(
             header.contains(
-                "resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource/mcp\""
-            )
+                "resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource/mcp\"",
+            ),
         )
     }
 
-    @Test("buildWWWAuthenticateHeader includes scope when provided")
-    func headerWithScope() {
-        let prmURL = URL(
-            string: "https://api.example.com/.well-known/oauth-protected-resource"
-        )!
+    @Test
+    func `buildWWWAuthenticateHeader includes scope when provided`() throws {
+        let prmURL = try #require(URL(
+            string: "https://api.example.com/.well-known/oauth-protected-resource",
+        ))
 
         let header = buildWWWAuthenticateHeader(
             error: "insufficient_scope",
             description: "Additional permissions required",
             resourceMetadataURL: prmURL,
-            scope: "read write admin"
+            scope: "read write admin",
         )
 
         #expect(header.contains("error=\"insufficient_scope\""))
         #expect(header.contains("scope=\"read write admin\""))
     }
 
-    @Test("buildWWWAuthenticateHeader omits description when nil")
-    func headerWithoutDescription() {
-        let prmURL = URL(
-            string: "https://api.example.com/.well-known/oauth-protected-resource"
-        )!
+    @Test
+    func `buildWWWAuthenticateHeader omits description when nil`() throws {
+        let prmURL = try #require(URL(
+            string: "https://api.example.com/.well-known/oauth-protected-resource",
+        ))
 
         let header = buildWWWAuthenticateHeader(
             error: "invalid_token",
-            resourceMetadataURL: prmURL
+            resourceMetadataURL: prmURL,
         )
 
         #expect(header.contains("error=\"invalid_token\""))
         #expect(!header.contains("error_description"))
     }
 
-    @Test("401 response body contains JSON error")
-    func responseBody() async {
+    @Test
+    func `401 response body contains JSON error`() async throws {
         let config = testConfig()
         let request = HTTPRequest(method: "GET", headers: [:])
 
@@ -492,13 +487,13 @@ struct WWWAuthenticateHeaderTests {
 
         #expect(response.headers[HTTPHeader.contentType] == "application/json")
 
-        let body = try! JSONDecoder().decode(OAuthTokenErrorResponse.self, from: response.body!)
+        let body = try JSONDecoder().decode(OAuthTokenErrorResponse.self, from: #require(response.body))
         #expect(body.error == "invalid_token")
         #expect(body.errorDescription != nil)
     }
 
-    @Test("401 response includes scope when scopesSupported is configured")
-    func scopeInResponse() async {
+    @Test
+    func `401 response includes scope when scopesSupported is configured`() async throws {
         let config = testConfig(scopesSupported: ["read", "write", "admin"])
         let request = HTTPRequest(method: "GET", headers: [:])
 
@@ -509,12 +504,12 @@ struct WWWAuthenticateHeaderTests {
             return
         }
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(wwwAuth.contains("scope=\"read write admin\""))
     }
 
-    @Test("401 response omits scope when scopesSupported is nil")
-    func noScopeInResponse() async {
+    @Test
+    func `401 response omits scope when scopesSupported is nil`() async throws {
         let config = testConfig(scopesSupported: nil)
         let request = HTTPRequest(method: "GET", headers: [:])
 
@@ -525,16 +520,16 @@ struct WWWAuthenticateHeaderTests {
             return
         }
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(!wwwAuth.contains("scope="))
     }
 
-    @Test("Empty bearer token gets correct error message")
-    func emptyTokenErrorMessage() async {
+    @Test
+    func `Empty bearer token gets correct error message`() async throws {
         let config = testConfig()
         let request = HTTPRequest(
             method: "GET",
-            headers: ["Authorization": "Bearer "]
+            headers: ["Authorization": "Bearer "],
         )
 
         let result = await authenticateRequest(request, config: config)
@@ -544,80 +539,78 @@ struct WWWAuthenticateHeaderTests {
             return
         }
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(wwwAuth.contains("Empty bearer token"))
     }
 }
 
 // MARK: - Insufficient Scope Response Tests
 
-@Suite("Insufficient scope response")
 struct InsufficientScopeTests {
-    @Test("403 response has correct status code and error")
-    func statusAndError() throws {
+    @Test
+    func `403 response has correct status code and error`() throws {
         let config = testConfig()
 
         let response = insufficientScopeResponse(
             scope: "admin",
             description: "Admin access required",
-            config: config
+            config: config,
         )
 
         #expect(response.statusCode == 403)
         #expect(response.headers[HTTPHeader.contentType] == "application/json")
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(wwwAuth.contains("error=\"insufficient_scope\""))
         #expect(wwwAuth.contains("scope=\"admin\""))
         #expect(wwwAuth.contains("error_description=\"Admin access required\""))
         #expect(wwwAuth.contains("resource_metadata="))
 
-        let body = try JSONDecoder().decode(OAuthTokenErrorResponse.self, from: response.body!)
+        let body = try JSONDecoder().decode(OAuthTokenErrorResponse.self, from: #require(response.body))
         #expect(body.error == "insufficient_scope")
         #expect(body.errorDescription == "Admin access required")
     }
 
-    @Test("403 response with multiple scopes")
-    func multipleScopes() {
+    @Test
+    func `403 response with multiple scopes`() throws {
         let config = testConfig()
 
         let response = insufficientScopeResponse(
             scope: "read write admin",
-            config: config
+            config: config,
         )
 
         #expect(response.statusCode == 403)
 
-        let wwwAuth = response.headers["www-authenticate"]!
+        let wwwAuth = try #require(response.headers["www-authenticate"])
         #expect(wwwAuth.contains("scope=\"read write admin\""))
     }
 
-    @Test("403 response without description uses default")
-    func defaultDescription() throws {
+    @Test
+    func `403 response without description uses default`() throws {
         let config = testConfig()
 
         let response = insufficientScopeResponse(
             scope: "admin",
-            config: config
+            config: config,
         )
 
-        let body = try JSONDecoder().decode(OAuthTokenErrorResponse.self, from: response.body!)
+        let body = try JSONDecoder().decode(OAuthTokenErrorResponse.self, from: #require(response.body))
         #expect(body.errorDescription == "Insufficient scope")
     }
 }
 
 // MARK: - PRM Endpoint Tests
 
-@Suite("Protected Resource Metadata endpoint")
 struct PRMEndpointTests {
-    @Test("PRM response contains correct metadata")
-    func responseContent() throws {
-        let config = testConfig(
-            resource: URL(string: "https://api.example.com/mcp")!,
-            authorizationServers: [URL(string: "https://auth.example.com")!],
+    @Test
+    func `PRM response contains correct metadata`() throws {
+        let config = try testConfig(
+            resource: #require(URL(string: "https://api.example.com/mcp")),
+            authorizationServers: [#require(URL(string: "https://auth.example.com"))],
             scopesSupported: ["read", "write"],
             resourceName: "Test MCP Server",
-            resourceDocumentation: URL(string: "https://docs.example.com")!
+            resourceDocumentation: #require(URL(string: "https://docs.example.com")),
         )
 
         let response = protectedResourceMetadataResponse(config: config)
@@ -627,18 +620,18 @@ struct PRMEndpointTests {
         #expect(response.headers[HTTPHeader.cacheControl] == "public, max-age=3600")
 
         let metadata = try JSONDecoder().decode(
-            ProtectedResourceMetadata.self, from: response.body!
+            ProtectedResourceMetadata.self, from: #require(response.body),
         )
         #expect(metadata.resource == URL(string: "https://api.example.com/mcp")!)
-        #expect(metadata.authorizationServers == [URL(string: "https://auth.example.com")!])
+        #expect(try metadata.authorizationServers == [#require(URL(string: "https://auth.example.com"))])
         #expect(metadata.scopesSupported == ["read", "write"])
         #expect(metadata.bearerMethodsSupported == ["header"])
         #expect(metadata.resourceName == "Test MCP Server")
         #expect(metadata.resourceDocumentation == URL(string: "https://docs.example.com")!)
     }
 
-    @Test("PRM response with minimal config")
-    func minimalConfig() throws {
+    @Test
+    func `PRM response with minimal config`() throws {
         let config = testConfig()
 
         let response = protectedResourceMetadataResponse(config: config)
@@ -646,25 +639,26 @@ struct PRMEndpointTests {
         #expect(response.statusCode == 200)
 
         let metadata = try JSONDecoder().decode(
-            ProtectedResourceMetadata.self, from: response.body!
+            ProtectedResourceMetadata.self, from: #require(response.body),
         )
         #expect(metadata.resource == URL(string: "https://api.example.com/mcp")!)
-        #expect(metadata.authorizationServers == [URL(string: "https://auth.example.com")!])
+        #expect(try metadata.authorizationServers == [#require(URL(string: "https://auth.example.com"))])
         #expect(metadata.scopesSupported == nil)
         #expect(metadata.bearerMethodsSupported == ["header"])
         #expect(metadata.resourceName == nil)
         #expect(metadata.resourceDocumentation == nil)
     }
 
-    @Test("PRM response JSON uses snake_case keys")
-    func snakeCaseKeys() throws {
+    @Test
+    func `PRM response JSON uses snake_case keys`() throws {
         let config = testConfig(
             scopesSupported: ["read"],
-            resourceName: "Test"
+            resourceName: "Test",
         )
 
         let response = protectedResourceMetadataResponse(config: config)
-        let json = try JSONSerialization.jsonObject(with: response.body!) as! [String: Any]
+        let body = try #require(response.body)
+        let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
 
         #expect(json["authorization_servers"] != nil)
         #expect(json["scopes_supported"] != nil)
@@ -672,12 +666,13 @@ struct PRMEndpointTests {
         #expect(json["resource_name"] != nil)
     }
 
-    @Test("PRM response omits nil optional fields")
-    func omitsNilFields() throws {
+    @Test
+    func `PRM response omits nil optional fields`() throws {
         let config = testConfig()
 
         let response = protectedResourceMetadataResponse(config: config)
-        let json = try JSONSerialization.jsonObject(with: response.body!) as! [String: Any]
+        let body = try #require(response.body)
+        let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
 
         // Required/always-present fields
         #expect(json["resource"] != nil)
@@ -696,63 +691,62 @@ struct PRMEndpointTests {
 
 // MARK: - PRM Path Construction Tests
 
-@Suite("PRM path construction")
 struct PRMPathTests {
-    @Test("Path-based server URL")
-    func pathBased() {
-        let url = URL(string: "https://api.example.com/mcp")!
+    @Test
+    func `Path-based server URL`() throws {
+        let url = try #require(URL(string: "https://api.example.com/mcp"))
         let path = protectedResourceMetadataPath(for: url)
         #expect(path == "/.well-known/oauth-protected-resource/mcp")
     }
 
-    @Test("Root server URL")
-    func rootServer() {
-        let url = URL(string: "https://api.example.com/")!
+    @Test
+    func `Root server URL`() throws {
+        let url = try #require(URL(string: "https://api.example.com/"))
         let path = protectedResourceMetadataPath(for: url)
         #expect(path == "/.well-known/oauth-protected-resource")
     }
 
-    @Test("Root server URL without trailing slash")
-    func rootServerNoSlash() {
-        let url = URL(string: "https://api.example.com")!
+    @Test
+    func `Root server URL without trailing slash`() throws {
+        let url = try #require(URL(string: "https://api.example.com"))
         let path = protectedResourceMetadataPath(for: url)
         #expect(path == "/.well-known/oauth-protected-resource")
     }
 
-    @Test("Nested path server URL")
-    func nestedPath() {
-        let url = URL(string: "https://api.example.com/v1/mcp")!
+    @Test
+    func `Nested path server URL`() throws {
+        let url = try #require(URL(string: "https://api.example.com/v1/mcp"))
         let path = protectedResourceMetadataPath(for: url)
         #expect(path == "/.well-known/oauth-protected-resource/v1/mcp")
     }
 
-    @Test("PRM full URL construction")
-    func fullURL() {
-        let url = URL(string: "https://api.example.com/mcp")!
+    @Test
+    func `PRM full URL construction`() throws {
+        let url = try #require(URL(string: "https://api.example.com/mcp"))
         let prmURL = protectedResourceMetadataURL(for: url)
         #expect(
             prmURL.absoluteString
-                == "https://api.example.com/.well-known/oauth-protected-resource/mcp"
+                == "https://api.example.com/.well-known/oauth-protected-resource/mcp",
         )
     }
 
-    @Test("PRM full URL for root server")
-    func fullURLRoot() {
-        let url = URL(string: "https://api.example.com")!
+    @Test
+    func `PRM full URL for root server`() throws {
+        let url = try #require(URL(string: "https://api.example.com"))
         let prmURL = protectedResourceMetadataURL(for: url)
         #expect(
             prmURL.absoluteString
-                == "https://api.example.com/.well-known/oauth-protected-resource"
+                == "https://api.example.com/.well-known/oauth-protected-resource",
         )
     }
 
-    @Test("PRM full URL strips query and fragment")
-    func fullURLStripsQueryAndFragment() {
-        let url = URL(string: "https://api.example.com/mcp?key=val#section")!
+    @Test
+    func `PRM full URL strips query and fragment`() throws {
+        let url = try #require(URL(string: "https://api.example.com/mcp?key=val#section"))
         let prmURL = protectedResourceMetadataURL(for: url)
         #expect(
             prmURL.absoluteString
-                == "https://api.example.com/.well-known/oauth-protected-resource/mcp"
+                == "https://api.example.com/.well-known/oauth-protected-resource/mcp",
         )
     }
 }

@@ -22,7 +22,7 @@ public func selectScope(
     wwwAuthenticateScope: String?,
     protectedResourceMetadata: ProtectedResourceMetadata?,
     authServerMetadata: OAuthMetadata?,
-    clientMetadataScope: String? = nil
+    clientMetadataScope: String? = nil,
 ) -> String? {
     if let wwwAuthenticateScope {
         return wwwAuthenticateScope

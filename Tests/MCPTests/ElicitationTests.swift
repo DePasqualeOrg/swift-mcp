@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Test Helpers
 
@@ -37,17 +36,16 @@ extension ElicitValue {
 
 // MARK: - Schema Encoding/Decoding Tests
 
-@Suite("Schema Encoding/Decoding Tests")
 struct SchemaEncodingTests {
-    @Test("StringSchema encodes and decodes correctly")
-    func testStringSchemaRoundtrip() throws {
+    @Test
+    func `StringSchema encodes and decodes correctly`() throws {
         let schema = StringSchema(
             title: "Name",
             description: "The user's name",
             minLength: 1,
             maxLength: 100,
             format: .email,
-            defaultValue: "user@example.com"
+            defaultValue: "user@example.com",
         )
 
         let encoder = JSONEncoder()
@@ -63,8 +61,8 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == "user@example.com")
     }
 
-    @Test("StringSchema with format encodes correctly")
-    func testStringSchemaFormats() throws {
+    @Test
+    func `StringSchema with format encodes correctly`() throws {
         let formats: [StringSchemaFormat] = [.email, .uri, .date, .dateTime]
 
         for format in formats {
@@ -75,17 +73,17 @@ struct SchemaEncodingTests {
         }
     }
 
-    @Test("StringSchema with pattern encodes correctly")
-    func testStringSchemaPattern() throws {
+    @Test
+    func `StringSchema with pattern encodes correctly`() throws {
         let schema = StringSchema(
             title: "ZIP Code",
-            pattern: "^[0-9]{5}$"
+            pattern: "^[0-9]{5}$",
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let data = try encoder.encode(schema)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"pattern\":\"^[0-9]{5}$\""))
 
@@ -94,15 +92,15 @@ struct SchemaEncodingTests {
         #expect(decoded.title == "ZIP Code")
     }
 
-    @Test("NumberSchema encodes and decodes correctly")
-    func testNumberSchemaRoundtrip() throws {
+    @Test
+    func `NumberSchema encodes and decodes correctly`() throws {
         let schema = NumberSchema(
             isInteger: true,
             title: "Age",
             description: "User age",
             minimum: 0,
             maximum: 150,
-            defaultValue: 25
+            defaultValue: 25,
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -115,12 +113,12 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == 25)
     }
 
-    @Test("BooleanSchema encodes and decodes correctly")
-    func testBooleanSchemaRoundtrip() throws {
+    @Test
+    func `BooleanSchema encodes and decodes correctly`() throws {
         let schema = BooleanSchema(
             title: "Subscribe",
             description: "Subscribe to newsletter",
-            defaultValue: true
+            defaultValue: true,
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -130,8 +128,8 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == true)
     }
 
-    @Test("TitledEnumSchema encodes and decodes correctly")
-    func testTitledEnumSchemaRoundtrip() throws {
+    @Test
+    func `TitledEnumSchema encodes and decodes correctly`() throws {
         let schema = TitledEnumSchema(
             title: "Color",
             description: "Pick a color",
@@ -140,7 +138,7 @@ struct SchemaEncodingTests {
                 TitledEnumOption(const: "green", title: "Green"),
                 TitledEnumOption(const: "blue", title: "Blue"),
             ],
-            defaultValue: "red"
+            defaultValue: "red",
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -153,12 +151,12 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == "red")
     }
 
-    @Test("UntitledEnumSchema encodes and decodes correctly")
-    func testUntitledEnumSchemaRoundtrip() throws {
+    @Test
+    func `UntitledEnumSchema encodes and decodes correctly`() throws {
         let schema = UntitledEnumSchema(
             title: "Size",
             enumValues: ["small", "medium", "large"],
-            defaultValue: "medium"
+            defaultValue: "medium",
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -169,8 +167,8 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == "medium")
     }
 
-    @Test("TitledMultiSelectEnumSchema encodes and decodes correctly")
-    func testTitledMultiSelectEnumSchemaRoundtrip() throws {
+    @Test
+    func `TitledMultiSelectEnumSchema encodes and decodes correctly`() throws {
         let schema = TitledMultiSelectEnumSchema(
             title: "Interests",
             description: "Select your interests",
@@ -179,7 +177,7 @@ struct SchemaEncodingTests {
                 TitledEnumOption(const: "sports", title: "Sports"),
                 TitledEnumOption(const: "music", title: "Music"),
             ],
-            defaultValue: ["tech"]
+            defaultValue: ["tech"],
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -190,12 +188,12 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == ["tech"])
     }
 
-    @Test("UntitledMultiSelectEnumSchema encodes and decodes correctly")
-    func testUntitledMultiSelectEnumSchemaRoundtrip() throws {
+    @Test
+    func `UntitledMultiSelectEnumSchema encodes and decodes correctly`() throws {
         let schema = UntitledMultiSelectEnumSchema(
             title: "Tags",
             enumValues: ["tag1", "tag2", "tag3"],
-            defaultValue: ["tag1", "tag2"]
+            defaultValue: ["tag1", "tag2"],
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -206,8 +204,8 @@ struct SchemaEncodingTests {
         #expect(decoded.defaultValue == ["tag1", "tag2"])
     }
 
-    @Test("ElicitationSchema with mixed property types encodes correctly")
-    func testElicitationSchemaWithMixedTypes() throws {
+    @Test
+    func `ElicitationSchema with mixed property types encodes correctly`() throws {
         let schema = ElicitationSchema(
             properties: [
                 "name": .string(StringSchema(title: "Name")),
@@ -215,10 +213,10 @@ struct SchemaEncodingTests {
                 "subscribe": .boolean(BooleanSchema(title: "Subscribe")),
                 "color": .titledEnum(TitledEnumSchema(
                     title: "Color",
-                    oneOf: [TitledEnumOption(const: "red", title: "Red")]
+                    oneOf: [TitledEnumOption(const: "red", title: "Red")],
                 )),
             ],
-            required: ["name", "age"]
+            required: ["name", "age"],
         )
 
         let data = try JSONEncoder().encode(schema)
@@ -231,18 +229,17 @@ struct SchemaEncodingTests {
 
 // MARK: - ElicitRequestParams Tests
 
-@Suite("ElicitRequestParams Tests")
 struct ElicitRequestParamsTests {
-    @Test("Form mode params encode and decode correctly")
-    func testFormModeParams() throws {
+    @Test
+    func `Form mode params encode and decode correctly`() throws {
         let params = ElicitRequestParams.form(ElicitRequestFormParams(
             message: "Please fill out this form",
             requestedSchema: ElicitationSchema(
                 properties: [
                     "name": .string(StringSchema(title: "Name")),
                 ],
-                required: ["name"]
-            )
+                required: ["name"],
+            ),
         ))
 
         let data = try JSONEncoder().encode(params)
@@ -256,12 +253,12 @@ struct ElicitRequestParamsTests {
         }
     }
 
-    @Test("URL mode params encode and decode correctly")
-    func testURLModeParams() throws {
+    @Test
+    func `URL mode params encode and decode correctly`() throws {
         let params = ElicitRequestParams.url(ElicitRequestURLParams(
             message: "Please authorize access",
             elicitationId: "auth-123",
-            url: "https://example.com/oauth/authorize"
+            url: "https://example.com/oauth/authorize",
         ))
 
         let data = try JSONEncoder().encode(params)
@@ -279,16 +276,15 @@ struct ElicitRequestParamsTests {
 
 // MARK: - ElicitResult Tests
 
-@Suite("ElicitResult Tests")
 struct ElicitResultTests {
-    @Test("ElicitResult with accept action encodes correctly")
-    func testElicitResultAccept() throws {
+    @Test
+    func `ElicitResult with accept action encodes correctly`() throws {
         let result = ElicitResult(
             action: .accept,
             content: [
                 "name": .string("Alice"),
                 "age": .int(30),
-            ]
+            ],
         )
 
         let data = try JSONEncoder().encode(result)
@@ -299,8 +295,8 @@ struct ElicitResultTests {
         #expect(decoded.content?["age"]?.intValue == 30)
     }
 
-    @Test("ElicitResult with decline action encodes correctly")
-    func testElicitResultDecline() throws {
+    @Test
+    func `ElicitResult with decline action encodes correctly`() throws {
         let result = ElicitResult(action: .decline)
 
         let data = try JSONEncoder().encode(result)
@@ -310,8 +306,8 @@ struct ElicitResultTests {
         #expect(decoded.content == nil)
     }
 
-    @Test("ElicitResult with cancel action encodes correctly")
-    func testElicitResultCancel() throws {
+    @Test
+    func `ElicitResult with cancel action encodes correctly`() throws {
         let result = ElicitResult(action: .cancel)
 
         let data = try JSONEncoder().encode(result)
@@ -323,42 +319,41 @@ struct ElicitResultTests {
 
 // MARK: - ElicitValue Tests
 
-@Suite("ElicitValue Tests")
 struct ElicitValueTests {
-    @Test("String value encodes and decodes correctly")
-    func testStringValue() throws {
+    @Test
+    func `String value encodes and decodes correctly`() throws {
         let value = ElicitValue.string("hello")
         let data = try JSONEncoder().encode(value)
         let decoded = try JSONDecoder().decode(ElicitValue.self, from: data)
         #expect(decoded.stringValue == "hello")
     }
 
-    @Test("Int value encodes and decodes correctly")
-    func testIntValue() throws {
+    @Test
+    func `Int value encodes and decodes correctly`() throws {
         let value = ElicitValue.int(42)
         let data = try JSONEncoder().encode(value)
         let decoded = try JSONDecoder().decode(ElicitValue.self, from: data)
         #expect(decoded.intValue == 42)
     }
 
-    @Test("Double value encodes and decodes correctly")
-    func testDoubleValue() throws {
+    @Test
+    func `Double value encodes and decodes correctly`() throws {
         let value = ElicitValue.double(3.14)
         let data = try JSONEncoder().encode(value)
         let decoded = try JSONDecoder().decode(ElicitValue.self, from: data)
         #expect(decoded.doubleValue == 3.14)
     }
 
-    @Test("Bool value encodes and decodes correctly")
-    func testBoolValue() throws {
+    @Test
+    func `Bool value encodes and decodes correctly`() throws {
         let value = ElicitValue.bool(true)
         let data = try JSONEncoder().encode(value)
         let decoded = try JSONDecoder().decode(ElicitValue.self, from: data)
         #expect(decoded.boolValue == true)
     }
 
-    @Test("Strings array value encodes and decodes correctly")
-    func testStringsValue() throws {
+    @Test
+    func `Strings array value encodes and decodes correctly`() throws {
         let value = ElicitValue.strings(["a", "b", "c"])
         let data = try JSONEncoder().encode(value)
         let decoded = try JSONDecoder().decode(ElicitValue.self, from: data)
@@ -368,10 +363,9 @@ struct ElicitValueTests {
 
 // MARK: - ElicitAction Tests
 
-@Suite("ElicitAction Tests")
 struct ElicitActionTests {
-    @Test("All action types encode and decode correctly")
-    func testActionTypes() throws {
+    @Test
+    func `All action types encode and decode correctly`() throws {
         let actions: [ElicitAction] = [.accept, .decline, .cancel]
 
         for action in actions {
@@ -384,12 +378,11 @@ struct ElicitActionTests {
 
 // MARK: - Capability Tests
 
-@Suite("Elicitation Capability Tests")
 struct ElicitationCapabilityTests {
-    @Test("Form capability encodes correctly")
-    func testFormCapability() throws {
+    @Test
+    func `Form capability encodes correctly`() throws {
         let capability = Client.Capabilities.Elicitation(
-            form: Client.Capabilities.Elicitation.Form(applyDefaults: true)
+            form: Client.Capabilities.Elicitation.Form(applyDefaults: true),
         )
 
         let data = try JSONEncoder().encode(capability)
@@ -398,10 +391,10 @@ struct ElicitationCapabilityTests {
         #expect(decoded.form?.applyDefaults == true)
     }
 
-    @Test("URL capability encodes correctly")
-    func testURLCapability() throws {
+    @Test
+    func `URL capability encodes correctly`() throws {
         let capability = Client.Capabilities.Elicitation(
-            url: Client.Capabilities.Elicitation.URL()
+            url: Client.Capabilities.Elicitation.URL(),
         )
 
         let data = try JSONEncoder().encode(capability)
@@ -410,11 +403,11 @@ struct ElicitationCapabilityTests {
         #expect(decoded.url != nil)
     }
 
-    @Test("Combined form and URL capability encodes correctly")
-    func testCombinedCapability() throws {
+    @Test
+    func `Combined form and URL capability encodes correctly`() throws {
         let capability = Client.Capabilities.Elicitation(
             form: Client.Capabilities.Elicitation.Form(),
-            url: Client.Capabilities.Elicitation.URL()
+            url: Client.Capabilities.Elicitation.URL(),
         )
 
         let data = try JSONEncoder().encode(capability)
@@ -427,18 +420,17 @@ struct ElicitationCapabilityTests {
 
 // MARK: - ElicitationRequiredErrorData Tests
 
-@Suite("ElicitationRequiredErrorData Tests")
 struct ElicitationRequiredErrorDataTests {
-    @Test("Error data encodes correctly")
-    func testErrorDataEncoding() throws {
+    @Test
+    func `Error data encodes correctly`() throws {
         let errorData = ElicitationRequiredErrorData(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Authorize",
                     elicitationId: "auth-1",
-                    url: "https://example.com/auth"
+                    url: "https://example.com/auth",
                 ),
-            ]
+            ],
         )
 
         let data = try JSONEncoder().encode(errorData)
@@ -452,18 +444,17 @@ struct ElicitationRequiredErrorDataTests {
 
 // MARK: - Server-Client Integration Tests
 
-@Suite("Elicitation Integration Tests")
 struct ElicitationIntegrationTests {
     // MARK: - Form Mode Flow Tests
 
-    @Test("Server can elicit form input from client - accept with content")
-    func testFormElicitationAccept() async throws {
+    @Test
+    func `Server can elicit form input from client - accept with content`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -477,8 +468,8 @@ struct ElicitationIntegrationTests {
                 message: "Please enter your name",
                 requestedSchema: ElicitationSchema(
                     properties: ["name": .string(StringSchema(title: "Name"))],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )))
 
             if result.action == .accept, let name = result.content?["name"]?.stringValue {
@@ -510,14 +501,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server can elicit form input from client - user declines")
-    func testFormElicitationDecline() async throws {
+    @Test
+    func `Server can elicit form input from client - user declines`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -530,8 +521,8 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.form(ElicitRequestFormParams(
                 message: "Confirm action?",
                 requestedSchema: ElicitationSchema(
-                    properties: ["confirm": .boolean(BooleanSchema(title: "Confirm"))]
-                )
+                    properties: ["confirm": .boolean(BooleanSchema(title: "Confirm"))],
+                ),
             )))
 
             return switch result.action {
@@ -558,14 +549,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server can elicit form input from client - user cancels")
-    func testFormElicitationCancel() async throws {
+    @Test
+    func `Server can elicit form input from client - user cancels`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -578,8 +569,8 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.form(ElicitRequestFormParams(
                 message: "Enter data",
                 requestedSchema: ElicitationSchema(
-                    properties: ["data": .string(StringSchema())]
-                )
+                    properties: ["data": .string(StringSchema())],
+                ),
             )))
 
             return switch result.action {
@@ -606,14 +597,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Form elicitation with multiple field types")
-    func testFormElicitationMultipleFieldTypes() async throws {
+    @Test
+    func `Form elicitation with multiple field types`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -632,8 +623,8 @@ struct ElicitationIntegrationTests {
                         "score": .number(NumberSchema(isInteger: false, title: "Score")),
                         "subscribe": .boolean(BooleanSchema(title: "Subscribe")),
                     ],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )))
 
             guard result.action == .accept, let content = result.content else {
@@ -646,7 +637,7 @@ struct ElicitationIntegrationTests {
             let subscribe = content["subscribe"]?.boolValue ?? false
 
             return CallTool.Result(content: [.text(
-                "Name: \(name), Age: \(age), Score: \(score), Subscribe: \(subscribe)"
+                "Name: \(name), Age: \(age), Score: \(score), Subscribe: \(subscribe)",
             )])
         }
 
@@ -659,7 +650,7 @@ struct ElicitationIntegrationTests {
                     "age": .int(30),
                     "score": .double(95.5),
                     "subscribe": .bool(true),
-                ]
+                ],
             )
         }
 
@@ -680,14 +671,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - URL Mode Flow Tests
 
-    @Test("Server can elicit URL authorization from client - accept")
-    func testURLElicitationAccept() async throws {
+    @Test
+    func `Server can elicit URL authorization from client - accept`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -700,7 +691,7 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                 message: "Please authorize access",
                 elicitationId: "auth-123",
-                url: "https://example.com/oauth"
+                url: "https://example.com/oauth",
             )))
 
             return switch result.action {
@@ -735,14 +726,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Capability Checking Tests
 
-    @Test("Server rejects form elicitation when client only supports URL mode")
-    func testFormElicitationRejectedWhenClientOnlySupportsURL() async throws {
+    @Test
+    func `Server rejects form elicitation when client only supports URL mode`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -755,7 +746,7 @@ struct ElicitationIntegrationTests {
             do {
                 _ = try await server.elicit(ElicitRequestParams.form(ElicitRequestFormParams(
                     message: "This should fail",
-                    requestedSchema: ElicitationSchema(properties: [:])
+                    requestedSchema: ElicitationSchema(properties: [:]),
                 )))
                 return CallTool.Result(content: [.text("Should not reach here")])
             } catch let error as MCPError {
@@ -780,14 +771,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server rejects URL elicitation when client only supports form mode")
-    func testURLElicitationRejectedWhenClientOnlySupportsForm() async throws {
+    @Test
+    func `Server rejects URL elicitation when client only supports form mode`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -801,7 +792,7 @@ struct ElicitationIntegrationTests {
                 _ = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                     message: "This should fail",
                     elicitationId: "test",
-                    url: "https://example.com/auth"
+                    url: "https://example.com/auth",
                 )))
                 return CallTool.Result(content: [.text("Should not reach here")])
             } catch let error as MCPError {
@@ -826,14 +817,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server rejects elicitation when client has no elicitation capability")
-    func testElicitationRejectedWhenNoCapability() async throws {
+    @Test
+    func `Server rejects elicitation when client has no elicitation capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -846,7 +837,7 @@ struct ElicitationIntegrationTests {
             do {
                 _ = try await server.elicit(ElicitRequestParams.form(ElicitRequestFormParams(
                     message: "This should fail",
-                    requestedSchema: ElicitationSchema(properties: [:])
+                    requestedSchema: ElicitationSchema(properties: [:]),
                 )))
                 return CallTool.Result(content: [.text("Should not reach here")])
             } catch let error as MCPError {
@@ -869,14 +860,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Multiple Elicitations Tests
 
-    @Test("Server can perform multiple sequential elicitations")
-    func testMultipleSequentialElicitations() async throws {
+    @Test
+    func `Server can perform multiple sequential elicitations`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -891,8 +882,8 @@ struct ElicitationIntegrationTests {
                 message: "Step 1: Enter name",
                 requestedSchema: ElicitationSchema(
                     properties: ["name": .string(StringSchema())],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )))
 
             guard step1.action == .accept, let name = step1.content?["name"]?.stringValue else {
@@ -904,8 +895,8 @@ struct ElicitationIntegrationTests {
                 message: "Step 2: Enter age",
                 requestedSchema: ElicitationSchema(
                     properties: ["age": .number(NumberSchema(isInteger: true))],
-                    required: ["age"]
-                )
+                    required: ["age"],
+                ),
             )))
 
             guard step2.action == .accept, let age = step2.content?["age"]?.intValue else {
@@ -919,8 +910,13 @@ struct ElicitationIntegrationTests {
 
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func getCount() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func getCount() -> Int {
+                count
+            }
         }
         let counter = Counter()
 
@@ -954,14 +950,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Enum Schema Tests
 
-    @Test("Form elicitation with titled enum")
-    func testFormElicitationWithTitledEnum() async throws {
+    @Test
+    func `Form elicitation with titled enum`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -981,11 +977,11 @@ struct ElicitationIntegrationTests {
                                 TitledEnumOption(const: "#FF0000", title: "Red"),
                                 TitledEnumOption(const: "#00FF00", title: "Green"),
                                 TitledEnumOption(const: "#0000FF", title: "Blue"),
-                            ]
+                            ],
                         )),
                     ],
-                    required: ["color"]
-                )
+                    required: ["color"],
+                ),
             )))
 
             guard result.action == .accept, let color = result.content?["color"]?.stringValue else {
@@ -1022,14 +1018,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Form elicitation with multi-select enum")
-    func testFormElicitationWithMultiSelect() async throws {
+    @Test
+    func `Form elicitation with multi-select enum`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1049,10 +1045,10 @@ struct ElicitationIntegrationTests {
                                 TitledEnumOption(const: "tech", title: "Technology"),
                                 TitledEnumOption(const: "sports", title: "Sports"),
                                 TitledEnumOption(const: "music", title: "Music"),
-                            ]
+                            ],
                         )),
-                    ]
-                )
+                    ],
+                ),
             )))
 
             guard result.action == .accept,
@@ -1083,14 +1079,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - URL Mode Decline/Cancel Tests
 
-    @Test("Server can elicit URL authorization from client - decline")
-    func testURLElicitationDecline() async throws {
+    @Test
+    func `Server can elicit URL authorization from client - decline`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1103,7 +1099,7 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                 message: "Please authorize access",
                 elicitationId: "auth-decline-123",
-                url: "https://example.com/oauth"
+                url: "https://example.com/oauth",
             )))
 
             return switch result.action {
@@ -1134,14 +1130,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server can elicit URL authorization from client - cancel")
-    func testURLElicitationCancel() async throws {
+    @Test
+    func `Server can elicit URL authorization from client - cancel`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1154,7 +1150,7 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                 message: "Please authorize access",
                 elicitationId: "auth-cancel-456",
-                url: "https://example.com/oauth"
+                url: "https://example.com/oauth",
             )))
 
             return switch result.action {
@@ -1184,14 +1180,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("URL mode elicitation response should not include content")
-    func testURLElicitationNoContent() async throws {
+    @Test
+    func `URL mode elicitation response should not include content`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1204,7 +1200,7 @@ struct ElicitationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                 message: "Complete authorization",
                 elicitationId: "content-check-789",
-                url: "https://example.com/auth"
+                url: "https://example.com/auth",
             )))
 
             // URL mode responses should not have content
@@ -1235,14 +1231,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Legacy Enum Format Tests
 
-    @Test("Form elicitation with legacy enumNames format")
-    func testFormElicitationWithLegacyEnumNames() async throws {
+    @Test
+    func `Form elicitation with legacy enumNames format`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1261,11 +1257,11 @@ struct ElicitationIntegrationTests {
                             description: "Choose your favorite color",
                             enumValues: ["#FF0000", "#00FF00", "#0000FF"],
                             enumNames: ["Red", "Green", "Blue"],
-                            defaultValue: "#00FF00"
+                            defaultValue: "#00FF00",
                         )),
                     ],
-                    required: ["color"]
-                )
+                    required: ["color"],
+                ),
             )))
 
             guard result.action == .accept, let color = result.content?["color"]?.stringValue else {
@@ -1306,14 +1302,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Optional Fields Tests
 
-    @Test("Form elicitation with optional fields - all provided")
-    func testFormElicitationOptionalFieldsAllProvided() async throws {
+    @Test
+    func `Form elicitation with optional fields - all provided`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1332,8 +1328,8 @@ struct ElicitationIntegrationTests {
                         "age": .number(NumberSchema(isInteger: true, title: "Age", description: "Optional age")),
                         "subscribe": .boolean(BooleanSchema(title: "Subscribe", description: "Optional subscription")),
                     ],
-                    required: ["name"] // Only name is required
-                )
+                    required: ["name"], // Only name is required
+                ),
             )))
 
             guard result.action == .accept, let content = result.content else {
@@ -1366,7 +1362,7 @@ struct ElicitationIntegrationTests {
                     "nickname": .string("Johnny"),
                     "age": .int(30),
                     "subscribe": .bool(true),
-                ]
+                ],
             )
         }
 
@@ -1385,14 +1381,14 @@ struct ElicitationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Form elicitation with optional fields - only required provided")
-    func testFormElicitationOptionalFieldsOnlyRequired() async throws {
+    @Test
+    func `Form elicitation with optional fields - only required provided`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1410,8 +1406,8 @@ struct ElicitationIntegrationTests {
                         "nickname": .string(StringSchema(title: "Nickname")),
                         "email": .string(StringSchema(title: "Email", format: .email)),
                     ],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )))
 
             guard result.action == .accept, let content = result.content else {
@@ -1445,8 +1441,8 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Default Values Tests
 
-    @Test("Schema default values are included in encoded JSON")
-    func testSchemaDefaultValuesEncoding() throws {
+    @Test
+    func `Schema default values are included in encoded JSON`() throws {
         let schema = ElicitationSchema(
             properties: [
                 "name": .string(StringSchema(title: "Name", defaultValue: "Guest")),
@@ -1455,21 +1451,21 @@ struct ElicitationIntegrationTests {
                 "color": .untitledEnum(UntitledEnumSchema(
                     title: "Color",
                     enumValues: ["red", "green", "blue"],
-                    defaultValue: "green"
+                    defaultValue: "green",
                 )),
                 "interests": .untitledMultiSelect(UntitledMultiSelectEnumSchema(
                     title: "Interests",
                     enumValues: ["tech", "sports", "music"],
-                    defaultValue: ["tech", "music"]
+                    defaultValue: ["tech", "music"],
                 )),
             ],
-            required: ["name"]
+            required: ["name"],
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(schema)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Verify defaults are present in the encoded JSON
         #expect(json.contains("\"default\":\"Guest\""))
@@ -1479,14 +1475,14 @@ struct ElicitationIntegrationTests {
         #expect(json.contains("\"default\":[\"tech\",\"music\"]"))
     }
 
-    @Test("Form elicitation with default values in schema")
-    func testFormElicitationWithDefaultValues() async throws {
+    @Test
+    func `Form elicitation with default values in schema`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1505,8 +1501,8 @@ struct ElicitationIntegrationTests {
                         "volume": .number(NumberSchema(isInteger: true, title: "Volume", minimum: 0, maximum: 100, defaultValue: 50)),
                         "darkMode": .boolean(BooleanSchema(title: "Dark Mode", defaultValue: false)),
                     ],
-                    required: ["email"]
-                )
+                    required: ["email"],
+                ),
             )))
 
             guard result.action == .accept, let content = result.content else {
@@ -1556,14 +1552,14 @@ struct ElicitationIntegrationTests {
 
     // MARK: - Complex Schema Tests (matching TypeScript SDK)
 
-    @Test("Form elicitation with complex object - multiple fields like TypeScript SDK")
-    func testFormElicitationComplexObject() async throws {
+    @Test
+    func `Form elicitation with complex object - multiple fields like TypeScript SDK`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1586,8 +1582,8 @@ struct ElicitationIntegrationTests {
                         "newsletter": .boolean(BooleanSchema(title: "Newsletter")),
                         "notifications": .boolean(BooleanSchema(title: "Notifications")),
                     ],
-                    required: ["name", "email", "age", "street", "city", "zipCode"]
-                )
+                    required: ["name", "email", "age", "street", "city", "zipCode"],
+                ),
             )))
 
             guard result.action == .accept, let content = result.content else {
@@ -1602,7 +1598,7 @@ struct ElicitationIntegrationTests {
             let newsletter = content["newsletter"]?.boolValue ?? false
 
             return CallTool.Result(content: [.text(
-                "\(name), \(email), \(age), \(city), \(zipCode), newsletter=\(newsletter)"
+                "\(name), \(email), \(age), \(city), \(zipCode), newsletter=\(newsletter)",
             )])
         }
 
@@ -1619,7 +1615,7 @@ struct ElicitationIntegrationTests {
                     "zipCode": .string("94105"),
                     "newsletter": .bool(true),
                     "notifications": .bool(false),
-                ]
+                ],
             )
         }
 
@@ -1638,16 +1634,15 @@ struct ElicitationIntegrationTests {
 
 // MARK: - Additional Schema Encoding Tests
 
-@Suite("LegacyTitledEnumSchema Tests")
 struct LegacyTitledEnumSchemaTests {
-    @Test("LegacyTitledEnumSchema encodes and decodes correctly")
-    func testLegacyTitledEnumSchemaRoundtrip() throws {
+    @Test
+    func `LegacyTitledEnumSchema encodes and decodes correctly`() throws {
         let schema = LegacyTitledEnumSchema(
             title: "Priority",
             description: "Select priority level",
             enumValues: ["low", "medium", "high"],
             enumNames: ["Low Priority", "Medium Priority", "High Priority"],
-            defaultValue: "medium"
+            defaultValue: "medium",
         )
 
         let encoder = JSONEncoder()
@@ -1662,8 +1657,8 @@ struct LegacyTitledEnumSchemaTests {
         #expect(decoded.defaultValue == "medium")
     }
 
-    @Test("LegacyTitledEnumSchema decodes via PrimitiveSchemaDefinition")
-    func testLegacyTitledEnumSchemaDecodingViaPrimitive() throws {
+    @Test
+    func `LegacyTitledEnumSchema decodes via PrimitiveSchemaDefinition`() throws {
         let json = """
         {
             "type": "string",
@@ -1674,7 +1669,7 @@ struct LegacyTitledEnumSchemaTests {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let decoded = try JSONDecoder().decode(PrimitiveSchemaDefinition.self, from: data)
 
         guard case let .legacyTitledEnum(schema) = decoded else {
@@ -1691,17 +1686,16 @@ struct LegacyTitledEnumSchemaTests {
 
 // MARK: - ElicitationCompleteNotification Tests
 
-@Suite("ElicitationCompleteNotification Tests")
 struct ElicitationCompleteNotificationTests {
-    @Test("ElicitationCompleteNotification name is correct")
-    func testNotificationName() {
+    @Test
+    func `ElicitationCompleteNotification name is correct`() {
         #expect(ElicitationCompleteNotification.name == "notifications/elicitation/complete")
     }
 
-    @Test("ElicitationCompleteNotification parameters encode correctly")
-    func testNotificationParametersEncoding() throws {
+    @Test
+    func `ElicitationCompleteNotification parameters encode correctly`() throws {
         let params = ElicitationCompleteNotification.Parameters(
-            elicitationId: "test-elicitation-123"
+            elicitationId: "test-elicitation-123",
         )
 
         let data = try JSONEncoder().encode(params)
@@ -1710,16 +1704,16 @@ struct ElicitationCompleteNotificationTests {
         #expect(decoded.elicitationId == "test-elicitation-123")
     }
 
-    @Test("ElicitationCompleteNotification message encoding")
-    func testNotificationMessageEncoding() throws {
+    @Test
+    func `ElicitationCompleteNotification message encoding`() throws {
         let notification = ElicitationCompleteNotification.message(
-            ElicitationCompleteNotification.Parameters(elicitationId: "complete-456")
+            ElicitationCompleteNotification.Parameters(elicitationId: "complete-456"),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(notification)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"method\":\"notifications/elicitation/complete\""))
         #expect(json.contains("\"elicitationId\":\"complete-456\""))
@@ -1729,17 +1723,16 @@ struct ElicitationCompleteNotificationTests {
 
 // MARK: - Untitled Enum Schema Tests
 
-@Suite("UntitledEnumSchema Tests")
 struct UntitledEnumSchemaTests {
-    @Test("UntitledEnumSchema with minItems/maxItems constraints")
-    func testUntitledMultiSelectWithConstraints() throws {
+    @Test
+    func `UntitledEnumSchema with minItems/maxItems constraints`() throws {
         let schema = UntitledMultiSelectEnumSchema(
             title: "Tags",
             description: "Select 1-3 tags",
             minItems: 1,
             maxItems: 3,
             enumValues: ["tag1", "tag2", "tag3", "tag4", "tag5"],
-            defaultValue: ["tag1"]
+            defaultValue: ["tag1"],
         )
 
         let encoder = JSONEncoder()
@@ -1757,16 +1750,15 @@ struct UntitledEnumSchemaTests {
 
 // MARK: - Additional Capability Tests
 
-@Suite("Elicitation Capability applyDefaults Tests")
 struct ElicitationCapabilityApplyDefaultsTests {
-    @Test("Form capability with applyDefaults encodes correctly")
-    func testFormCapabilityWithApplyDefaults() throws {
+    @Test
+    func `Form capability with applyDefaults encodes correctly`() throws {
         let capability = Client.Capabilities.Elicitation(
-            form: Client.Capabilities.Elicitation.Form(applyDefaults: true)
+            form: Client.Capabilities.Elicitation.Form(applyDefaults: true),
         )
 
         let data = try JSONEncoder().encode(capability)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("applyDefaults"))
         #expect(json.contains("true"))
@@ -1775,10 +1767,10 @@ struct ElicitationCapabilityApplyDefaultsTests {
         #expect(decoded.form?.applyDefaults == true)
     }
 
-    @Test("Form capability with applyDefaults false encodes correctly")
-    func testFormCapabilityWithApplyDefaultsFalse() throws {
+    @Test
+    func `Form capability with applyDefaults false encodes correctly`() throws {
         let capability = Client.Capabilities.Elicitation(
-            form: Client.Capabilities.Elicitation.Form(applyDefaults: false)
+            form: Client.Capabilities.Elicitation.Form(applyDefaults: false),
         )
 
         let data = try JSONEncoder().encode(capability)
@@ -1790,33 +1782,32 @@ struct ElicitationCapabilityApplyDefaultsTests {
 
 // MARK: - URLElicitationRequiredError Tests
 
-@Suite("URLElicitationRequiredError Tests")
 struct URLElicitationRequiredErrorTests {
-    @Test("MCPError.urlElicitationRequired creates error with correct code")
-    func testErrorCode() {
+    @Test
+    func `MCPError.urlElicitationRequired creates error with correct code`() {
         let error = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Please authorize",
                     elicitationId: "auth-123",
-                    url: "https://example.com/oauth"
+                    url: "https://example.com/oauth",
                 ),
-            ]
+            ],
         )
 
         #expect(error.code == ErrorCode.urlElicitationRequired)
     }
 
-    @Test("MCPError.urlElicitationRequired default message")
-    func testDefaultMessage() {
+    @Test
+    func `MCPError.urlElicitationRequired default message`() {
         let singleError = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Authorize",
                     elicitationId: "auth-1",
-                    url: "https://example.com/auth"
+                    url: "https://example.com/auth",
                 ),
-            ]
+            ],
         )
 
         #expect(singleError.errorDescription == "URL elicitation required")
@@ -1825,30 +1816,30 @@ struct URLElicitationRequiredErrorTests {
             elicitations: [
                 ElicitRequestURLParams(message: "Auth 1", elicitationId: "a1", url: "https://example.com/1"),
                 ElicitRequestURLParams(message: "Auth 2", elicitationId: "a2", url: "https://example.com/2"),
-            ]
+            ],
         )
 
         #expect(multipleError.errorDescription == "URL elicitations required")
     }
 
-    @Test("MCPError.urlElicitationRequired custom message")
-    func testCustomMessage() {
+    @Test
+    func `MCPError.urlElicitationRequired custom message`() {
         let error = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Authorize",
                     elicitationId: "auth-1",
-                    url: "https://example.com/auth"
+                    url: "https://example.com/auth",
                 ),
             ],
-            message: "Custom authorization required"
+            message: "Custom authorization required",
         )
 
         #expect(error.errorDescription == "Custom authorization required")
     }
 
-    @Test("MCPError.urlElicitationRequired elicitations accessor")
-    func testElicitationsAccessor() {
+    @Test
+    func `MCPError.urlElicitationRequired elicitations accessor`() {
         let elicitations = [
             ElicitRequestURLParams(message: "Auth 1", elicitationId: "a1", url: "https://example.com/1"),
             ElicitRequestURLParams(message: "Auth 2", elicitationId: "a2", url: "https://example.com/2"),
@@ -1861,23 +1852,23 @@ struct URLElicitationRequiredErrorTests {
         #expect(error.elicitations?[1].elicitationId == "a2")
     }
 
-    @Test("MCPError.urlElicitationRequired encodes correctly to JSON")
-    func testEncoding() throws {
+    @Test
+    func `MCPError.urlElicitationRequired encodes correctly to JSON`() throws {
         let error = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Please authorize",
                     elicitationId: "auth-123",
-                    url: "https://example.com/oauth"
+                    url: "https://example.com/oauth",
                 ),
             ],
-            message: "Authorization required"
+            message: "Authorization required",
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(error)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"code\":-32042"))
         #expect(json.contains("\"message\":\"Authorization required\""))
@@ -1886,8 +1877,8 @@ struct URLElicitationRequiredErrorTests {
         #expect(json.contains("\"url\":\"https://example.com/oauth\""))
     }
 
-    @Test("MCPError.urlElicitationRequired decodes correctly from JSON")
-    func testDecoding() throws {
+    @Test
+    func `MCPError.urlElicitationRequired decodes correctly from JSON`() throws {
         let json = """
         {
             "code": -32042,
@@ -1905,7 +1896,7 @@ struct URLElicitationRequiredErrorTests {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let error = try JSONDecoder().decode(MCPError.self, from: data)
 
         #expect(error.code == ErrorCode.urlElicitationRequired)
@@ -1914,17 +1905,17 @@ struct URLElicitationRequiredErrorTests {
         #expect(error.elicitations?[0].url == "https://example.com/authorize")
     }
 
-    @Test("MCPError.urlElicitationRequired roundtrip encoding")
-    func testRoundtrip() throws {
+    @Test
+    func `MCPError.urlElicitationRequired roundtrip encoding`() throws {
         let original = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Authorize OAuth",
                     elicitationId: "oauth-789",
-                    url: "https://provider.com/oauth/authorize"
+                    url: "https://provider.com/oauth/authorize",
                 ),
             ],
-            message: "OAuth authorization needed"
+            message: "OAuth authorization needed",
         )
 
         let data = try JSONEncoder().encode(original)
@@ -1936,8 +1927,8 @@ struct URLElicitationRequiredErrorTests {
         #expect(decoded.elicitations?[0].elicitationId == original.elicitations?[0].elicitationId)
     }
 
-    @Test("MCPError.fromError reconstructs urlElicitationRequired")
-    func testFromError() {
+    @Test
+    func `MCPError.fromError reconstructs urlElicitationRequired`() {
         let data: Value = .object([
             "elicitations": .array([
                 .object([
@@ -1952,7 +1943,7 @@ struct URLElicitationRequiredErrorTests {
         let error = MCPError.fromError(
             code: ErrorCode.urlElicitationRequired,
             message: "Elicitation required",
-            data: data
+            data: data,
         )
 
         #expect(error.code == ErrorCode.urlElicitationRequired)
@@ -1960,12 +1951,12 @@ struct URLElicitationRequiredErrorTests {
         #expect(error.elicitations?[0].elicitationId == "from-error-123")
     }
 
-    @Test("MCPError.fromError falls back to serverError for invalid data")
-    func testFromErrorFallback() {
+    @Test
+    func `MCPError.fromError falls back to serverError for invalid data`() {
         let error = MCPError.fromError(
             code: ErrorCode.urlElicitationRequired,
             message: "Elicitation required",
-            data: nil
+            data: nil,
         )
 
         // Should fall back to serverError when data is missing
@@ -1977,14 +1968,14 @@ struct URLElicitationRequiredErrorTests {
         }
     }
 
-    @Test("Tool handler can throw URLElicitationRequiredError")
-    func testThrowFromToolHandler() async throws {
+    @Test
+    func `Tool handler can throw URLElicitationRequiredError`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2000,10 +1991,10 @@ struct URLElicitationRequiredErrorTests {
                     ElicitRequestURLParams(
                         message: "Please authorize access to your files",
                         elicitationId: "file-access-auth",
-                        url: "https://files.example.com/oauth"
+                        url: "https://files.example.com/oauth",
                     ),
                 ],
-                message: "Authorization required to access files"
+                message: "Authorization required to access files",
             )
         }
 
@@ -2025,14 +2016,14 @@ struct URLElicitationRequiredErrorTests {
         await client.disconnect()
     }
 
-    @Test("Client receives URLElicitationRequiredError with multiple elicitations")
-    func testMultipleElicitations() async throws {
+    @Test
+    func `Client receives URLElicitationRequiredError with multiple elicitations`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2047,20 +2038,20 @@ struct URLElicitationRequiredErrorTests {
                     ElicitRequestURLParams(
                         message: "Authorize Google Drive",
                         elicitationId: "google-drive",
-                        url: "https://accounts.google.com/oauth"
+                        url: "https://accounts.google.com/oauth",
                     ),
                     ElicitRequestURLParams(
                         message: "Authorize Dropbox",
                         elicitationId: "dropbox",
-                        url: "https://www.dropbox.com/oauth"
+                        url: "https://www.dropbox.com/oauth",
                     ),
                     ElicitRequestURLParams(
                         message: "Authorize OneDrive",
                         elicitationId: "onedrive",
-                        url: "https://login.microsoftonline.com/oauth"
+                        url: "https://login.microsoftonline.com/oauth",
                     ),
                 ],
-                message: "Multiple cloud storage authorizations required"
+                message: "Multiple cloud storage authorizations required",
             )
         }
 
@@ -2099,16 +2090,15 @@ private actor NotificationState {
     }
 }
 
-@Suite("ElicitationComplete Notification Integration Tests")
 struct ElicitationCompleteNotificationIntegrationTests {
-    @Test("Server can send elicitation complete notification")
-    func testServerSendsElicitationCompleteNotification() async throws {
+    @Test
+    func `Server can send elicitation complete notification`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         let notificationState = NotificationState()
@@ -2125,7 +2115,7 @@ struct ElicitationCompleteNotificationIntegrationTests {
 
             // Send the completion notification
             try await context.sendNotification(ElicitationCompleteNotification.message(.init(
-                elicitationId: elicitationId
+                elicitationId: elicitationId,
             )))
 
             return CallTool.Result(content: [.text("Elicitation completed")])
@@ -2164,14 +2154,14 @@ struct ElicitationCompleteNotificationIntegrationTests {
         await client.disconnect()
     }
 
-    @Test("Server sends elicitation complete after URL mode elicitation")
-    func testElicitationCompleteAfterURLElicitation() async throws {
+    @Test
+    func `Server sends elicitation complete after URL mode elicitation`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         let notificationState = NotificationState()
@@ -2188,13 +2178,13 @@ struct ElicitationCompleteNotificationIntegrationTests {
             let result = try await server.elicit(ElicitRequestParams.url(ElicitRequestURLParams(
                 message: "Complete OAuth",
                 elicitationId: elicitationId,
-                url: "https://example.com/oauth"
+                url: "https://example.com/oauth",
             )))
 
             // After client responds, send completion notification
             if result.action == .accept {
                 try await context.sendNotification(ElicitationCompleteNotification.message(.init(
-                    elicitationId: elicitationId
+                    elicitationId: elicitationId,
                 )))
             }
 
@@ -2246,7 +2236,6 @@ private actor TaskAugmentedState {
     }
 }
 
-@Suite("Task-Augmented Elicitation Tests")
 struct TaskAugmentedElicitationTests {
     /// Helper to create a simple MCPTask for testing
     private static func makeTask(taskId: String, status: TaskStatus) -> MCPTask {
@@ -2255,12 +2244,12 @@ struct TaskAugmentedElicitationTests {
             taskId: taskId,
             status: status,
             createdAt: now,
-            lastUpdatedAt: now
+            lastUpdatedAt: now,
         )
     }
 
-    @Test("Client can register task-augmented elicitation handler")
-    func testTaskAugmentedElicitationHandler() async throws {
+    @Test
+    func `Client can register task-augmented elicitation handler`() async {
         let elicitationState = TaskAugmentedState()
 
         let client = Client(name: "ElicitTestClient", version: "1.0.0")
@@ -2282,8 +2271,8 @@ struct TaskAugmentedElicitationTests {
         #expect(caps.tasks?.requests?.elicitation?.create != nil)
     }
 
-    @Test("TaskAugmentedElicitationHandler type alias exists")
-    func testTaskAugmentedElicitationHandlerType() {
+    @Test
+    func `TaskAugmentedElicitationHandler type alias exists`() {
         // Verify the type alias compiles correctly
         let handler: ExperimentalClientTaskHandlers.TaskAugmentedElicitationHandler = { _, _ in
             let taskId = UUID().uuidString
@@ -2294,8 +2283,8 @@ struct TaskAugmentedElicitationTests {
         _ = handler
     }
 
-    @Test("ExperimentalClientTaskHandlers builds correct capability for elicitation")
-    func testBuildCapabilityWithElicitation() {
+    @Test
+    func `ExperimentalClientTaskHandlers builds correct capability for elicitation`() {
         var handlers = ExperimentalClientTaskHandlers()
 
         // With elicitation handler, capability should include requests.elicitation
@@ -2308,8 +2297,8 @@ struct TaskAugmentedElicitationTests {
         #expect(capability?.requests?.elicitation?.create != nil)
     }
 
-    @Test("ExperimentalClientTaskHandlers builds capability with both sampling and elicitation")
-    func testBuildCapabilityWithBoth() {
+    @Test
+    func `ExperimentalClientTaskHandlers builds capability with both sampling and elicitation`() {
         var handlers = ExperimentalClientTaskHandlers()
 
         handlers.taskAugmentedSampling = { _, _ in
@@ -2326,8 +2315,8 @@ struct TaskAugmentedElicitationTests {
         #expect(capability?.requests?.elicitation?.create != nil)
     }
 
-    @Test("hasTaskAugmentedElicitation returns correct value")
-    func testHasTaskAugmentedElicitation() {
+    @Test
+    func `hasTaskAugmentedElicitation returns correct value`() {
         // Without capability
         #expect(hasTaskAugmentedElicitation(nil) == false)
 
@@ -2345,13 +2334,13 @@ struct TaskAugmentedElicitationTests {
 
         // With elicitation.create
         let withElicitation = Client.Capabilities(
-            tasks: .init(requests: .init(elicitation: .init(create: .init())))
+            tasks: .init(requests: .init(elicitation: .init(create: .init()))),
         )
         #expect(hasTaskAugmentedElicitation(withElicitation) == true)
     }
 
-    @Test("requireTaskAugmentedElicitation throws when not supported")
-    func testRequireTaskAugmentedElicitation() {
+    @Test
+    func `requireTaskAugmentedElicitation throws when not supported`() {
         // Should throw when capability is nil
         #expect(throws: MCPError.self) {
             try requireTaskAugmentedElicitation(nil)
@@ -2365,7 +2354,7 @@ struct TaskAugmentedElicitationTests {
 
         // Should not throw when supported
         let withElicitation = Client.Capabilities(
-            tasks: .init(requests: .init(elicitation: .init(create: .init())))
+            tasks: .init(requests: .init(elicitation: .init(create: .init()))),
         )
         #expect(throws: Never.self) {
             try requireTaskAugmentedElicitation(withElicitation)

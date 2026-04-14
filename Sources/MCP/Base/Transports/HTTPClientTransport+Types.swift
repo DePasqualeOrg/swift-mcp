@@ -67,7 +67,7 @@ public struct HTTPReconnectionOptions: Sendable {
         initialReconnectionDelay: TimeInterval = 1.0,
         maxReconnectionDelay: TimeInterval = 30.0,
         reconnectionDelayGrowFactor: Double = 1.5,
-        maxRetries: Int = 2
+        maxRetries: Int = 2,
     ) {
         self.initialReconnectionDelay = initialReconnectionDelay
         self.maxReconnectionDelay = maxReconnectionDelay

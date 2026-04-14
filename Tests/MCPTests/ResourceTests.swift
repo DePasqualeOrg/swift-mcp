@@ -2,20 +2,18 @@
 // Copyright © Matt Zmuda
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Resource Tests")
 struct ResourceTests {
-    @Test("Resource initialization with valid parameters")
-    func testResourceInitialization() throws {
+    @Test
+    func `Resource initialization with valid parameters`() {
         let resource = Resource(
             name: "test_resource",
             uri: "file://test.txt",
             description: "A test resource",
             mimeType: "text/plain",
-            _meta: ["key": "value"]
+            _meta: ["key": "value"],
         )
 
         #expect(resource.name == "test_resource")
@@ -25,14 +23,14 @@ struct ResourceTests {
         #expect(resource._meta?["key"] == "value")
     }
 
-    @Test("Resource encoding and decoding")
-    func testResourceEncodingDecoding() throws {
+    @Test
+    func `Resource encoding and decoding`() throws {
         let resource = Resource(
             name: "test_resource",
             uri: "file://test.txt",
             description: "Test resource description",
             mimeType: "text/plain",
-            _meta: ["key1": "value1", "key2": "value2"]
+            _meta: ["key1": "value1", "key2": "value2"],
         )
 
         let encoder = JSONEncoder()
@@ -48,10 +46,10 @@ struct ResourceTests {
         #expect(decoded._meta == resource._meta)
     }
 
-    @Test("Resource.Content text initialization and encoding")
-    func testResourceContentTextEncoding() throws {
+    @Test
+    func `Resource.Content text initialization and encoding`() throws {
         let content = Resource.Content.text(
-            "Hello, world!", uri: "file://test.txt", mimeType: "text/plain"
+            "Hello, world!", uri: "file://test.txt", mimeType: "text/plain",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -65,11 +63,11 @@ struct ResourceTests {
         #expect(decoded.blob == nil)
     }
 
-    @Test("Resource.Content binary initialization and encoding")
-    func testResourceContentBinaryEncoding() throws {
+    @Test
+    func `Resource.Content binary initialization and encoding`() throws {
         let binaryData = "Test binary data".data(using: .utf8)!
         let content = Resource.Content.binary(
-            binaryData, uri: "file://test.bin", mimeType: "application/octet-stream"
+            binaryData, uri: "file://test.bin", mimeType: "application/octet-stream",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -83,8 +81,8 @@ struct ResourceTests {
         #expect(decoded.blob == binaryData.base64EncodedString())
     }
 
-    @Test("ListResources parameters validation")
-    func testListResourcesParameters() throws {
+    @Test
+    func `ListResources parameters validation`() {
         let params = ListResources.Parameters(cursor: "next_page")
         #expect(params.cursor == "next_page")
 
@@ -92,13 +90,13 @@ struct ResourceTests {
         #expect(emptyParams.cursor == nil)
     }
 
-    @Test("ListResources request decoding with omitted params")
-    func testListResourcesRequestDecodingWithOmittedParams() throws {
+    @Test
+    func `ListResources request decoding with omitted params`() throws {
         // Test decoding when params field is omitted
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"resources/list"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListResources>.self, from: data)
@@ -107,13 +105,13 @@ struct ResourceTests {
         #expect(decoded.method == ListResources.name)
     }
 
-    @Test("ListResources request decoding with null params")
-    func testListResourcesRequestDecodingWithNullParams() throws {
+    @Test
+    func `ListResources request decoding with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"resources/list","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListResources>.self, from: data)
@@ -122,8 +120,8 @@ struct ResourceTests {
         #expect(decoded.method == ListResources.name)
     }
 
-    @Test("ListResources result validation")
-    func testListResourcesResult() throws {
+    @Test
+    func `ListResources result validation`() {
         let resources = [
             Resource(name: "resource1", uri: "file://test1.txt"),
             Resource(name: "resource2", uri: "file://test2.txt"),
@@ -136,14 +134,14 @@ struct ResourceTests {
         #expect(result.nextCursor == "next_page")
     }
 
-    @Test("ReadResource parameters validation")
-    func testReadResourceParameters() throws {
+    @Test
+    func `ReadResource parameters validation`() {
         let params = ReadResource.Parameters(uri: "file://test.txt")
         #expect(params.uri == "file://test.txt")
     }
 
-    @Test("ReadResource result validation")
-    func testReadResourceResult() throws {
+    @Test
+    func `ReadResource result validation`() {
         let contents = [
             Resource.Content.text("Content 1", uri: "file://test1.txt"),
             Resource.Content.text("Content 2", uri: "file://test2.txt"),
@@ -153,29 +151,29 @@ struct ResourceTests {
         #expect(result.contents.count == 2)
     }
 
-    @Test("ResourceSubscribe parameters validation")
-    func testResourceSubscribeParameters() throws {
+    @Test
+    func `ResourceSubscribe parameters validation`() {
         let params = ResourceSubscribe.Parameters(uri: "file://test.txt")
         #expect(params.uri == "file://test.txt")
         #expect(ResourceSubscribe.name == "resources/subscribe")
     }
 
-    @Test("ResourceUnsubscribe parameters validation")
-    func testResourceUnsubscribeParameters() throws {
+    @Test
+    func `ResourceUnsubscribe parameters validation`() {
         let params = ResourceUnsubscribe.Parameters(uri: "file://test.txt")
         #expect(params.uri == "file://test.txt")
         #expect(ResourceUnsubscribe.name == "resources/unsubscribe")
     }
 
-    @Test("ResourceUpdatedNotification parameters validation")
-    func testResourceUpdatedNotification() throws {
+    @Test
+    func `ResourceUpdatedNotification parameters validation`() {
         let params = ResourceUpdatedNotification.Parameters(uri: "file://test.txt")
         #expect(params.uri == "file://test.txt")
         #expect(ResourceUpdatedNotification.name == "notifications/resources/updated")
     }
 
-    @Test("ResourceListChangedNotification name validation")
-    func testResourceListChangedNotification() throws {
+    @Test
+    func `ResourceListChangedNotification name validation`() {
         #expect(ResourceListChangedNotification.name == "notifications/resources/list_changed")
     }
 
@@ -183,13 +181,13 @@ struct ResourceTests {
 
     /// Tests for MIME types with parameters as specified in RFC 2045.
     /// Based on: Python SDK `tests/issues/test_1754_mime_type_parameters.py`
-    @Test("Resource with MIME type parameters (RFC 2045)")
-    func testMimeTypeWithParameters() throws {
+    @Test
+    func `Resource with MIME type parameters (RFC 2045)`() throws {
         // MIME types with parameters should be accepted per RFC 2045
         let resource = Resource(
             name: "widget",
             uri: "ui://widget",
-            mimeType: "text/html;profile=mcp-app"
+            mimeType: "text/html;profile=mcp-app",
         )
 
         #expect(resource.mimeType == "text/html;profile=mcp-app")
@@ -204,12 +202,12 @@ struct ResourceTests {
         #expect(decoded.mimeType == "text/html;profile=mcp-app")
     }
 
-    @Test("Resource with MIME type parameters and space after semicolon")
-    func testMimeTypeWithParametersAndSpace() throws {
+    @Test
+    func `Resource with MIME type parameters and space after semicolon`() throws {
         let resource = Resource(
             name: "data",
             uri: "data://json",
-            mimeType: "application/json; charset=utf-8"
+            mimeType: "application/json; charset=utf-8",
         )
 
         #expect(resource.mimeType == "application/json; charset=utf-8")
@@ -223,12 +221,12 @@ struct ResourceTests {
         #expect(decoded.mimeType == "application/json; charset=utf-8")
     }
 
-    @Test("Resource with multiple MIME type parameters")
-    func testMimeTypeWithMultipleParameters() throws {
+    @Test
+    func `Resource with multiple MIME type parameters`() throws {
         let resource = Resource(
             name: "multi",
             uri: "data://multi",
-            mimeType: "text/plain; charset=utf-8; format=fixed"
+            mimeType: "text/plain; charset=utf-8; format=fixed",
         )
 
         #expect(resource.mimeType == "text/plain; charset=utf-8; format=fixed")
@@ -242,12 +240,12 @@ struct ResourceTests {
         #expect(decoded.mimeType == "text/plain; charset=utf-8; format=fixed")
     }
 
-    @Test("Resource.Content preserves MIME type with parameters")
-    func testResourceContentPreservesMimeTypeWithParameters() throws {
+    @Test
+    func `Resource.Content preserves MIME type with parameters`() throws {
         let content = Resource.Content.text(
             "<html><body>Hello MCP-UI</body></html>",
             uri: "ui://my-widget",
-            mimeType: "text/html;profile=mcp-app"
+            mimeType: "text/html;profile=mcp-app",
         )
 
         #expect(content.mimeType == "text/html;profile=mcp-app")
@@ -265,14 +263,14 @@ struct ResourceTests {
 
     /// Tests for Resource.Template encoding and decoding.
     /// Based on: Python SDK `tests/issues/test_129_resource_templates.py`
-    @Test("Resource.Template initialization and encoding")
-    func testResourceTemplateInitialization() throws {
+    @Test
+    func `Resource.Template initialization and encoding`() throws {
         let template = Resource.Template(
             uriTemplate: "greeting://{name}",
             name: "greeting",
             title: "Greeting Resource",
             description: "Get a personalized greeting",
-            mimeType: "text/plain"
+            mimeType: "text/plain",
         )
 
         #expect(template.uriTemplate == "greeting://{name}")
@@ -294,12 +292,12 @@ struct ResourceTests {
         #expect(decoded.mimeType == "text/plain")
     }
 
-    @Test("Resource.Template with multiple URI parameters")
-    func testResourceTemplateMultipleParams() throws {
+    @Test
+    func `Resource.Template with multiple URI parameters`() throws {
         let template = Resource.Template(
             uriTemplate: "users://{user_id}/posts/{post_id}",
             name: "user_post",
-            description: "User post resource"
+            description: "User post resource",
         )
 
         #expect(template.uriTemplate == "users://{user_id}/posts/{post_id}")
@@ -313,13 +311,13 @@ struct ResourceTests {
         #expect(decoded.uriTemplate == "users://{user_id}/posts/{post_id}")
     }
 
-    @Test("Resource.Template with annotations and metadata")
-    func testResourceTemplateWithAnnotations() throws {
+    @Test
+    func `Resource.Template with annotations and metadata`() throws {
         let template = Resource.Template(
             uriTemplate: "file:///{path}",
             name: "file",
             annotations: Annotations(audience: [.user], priority: 0.8),
-            _meta: ["custom": "value"]
+            _meta: ["custom": "value"],
         )
 
         #expect(template.uriTemplate == "file:///{path}")
@@ -338,8 +336,8 @@ struct ResourceTests {
         #expect(decoded._meta?["custom"] == "value")
     }
 
-    @Test("ListResourceTemplates parameters validation")
-    func testListResourceTemplatesParameters() throws {
+    @Test
+    func `ListResourceTemplates parameters validation`() {
         let params = ListResourceTemplates.Parameters(cursor: "template_page_2")
         #expect(params.cursor == "template_page_2")
 
@@ -347,24 +345,24 @@ struct ResourceTests {
         #expect(emptyParams.cursor == nil)
     }
 
-    @Test("ListResourceTemplates result encoding/decoding")
-    func testListResourceTemplatesResult() throws {
+    @Test
+    func `ListResourceTemplates result encoding/decoding`() throws {
         let templates = [
             Resource.Template(
                 uriTemplate: "greeting://{name}",
                 name: "greeting",
-                description: "Get a personalized greeting"
+                description: "Get a personalized greeting",
             ),
             Resource.Template(
                 uriTemplate: "users://{user_id}/profile",
                 name: "user_profile",
-                description: "User profile resource"
+                description: "User profile resource",
             ),
         ]
 
         let result = ListResourceTemplates.Result(
             templates: templates,
-            nextCursor: "next_template_page"
+            nextCursor: "next_template_page",
         )
 
         #expect(result.templates.count == 2)
@@ -382,17 +380,17 @@ struct ResourceTests {
         #expect(decoded.nextCursor == "next_template_page")
     }
 
-    @Test("ListResourceTemplates result uses 'resourceTemplates' key in JSON")
-    func testListResourceTemplatesUsesCorrectJsonKey() throws {
+    @Test
+    func `ListResourceTemplates result uses 'resourceTemplates' key in JSON`() throws {
         let result = ListResourceTemplates.Result(
             templates: [
                 Resource.Template(uriTemplate: "test://{id}", name: "test"),
-            ]
+            ],
         )
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(result)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         // Verify the JSON uses "resourceTemplates" as the key (per MCP spec)
         #expect(jsonString.contains("resourceTemplates"))
@@ -401,15 +399,15 @@ struct ResourceTests {
 
     // MARK: - ResourceLink Tests
 
-    @Test("ResourceLink initialization and encoding")
-    func testResourceLinkInitialization() throws {
+    @Test
+    func `ResourceLink initialization and encoding`() {
         let link = ResourceLink(
             name: "example_file",
             title: "Example File",
             uri: "file:///example.txt",
             description: "An example resource link",
             mimeType: "text/plain",
-            size: 1024
+            size: 1024,
         )
 
         #expect(link.name == "example_file")
@@ -420,27 +418,27 @@ struct ResourceTests {
         #expect(link.size == 1024)
     }
 
-    @Test("ResourceLink encodes with 'resource_link' type")
-    func testResourceLinkEncodesWithType() throws {
+    @Test
+    func `ResourceLink encodes with 'resource_link' type`() throws {
         let link = ResourceLink(
             name: "test",
-            uri: "file:///test.txt"
+            uri: "file:///test.txt",
         )
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(link)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonString.contains("\"type\":\"resource_link\""))
     }
 
-    @Test("ResourceLink decoding validates type field")
-    func testResourceLinkDecodingValidatesType() throws {
+    @Test
+    func `ResourceLink decoding validates type field`() throws {
         // Valid resource_link type
         let validJson = """
         {"type":"resource_link","name":"test","uri":"file:///test.txt"}
         """
-        let validData = validJson.data(using: .utf8)!
+        let validData = try #require(validJson.data(using: .utf8))
         let decoder = JSONDecoder()
 
         let decoded = try decoder.decode(ResourceLink.self, from: validData)
@@ -451,20 +449,20 @@ struct ResourceTests {
         let invalidJson = """
         {"type":"wrong_type","name":"test","uri":"file:///test.txt"}
         """
-        let invalidData = invalidJson.data(using: .utf8)!
+        let invalidData = try #require(invalidJson.data(using: .utf8))
 
         #expect(throws: DecodingError.self) {
             _ = try decoder.decode(ResourceLink.self, from: invalidData)
         }
     }
 
-    @Test("ResourceLink decodes without type field (backward compatibility)")
-    func testResourceLinkDecodesWithoutType() throws {
+    @Test
+    func `ResourceLink decodes without type field (backward compatibility)`() throws {
         // Type field is optional for backward compatibility
         let json = """
         {"name":"test","uri":"file:///test.txt"}
         """
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let decoder = JSONDecoder()
 
         let decoded = try decoder.decode(ResourceLink.self, from: data)
@@ -472,8 +470,8 @@ struct ResourceTests {
         #expect(decoded.uri == "file:///test.txt")
     }
 
-    @Test("ResourceLink encoding/decoding roundtrip with all optional fields")
-    func testResourceLinkRoundtripAllFields() throws {
+    @Test
+    func `ResourceLink encoding/decoding roundtrip with all optional fields`() throws {
         let link = ResourceLink(
             name: "complete_resource",
             title: "Complete Resource Title",
@@ -482,7 +480,7 @@ struct ResourceTests {
             mimeType: "application/json; charset=utf-8",
             size: 4096,
             annotations: Annotations(audience: [.user, .assistant], priority: 0.75),
-            _meta: ["version": "2.0", "author": "test"]
+            _meta: ["version": "2.0", "author": "test"],
         )
 
         let encoder = JSONEncoder()
@@ -503,13 +501,13 @@ struct ResourceTests {
         #expect(decoded._meta?["author"] == "test")
     }
 
-    @Test("ResourceLink decoding fails when required 'name' field is missing")
-    func testResourceLinkDecodingFailsMissingName() throws {
+    @Test
+    func `ResourceLink decoding fails when required 'name' field is missing`() throws {
         // Missing required 'name' field
         let json = """
         {"type":"resource_link","uri":"file:///test.txt"}
         """
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let decoder = JSONDecoder()
 
         #expect(throws: DecodingError.self) {
@@ -517,13 +515,13 @@ struct ResourceTests {
         }
     }
 
-    @Test("ResourceLink decoding fails when required 'uri' field is missing")
-    func testResourceLinkDecodingFailsMissingUri() throws {
+    @Test
+    func `ResourceLink decoding fails when required 'uri' field is missing`() throws {
         // Missing required 'uri' field
         let json = """
         {"type":"resource_link","name":"test"}
         """
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let decoder = JSONDecoder()
 
         #expect(throws: DecodingError.self) {
@@ -533,8 +531,8 @@ struct ResourceTests {
 
     // MARK: - Pagination Encoding Tests
 
-    @Test("ListResources pagination cursor encoding roundtrip")
-    func testPaginationCursorEncodingRoundtrip() throws {
+    @Test
+    func `ListResources pagination cursor encoding roundtrip`() throws {
         // Test that cursor values are properly encoded and decoded
         let cursor = "page_2_cursor_abc123"
         let params = ListResources.Parameters(cursor: cursor)
@@ -548,8 +546,8 @@ struct ResourceTests {
         #expect(decoded.cursor == cursor)
     }
 
-    @Test("ListResources result nextCursor encoding roundtrip")
-    func testPaginationNextCursorEncodingRoundtrip() throws {
+    @Test
+    func `ListResources result nextCursor encoding roundtrip`() throws {
         let resources = [
             Resource(name: "resource1", uri: "file://test1.txt"),
             Resource(name: "resource2", uri: "file://test2.txt"),
@@ -557,7 +555,7 @@ struct ResourceTests {
 
         let result = ListResources.Result(
             resources: resources,
-            nextCursor: "next_page_cursor_xyz789"
+            nextCursor: "next_page_cursor_xyz789",
         )
 
         let encoder = JSONEncoder()
@@ -570,8 +568,8 @@ struct ResourceTests {
         #expect(decoded.nextCursor == "next_page_cursor_xyz789")
     }
 
-    @Test("Pagination result with no more pages")
-    func testPaginationResultNoMorePages() throws {
+    @Test
+    func `Pagination result with no more pages`() throws {
         let resources = [
             Resource(name: "last_resource", uri: "file://last.txt"),
         ]
@@ -591,8 +589,8 @@ struct ResourceTests {
 
     // MARK: - Resource with All Fields Tests
 
-    @Test("Resource with all optional fields")
-    func testResourceWithAllFields() throws {
+    @Test
+    func `Resource with all optional fields`() throws {
         let resource = Resource(
             name: "complete_resource",
             title: "Complete Resource Title",
@@ -601,7 +599,7 @@ struct ResourceTests {
             mimeType: "application/json; charset=utf-8",
             size: 2048,
             annotations: Annotations(audience: [.user, .assistant], priority: 0.9),
-            _meta: ["version": "1.0", "author": "test"]
+            _meta: ["version": "1.0", "author": "test"],
         )
 
         #expect(resource.name == "complete_resource")
@@ -633,8 +631,8 @@ struct ResourceTests {
 
     // MARK: - Integration Tests
 
-    @Test("Paginated resource listing")
-    func testPaginatedResourceListing() async throws {
+    @Test
+    func `Paginated resource listing`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track pagination state
@@ -643,7 +641,7 @@ struct ResourceTests {
         let server = Server(
             name: "PaginatedResourceServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         // Handler returns paginated resources
@@ -684,14 +682,14 @@ struct ResourceTests {
         await server.stop()
     }
 
-    @Test("Resource template listing and reading")
-    func testResourceTemplateListingAndReading() async throws {
+    @Test
+    func `Resource template listing and reading`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TemplateServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         // Handler for listing resource templates
@@ -700,12 +698,12 @@ struct ResourceTests {
                 Resource.Template(
                     uriTemplate: "greeting://{name}",
                     name: "greeting",
-                    description: "Get a personalized greeting"
+                    description: "Get a personalized greeting",
                 ),
                 Resource.Template(
                     uriTemplate: "users://{user_id}/profile",
                     name: "user_profile",
-                    description: "User profile resource"
+                    description: "User profile resource",
                 ),
             ])
         }
@@ -762,14 +760,14 @@ struct ResourceTests {
         await server.stop()
     }
 
-    @Test("Resource with MIME type parameters in integration")
-    func testResourceWithMimeTypeParametersIntegration() async throws {
+    @Test
+    func `Resource with MIME type parameters in integration`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "MimeTypeServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         await server.withRequestHandler(ListResources.self) { _, _ in
@@ -777,12 +775,12 @@ struct ResourceTests {
                 Resource(
                     name: "widget",
                     uri: "ui://widget",
-                    mimeType: "text/html;profile=mcp-app"
+                    mimeType: "text/html;profile=mcp-app",
                 ),
                 Resource(
                     name: "data",
                     uri: "data://json",
-                    mimeType: "application/json; charset=utf-8"
+                    mimeType: "application/json; charset=utf-8",
                 ),
             ])
         }
@@ -793,7 +791,7 @@ struct ResourceTests {
                     .text(
                         "<html><body>Hello MCP-UI</body></html>",
                         uri: params.uri,
-                        mimeType: "text/html;profile=mcp-app"
+                        mimeType: "text/html;profile=mcp-app",
                     ),
                 ])
             }
@@ -820,14 +818,14 @@ struct ResourceTests {
         await server.stop()
     }
 
-    @Test("Paginated resource template listing")
-    func testPaginatedResourceTemplateListing() async throws {
+    @Test
+    func `Paginated resource template listing`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "PaginatedTemplateServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         await server.withRequestHandler(ListResourceTemplates.self) { params, _ in
@@ -837,14 +835,14 @@ struct ResourceTests {
                         Resource.Template(uriTemplate: "template://{id1}", name: "template1"),
                         Resource.Template(uriTemplate: "template://{id2}", name: "template2"),
                     ],
-                    nextCursor: "page_2"
+                    nextCursor: "page_2",
                 )
             } else if params.cursor == "page_2" {
                 return ListResourceTemplates.Result(
                     templates: [
                         Resource.Template(uriTemplate: "template://{id3}", name: "template3"),
                     ],
-                    nextCursor: nil
+                    nextCursor: nil,
                 )
             }
             return ListResourceTemplates.Result(templates: [])
@@ -873,14 +871,14 @@ struct ResourceTests {
         await server.stop()
     }
 
-    @Test("Empty resource listing result")
-    func testEmptyResourceListingResult() async throws {
+    @Test
+    func `Empty resource listing result`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "EmptyResourceServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         // Handler returns empty resource list
@@ -902,14 +900,14 @@ struct ResourceTests {
         await server.stop()
     }
 
-    @Test("Empty resource template listing result")
-    func testEmptyResourceTemplateListingResult() async throws {
+    @Test
+    func `Empty resource template listing result`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "EmptyTemplateServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         // Handler returns empty template list

@@ -70,7 +70,7 @@ public actor ToolRegistry {
     @discardableResult
     public func register<T: ToolSpec>(
         _ tool: T.Type,
-        onListChanged: (@Sendable () async -> Void)? = nil
+        onListChanged: (@Sendable () async -> Void)? = nil,
     ) throws -> RegisteredTool {
         let name = T.toolDefinition.name
         guard !hasTool(name) else {
@@ -109,7 +109,7 @@ public actor ToolRegistry {
         outputSchema: Value? = nil,
         annotations: [AnnotationOption] = [],
         onListChanged: (@Sendable () async -> Void)? = nil,
-        handler: @escaping @Sendable (Input, HandlerContext) async throws -> some ToolOutput
+        handler: @escaping @Sendable (Input, HandlerContext) async throws -> some ToolOutput,
     ) throws -> RegisteredTool {
         guard !hasTool(name) else {
             throw MCPError.invalidParams("Tool '\(name)' is already registered")
@@ -120,7 +120,7 @@ public actor ToolRegistry {
             description: description,
             inputSchema: inputSchema,
             outputSchema: outputSchema,
-            annotations: AnnotationOption.buildAnnotations(from: annotations)
+            annotations: AnnotationOption.buildAnnotations(from: annotations),
         )
 
         let closureHandler: @Sendable ([String: Value]?, HandlerContext) async throws -> CallTool.Result = { arguments, context in
@@ -149,7 +149,7 @@ public actor ToolRegistry {
         description: String? = nil,
         annotations: [AnnotationOption] = [],
         onListChanged: (@Sendable () async -> Void)? = nil,
-        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput
+        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput,
     ) throws -> RegisteredTool {
         guard !hasTool(name) else {
             throw MCPError.invalidParams("Tool '\(name)' is already registered")
@@ -159,7 +159,7 @@ public actor ToolRegistry {
             name: name,
             description: description,
             inputSchema: .object(["type": .string("object")]),
-            annotations: AnnotationOption.buildAnnotations(from: annotations)
+            annotations: AnnotationOption.buildAnnotations(from: annotations),
         )
 
         let closureHandler: @Sendable ([String: Value]?, HandlerContext) async throws -> CallTool.Result = { _, context in
@@ -210,7 +210,7 @@ public actor ToolRegistry {
     public func execute(
         _ name: String,
         arguments: [String: Value]?,
-        context: HandlerContext
+        context: HandlerContext,
     ) async throws -> CallTool.Result {
         let entry = try resolveEntry(name)
 
@@ -282,13 +282,13 @@ public actor ToolRegistry {
 // MARK: - Internal Types
 
 /// Unified storage for both DSL and closure-based tools.
-struct ToolEntry: Sendable {
+struct ToolEntry {
     /// The kind of tool (DSL or closure).
-    enum Kind: Sendable {
+    enum Kind {
         case dsl(any ToolSpec.Type)
         case closure(
             definition: Tool,
-            handler: @Sendable ([String: Value]?, HandlerContext) async throws -> CallTool.Result
+            handler: @Sendable ([String: Value]?, HandlerContext) async throws -> CallTool.Result,
         )
     }
 

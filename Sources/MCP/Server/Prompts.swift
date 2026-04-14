@@ -32,7 +32,7 @@ public struct Prompt: Hashable, Codable, Sendable {
         description: String? = nil,
         arguments: [Argument]? = nil,
         _meta: [String: Value]? = nil,
-        icons: [Icon]? = nil
+        icons: [Icon]? = nil,
     ) {
         self.name = name
         self.title = title
@@ -58,7 +58,7 @@ public struct Prompt: Hashable, Codable, Sendable {
             name: String,
             title: String? = nil,
             description: String? = nil,
-            required: Bool? = nil
+            required: Bool? = nil,
         ) {
             self.name = name
             self.title = title
@@ -255,7 +255,7 @@ extension Prompt.Message.Content: Codable {
                 throw DecodingError.dataCorruptedError(
                     forKey: .type,
                     in: container,
-                    debugDescription: "Unknown content type"
+                    debugDescription: "Unknown content type",
                 )
         }
     }
@@ -314,7 +314,7 @@ public enum ListPrompts: Method {
             prompts: [Prompt],
             nextCursor: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.prompts = prompts
             self.nextCursor = nextCursor
@@ -379,7 +379,7 @@ public enum GetPrompt: Method {
             description: String?,
             messages: [Prompt.Message],
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.description = description
             self.messages = messages

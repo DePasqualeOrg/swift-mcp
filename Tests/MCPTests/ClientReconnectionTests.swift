@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -35,15 +34,14 @@ import FoundationNetworking
 /// - `should use server-provided retry value for reconnection delay`
 /// - `should reconnect on graceful stream close`
 /// - `should not schedule any reconnection attempts when maxRetries is 0`
-@Suite("Client Reconnection Tests")
 struct ClientReconnectionTests {
     // MARK: - Reconnection Options Tests
 
-    @Test("Default reconnection options")
-    func defaultReconnectionOptions() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: false
+    @Test
+    func `Default reconnection options`() throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: false,
         )
 
         let options = transport.reconnectionOptions
@@ -53,19 +51,19 @@ struct ClientReconnectionTests {
         #expect(options.maxRetries == 2)
     }
 
-    @Test("Custom reconnection options")
-    func customReconnectionOptions() async throws {
+    @Test
+    func `Custom reconnection options`() throws {
         let customOptions = HTTPReconnectionOptions(
             initialReconnectionDelay: 0.5,
             maxReconnectionDelay: 10.0,
             reconnectionDelayGrowFactor: 2.0,
-            maxRetries: 5
+            maxRetries: 5,
         )
 
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
             streaming: false,
-            reconnectionOptions: customOptions
+            reconnectionOptions: customOptions,
         )
 
         let options = transport.reconnectionOptions
@@ -77,11 +75,11 @@ struct ClientReconnectionTests {
 
     // MARK: - Last Event ID Tracking Tests
 
-    @Test("Last received event ID is initially nil")
-    func lastEventIdInitiallyNil() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: false
+    @Test
+    func `Last received event ID is initially nil`() async throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: false,
         )
 
         let lastEventId = await transport.lastReceivedEventId
@@ -90,17 +88,22 @@ struct ClientReconnectionTests {
 
     // MARK: - Resumption Token Callback Tests
 
-    @Test("Resumption token callback can be set")
-    func resumptionTokenCallbackCanBeSet() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: false
+    @Test
+    func `Resumption token callback can be set`() async throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: false,
         )
 
         actor TokenCollector {
             var tokens: [String] = []
-            func add(_ token: String) { tokens.append(token) }
-            func get() -> [String] { tokens }
+            func add(_ token: String) {
+                tokens.append(token)
+            }
+
+            func get() -> [String] {
+                tokens
+            }
         }
 
         let collector = TokenCollector()
@@ -119,8 +122,8 @@ struct ClientReconnectionTests {
 
     // MARK: - Reconnection Options Struct Tests
 
-    @Test("HTTPReconnectionOptions default values")
-    func reconnectionOptionsDefaultValues() {
+    @Test
+    func `HTTPReconnectionOptions default values`() {
         let options = HTTPReconnectionOptions()
         #expect(options.initialReconnectionDelay == 1.0)
         #expect(options.maxReconnectionDelay == 30.0)
@@ -128,8 +131,8 @@ struct ClientReconnectionTests {
         #expect(options.maxRetries == 2)
     }
 
-    @Test("HTTPReconnectionOptions static default")
-    func reconnectionOptionsStaticDefault() {
+    @Test
+    func `HTTPReconnectionOptions static default`() {
         let options = HTTPReconnectionOptions.default
         #expect(options.initialReconnectionDelay == 1.0)
         #expect(options.maxReconnectionDelay == 30.0)
@@ -137,13 +140,13 @@ struct ClientReconnectionTests {
         #expect(options.maxRetries == 2)
     }
 
-    @Test("HTTPReconnectionOptions custom initialization")
-    func reconnectionOptionsCustomInit() {
+    @Test
+    func `HTTPReconnectionOptions custom initialization`() {
         let options = HTTPReconnectionOptions(
             initialReconnectionDelay: 2.0,
             maxReconnectionDelay: 60.0,
             reconnectionDelayGrowFactor: 3.0,
-            maxRetries: 10
+            maxRetries: 10,
         )
         #expect(options.initialReconnectionDelay == 2.0)
         #expect(options.maxReconnectionDelay == 60.0)
@@ -153,14 +156,14 @@ struct ClientReconnectionTests {
 
     // MARK: - Exponential Backoff Logic Tests
 
-    @Test("Exponential backoff calculation")
-    func exponentialBackoffCalculation() {
+    @Test
+    func `Exponential backoff calculation`() {
         // Test the math of exponential backoff
         let options = HTTPReconnectionOptions(
             initialReconnectionDelay: 1.0,
             maxReconnectionDelay: 30.0,
             reconnectionDelayGrowFactor: 2.0,
-            maxRetries: 10
+            maxRetries: 10,
         )
 
         // delay = initialDelay * growFactor^attempt
@@ -186,11 +189,11 @@ struct ClientReconnectionTests {
 
     // MARK: - Transport State Tests
 
-    @Test("Transport tracks session ID")
-    func transportTracksSessionId() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: false
+    @Test
+    func `Transport tracks session ID`() async throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: false,
         )
 
         // Initially nil
@@ -198,11 +201,11 @@ struct ClientReconnectionTests {
         #expect(sessionId == nil)
     }
 
-    @Test("Transport tracks protocol version")
-    func transportTracksProtocolVersion() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: false
+    @Test
+    func `Transport tracks protocol version`() async throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: false,
         )
 
         // Initially nil
@@ -213,11 +216,11 @@ struct ClientReconnectionTests {
     // MARK: - Resume Stream API Tests
 
     #if !os(Linux)
-    @Test("Resume stream method exists and is callable")
-    func resumeStreamMethodExists() async throws {
-        let transport = HTTPClientTransport(
-            endpoint: URL(string: "http://localhost:8080/mcp")!,
-            streaming: true
+    @Test
+    func `Resume stream method exists and is callable`() async throws {
+        let transport = try HTTPClientTransport(
+            endpoint: #require(URL(string: "http://localhost:8080/mcp")),
+            streaming: true,
         )
 
         // The method exists and is callable (though it won't do anything useful

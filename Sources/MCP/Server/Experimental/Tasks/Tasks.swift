@@ -98,7 +98,7 @@ public struct MCPTask: Hashable, Sendable {
         createdAt: String,
         lastUpdatedAt: String,
         pollInterval: Int? = nil,
-        statusMessage: String? = nil
+        statusMessage: String? = nil,
     ) {
         self.taskId = taskId
         self.status = status
@@ -235,7 +235,7 @@ public struct CreateTaskResult: ResultWithExtraFields {
     public init(
         task: MCPTask,
         _meta: [String: Value]? = nil,
-        extraFields: [String: Value]? = nil
+        extraFields: [String: Value]? = nil,
     ) {
         self.task = task
         self._meta = _meta
@@ -331,7 +331,7 @@ public enum GetTask: Method {
             pollInterval: Int? = nil,
             statusMessage: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.taskId = taskId
             self.status = status
@@ -519,7 +519,7 @@ public enum ListTasks: Method {
             tasks: [MCPTask],
             nextCursor: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.tasks = tasks
             self.nextCursor = nextCursor
@@ -604,7 +604,7 @@ public enum CancelTask: Method {
             pollInterval: Int? = nil,
             statusMessage: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.taskId = taskId
             self.status = status
@@ -702,7 +702,7 @@ public struct TaskStatusNotification: Notification {
             lastUpdatedAt: String,
             pollInterval: Int? = nil,
             statusMessage: String? = nil,
-            _meta: [String: Value]? = nil
+            _meta: [String: Value]? = nil,
         ) {
             self.taskId = taskId
             self.status = status
@@ -824,7 +824,7 @@ public extension Server.Capabilities {
         public init(
             list: List? = nil,
             cancel: Cancel? = nil,
-            requests: Requests? = nil
+            requests: Requests? = nil,
         ) {
             self.list = list
             self.cancel = cancel
@@ -838,7 +838,7 @@ public extension Server.Capabilities {
             Tasks(
                 list: List(),
                 cancel: Cancel(),
-                requests: Requests(tools: .init(call: .init()))
+                requests: Requests(tools: .init(call: .init())),
             )
         }
     }
@@ -917,7 +917,7 @@ public extension Client.Capabilities {
 
             public init(
                 sampling: Sampling? = nil,
-                elicitation: Elicitation? = nil
+                elicitation: Elicitation? = nil,
             ) {
                 self.sampling = sampling
                 self.elicitation = elicitation
@@ -934,7 +934,7 @@ public extension Client.Capabilities {
         public init(
             list: List? = nil,
             cancel: Cancel? = nil,
-            requests: Requests? = nil
+            requests: Requests? = nil,
         ) {
             self.list = list
             self.cancel = cancel
@@ -950,8 +950,8 @@ public extension Client.Capabilities {
                 cancel: Cancel(),
                 requests: Requests(
                     sampling: .init(createMessage: .init()),
-                    elicitation: .init(create: .init())
-                )
+                    elicitation: .init(create: .init()),
+                ),
             )
         }
     }

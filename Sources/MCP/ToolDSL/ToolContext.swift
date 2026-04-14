@@ -61,7 +61,7 @@ public struct HandlerContext: Sendable {
     public func reportProgress(
         _ progress: Double,
         total: Double? = nil,
-        message: String? = nil
+        message: String? = nil,
     ) async throws {
         guard let token = progressToken else { return }
         try await requestContext.sendProgress(token: token, progress: progress, total: total, message: message)
@@ -77,12 +77,12 @@ public struct HandlerContext: Sendable {
     public func log(
         level: LoggingLevel,
         _ message: String,
-        logger: String? = nil
+        logger: String? = nil,
     ) async throws {
         try await requestContext.sendLogMessage(
             level: level,
             logger: logger,
-            data: .string(message)
+            data: .string(message),
         )
     }
 
@@ -164,7 +164,7 @@ public struct HandlerContext: Sendable {
     /// - Throws: `MCPError` if the request fails.
     public func elicit(
         message: String,
-        requestedSchema: ElicitationSchema
+        requestedSchema: ElicitationSchema,
     ) async throws -> ElicitResult {
         try await requestContext.elicit(message: message, requestedSchema: requestedSchema)
     }
@@ -198,7 +198,7 @@ public struct HandlerContext: Sendable {
     public func elicitUrl(
         message: String,
         url: String,
-        elicitationId: String
+        elicitationId: String,
     ) async throws -> ElicitResult {
         try await requestContext.elicitUrl(message: message, url: url, elicitationId: elicitationId)
     }
@@ -240,7 +240,7 @@ public struct HandlerContext: Sendable {
         includeContext: Sampling.ContextInclusion? = nil,
         temperature: Double? = nil,
         stopSequences: [String]? = nil,
-        metadata: [String: Value]? = nil
+        metadata: [String: Value]? = nil,
     ) async throws -> CreateSamplingMessage.Result {
         let params = SamplingParameters(
             messages: messages,
@@ -250,7 +250,7 @@ public struct HandlerContext: Sendable {
             temperature: temperature,
             maxTokens: maxTokens,
             stopSequences: stopSequences,
-            metadata: metadata
+            metadata: metadata,
         )
         let request = CreateSamplingMessage.request(id: .random, params)
         let responseData = try await requestContext.sendRequest(request)

@@ -1,23 +1,21 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Stateless Mode Tests")
 struct StatelessModeTests {
     // MARK: - Transport Property Tests
 
-    @Test("MockTransport defaults to supporting server-to-client requests")
-    func mockTransportDefaultsToSupportingRequests() async throws {
+    @Test
+    func `MockTransport defaults to supporting server-to-client requests`() async {
         let transport = MockTransport()
         let supports = await transport.supportsServerToClientRequests
         #expect(supports == true)
     }
 
-    @Test("MockTransport can be configured to not support server-to-client requests")
-    func mockTransportCanBeConfiguredToNotSupportRequests() async throws {
+    @Test
+    func `MockTransport can be configured to not support server-to-client requests`() async {
         let transport = MockTransport()
         await transport.setSupportsServerToClientRequests(false)
         let supports = await transport.supportsServerToClientRequests
@@ -26,9 +24,10 @@ struct StatelessModeTests {
 
     // MARK: - Server-to-Client Request Rejection
 
-    @Test("listRoots fails immediately when transport does not support server-to-client requests",
-          .timeLimit(.minutes(1)))
-    func listRootsFailsInStatelessMode() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `listRoots fails immediately when transport does not support server-to-client requests`() async throws {
         let transport = MockTransport()
         await transport.setSupportsServerToClientRequests(false)
 
@@ -43,16 +42,17 @@ struct StatelessModeTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(roots: .init(listChanged: true)),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         // Wait for server to process and respond
         _ = await transport.waitForSentMessageCount(1, timeout: .seconds(5))
 
         // Queue initialized notification
         try await transport.queue(
-            notification: InitializedNotification.message(.init())
+            notification: InitializedNotification.message(.init()),
         )
 
         // Brief pause to ensure notification is processed
@@ -67,16 +67,17 @@ struct StatelessModeTests {
             let errorDescription = String(describing: error)
             #expect(
                 errorDescription.contains("stateless") || errorDescription.localizedCaseInsensitiveContains("server-to-client"),
-                "Expected stateless mode error, got: \(errorDescription)"
+                "Expected stateless mode error, got: \(errorDescription)",
             )
         }
 
         await server.stop()
     }
 
-    @Test("createMessage fails immediately when transport does not support server-to-client requests",
-          .timeLimit(.minutes(1)))
-    func createMessageFailsInStatelessMode() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `createMessage fails immediately when transport does not support server-to-client requests`() async throws {
         let transport = MockTransport()
         await transport.setSupportsServerToClientRequests(false)
 
@@ -89,14 +90,15 @@ struct StatelessModeTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(sampling: .init()),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         _ = await transport.waitForSentMessageCount(1, timeout: .seconds(5))
 
         try await transport.queue(
-            notification: InitializedNotification.message(.init())
+            notification: InitializedNotification.message(.init()),
         )
 
         try await Task.sleep(for: .milliseconds(100))
@@ -105,24 +107,25 @@ struct StatelessModeTests {
             _ = try await server.createMessage(
                 CreateSamplingMessage.Parameters(
                     messages: [Sampling.Message(role: .user, content: .text("Hello"))],
-                    maxTokens: 100
-                )
+                    maxTokens: 100,
+                ),
             )
             Issue.record("Expected createMessage to throw in stateless mode")
         } catch let error as MCPError {
             let errorDescription = String(describing: error)
             #expect(
                 errorDescription.contains("stateless") || errorDescription.localizedCaseInsensitiveContains("server-to-client"),
-                "Expected stateless mode error, got: \(errorDescription)"
+                "Expected stateless mode error, got: \(errorDescription)",
             )
         }
 
         await server.stop()
     }
 
-    @Test("elicit fails immediately when transport does not support server-to-client requests",
-          .timeLimit(.minutes(1)))
-    func elicitFailsInStatelessMode() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `elicit fails immediately when transport does not support server-to-client requests`() async throws {
         let transport = MockTransport()
         await transport.setSupportsServerToClientRequests(false)
 
@@ -135,14 +138,15 @@ struct StatelessModeTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(elicitation: .init(form: .init())),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         _ = await transport.waitForSentMessageCount(1, timeout: .seconds(5))
 
         try await transport.queue(
-            notification: InitializedNotification.message(.init())
+            notification: InitializedNotification.message(.init()),
         )
 
         try await Task.sleep(for: .milliseconds(100))
@@ -151,15 +155,15 @@ struct StatelessModeTests {
             _ = try await server.elicit(
                 .form(ElicitRequestFormParams(
                     message: "Please provide input",
-                    requestedSchema: ElicitationSchema(properties: [:])
-                ))
+                    requestedSchema: ElicitationSchema(properties: [:]),
+                )),
             )
             Issue.record("Expected elicit to throw in stateless mode")
         } catch let error as MCPError {
             let errorDescription = String(describing: error)
             #expect(
                 errorDescription.contains("stateless") || errorDescription.localizedCaseInsensitiveContains("server-to-client"),
-                "Expected stateless mode error, got: \(errorDescription)"
+                "Expected stateless mode error, got: \(errorDescription)",
             )
         }
 

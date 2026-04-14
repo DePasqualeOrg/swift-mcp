@@ -70,7 +70,8 @@ public extension Data {
         } else {
             guard
                 let percentDecodedData = String(encodedData).removingPercentEncoding?.data(
-                    using: .utf8)
+                    using: .utf8,
+                )
             else { return nil }
             decodedData = percentDecodedData
         }

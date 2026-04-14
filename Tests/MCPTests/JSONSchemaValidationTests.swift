@@ -1,23 +1,21 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for JSON Schema validation functionality.
 ///
 /// These tests verify the DefaultJSONSchemaValidator implementation against
 /// various JSON Schema 2020-12 features, following the test patterns from
 /// the TypeScript and Python SDKs.
-@Suite("JSON Schema Validation Tests")
 struct JSONSchemaValidationTests {
     let validator = DefaultJSONSchemaValidator()
 
     // MARK: - String Schemas
 
-    @Test("Validates basic string type")
-    func basicString() throws {
+    @Test
+    func `Validates basic string type`() throws {
         let schema: Value = ["type": "string"]
 
         // Valid
@@ -29,8 +27,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates string with length constraints")
-    func stringLengthConstraints() throws {
+    @Test
+    func `Validates string with length constraints`() throws {
         let schema: Value = [
             "type": "string",
             "minLength": 3,
@@ -52,8 +50,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates string pattern")
-    func stringPattern() throws {
+    @Test
+    func `Validates string pattern`() throws {
         let schema: Value = [
             "type": "string",
             "pattern": "^[A-Z]{3}$",
@@ -75,8 +73,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Number Schemas
 
-    @Test("Validates number type")
-    func numberType() throws {
+    @Test
+    func `Validates number type`() throws {
         let schema: Value = ["type": "number"]
 
         // Valid
@@ -89,8 +87,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates integer type")
-    func integerType() throws {
+    @Test
+    func `Validates integer type`() throws {
         let schema: Value = ["type": "integer"]
 
         // Valid
@@ -102,8 +100,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates number range")
-    func numberRange() throws {
+    @Test
+    func `Validates number range`() throws {
         let schema: Value = [
             "type": "number",
             "minimum": 0,
@@ -128,8 +126,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Boolean Schemas
 
-    @Test("Validates boolean type")
-    func booleanType() throws {
+    @Test
+    func `Validates boolean type`() throws {
         let schema: Value = ["type": "boolean"]
 
         // Valid
@@ -149,8 +147,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Enum Schemas
 
-    @Test("Validates enum values")
-    func enumValues() throws {
+    @Test
+    func `Validates enum values`() throws {
         let schema: Value = [
             "enum": ["red", "green", "blue"],
         ]
@@ -166,8 +164,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates enum with mixed types")
-    func enumMixedTypes() throws {
+    @Test
+    func `Validates enum with mixed types`() throws {
         let schema: Value = [
             "enum": ["option1", 42, true, .null],
         ]
@@ -186,8 +184,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Object Schemas
 
-    @Test("Validates simple object with required fields")
-    func simpleObject() throws {
+    @Test
+    func `Validates simple object with required fields`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -200,20 +198,20 @@ struct JSONSchemaValidationTests {
         // Valid - all fields
         try validator.validate(
             .object(["name": .string("John"), "age": .int(30)]),
-            against: schema
+            against: schema,
         )
 
         // Valid - required only
         try validator.validate(
             .object(["name": .string("John")]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - missing required field
         #expect(throws: MCPError.self) {
             try validator.validate(
                 .object(["age": .int(30)]),
-                against: schema
+                against: schema,
             )
         }
 
@@ -223,8 +221,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates nested objects")
-    func nestedObjects() throws {
+    @Test
+    func `Validates nested objects`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -248,7 +246,7 @@ struct JSONSchemaValidationTests {
                     "email": .string("john@example.com"),
                 ]),
             ]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - nested required field missing
@@ -259,13 +257,13 @@ struct JSONSchemaValidationTests {
                         "email": .string("john@example.com"),
                     ]),
                 ]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Validates object with additionalProperties: false")
-    func additionalPropertiesFalse() throws {
+    @Test
+    func `Validates object with additionalProperties: false`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -277,22 +275,22 @@ struct JSONSchemaValidationTests {
         // Valid
         try validator.validate(
             .object(["name": .string("John")]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - extra field
         #expect(throws: MCPError.self) {
             try validator.validate(
                 .object(["name": .string("John"), "extra": .string("field")]),
-                against: schema
+                against: schema,
             )
         }
     }
 
     // MARK: - Array Schemas
 
-    @Test("Validates array of strings")
-    func arrayOfStrings() throws {
+    @Test
+    func `Validates array of strings`() throws {
         let schema: Value = [
             "type": "array",
             "items": ["type": "string"],
@@ -308,8 +306,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates array length constraints")
-    func arrayLengthConstraints() throws {
+    @Test
+    func `Validates array length constraints`() throws {
         let schema: Value = [
             "type": "array",
             "items": ["type": "number"],
@@ -332,8 +330,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates array with unique items")
-    func arrayUniqueItems() throws {
+    @Test
+    func `Validates array with unique items`() throws {
         let schema: Value = [
             "type": "array",
             "items": ["type": "number"],
@@ -351,8 +349,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - JSON Schema 2020-12 Features
 
-    @Test("Validates with allOf")
-    func allOf() throws {
+    @Test
+    func `Validates with allOf`() throws {
         let schema: Value = [
             "allOf": [
                 ["type": "object", "properties": ["name": ["type": "string"]]],
@@ -363,24 +361,24 @@ struct JSONSchemaValidationTests {
         // Valid
         try validator.validate(
             .object(["name": .string("John"), "age": .int(30)]),
-            against: schema
+            against: schema,
         )
         try validator.validate(
             .object(["name": .string("John")]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - wrong type for name
         #expect(throws: MCPError.self) {
             try validator.validate(
                 .object(["name": .int(123)]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Validates with anyOf")
-    func anyOf() throws {
+    @Test
+    func `Validates with anyOf`() throws {
         let schema: Value = [
             "anyOf": [
                 ["type": "string"],
@@ -398,8 +396,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates with oneOf")
-    func oneOf() throws {
+    @Test
+    func `Validates with oneOf`() throws {
         let schema: Value = [
             "oneOf": [
                 ["type": "string", "minLength": 5],
@@ -419,8 +417,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates with not")
-    func notConstraint() throws {
+    @Test
+    func `Validates with not`() throws {
         let schema: Value = [
             "not": ["type": "null"],
         ]
@@ -435,8 +433,8 @@ struct JSONSchemaValidationTests {
         }
     }
 
-    @Test("Validates with const")
-    func constValue() throws {
+    @Test
+    func `Validates with const`() throws {
         let schema: Value = [
             "const": "specific-value",
         ]
@@ -452,8 +450,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Complex Real-World Schemas
 
-    @Test("Validates user registration form schema")
-    func userRegistrationForm() throws {
+    @Test
+    func `Validates user registration form schema`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -486,7 +484,7 @@ struct JSONSchemaValidationTests {
                 "age": .int(25),
                 "newsletter": .bool(true),
             ]),
-            against: schema
+            against: schema,
         )
 
         // Valid - required only
@@ -495,7 +493,7 @@ struct JSONSchemaValidationTests {
                 "username": .string("john_doe"),
                 "email": .string("john@example.com"),
             ]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - username too short
@@ -505,7 +503,7 @@ struct JSONSchemaValidationTests {
                     "username": .string("ab"),
                     "email": .string("john@example.com"),
                 ]),
-                against: schema
+                against: schema,
             )
         }
 
@@ -517,13 +515,13 @@ struct JSONSchemaValidationTests {
                     "email": .string("john@example.com"),
                     "age": .int(15),
                 ]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Validates API response with nested structure")
-    func apiResponseSchema() throws {
+    @Test
+    func `Validates API response with nested structure`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -565,7 +563,7 @@ struct JSONSchemaValidationTests {
                     ]),
                 ]),
             ]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - wrong status enum
@@ -578,15 +576,15 @@ struct JSONSchemaValidationTests {
                         "items": .array([]),
                     ]),
                 ]),
-                against: schema
+                against: schema,
             )
         }
     }
 
     // MARK: - Error Messages
 
-    @Test("Provides helpful error message on validation failure")
-    func errorMessages() throws {
+    @Test
+    func `Provides helpful error message on validation failure`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -607,8 +605,8 @@ struct JSONSchemaValidationTests {
 
     // MARK: - Schema Caching
 
-    @Test("Caches compiled schemas for repeated validation")
-    func schemaCaching() throws {
+    @Test
+    func `Caches compiled schemas for repeated validation`() throws {
         let schema: Value = [
             "type": "object",
             "properties": [
@@ -632,10 +630,9 @@ struct JSONSchemaValidationTests {
 
 // MARK: - Tool Input Validation Tests
 
-@Suite("Tool Input Validation Tests")
 struct ToolInputValidationTests {
-    @Test("Valid tool call passes input validation")
-    func validToolCall() throws {
+    @Test
+    func `Valid tool call passes input validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let inputSchema: Value = [
             "type": "object",
@@ -656,8 +653,8 @@ struct ToolInputValidationTests {
         try validator.validate(arguments, against: inputSchema)
     }
 
-    @Test("Missing required argument fails validation")
-    func missingRequiredArgument() throws {
+    @Test
+    func `Missing required argument fails validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let inputSchema: Value = [
             "type": "object",
@@ -678,8 +675,8 @@ struct ToolInputValidationTests {
         }
     }
 
-    @Test("Wrong argument type fails validation")
-    func wrongArgumentType() throws {
+    @Test
+    func `Wrong argument type fails validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let inputSchema: Value = [
             "type": "object",
@@ -700,8 +697,8 @@ struct ToolInputValidationTests {
         }
     }
 
-    @Test("Invalid enum value fails validation")
-    func invalidEnumValue() throws {
+    @Test
+    func `Invalid enum value fails validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let inputSchema: Value = [
             "type": "object",
@@ -722,8 +719,8 @@ struct ToolInputValidationTests {
         }
     }
 
-    @Test("Additional properties rejected when forbidden")
-    func additionalPropertiesRejected() throws {
+    @Test
+    func `Additional properties rejected when forbidden`() throws {
         let validator = DefaultJSONSchemaValidator()
         let inputSchema: Value = [
             "type": "object",
@@ -749,10 +746,9 @@ struct ToolInputValidationTests {
 
 // MARK: - Tool Output Validation Tests
 
-@Suite("Tool Output Validation Tests")
 struct ToolOutputValidationTests {
-    @Test("Valid structured output passes validation")
-    func validStructuredOutput() throws {
+    @Test
+    func `Valid structured output passes validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let outputSchema: Value = [
             "type": "object",
@@ -771,8 +767,8 @@ struct ToolOutputValidationTests {
         try validator.validate(structuredContent, against: outputSchema)
     }
 
-    @Test("Missing required field in output fails validation")
-    func missingRequiredOutputField() throws {
+    @Test
+    func `Missing required field in output fails validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let outputSchema: Value = [
             "type": "object",
@@ -793,8 +789,8 @@ struct ToolOutputValidationTests {
         }
     }
 
-    @Test("Wrong type in output fails validation")
-    func wrongOutputType() throws {
+    @Test
+    func `Wrong type in output fails validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let outputSchema: Value = [
             "type": "object",
@@ -817,8 +813,8 @@ struct ToolOutputValidationTests {
         }
     }
 
-    @Test("Complex output schema validation")
-    func complexOutputSchema() throws {
+    @Test
+    func `Complex output schema validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let outputSchema: Value = [
             "type": "object",
@@ -835,7 +831,7 @@ struct ToolOutputValidationTests {
                 "sentiment": .string("positive"),
                 "confidence": .double(0.95),
             ]),
-            against: outputSchema
+            against: outputSchema,
         )
 
         // Invalid - confidence out of range
@@ -845,7 +841,7 @@ struct ToolOutputValidationTests {
                     "sentiment": .string("positive"),
                     "confidence": .double(1.5),
                 ]),
-                against: outputSchema
+                against: outputSchema,
             )
         }
 
@@ -856,7 +852,7 @@ struct ToolOutputValidationTests {
                     "sentiment": .string("happy"),
                     "confidence": .double(0.8),
                 ]),
-                against: outputSchema
+                against: outputSchema,
             )
         }
     }
@@ -864,10 +860,9 @@ struct ToolOutputValidationTests {
 
 // MARK: - Elicitation Validation Tests
 
-@Suite("Elicitation Schema Validation Tests")
 struct ElicitationValidationTests {
-    @Test("Simple string field validation")
-    func simpleStringField() throws {
+    @Test
+    func `Simple string field validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -886,8 +881,8 @@ struct ElicitationValidationTests {
         }
     }
 
-    @Test("Integer field with range validation")
-    func integerFieldWithRange() throws {
+    @Test
+    func `Integer field with range validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -906,8 +901,8 @@ struct ElicitationValidationTests {
         }
     }
 
-    @Test("Boolean field validation")
-    func booleanField() throws {
+    @Test
+    func `Boolean field validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -927,8 +922,8 @@ struct ElicitationValidationTests {
         }
     }
 
-    @Test("Complex multi-field form validation")
-    func complexMultiFieldForm() throws {
+    @Test
+    func `Complex multi-field form validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -949,7 +944,7 @@ struct ElicitationValidationTests {
                 "age": .int(28),
                 "newsletter": .bool(true),
             ]),
-            against: schema
+            against: schema,
         )
 
         // Valid - required only
@@ -959,12 +954,12 @@ struct ElicitationValidationTests {
                 "email": .string("jane@example.com"),
                 "age": .int(28),
             ]),
-            against: schema
+            against: schema,
         )
     }
 
-    @Test("Missing required field rejected")
-    func missingRequiredField() throws {
+    @Test
+    func `Missing required field rejected`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -979,13 +974,13 @@ struct ElicitationValidationTests {
         #expect(throws: MCPError.self) {
             try validator.validate(
                 .object(["email": .string("user@example.com")]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Invalid field type rejected")
-    func invalidFieldType() throws {
+    @Test
+    func `Invalid field type rejected`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -1003,13 +998,13 @@ struct ElicitationValidationTests {
                     "name": .string("John Doe"),
                     "age": .string("thirty"),
                 ]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Single-select enum validation")
-    func singleSelectEnum() throws {
+    @Test
+    func `Single-select enum validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -1031,8 +1026,8 @@ struct ElicitationValidationTests {
         }
     }
 
-    @Test("Multi-select enum validation")
-    func multiSelectEnum() throws {
+    @Test
+    func `Multi-select enum validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -1053,20 +1048,20 @@ struct ElicitationValidationTests {
         // Valid
         try validator.validate(
             .object(["colors": .array([.string("Red"), .string("Blue")])]),
-            against: schema
+            against: schema,
         )
 
         // Invalid - value not in enum
         #expect(throws: MCPError.self) {
             try validator.validate(
                 .object(["colors": .array([.string("Red"), .string("Black")])]),
-                against: schema
+                against: schema,
             )
         }
     }
 
-    @Test("Titled enum with oneOf validation")
-    func titledEnumWithOneOf() throws {
+    @Test
+    func `Titled enum with oneOf validation`() throws {
         let validator = DefaultJSONSchemaValidator()
         let schema: Value = [
             "type": "object",
@@ -1095,43 +1090,42 @@ struct ElicitationValidationTests {
 
 // MARK: - Value.toJSONValue() Tests
 
-@Suite("Value to JSONValue Conversion Tests")
 struct ValueToJSONValueTests {
-    @Test("Converts null value")
-    func nullValue() throws {
+    @Test
+    func `Converts null value`() {
         let value: Value = .null
         let jsonValue = value.toJSONValue()
         #expect(jsonValue == .null)
     }
 
-    @Test("Converts boolean values")
-    func booleanValues() throws {
+    @Test
+    func `Converts boolean values`() {
         #expect(Value.bool(true).toJSONValue() == .boolean(true))
         #expect(Value.bool(false).toJSONValue() == .boolean(false))
     }
 
-    @Test("Converts integer values")
-    func integerValues() throws {
+    @Test
+    func `Converts integer values`() {
         #expect(Value.int(42).toJSONValue() == .integer(42))
         #expect(Value.int(-10).toJSONValue() == .integer(-10))
         #expect(Value.int(0).toJSONValue() == .integer(0))
     }
 
-    @Test("Converts double values")
-    func doubleValues() throws {
+    @Test
+    func `Converts double values`() {
         #expect(Value.double(3.14).toJSONValue() == .number(3.14))
         #expect(Value.double(-2.5).toJSONValue() == .number(-2.5))
     }
 
-    @Test("Converts string values")
-    func stringValues() throws {
+    @Test
+    func `Converts string values`() {
         #expect(Value.string("hello").toJSONValue() == .string("hello"))
         #expect(Value.string("").toJSONValue() == .string(""))
         #expect(Value.string("Unicode: 你好").toJSONValue() == .string("Unicode: 你好"))
     }
 
-    @Test("Converts array values")
-    func arrayValues() throws {
+    @Test
+    func `Converts array values`() {
         let value: Value = .array([.int(1), .string("two"), .bool(true)])
         let jsonValue = value.toJSONValue()
 
@@ -1145,8 +1139,8 @@ struct ValueToJSONValueTests {
         }
     }
 
-    @Test("Converts object values")
-    func objectValues() throws {
+    @Test
+    func `Converts object values`() {
         let value: Value = .object([
             "name": .string("John"),
             "age": .int(30),
@@ -1163,8 +1157,8 @@ struct ValueToJSONValueTests {
         }
     }
 
-    @Test("Converts nested structures")
-    func nestedStructures() throws {
+    @Test
+    func `Converts nested structures`() {
         let value: Value = .object([
             "user": .object([
                 "name": .string("Alice"),

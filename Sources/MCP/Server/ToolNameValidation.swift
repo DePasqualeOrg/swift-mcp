@@ -33,7 +33,7 @@ public func validateToolName(_ name: String) -> ToolNameValidationResult {
     if name.count > 128 {
         return ToolNameValidationResult(
             isValid: false,
-            warnings: ["Tool name exceeds maximum length of 128 characters (current: \(name.count))"]
+            warnings: ["Tool name exceeds maximum length of 128 characters (current: \(name.count))"],
         )
     }
 
@@ -49,19 +49,19 @@ public func validateToolName(_ name: String) -> ToolNameValidationResult {
     // Check for potentially confusing patterns
     if name.hasPrefix("-") || name.hasSuffix("-") {
         warnings.append(
-            "Tool name starts or ends with a dash, which may cause parsing issues in some contexts"
+            "Tool name starts or ends with a dash, which may cause parsing issues in some contexts",
         )
     }
 
     if name.hasPrefix(".") || name.hasSuffix(".") {
         warnings.append(
-            "Tool name starts or ends with a dot, which may cause parsing issues in some contexts"
+            "Tool name starts or ends with a dot, which may cause parsing issues in some contexts",
         )
     }
 
     // Check for invalid characters
     let validCharacterSet = CharacterSet(
-        charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-"
+        charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-",
     )
     let nameCharacterSet = CharacterSet(charactersIn: name)
 
@@ -76,7 +76,7 @@ public func validateToolName(_ name: String) -> ToolNameValidationResult {
 
         warnings.append("Tool name contains invalid characters: \(uniqueInvalidChars)")
         warnings.append(
-            "Allowed characters are: A-Z, a-z, 0-9, underscore (_), dash (-), and dot (.)"
+            "Allowed characters are: A-Z, a-z, 0-9, underscore (_), dash (-), and dot (.)",
         )
 
         return ToolNameValidationResult(isValid: false, warnings: warnings)
@@ -102,7 +102,7 @@ public func validateAndWarnToolName(_ name: String) -> Bool {
             print("Tool registration will proceed, but this may cause compatibility issues.")
             print("Consider updating the tool name to conform to the MCP tool naming standard.")
             print(
-                "See SEP: Specify Format for Tool Names (https://github.com/modelcontextprotocol/modelcontextprotocol/issues/986) for more details."
+                "See SEP: Specify Format for Tool Names (https://github.com/modelcontextprotocol/modelcontextprotocol/issues/986) for more details.",
             )
         }
     }

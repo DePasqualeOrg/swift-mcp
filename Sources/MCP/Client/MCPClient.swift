@@ -74,7 +74,7 @@ public actor MCPClient {
             initialDelay: .seconds(1),
             maxDelay: .seconds(30),
             delayGrowFactor: 2.0,
-            healthCheckInterval: .seconds(60)
+            healthCheckInterval: .seconds(60),
         )
 
         public init(
@@ -82,7 +82,7 @@ public actor MCPClient {
             initialDelay: Duration = .seconds(1),
             maxDelay: Duration = .seconds(30),
             delayGrowFactor: Double = 2.0,
-            healthCheckInterval: Duration? = .seconds(60)
+            healthCheckInterval: Duration? = .seconds(60),
         ) {
             self.maxRetries = maxRetries
             self.initialDelay = initialDelay
@@ -194,18 +194,18 @@ public actor MCPClient {
         reconnectionOptions: ReconnectionOptions = .default,
         capabilities: Client.Capabilities? = nil,
         configuration: Client.Configuration = .default,
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         client = Client(
             name: name,
             version: version,
             capabilities: capabilities,
-            configuration: configuration
+            configuration: configuration,
         )
         self.reconnectionOptions = reconnectionOptions
         self.logger = logger ?? Logger(
             label: "mcp.client.managed",
-            factory: { _ in SwiftLogNoOpLogHandler() }
+            factory: { _ in SwiftLogNoOpLogHandler() },
         )
     }
 
@@ -222,7 +222,7 @@ public actor MCPClient {
     /// - Throws: `MCPError` if connection or initialization fails.
     @discardableResult
     public func connect(
-        transport: @escaping @Sendable () async throws -> any Transport
+        transport: @escaping @Sendable () async throws -> any Transport,
     ) async throws -> Initialize.Result {
         // Clean up any existing connection before establishing a new one
         if state != .disconnected {
@@ -290,7 +290,7 @@ public actor MCPClient {
     /// - Throws: `MCPError` if the call fails after retry.
     public func callTool(
         name: String,
-        arguments: [String: Value]? = nil
+        arguments: [String: Value]? = nil,
     ) async throws -> CallTool.Result {
         try await withReconnection {
             try await $0.callTool(name: name, arguments: arguments)
@@ -308,7 +308,7 @@ public actor MCPClient {
     public func callTool(
         name: String,
         arguments: [String: Value]? = nil,
-        onProgress: @escaping ProgressCallback
+        onProgress: @escaping ProgressCallback,
     ) async throws -> CallTool.Result {
         try await withReconnection {
             try await $0.callTool(name: name, arguments: arguments, onProgress: onProgress)
@@ -346,7 +346,7 @@ public actor MCPClient {
     /// Gets a prompt by name.
     public func getPrompt(
         name: String,
-        arguments: [String: String]? = nil
+        arguments: [String: String]? = nil,
     ) async throws -> GetPrompt.Result {
         try await withReconnection {
             try await $0.getPrompt(name: name, arguments: arguments)
@@ -371,7 +371,7 @@ public actor MCPClient {
     /// already in progress (e.g., triggered by the event stream), the call waits
     /// for it to complete rather than failing immediately.
     private func withReconnection<T: Sendable>(
-        _ operation: @Sendable (Client) async throws -> T
+        _ operation: @Sendable (Client) async throws -> T,
     ) async throws -> T {
         // If reconnection is already in progress, wait for it before attempting the operation.
         if case .reconnecting = state {

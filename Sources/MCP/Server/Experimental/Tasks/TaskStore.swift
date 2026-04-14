@@ -221,14 +221,14 @@ public actor InMemoryTaskStore: TaskStore {
             ttl: metadata.ttl,
             createdAt: now,
             lastUpdatedAt: now,
-            pollInterval: 1000 // Default 1 second poll interval
+            pollInterval: 1000, // Default 1 second poll interval
         )
 
         tasks[id] = StoredTask(
             task: task,
             result: nil,
             sessionId: sessionId,
-            expiresAt: calculateExpiry(ttl: metadata.ttl)
+            expiresAt: calculateExpiry(ttl: metadata.ttl),
         )
 
         return task

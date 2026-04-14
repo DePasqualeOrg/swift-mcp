@@ -21,19 +21,18 @@ import System
 ///
 /// These tests verify that the server properly handles malformed input without crashing,
 /// and remains functional after receiving invalid messages.
-@Suite("Malformed Input Handling")
 struct MalformedInputHandlingTests {
     /// Test that a request with missing required method returns an error response.
     ///
     /// Based on Python SDK's test_malformed_initialize_request_does_not_crash_server.
     /// This tests the fix for HackerOne vulnerability report #3156202.
     @Test(.timeLimit(.minutes(1)))
-    func malformedRequestWithMissingMethodReturnsError() async throws {
+    func `malformed request with missing method returns error`() async throws {
         let transport = MockTransport()
         let server = Server(
             name: "MalformedInputServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         try await server.start(transport: transport)
@@ -87,12 +86,12 @@ struct MalformedInputHandlingTests {
     ///
     /// Based on Python SDK's test_multiple_concurrent_malformed_requests.
     @Test(.timeLimit(.minutes(1)))
-    func multipleConcurrentMalformedRequestsDontCrashServer() async throws {
+    func `multiple concurrent malformed requests dont crash server`() async throws {
         let transport = MockTransport()
         let server = Server(
             name: "ConcurrentMalformedServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         try await server.start(transport: transport)
@@ -126,7 +125,7 @@ struct MalformedInputHandlingTests {
     /// This tests the "recovery" aspect - after receiving malformed input,
     /// the server should still be able to process valid requests.
     @Test(.timeLimit(.minutes(1)))
-    func serverRecoveriesAfterMalformedInput() async throws {
+    func `server recoveries after malformed input`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -136,18 +135,18 @@ struct MalformedInputHandlingTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "RecoveryServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -177,7 +176,7 @@ struct MalformedInputHandlingTests {
 
     /// Test that missing jsonrpc field returns parse error.
     @Test(.timeLimit(.minutes(1)))
-    func missingJsonRpcFieldReturnsError() async throws {
+    func `missing json rpc field returns error`() async throws {
         let transport = MockTransport()
         let server = Server(name: "ParseErrorServer", version: "1.0.0")
 
@@ -207,7 +206,7 @@ struct MalformedInputHandlingTests {
 
     /// Test that completely invalid JSON returns parse error.
     @Test(.timeLimit(.minutes(1)))
-    func invalidJsonReturnsParseError() async throws {
+    func `invalid json returns parse error`() async throws {
         let transport = MockTransport()
         let server = Server(name: "InvalidJsonServer", version: "1.0.0")
 
@@ -229,9 +228,9 @@ struct MalformedInputHandlingTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            )
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
         )
 
         let initReceived = await transport.waitForSentMessage { message in
@@ -252,13 +251,12 @@ struct MalformedInputHandlingTests {
 ///
 /// These tests verify that the server properly handles exceptions in request handlers
 /// without crashing, and can continue processing subsequent requests.
-@Suite("Server Resilience")
 struct ServerResilienceTests {
     /// Test that exceptions in request handlers are properly converted to error responses.
     ///
     /// Based on Python SDK's test_exception_handling_with_raise_exceptions_true.
     @Test(.timeLimit(.minutes(1)))
-    func exceptionInHandlerReturnsErrorResponse() async throws {
+    func `exception in handler returns error response`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -268,18 +266,18 @@ struct ServerResilienceTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "ExceptionServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -305,7 +303,7 @@ struct ServerResilienceTests {
         // Call the failing tool - should get an error response, not a crash
         do {
             _ = try await client.send(
-                CallTool.request(.init(name: "failing_tool", arguments: [:]))
+                CallTool.request(.init(name: "failing_tool", arguments: [:])),
             )
             Issue.record("Expected tool call to throw an error")
         } catch let error as MCPError {
@@ -327,7 +325,7 @@ struct ServerResilienceTests {
     ///
     /// Based on Python SDK's test_normal_message_handling_not_affected.
     @Test(.timeLimit(.minutes(1)))
-    func normalMessageHandlingNotAffectedByExceptions() async throws {
+    func `normal message handling not affected by exceptions`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -337,12 +335,12 @@ struct ServerResilienceTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let callCounter = AtomicCounter()
@@ -350,7 +348,7 @@ struct ServerResilienceTests {
         let server = Server(
             name: "NormalHandlingServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -376,7 +374,7 @@ struct ServerResilienceTests {
 
         // Call good tool - should succeed
         let result1 = try await client.send(
-            CallTool.request(.init(name: "good_tool", arguments: [:]))
+            CallTool.request(.init(name: "good_tool", arguments: [:])),
         )
         if case let .text(text, _, _) = result1.content.first {
             #expect(text == "Success!")
@@ -385,7 +383,7 @@ struct ServerResilienceTests {
         // Call bad tool - should fail but not crash server
         do {
             _ = try await client.send(
-                CallTool.request(.init(name: "bad_tool", arguments: [:]))
+                CallTool.request(.init(name: "bad_tool", arguments: [:])),
             )
         } catch {
             // Expected
@@ -393,7 +391,7 @@ struct ServerResilienceTests {
 
         // Call good tool again - should still work
         let result2 = try await client.send(
-            CallTool.request(.init(name: "good_tool", arguments: [:]))
+            CallTool.request(.init(name: "good_tool", arguments: [:])),
         )
         if case let .text(text, _, _) = result2.content.first {
             #expect(text == "Success!")
@@ -409,7 +407,7 @@ struct ServerResilienceTests {
     /// Based on Python SDK's test_exception_handling_with_raise_exceptions_false
     /// which tests ValueError, RuntimeError, KeyError, and generic Exception.
     @Test(.timeLimit(.minutes(1)))
-    func multipleExceptionTypesHandledGracefully() async throws {
+    func `multiple exception types handled gracefully`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -419,18 +417,18 @@ struct ServerResilienceTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "MultipleExceptionsServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -476,7 +474,7 @@ struct ServerResilienceTests {
         for (toolName, expectedCode) in errorTools {
             do {
                 _ = try await client.send(
-                    CallTool.request(.init(name: toolName, arguments: [:]))
+                    CallTool.request(.init(name: toolName, arguments: [:])),
                 )
                 Issue.record("Expected \(toolName) to throw an error")
             } catch let error as MCPError {
@@ -486,7 +484,7 @@ struct ServerResilienceTests {
 
         // Verify server still works after all the exceptions
         let result = try await client.send(
-            CallTool.request(.init(name: "good_tool", arguments: [:]))
+            CallTool.request(.init(name: "good_tool", arguments: [:])),
         )
         if case let .text(text, _, _) = result.content.first {
             #expect(text == "Works!")
@@ -509,14 +507,13 @@ struct ServerResilienceTests {
 /// 2. The server can still handle new requests
 /// 3. The client can make new requests
 /// 4. No resources are leaked
-@Suite("Timeout and Server Responsiveness")
 struct TimeoutServerResponsivenessTests {
     /// Test that server remains responsive after a client request times out.
     ///
     /// Based on Python SDK's test_notification_validation_error.
     /// Uses per-request timeouts to avoid race conditions.
     @Test(.timeLimit(.minutes(1)))
-    func serverRemainsResponsiveAfterTimeout() async throws {
+    func `server remains responsive after timeout`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -526,12 +523,12 @@ struct TimeoutServerResponsivenessTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let requestCount = AtomicCounter()
@@ -540,7 +537,7 @@ struct TimeoutServerResponsivenessTests {
         let server = Server(
             name: "TimeoutResponsivenessServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -570,7 +567,7 @@ struct TimeoutServerResponsivenessTests {
 
         // First call should work (fast operation, no timeout)
         let result1 = try await client.send(
-            CallTool.request(.init(name: "fast", arguments: [:]))
+            CallTool.request(.init(name: "fast", arguments: [:])),
         )
         if case let .text(text, _, _) = result1.content.first {
             #expect(text == "fast 1")
@@ -580,7 +577,7 @@ struct TimeoutServerResponsivenessTests {
         do {
             _ = try await client.send(
                 CallTool.request(.init(name: "slow", arguments: [:])),
-                options: .init(timeout: .milliseconds(10))
+                options: .init(timeout: .milliseconds(10)),
             )
             Issue.record("Expected slow tool to timeout")
         } catch let error as MCPError {
@@ -597,7 +594,7 @@ struct TimeoutServerResponsivenessTests {
         // Third call should work (fast operation, no timeout)
         // This proves the server is still responsive
         let result3 = try await client.send(
-            CallTool.request(.init(name: "fast", arguments: [:]))
+            CallTool.request(.init(name: "fast", arguments: [:])),
         )
         if case let .text(text, _, _) = result3.content.first {
             #expect(text == "fast 3", "Third call should succeed after timeout")
@@ -612,7 +609,7 @@ struct TimeoutServerResponsivenessTests {
     ///
     /// This verifies that the server doesn't get into a bad state after a timeout.
     @Test(.timeLimit(.minutes(1)))
-    func multipleRequestsAfterTimeout() async throws {
+    func `multiple requests after timeout`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -622,18 +619,18 @@ struct TimeoutServerResponsivenessTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "MultipleAfterTimeoutServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -659,7 +656,7 @@ struct TimeoutServerResponsivenessTests {
         do {
             _ = try await client.send(
                 CallTool.request(.init(name: "configurable", arguments: ["delay": .double(10.0)])),
-                options: .init(timeout: .milliseconds(10))
+                options: .init(timeout: .milliseconds(10)),
             )
         } catch {
             // Expected timeout
@@ -668,7 +665,7 @@ struct TimeoutServerResponsivenessTests {
         // Now send multiple sequential requests - all should succeed
         for i in 1 ... 5 {
             let result = try await client.send(
-                CallTool.request(.init(name: "configurable", arguments: ["delay": .double(0.0)]))
+                CallTool.request(.init(name: "configurable", arguments: ["delay": .double(0.0)])),
             )
             if case let .text(text, _, _) = result.content.first {
                 #expect(text == "Completed after 0.0s", "Request \(i) should succeed")
@@ -680,7 +677,7 @@ struct TimeoutServerResponsivenessTests {
     ///
     /// Based on Python SDK's approach of testing timeout isolation.
     @Test(.timeLimit(.minutes(1)))
-    func timeoutDoesntAffectConcurrentRequests() async throws {
+    func `timeout doesnt affect concurrent requests`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -690,12 +687,12 @@ struct TimeoutServerResponsivenessTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let slowRequestLock = AsyncEvent()
@@ -703,7 +700,7 @@ struct TimeoutServerResponsivenessTests {
         let server = Server(
             name: "ConcurrentTimeoutServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -733,7 +730,7 @@ struct TimeoutServerResponsivenessTests {
         let slowTask = Task {
             try await client.send(
                 CallTool.request(.init(name: "slow_tool", arguments: [:])),
-                options: .init(timeout: .milliseconds(50))
+                options: .init(timeout: .milliseconds(50)),
             )
         }
 
@@ -743,7 +740,7 @@ struct TimeoutServerResponsivenessTests {
         // Start a fast request concurrently - this should succeed even though slow is pending
         let fastTask = Task {
             try await client.send(
-                CallTool.request(.init(name: "fast_tool", arguments: [:]))
+                CallTool.request(.init(name: "fast_tool", arguments: [:])),
             )
         }
 
@@ -778,5 +775,7 @@ private actor AtomicCounter {
         return count
     }
 
-    var value: Int { count }
+    var value: Int {
+        count
+    }
 }

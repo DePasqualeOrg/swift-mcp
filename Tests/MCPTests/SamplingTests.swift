@@ -1,13 +1,11 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
-
+import Logging
 @testable import MCP
+import Testing
 
 #if canImport(System)
 import System
@@ -15,10 +13,9 @@ import System
 @preconcurrency import SystemPackage
 #endif
 
-@Suite("Sampling Tests")
 struct SamplingTests {
-    @Test("Sampling.Message encoding and decoding")
-    func testSamplingMessageCoding() throws {
+    @Test
+    func `Sampling.Message encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -37,7 +34,8 @@ struct SamplingTests {
 
         // Test image content
         let imageMessage: Sampling.Message = .assistant(
-            .image(data: "base64imagedata", mimeType: "image/png"))
+            .image(data: "base64imagedata", mimeType: "image/png"),
+        )
 
         let imageData = try encoder.encode(imageMessage)
         let decodedImageMessage = try decoder.decode(Sampling.Message.self, from: imageData)
@@ -52,7 +50,8 @@ struct SamplingTests {
 
         // Test audio content
         let audioMessage: Sampling.Message = .user(
-            .audio(data: "base64audiodata", mimeType: "audio/wav"))
+            .audio(data: "base64audiodata", mimeType: "audio/wav"),
+        )
 
         let audioData = try encoder.encode(audioMessage)
         let decodedAudioMessage = try decoder.decode(Sampling.Message.self, from: audioData)
@@ -66,8 +65,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("ModelPreferences encoding and decoding")
-    func testModelPreferencesCoding() throws {
+    @Test
+    func `ModelPreferences encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -78,7 +77,7 @@ struct SamplingTests {
             ],
             costPriority: 0.8,
             speedPriority: 0.3,
-            intelligencePriority: 0.9
+            intelligencePriority: 0.9,
         )
 
         let data = try encoder.encode(preferences)
@@ -92,8 +91,8 @@ struct SamplingTests {
         #expect(decoded.intelligencePriority?.doubleValue == 0.9)
     }
 
-    @Test("ContextInclusion encoding and decoding")
-    func testContextInclusionCoding() throws {
+    @Test
+    func `ContextInclusion encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -106,8 +105,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("StopReason encoding and decoding")
-    func testStopReasonCoding() throws {
+    @Test
+    func `StopReason encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -140,8 +139,8 @@ struct SamplingTests {
         #expect(decodedCustom.rawValue == "customProviderReason")
     }
 
-    @Test("CreateMessage request parameters")
-    func testCreateMessageParameters() throws {
+    @Test
+    func `CreateMessage request parameters`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -154,7 +153,7 @@ struct SamplingTests {
             hints: [Sampling.ModelPreferences.Hint(name: "claude-4-sonnet")],
             costPriority: 0.5,
             speedPriority: 0.7,
-            intelligencePriority: 0.9
+            intelligencePriority: 0.9,
         )
 
         let parameters = CreateSamplingMessage.Parameters(
@@ -165,7 +164,7 @@ struct SamplingTests {
             temperature: 0.7,
             maxTokens: 150,
             stopSequences: ["END", "STOP"],
-            metadata: ["provider": "test"]
+            metadata: ["provider": "test"],
         )
 
         let data = try encoder.encode(parameters)
@@ -183,8 +182,8 @@ struct SamplingTests {
         #expect(decoded.metadata?["provider"]?.stringValue == "test")
     }
 
-    @Test("CreateMessage result (without tools)")
-    func testCreateMessageResult() throws {
+    @Test
+    func `CreateMessage result (without tools)`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -192,7 +191,7 @@ struct SamplingTests {
             model: "claude-4-sonnet",
             stopReason: .endTurn,
             role: .assistant,
-            content: .text("The weather is sunny and 75°F.")
+            content: .text("The weather is sunny and 75°F."),
         )
 
         let data = try encoder.encode(result)
@@ -210,8 +209,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("CreateMessage result decodes array content (MCP spec compatibility)")
-    func testCreateMessageResultDecodesArrayContent() throws {
+    @Test
+    func `CreateMessage result decodes array content (MCP spec compatibility)`() throws {
         let decoder = JSONDecoder()
 
         // MCP spec allows content to be either single or array.
@@ -238,8 +237,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("CreateMessage result decodes single content")
-    func testCreateMessageResultDecodesSingleContent() throws {
+    @Test
+    func `CreateMessage result decodes single content`() throws {
         let decoder = JSONDecoder()
 
         // Single object content (common format)
@@ -260,8 +259,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("CreateMessage result with tools")
-    func testCreateMessageResultWithTools() throws {
+    @Test
+    func `CreateMessage result with tools`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -269,13 +268,13 @@ struct SamplingTests {
         let toolUse = ToolUseContent(
             name: "get_weather",
             id: "call-123",
-            input: ["city": "Paris"]
+            input: ["city": "Paris"],
         )
         let result = CreateSamplingMessageWithTools.Result(
             model: "claude-4-sonnet",
             stopReason: .toolUse,
             role: .assistant,
-            content: .toolUse(toolUse)
+            content: .toolUse(toolUse),
         )
 
         let data = try encoder.encode(result)
@@ -294,8 +293,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("CreateMessage result with parallel tool calls")
-    func testCreateMessageResultWithParallelToolCalls() throws {
+    @Test
+    func `CreateMessage result with parallel tool calls`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -307,7 +306,7 @@ struct SamplingTests {
             model: "claude-4-sonnet",
             stopReason: .toolUse,
             role: .assistant,
-            content: [.toolUse(toolUse1), .toolUse(toolUse2)]
+            content: [.toolUse(toolUse1), .toolUse(toolUse2)],
         )
 
         let data = try encoder.encode(result)
@@ -327,8 +326,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("CreateMessage request creation")
-    func testCreateMessageRequest() throws {
+    @Test
+    func `CreateMessage request creation`() {
         let messages: [Sampling.Message] = [
             .user("Hello"),
         ]
@@ -336,8 +335,8 @@ struct SamplingTests {
         let request = CreateSamplingMessage.request(
             .init(
                 messages: messages,
-                maxTokens: 100
-            )
+                maxTokens: 100,
+            ),
         )
 
         #expect(request.method == "sampling/createMessage")
@@ -345,10 +344,10 @@ struct SamplingTests {
         #expect(request.params.maxTokens == 100)
     }
 
-    @Test("Client capabilities include sampling")
-    func testClientCapabilitiesIncludeSampling() throws {
+    @Test
+    func `Client capabilities include sampling`() throws {
         let capabilities = Client.Capabilities(
-            sampling: .init()
+            sampling: .init(),
         )
 
         #expect(capabilities.sampling != nil)
@@ -362,10 +361,10 @@ struct SamplingTests {
         #expect(decoded.sampling != nil)
     }
 
-    @Test("Client capabilities with sampling.tools")
-    func testClientCapabilitiesWithSamplingTools() throws {
+    @Test
+    func `Client capabilities with sampling.tools`() throws {
         let capabilities = Client.Capabilities(
-            sampling: .init(tools: .init())
+            sampling: .init(tools: .init()),
         )
 
         #expect(capabilities.sampling?.tools != nil)
@@ -376,7 +375,7 @@ struct SamplingTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"tools\":{}"))
 
@@ -385,10 +384,10 @@ struct SamplingTests {
         #expect(decoded.sampling?.context == nil)
     }
 
-    @Test("Client capabilities with sampling.context")
-    func testClientCapabilitiesWithSamplingContext() throws {
+    @Test
+    func `Client capabilities with sampling.context`() throws {
         let capabilities = Client.Capabilities(
-            sampling: .init(context: .init())
+            sampling: .init(context: .init()),
         )
 
         #expect(capabilities.sampling?.context != nil)
@@ -399,7 +398,7 @@ struct SamplingTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"context\":{}"))
 
@@ -408,10 +407,10 @@ struct SamplingTests {
         #expect(decoded.sampling?.tools == nil)
     }
 
-    @Test("Client capabilities with sampling.tools and sampling.context")
-    func testClientCapabilitiesWithSamplingToolsAndContext() throws {
+    @Test
+    func `Client capabilities with sampling.tools and sampling.context`() throws {
         let capabilities = Client.Capabilities(
-            sampling: .init(context: .init(), tools: .init())
+            sampling: .init(context: .init(), tools: .init()),
         )
 
         #expect(capabilities.sampling?.tools != nil)
@@ -422,7 +421,7 @@ struct SamplingTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"tools\":{}"))
         #expect(json.contains("\"context\":{}"))
@@ -432,25 +431,25 @@ struct SamplingTests {
         #expect(decoded.sampling?.context != nil)
     }
 
-    @Test("Sampling message content JSON format")
-    func testSamplingMessageContentJSONFormat() throws {
+    @Test
+    func `Sampling message content JSON format`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         // Test text content JSON format
         let textContent: Sampling.Message.ContentBlock = .text("Hello")
         let textData = try encoder.encode(textContent)
-        let textJSON = String(data: textData, encoding: .utf8)!
+        let textJSON = try #require(String(data: textData, encoding: .utf8))
 
         #expect(textJSON.contains("\"type\":\"text\""))
         #expect(textJSON.contains("\"text\":\"Hello\""))
 
         // Test image content JSON format
         let imageContent: Sampling.Message.ContentBlock = .image(
-            data: "base64data", mimeType: "image/png"
+            data: "base64data", mimeType: "image/png",
         )
         let imageData = try encoder.encode(imageContent)
-        let imageJSON = String(data: imageData, encoding: .utf8)!
+        let imageJSON = try #require(String(data: imageData, encoding: .utf8))
 
         #expect(imageJSON.contains("\"type\":\"image\""))
         #expect(imageJSON.contains("\"data\":\"base64data\""))
@@ -458,18 +457,18 @@ struct SamplingTests {
 
         // Test audio content JSON format
         let audioContent: Sampling.Message.ContentBlock = .audio(
-            data: "base64audiodata", mimeType: "audio/wav"
+            data: "base64audiodata", mimeType: "audio/wav",
         )
         let audioData = try encoder.encode(audioContent)
-        let audioJSON = String(data: audioData, encoding: .utf8)!
+        let audioJSON = try #require(String(data: audioData, encoding: .utf8))
 
         #expect(audioJSON.contains("\"type\":\"audio\""))
         #expect(audioJSON.contains("\"data\":\"base64audiodata\""))
         #expect(audioJSON.contains("\"mimeType\":\"audio\\/wav\""))
     }
 
-    @Test("Backwards compatibility: Sampling.Message.Content alias")
-    func testContentTypeAliasBackwardsCompatibility() throws {
+    @Test
+    func `Backwards compatibility: Sampling.Message.Content alias`() {
         // Test that the deprecated Content type alias still works
         let content: Sampling.Message.ContentBlock = .text("Hello")
 
@@ -484,13 +483,13 @@ struct SamplingTests {
         #expect(block == content)
     }
 
-    @Test("UnitInterval in Sampling.ModelPreferences")
-    func testUnitIntervalInModelPreferences() throws {
+    @Test
+    func `UnitInterval in Sampling.ModelPreferences`() throws {
         // Test that UnitInterval validation works in Sampling.ModelPreferences
         let validPreferences = Sampling.ModelPreferences(
             costPriority: 0.5,
             speedPriority: 1.0,
-            intelligencePriority: 0.0
+            intelligencePriority: 0.0,
         )
 
         #expect(validPreferences.costPriority?.doubleValue == 0.5)
@@ -509,8 +508,8 @@ struct SamplingTests {
         #expect(decoded.intelligencePriority?.doubleValue == 0.0)
     }
 
-    @Test("Message factory methods")
-    func testMessageFactoryMethods() throws {
+    @Test
+    func `Message factory methods`() {
         // Test user message factory method
         let userMessage: Sampling.Message = .user("Hello, world!")
         #expect(userMessage.role == .user)
@@ -531,7 +530,8 @@ struct SamplingTests {
 
         // Test with image content
         let imageMessage: Sampling.Message = .user(
-            .image(data: "base64data", mimeType: "image/png"))
+            .image(data: "base64data", mimeType: "image/png"),
+        )
         #expect(imageMessage.role == .user)
         if case let .image(data, mimeType, _, _) = imageMessage.content.first {
             #expect(data == "base64data")
@@ -541,8 +541,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("Content ExpressibleByStringLiteral")
-    func testContentExpressibleByStringLiteral() throws {
+    @Test
+    func `Content ExpressibleByStringLiteral`() {
         // Test string literal assignment
         let content: Sampling.Message.ContentBlock = "Hello from string literal"
 
@@ -573,8 +573,8 @@ struct SamplingTests {
         #expect(messages[2].role == .user)
     }
 
-    @Test("Content ExpressibleByStringInterpolation")
-    func testContentExpressibleByStringInterpolation() throws {
+    @Test
+    func `Content ExpressibleByStringInterpolation`() {
         let userName = "Alice"
         let temperature = 72
         let location = "San Francisco"
@@ -591,7 +591,8 @@ struct SamplingTests {
 
         // Test in message creation with interpolation
         let message = Sampling.Message.user(
-            "Welcome \(userName)! Today's weather in \(location) is \(temperature)°F")
+            "Welcome \(userName)! Today's weather in \(location) is \(temperature)°F",
+        )
         if case let .text(text, _, _) = message.content.first {
             #expect(text == "Welcome Alice! Today's weather in San Francisco is 72°F")
         } else {
@@ -602,7 +603,8 @@ struct SamplingTests {
         let items = ["apples", "bananas", "oranges"]
         let count = items.count
         let listMessage: Sampling.Message = .assistant(
-            "You have \(count) items: \(items.joined(separator: ", "))")
+            "You have \(count) items: \(items.joined(separator: ", "))",
+        )
 
         if case let .text(text, _, _) = listMessage.content.first {
             #expect(text == "You have 3 items: apples, bananas, oranges")
@@ -611,15 +613,16 @@ struct SamplingTests {
         }
     }
 
-    @Test("Message factory methods with string interpolation")
-    func testMessageFactoryMethodsWithStringInterpolation() throws {
+    @Test
+    func `Message factory methods with string interpolation`() {
         let customerName = "Bob"
         let orderNumber = "ORD-12345"
         let issueType = "delivery delay"
 
         // Test user message with interpolation
         let userMessage: Sampling.Message = .user(
-            "Hi, I'm \(customerName) and I have an issue with order \(orderNumber)")
+            "Hi, I'm \(customerName) and I have an issue with order \(orderNumber)",
+        )
         #expect(userMessage.role == .user)
         if case let .text(text, _, _) = userMessage.content.first {
             #expect(text == "Hi, I'm Bob and I have an issue with order ORD-12345")
@@ -629,13 +632,13 @@ struct SamplingTests {
 
         // Test assistant message with interpolation
         let assistantMessage: Sampling.Message = .assistant(
-            "Hello \(customerName), I can help you with your \(issueType) issue for order \(orderNumber)"
+            "Hello \(customerName), I can help you with your \(issueType) issue for order \(orderNumber)",
         )
         #expect(assistantMessage.role == .assistant)
         if case let .text(text, _, _) = assistantMessage.content.first {
             #expect(
                 text
-                    == "Hello Bob, I can help you with your delivery delay issue for order ORD-12345"
+                    == "Hello Bob, I can help you with your delivery delay issue for order ORD-12345",
             )
         } else {
             #expect(Bool(false), "Expected text content")
@@ -647,7 +650,7 @@ struct SamplingTests {
             .assistant("Hi \(customerName), how can I help you today?"),
             .user("I have an issue with order \(orderNumber) - it's a \(issueType)"),
             .assistant(
-                "I understand you're experiencing a \(issueType) with order \(orderNumber). Let me look into that for you."
+                "I understand you're experiencing a \(issueType) with order \(orderNumber). Let me look into that for you.",
             ),
         ]
 
@@ -661,8 +664,8 @@ struct SamplingTests {
         }
     }
 
-    @Test("Ergonomic API usage patterns")
-    func testErgonomicAPIUsagePatterns() throws {
+    @Test
+    func `Ergonomic API usage patterns`() throws {
         // Test various ergonomic usage patterns enabled by the new API
 
         // Pattern 1: Simple conversation
@@ -683,7 +686,7 @@ struct SamplingTests {
             .assistant("The \(productName) is priced at $\(String(format: "%.2f", price))"),
             .user("Do you have any discounts?"),
             .assistant(
-                "Yes! We currently have a \(discount)% discount, bringing the price to $\(String(format: "%.2f", price * (1.0 - Double(discount) / 100.0)))"
+                "Yes! We currently have a \(discount)% discount, bringing the price to $\(String(format: "%.2f", price * (1.0 - Double(discount) / 100.0)))",
             ),
         ]
         #expect(salesConversation.count == 4)
@@ -722,18 +725,17 @@ struct SamplingTests {
     }
 }
 
-@Suite("Sampling Message Validation Tests")
 struct SamplingMessageValidationTests {
-    @Test("validateToolUseResultMessages passes for empty messages")
-    func testEmptyMessages() throws {
+    @Test
+    func `validateToolUseResultMessages passes for empty messages`() throws {
         let messages: [Sampling.Message] = []
         #expect(throws: Never.self) {
             try Sampling.Message.validateToolUseResultMessages(messages)
         }
     }
 
-    @Test("validateToolUseResultMessages passes for simple text messages")
-    func testSimpleTextMessages() throws {
+    @Test
+    func `validateToolUseResultMessages passes for simple text messages`() throws {
         let messages: [Sampling.Message] = [
             .user("Hello"),
             .assistant("Hi there!"),
@@ -743,16 +745,16 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages passes for valid tool_use then tool_result")
-    func testValidToolUseAndResult() throws {
+    @Test
+    func `validateToolUseResultMessages passes for valid tool_use then tool_result`() throws {
         let toolUseContent = ToolUseContent(
             name: "get_weather",
             id: "tool-123",
-            input: ["city": "Paris"]
+            input: ["city": "Paris"],
         )
         let toolResultContent = ToolResultContent(
             toolUseId: "tool-123",
-            content: [.text("Sunny, 72°F")]
+            content: [.text("Sunny, 72°F")],
         )
 
         let messages: [Sampling.Message] = [
@@ -766,11 +768,11 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails when tool_result mixed with other content")
-    func testToolResultMixedWithOtherContent() throws {
+    @Test
+    func `validateToolUseResultMessages fails when tool_result mixed with other content`() throws {
         let toolResultContent = ToolResultContent(
             toolUseId: "tool-123",
-            content: [.text("Result")]
+            content: [.text("Result")],
         )
 
         let messages: [Sampling.Message] = [
@@ -787,11 +789,11 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails when tool_result without preceding tool_use")
-    func testToolResultWithoutPrecedingToolUse() throws {
+    @Test
+    func `validateToolUseResultMessages fails when tool_result without preceding tool_use`() throws {
         let toolResultContent = ToolResultContent(
             toolUseId: "tool-123",
-            content: [.text("Result")]
+            content: [.text("Result")],
         )
 
         let messages: [Sampling.Message] = [
@@ -805,11 +807,11 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails when tool_result is first message")
-    func testToolResultAsFirstMessage() throws {
+    @Test
+    func `validateToolUseResultMessages fails when tool_result is first message`() throws {
         let toolResultContent = ToolResultContent(
             toolUseId: "tool-123",
-            content: [.text("Result")]
+            content: [.text("Result")],
         )
 
         let messages: [Sampling.Message] = [
@@ -821,16 +823,16 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails when tool IDs don't match")
-    func testMismatchedToolIds() throws {
+    @Test
+    func `validateToolUseResultMessages fails when tool IDs don't match`() throws {
         let toolUseContent = ToolUseContent(
             name: "get_weather",
             id: "tool-123",
-            input: [:]
+            input: [:],
         )
         let toolResultContent = ToolResultContent(
             toolUseId: "tool-456", // Different ID!
-            content: [.text("Result")]
+            content: [.text("Result")],
         )
 
         let messages: [Sampling.Message] = [
@@ -844,8 +846,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages passes with multiple matching tool_use/tool_result")
-    func testMultipleMatchingToolUseAndResults() throws {
+    @Test
+    func `validateToolUseResultMessages passes with multiple matching tool_use/tool_result`() throws {
         let toolUse1 = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
         let toolUse2 = ToolUseContent(name: "get_time", id: "tool-2", input: [:])
         let toolResult1 = ToolResultContent(toolUseId: "tool-1", content: [.text("Sunny")])
@@ -868,8 +870,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails with partial tool_result match")
-    func testPartialToolResultMatch() throws {
+    @Test
+    func `validateToolUseResultMessages fails with partial tool_result match`() throws {
         let toolUse1 = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
         let toolUse2 = ToolUseContent(name: "get_time", id: "tool-2", input: [:])
         // Only providing result for tool-1, missing tool-2
@@ -891,8 +893,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails with extra tool_results not matching tool_use")
-    func testExtraToolResultsNotMatchingToolUse() throws {
+    @Test
+    func `validateToolUseResultMessages fails with extra tool_results not matching tool_use`() throws {
         // tool_use has [1], but tool_result has [1, 2] - extra result for non-existent tool
         let toolUse = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
         let toolResult1 = ToolResultContent(toolUseId: "tool-1", content: [.text("Sunny")])
@@ -912,8 +914,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages fails when text message follows tool_use")
-    func testTextMessageAfterToolUse() throws {
+    @Test
+    func `validateToolUseResultMessages fails when text message follows tool_use`() throws {
         // After tool_use, you MUST provide tool_result - can't just send text
         let toolUse = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
 
@@ -928,8 +930,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages passes for conversation continuing after tool results")
-    func testConversationContinuesAfterToolResults() throws {
+    @Test
+    func `validateToolUseResultMessages passes for conversation continuing after tool results`() throws {
         // Valid flow: tool_use → tool_result → text → text (conversation continues normally)
         let toolUse = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
         let toolResult = ToolResultContent(toolUseId: "tool-1", content: [.text("Sunny")])
@@ -947,8 +949,8 @@ struct SamplingMessageValidationTests {
         }
     }
 
-    @Test("validateToolUseResultMessages passes when tool_use has text alongside")
-    func testToolUseWithTextInAssistantMessage() throws {
+    @Test
+    func `validateToolUseResultMessages passes when tool_use has text alongside`() throws {
         // Assistant can have both text and tool_use in the same message
         let toolUse = ToolUseContent(name: "get_weather", id: "tool-1", input: [:])
         let toolResult = ToolResultContent(toolUseId: "tool-1", content: [.text("Sunny")])
@@ -968,30 +970,29 @@ struct SamplingMessageValidationTests {
     }
 }
 
-@Suite("Sampling Integration Tests")
 struct SamplingIntegrationTests {
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testSamplingCapabilitiesNegotiation() async throws {
+    func `sampling capabilities negotiation`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.sampling",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         // Server (sampling is a client capability, not server)
@@ -999,14 +1000,14 @@ struct SamplingIntegrationTests {
             name: "SamplingTestServer",
             version: "1.0.0",
             capabilities: .init(
-                tools: .init()
-            )
+                tools: .init(),
+            ),
         )
 
         // Client (capabilities will be set during initialization)
         let client = Client(
             name: "SamplingTestClient",
-            version: "1.0"
+            version: "1.0",
         )
 
         try await server.start(transport: serverTransport)
@@ -1021,9 +1022,9 @@ struct SamplingIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testSamplingMessageTypes() async throws {
+    func `sampling message types`() throws {
         // Test comprehensive message content types
         let textMessage: Sampling.Message = .user("What do you see in this data?")
 
@@ -1031,8 +1032,9 @@ struct SamplingIntegrationTests {
             .image(
                 data:
                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
-                mimeType: "image/png"
-            ))
+                mimeType: "image/png",
+            ),
+        )
 
         // Test encoding/decoding of different message types
         let encoder = JSONEncoder()
@@ -1061,17 +1063,17 @@ struct SamplingIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testSamplingResultTypes() async throws {
+    func `sampling result types`() throws {
         // Test different result content types and stop reasons
         let textResult = CreateSamplingMessage.Result(
             model: "claude-4-sonnet",
             stopReason: .endTurn,
             role: .assistant,
             content: .text(
-                "Based on the sales data analysis, I can see a strong upward trend through Q3, with a slight decline in Q4. This suggests seasonal factors or market saturation."
-            )
+                "Based on the sales data analysis, I can see a strong upward trend through Q3, with a slight decline in Q4. This suggests seasonal factors or market saturation.",
+            ),
         )
 
         let imageResult = CreateSamplingMessage.Result(
@@ -1080,15 +1082,15 @@ struct SamplingIntegrationTests {
             role: .assistant,
             content: .image(
                 data: "generated_chart_base64_data_here",
-                mimeType: "image/png"
-            )
+                mimeType: "image/png",
+            ),
         )
 
         let stopSequenceResult = CreateSamplingMessage.Result(
             model: "gpt-4.1",
             stopReason: .stopSequence,
             role: .assistant,
-            content: .text("Analysis complete.\nEND_ANALYSIS")
+            content: .text("Analysis complete.\nEND_ANALYSIS"),
         )
 
         // Test encoding/decoding of different result types
@@ -1098,7 +1100,7 @@ struct SamplingIntegrationTests {
         // Test text result
         let textData = try encoder.encode(textResult)
         let decodedTextResult = try decoder.decode(
-            CreateSamplingMessage.Result.self, from: textData
+            CreateSamplingMessage.Result.self, from: textData,
         )
         #expect(decodedTextResult.model == "claude-4-sonnet")
         #expect(decodedTextResult.stopReason == .endTurn)
@@ -1107,7 +1109,7 @@ struct SamplingIntegrationTests {
         // Test image result
         let imageData = try encoder.encode(imageResult)
         let decodedImageResult = try decoder.decode(
-            CreateSamplingMessage.Result.self, from: imageData
+            CreateSamplingMessage.Result.self, from: imageData,
         )
         #expect(decodedImageResult.model == "dall-e-3")
         #expect(decodedImageResult.stopReason == .maxTokens)
@@ -1115,15 +1117,15 @@ struct SamplingIntegrationTests {
         // Test stop sequence result
         let stopData = try encoder.encode(stopSequenceResult)
         let decodedStopResult = try decoder.decode(
-            CreateSamplingMessage.Result.self, from: stopData
+            CreateSamplingMessage.Result.self, from: stopData,
         )
         #expect(decodedStopResult.stopReason == .stopSequence)
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testSamplingParameterValidation() async throws {
+    func `sampling parameter validation`() throws {
         // Test parameter validation and edge cases
         let validMessages: [Sampling.Message] = [
             .user("Valid message"),
@@ -1134,7 +1136,7 @@ struct SamplingIntegrationTests {
         // Test with valid parameters
         let validParams = CreateSamplingMessage.Parameters(
             messages: validMessages,
-            maxTokens: 100
+            maxTokens: 100,
         )
         #expect(validParams.messages.count == 1)
         #expect(validParams.maxTokens == 100)
@@ -1146,7 +1148,7 @@ struct SamplingIntegrationTests {
                 hints: [Sampling.ModelPreferences.Hint(name: "claude-4")],
                 costPriority: 0.5,
                 speedPriority: 0.8,
-                intelligencePriority: 0.9
+                intelligencePriority: 0.9,
             ),
             systemPrompt: "You are a helpful assistant.",
             includeContext: .allServers,
@@ -1156,7 +1158,7 @@ struct SamplingIntegrationTests {
             metadata: [
                 "sessionId": "test-session-123",
                 "userId": "user-456",
-            ]
+            ],
         )
 
         #expect(comprehensiveParams.messages.count == 1)
@@ -1186,9 +1188,9 @@ struct SamplingIntegrationTests {
     }
 
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testSamplingWorkflowScenarios() async throws {
+    func `sampling workflow scenarios`() throws {
         // Test realistic sampling workflow scenarios
 
         // Scenario 1: Data Analysis Request
@@ -1201,7 +1203,8 @@ struct SamplingIntegrationTests {
                 - Top complaints: shipping delays (12%), product quality (8%)
                 - Top praise: customer service (45%), product features (40%)
                 - NPS Score: 72
-                """),
+                """,
+            ),
         ]
 
         let dataAnalysisParams = CreateSamplingMessage.Parameters(
@@ -1209,20 +1212,21 @@ struct SamplingIntegrationTests {
             modelPreferences: Sampling.ModelPreferences(
                 hints: [Sampling.ModelPreferences.Hint(name: "claude-4-sonnet")],
                 speedPriority: 0.3,
-                intelligencePriority: 0.9
+                intelligencePriority: 0.9,
             ),
             systemPrompt: "You are an expert business analyst. Provide actionable insights.",
             includeContext: .thisServer,
             temperature: 0.3, // Lower temperature for analytical tasks
             maxTokens: 400,
             stopSequences: ["---END---"],
-            metadata: ["analysisType": "customer-feedback"]
+            metadata: ["analysisType": "customer-feedback"],
         )
 
         // Scenario 2: Creative Content Generation
         let creativeMessages: [Sampling.Message] = [
             .user(
-                "Write a compelling product description for a new smart home device."),
+                "Write a compelling product description for a new smart home device.",
+            ),
         ]
 
         let creativeParams = CreateSamplingMessage.Parameters(
@@ -1231,12 +1235,12 @@ struct SamplingIntegrationTests {
                 hints: [Sampling.ModelPreferences.Hint(name: "gpt-4.1")],
                 costPriority: 0.4,
                 speedPriority: 0.6,
-                intelligencePriority: 0.8
+                intelligencePriority: 0.8,
             ),
             systemPrompt: "You are a creative marketing copywriter.",
             temperature: 0.8, // Higher temperature for creativity
             maxTokens: 200,
-            metadata: ["contentType": "marketing-copy"]
+            metadata: ["contentType": "marketing-copy"],
         )
 
         // Test parameter encoding for both scenarios
@@ -1252,10 +1256,10 @@ struct SamplingIntegrationTests {
         // Test decoding
         let decoder = JSONDecoder()
         let decodedAnalysis = try decoder.decode(
-            CreateSamplingMessage.Parameters.self, from: analysisData
+            CreateSamplingMessage.Parameters.self, from: analysisData,
         )
         let decodedCreative = try decoder.decode(
-            CreateSamplingMessage.Parameters.self, from: creativeData
+            CreateSamplingMessage.Parameters.self, from: creativeData,
         )
 
         #expect(decodedAnalysis.temperature == 0.3)
@@ -1265,13 +1269,12 @@ struct SamplingIntegrationTests {
     }
 }
 
-@Suite("Client Sampling Parameters Tests")
 struct ClientSamplingParametersTests {
-    @Test("ClientSamplingParameters init without tools")
-    func testClientSamplingParametersInitWithoutTools() throws {
+    @Test
+    func `ClientSamplingParameters init without tools`() {
         let params = ClientSamplingParameters(
             messages: [.user("Hello")],
-            maxTokens: 100
+            maxTokens: 100,
         )
 
         #expect(params.messages.count == 1)
@@ -1280,19 +1283,19 @@ struct ClientSamplingParametersTests {
         #expect(params.tools == nil)
     }
 
-    @Test("ClientSamplingParameters init with tools")
-    func testClientSamplingParametersInitWithTools() throws {
+    @Test
+    func `ClientSamplingParameters init with tools`() {
         let tool = Tool(
             name: "get_weather",
             description: "Get weather",
-            inputSchema: .object([:])
+            inputSchema: .object([:]),
         )
 
         let params = ClientSamplingParameters(
             messages: [.user("What's the weather?")],
             maxTokens: 200,
             tools: [tool],
-            toolChoice: ToolChoice(mode: .auto)
+            toolChoice: ToolChoice(mode: .auto),
         )
 
         #expect(params.messages.count == 1)
@@ -1303,29 +1306,29 @@ struct ClientSamplingParametersTests {
         #expect(params.toolChoice?.mode == .auto)
     }
 
-    @Test("ClientSamplingParameters encoding and decoding")
-    func testClientSamplingParametersCoding() throws {
+    @Test
+    func `ClientSamplingParameters encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let tool = Tool(
             name: "test_tool",
             description: "A test tool",
-            inputSchema: .object([:])
+            inputSchema: .object([:]),
         )
 
         let params = ClientSamplingParameters(
             messages: [.user("Hello"), .assistant("Hi there!")],
             modelPreferences: ModelPreferences(
                 hints: [ModelPreferences.Hint(name: "claude-4")],
-                costPriority: 0.5
+                costPriority: 0.5,
             ),
             systemPrompt: "You are helpful",
             temperature: 0.7,
             maxTokens: 150,
             stopSequences: ["STOP"],
             tools: [tool],
-            toolChoice: ToolChoice(mode: .required)
+            toolChoice: ToolChoice(mode: .required),
         )
 
         let data = try encoder.encode(params)
@@ -1344,26 +1347,26 @@ struct ClientSamplingParametersTests {
         #expect(decoded.hasTools == true)
     }
 
-    @Test("ClientSamplingParameters hasTools with empty tools array")
-    func testClientSamplingParametersHasToolsEmpty() throws {
+    @Test
+    func `ClientSamplingParameters hasTools with empty tools array`() {
         let params = ClientSamplingParameters(
             messages: [.user("Hello")],
             maxTokens: 100,
-            tools: [] // Empty array
+            tools: [], // Empty array
         )
 
         // Empty array should be treated as no tools
         #expect(params.hasTools == false)
     }
 
-    @Test("ClientSamplingRequest result type matches CreateSamplingMessageWithTools.Result")
-    func testClientSamplingRequestResultType() throws {
+    @Test
+    func `ClientSamplingRequest result type matches CreateSamplingMessageWithTools.Result`() {
         // Verify the type alias works correctly
         let result: ClientSamplingRequest.Result = CreateSamplingMessageWithTools.Result(
             model: "test-model",
             stopReason: .endTurn,
             role: .assistant,
-            content: .text("Hello")
+            content: .text("Hello"),
         )
 
         #expect(result.model == "test-model")
@@ -1371,8 +1374,8 @@ struct ClientSamplingParametersTests {
         #expect(result.content.count == 1)
     }
 
-    @Test("ClientSamplingParameters decodes from JSON without tools")
-    func testClientSamplingParametersDecodesWithoutTools() throws {
+    @Test
+    func `ClientSamplingParameters decodes from JSON without tools`() throws {
         let decoder = JSONDecoder()
 
         let json = """
@@ -1390,8 +1393,8 @@ struct ClientSamplingParametersTests {
         #expect(params.tools == nil)
     }
 
-    @Test("ClientSamplingParameters decodes from JSON with tools")
-    func testClientSamplingParametersDecodesWithTools() throws {
+    @Test
+    func `ClientSamplingParameters decodes from JSON with tools`() throws {
         let decoder = JSONDecoder()
 
         let json = """
@@ -1414,10 +1417,9 @@ struct ClientSamplingParametersTests {
     }
 }
 
-@Suite("Sampling JSON Format Verification Tests")
 struct SamplingJSONFormatTests {
-    @Test("ToolChoice encodes correctly")
-    func testToolChoiceEncoding() throws {
+    @Test
+    func `ToolChoice encodes correctly`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
@@ -1432,14 +1434,14 @@ struct SamplingJSONFormatTests {
         #expect(try String(data: encoder.encode(nilChoice), encoding: .utf8) == "{}")
     }
 
-    @Test("ToolChoice decodes all modes correctly")
-    func testToolChoiceDecoding() throws {
+    @Test
+    func `ToolChoice decodes all modes correctly`() throws {
         let decoder = JSONDecoder()
 
-        let auto = try decoder.decode(ToolChoice.self, from: "{\"mode\":\"auto\"}".data(using: .utf8)!)
-        let required = try decoder.decode(ToolChoice.self, from: "{\"mode\":\"required\"}".data(using: .utf8)!)
-        let none = try decoder.decode(ToolChoice.self, from: "{\"mode\":\"none\"}".data(using: .utf8)!)
-        let empty = try decoder.decode(ToolChoice.self, from: "{}".data(using: .utf8)!)
+        let auto = try decoder.decode(ToolChoice.self, from: #require("{\"mode\":\"auto\"}".data(using: .utf8)))
+        let required = try decoder.decode(ToolChoice.self, from: #require("{\"mode\":\"required\"}".data(using: .utf8)))
+        let none = try decoder.decode(ToolChoice.self, from: #require("{\"mode\":\"none\"}".data(using: .utf8)))
+        let empty = try decoder.decode(ToolChoice.self, from: #require("{}".data(using: .utf8)))
 
         #expect(auto.mode == .auto)
         #expect(required.mode == .required)
@@ -1447,44 +1449,44 @@ struct SamplingJSONFormatTests {
         #expect(empty.mode == nil)
     }
 
-    @Test("Sampling result single content encodes as object not array")
-    func testSingleContentEncodesAsObject() throws {
+    @Test
+    func `Sampling result single content encodes as object not array`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let result = CreateSamplingMessage.Result(
             model: "test",
             role: .assistant,
-            content: .text("Hello")
+            content: .text("Hello"),
         )
 
-        let json = try String(data: encoder.encode(result), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(result), encoding: .utf8))
 
         // Content should be an object, not an array
         #expect(json.contains("\"content\":{\"text\":\"Hello\",\"type\":\"text\"}"))
         #expect(!json.contains("\"content\":["))
     }
 
-    @Test("Sampling result with tools single content encodes as object")
-    func testToolsResultSingleContentEncodesAsObject() throws {
+    @Test
+    func `Sampling result with tools single content encodes as object`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let result = CreateSamplingMessageWithTools.Result(
             model: "test",
             role: .assistant,
-            content: .text("Hello")
+            content: .text("Hello"),
         )
 
-        let json = try String(data: encoder.encode(result), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(result), encoding: .utf8))
 
         // Single content should be an object, not an array
         #expect(json.contains("\"content\":{\"text\":\"Hello\",\"type\":\"text\"}"))
         #expect(!json.contains("\"content\":["))
     }
 
-    @Test("Sampling result with tools multiple content encodes as array")
-    func testToolsResultMultipleContentEncodesAsArray() throws {
+    @Test
+    func `Sampling result with tools multiple content encodes as array`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
@@ -1494,31 +1496,31 @@ struct SamplingJSONFormatTests {
         let result = CreateSamplingMessageWithTools.Result(
             model: "test",
             role: .assistant,
-            content: [.toolUse(toolUse1), .toolUse(toolUse2)]
+            content: [.toolUse(toolUse1), .toolUse(toolUse2)],
         )
 
-        let json = try String(data: encoder.encode(result), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(result), encoding: .utf8))
 
         // Multiple content should be an array
         #expect(json.contains("\"content\":["))
     }
 
-    @Test("Sampling message single content encodes as object")
-    func testMessageSingleContentEncodesAsObject() throws {
+    @Test
+    func `Sampling message single content encodes as object`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let message: Sampling.Message = .user("Hello")
 
-        let json = try String(data: encoder.encode(message), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(message), encoding: .utf8))
 
         // Single content should be an object
         #expect(json.contains("\"content\":{\"text\":\"Hello\",\"type\":\"text\"}"))
         #expect(!json.contains("\"content\":["))
     }
 
-    @Test("Sampling message multiple content encodes as array")
-    func testMessageMultipleContentEncodesAsArray() throws {
+    @Test
+    func `Sampling message multiple content encodes as array`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
@@ -1527,14 +1529,14 @@ struct SamplingJSONFormatTests {
             .image(data: "abc", mimeType: "image/png"),
         ])
 
-        let json = try String(data: encoder.encode(message), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(message), encoding: .utf8))
 
         // Multiple content should be an array
         #expect(json.contains("\"content\":["))
     }
 
-    @Test("StopReason encodes as raw string")
-    func testStopReasonEncoding() throws {
+    @Test
+    func `StopReason encodes as raw string`() throws {
         let encoder = JSONEncoder()
 
         #expect(try String(data: encoder.encode(StopReason.endTurn), encoding: .utf8) == "\"endTurn\"")
@@ -1547,18 +1549,18 @@ struct SamplingJSONFormatTests {
         #expect(try String(data: encoder.encode(custom), encoding: .utf8) == "\"customReason\"")
     }
 
-    @Test("ToolUseContent encodes with correct structure")
-    func testToolUseContentEncoding() throws {
+    @Test
+    func `ToolUseContent encodes with correct structure`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let toolUse = ToolUseContent(
             name: "get_weather",
             id: "call-123",
-            input: ["city": "Paris"]
+            input: ["city": "Paris"],
         )
 
-        let json = try String(data: encoder.encode(toolUse), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(toolUse), encoding: .utf8))
 
         #expect(json.contains("\"type\":\"tool_use\""))
         #expect(json.contains("\"name\":\"get_weather\""))
@@ -1566,26 +1568,26 @@ struct SamplingJSONFormatTests {
         #expect(json.contains("\"input\":{\"city\":\"Paris\"}"))
     }
 
-    @Test("ToolResultContent encodes with correct structure")
-    func testToolResultContentEncoding() throws {
+    @Test
+    func `ToolResultContent encodes with correct structure`() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let toolResult = ToolResultContent(
             toolUseId: "call-123",
             content: [.text("Sunny, 72°F")],
-            isError: false
+            isError: false,
         )
 
-        let json = try String(data: encoder.encode(toolResult), encoding: .utf8)!
+        let json = try #require(String(data: encoder.encode(toolResult), encoding: .utf8))
 
         #expect(json.contains("\"type\":\"tool_result\""))
         #expect(json.contains("\"toolUseId\":\"call-123\""))
         #expect(json.contains("\"isError\":false"))
     }
 
-    @Test("CreateMessage result decodes from TypeScript SDK format")
-    func testDecodesFromTypeScriptFormat() throws {
+    @Test
+    func `CreateMessage result decodes from TypeScript SDK format`() throws {
         let decoder = JSONDecoder()
 
         // Format matching TypeScript SDK output
@@ -1613,8 +1615,8 @@ struct SamplingJSONFormatTests {
         }
     }
 
-    @Test("CreateMessage result decodes from Python SDK format with array")
-    func testDecodesFromPythonFormatWithArray() throws {
+    @Test
+    func `CreateMessage result decodes from Python SDK format with array`() throws {
         let decoder = JSONDecoder()
 
         // Python SDK may send array content
@@ -1648,13 +1650,11 @@ struct SamplingJSONFormatTests {
     }
 }
 
-@Suite("ToolContext Sampling Tests")
 struct ToolContextSamplingTests {
     @Test(
-        "Tool using context.createMessage sends correctly encoded request",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testToolContextCreateMessage() async throws {
+    func `Tool using context.createMessage sends correctly encoded request`() async throws {
         // This test verifies the fix for a double-encoding bug where ToolContext.createMessage
         // was pre-encoding the request to Data, then calling RequestHandlerContext.sendRequest
         // which re-encoded it (turning the JSON into a base64 string).
@@ -1678,12 +1678,12 @@ struct ToolContextSamplingTests {
         // Register a tool that calls context.createMessage (the HandlerContext method)
         _ = try await mcpServer.register(
             name: "test_sampling_tool",
-            description: "A tool that uses createMessage"
+            description: "A tool that uses createMessage",
         ) { (context: HandlerContext) in
             // This exercises the HandlerContext.createMessage path
             let result = try await context.createMessage(
                 messages: [Sampling.Message.user("Test prompt from tool")],
-                maxTokens: 100
+                maxTokens: 100,
             )
 
             // Return the LLM's response
@@ -1708,7 +1708,7 @@ struct ToolContextSamplingTests {
                 model: "test-model",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: [.text("Mock LLM response")]
+                content: [.text("Mock LLM response")],
             )
         }
 
@@ -1747,25 +1747,23 @@ struct ToolContextSamplingTests {
     }
 }
 
-@Suite("Server Sampling Capability Validation Tests")
 struct ServerSamplingCapabilityValidationTests {
     @Test(
-        "Server throws when tools provided without sampling.tools capability",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerThrowsWhenToolsWithoutCapability() async throws {
+    func `Server throws when tools provided without sampling.tools capability`() async throws {
         // Set up server
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Set up client without sampling.tools capability (just basic sampling)
         // supportsTools defaults to false, so this client won't have tools capability
         let client = Client(
             name: "TestClient",
-            version: "1.0"
+            version: "1.0",
         )
         await client.withSamplingHandler { _, _ in
             // This handler won't be called in this test
@@ -1786,7 +1784,7 @@ struct ServerSamplingCapabilityValidationTests {
             tools: [
                 Tool(name: "test_tool", inputSchema: .object([:])),
             ],
-            toolChoice: nil
+            toolChoice: nil,
         )
 
         await #expect(throws: MCPError.self) {
@@ -1798,21 +1796,20 @@ struct ServerSamplingCapabilityValidationTests {
     }
 
     @Test(
-        "Server throws when client lacks sampling capability entirely",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerThrowsWithoutSamplingCapability() async throws {
+    func `Server throws when client lacks sampling capability entirely`() async throws {
         // Set up server (sampling is a client capability, not server)
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Set up client without sampling capability
         let client = Client(
             name: "TestClient",
-            version: "1.0"
+            version: "1.0",
         )
         // Don't set any sampling capability
 
@@ -1826,7 +1823,7 @@ struct ServerSamplingCapabilityValidationTests {
         // doesn't have sampling capability
         let params = SamplingParameters(
             messages: [.user("Hello")],
-            maxTokens: 100
+            maxTokens: 100,
         )
 
         await #expect(throws: MCPError.self) {
@@ -1838,29 +1835,28 @@ struct ServerSamplingCapabilityValidationTests {
     }
 
     @Test(
-        "Server succeeds when client has sampling capability",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerSucceedsWithSamplingCapability() async throws {
+    func `Server succeeds when client has sampling capability`() async throws {
         // Set up server (sampling is a client capability, not server)
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Set up client WITH sampling capability
         // Handler registration auto-detects capability
         let client = Client(
             name: "TestClient",
-            version: "1.0"
+            version: "1.0",
         )
         await client.withSamplingHandler { _, _ in
             ClientSamplingRequest.Result(
                 model: "test-model",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: [.text("Hello from client!")]
+                content: [.text("Hello from client!")],
             )
         }
 
@@ -1873,7 +1869,7 @@ struct ServerSamplingCapabilityValidationTests {
         // Attempt to call createMessage should succeed
         let params = SamplingParameters(
             messages: [.user("Hello")],
-            maxTokens: 100
+            maxTokens: 100,
         )
 
         let result = try await server.createMessage(params)
@@ -1891,21 +1887,20 @@ struct ServerSamplingCapabilityValidationTests {
     }
 
     @Test(
-        "Server succeeds with tools when client has sampling.tools capability",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testServerSucceedsWithToolsCapability() async throws {
+    func `Server succeeds with tools when client has sampling.tools capability`() async throws {
         // Set up server (sampling is a client capability, not server)
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init()
+            capabilities: .init(),
         )
 
         // Set up client WITH sampling.tools capability
         let client = Client(
             name: "TestClient",
-            version: "1.0"
+            version: "1.0",
         )
 
         // Set up client sampling handler with tools support
@@ -1917,8 +1912,8 @@ struct ServerSamplingCapabilityValidationTests {
                 content: [.toolUse(ToolUseContent(
                     name: "get_weather",
                     id: "call-123",
-                    input: ["city": "Paris"]
-                ))]
+                    input: ["city": "Paris"],
+                ))],
             )
         }
 
@@ -1935,7 +1930,7 @@ struct ServerSamplingCapabilityValidationTests {
             tools: [
                 Tool(name: "get_weather", inputSchema: .object([:])),
             ],
-            toolChoice: ToolChoice(mode: .auto)
+            toolChoice: ToolChoice(mode: .auto),
         )
 
         let result = try await server.createMessageWithTools(params)

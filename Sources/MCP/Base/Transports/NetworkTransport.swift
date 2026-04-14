@@ -16,13 +16,13 @@ import Network
     func cancel()
     func send(
         content: Data?, contentContext: NWConnection.ContentContext, isComplete: Bool,
-        completion: NWConnection.SendCompletion
+        completion: NWConnection.SendCompletion,
     )
     func receive(
         minimumIncompleteLength: Int, maximumLength: Int,
         completion: @escaping @Sendable (
-            Data?, NWConnection.ContentContext?, Bool, NWError?
-        ) -> Void
+            Data?, NWConnection.ContentContext?, Bool, NWError?,
+        ) -> Void,
     )
 }
 
@@ -107,7 +107,8 @@ public actor NetworkTransport: Transport {
             }
 
             self.timestamp = Date(
-                timeIntervalSinceReferenceDate: TimeInterval(timestamp) / 1000.0)
+                timeIntervalSinceReferenceDate: TimeInterval(timestamp) / 1000.0,
+            )
         }
 
         /// Converts the heartbeat to its raw representation.
@@ -195,7 +196,7 @@ public actor NetworkTransport: Transport {
         public init(
             enabled: Bool = true,
             maxAttempts: Int = 5,
-            backoffMultiplier: Double = 1.5
+            backoffMultiplier: Double = 1.5,
         ) {
             self.enabled = enabled
             self.maxAttempts = maxAttempts
@@ -280,14 +281,14 @@ public actor NetworkTransport: Transport {
         logger: Logger? = nil,
         heartbeatConfig: HeartbeatConfiguration = .default,
         reconnectionConfig: ReconnectionConfiguration = .default,
-        bufferConfig: BufferConfiguration = .default
+        bufferConfig: BufferConfiguration = .default,
     ) {
         self.init(
             connection,
             logger: logger,
             heartbeatConfig: heartbeatConfig,
             reconnectionConfig: reconnectionConfig,
-            bufferConfig: bufferConfig
+            bufferConfig: bufferConfig,
         )
     }
 
@@ -296,14 +297,14 @@ public actor NetworkTransport: Transport {
         logger: Logger? = nil,
         heartbeatConfig: HeartbeatConfiguration = .default,
         reconnectionConfig: ReconnectionConfiguration = .default,
-        bufferConfig: BufferConfiguration = .default
+        bufferConfig: BufferConfiguration = .default,
     ) {
         self.connection = connection
         self.logger =
             logger
                 ?? Logger(
                     label: "mcp.transport.network",
-                    factory: { _ in SwiftLogNoOpLogHandler() }
+                    factory: { _ in SwiftLogNoOpLogHandler() },
                 )
         self.reconnectionConfig = reconnectionConfig
         self.heartbeatConfig = heartbeatConfig
@@ -445,7 +446,7 @@ public actor NetworkTransport: Transport {
                         }
                         continuation.resume()
                     }
-                }
+                },
             )
         }
 
@@ -520,11 +521,12 @@ public actor NetworkTransport: Transport {
                         }
 
                         continuation.resume(
-                            throwing: MCPError.internalError("Send error: \(error)"))
+                            throwing: MCPError.internalError("Send error: \(error)"),
+                        )
                     } else {
                         continuation.resume()
                     }
-                }
+                },
             )
         }
     }
@@ -559,7 +561,7 @@ public actor NetworkTransport: Transport {
 
                     if consecutiveEmptyReads >= maxConsecutiveEmptyReads {
                         logger.warning(
-                            "Multiple consecutive empty reads (\(consecutiveEmptyReads)), possible connection issue"
+                            "Multiple consecutive empty reads (\(consecutiveEmptyReads)), possible connection issue",
                         )
 
                         // Check connection state
@@ -599,7 +601,7 @@ public actor NetworkTransport: Transport {
 
                     if !messageData.isEmpty {
                         logger.debug(
-                            "Message received", metadata: ["size": "\(messageData.count)"]
+                            "Message received", metadata: ["size": "\(messageData.count)"],
                         )
                         messageContinuation.yield(TransportMessage(data: Data(messageData)))
                     }
@@ -616,7 +618,7 @@ public actor NetworkTransport: Transport {
                         {
                             reconnectAttempt += 1
                             logger.warning(
-                                "Network connection lost, attempting reconnection (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))..."
+                                "Network connection lost, attempting reconnection (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))...",
                             )
 
                             // Mark as not connected while attempting reconnection
@@ -625,7 +627,8 @@ public actor NetworkTransport: Transport {
                             // Schedule reconnection attempt
                             Task {
                                 let delay = reconnectionConfig.backoffDelay(
-                                    for: reconnectAttempt)
+                                    for: reconnectAttempt,
+                                )
                                 try? await Task.sleep(for: .seconds(delay))
 
                                 if !isStopping {
@@ -642,7 +645,8 @@ public actor NetworkTransport: Transport {
                         } else {
                             // We're not reconnecting, finish the message stream with error
                             messageContinuation.finish(
-                                throwing: MCPError.transportError(error))
+                                throwing: MCPError.transportError(error),
+                            )
                             break
                         }
                     } else {
@@ -667,7 +671,7 @@ public actor NetworkTransport: Transport {
                         // Similar reconnection logic for other errors
                         reconnectAttempt += 1
                         logger.warning(
-                            "Error during receive, attempting reconnection (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))..."
+                            "Error during receive, attempting reconnection (\(reconnectAttempt)/\(reconnectionConfig.maxAttempts))...",
                         )
 
                         isConnected = false

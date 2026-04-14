@@ -1,32 +1,30 @@
 // Copyright © Anthony DePasquale
 
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for SessionManager - a thread-safe session storage helper.
 ///
 /// These tests follow the TypeScript SDK's pattern for session management.
-@Suite("Session Manager Tests")
 struct SessionManagerTests {
     // MARK: - Basic Operations
 
-    @Test("Initialization creates empty manager")
-    func initialization() async {
+    @Test
+    func `Initialization creates empty manager`() async {
         let manager = SessionManager()
         let count = await manager.activeSessionCount
         #expect(count == 0)
     }
 
-    @Test("Max sessions configuration")
-    func maxSessionsConfiguration() async {
+    @Test
+    func `Max sessions configuration`() async {
         let manager = SessionManager(maxSessions: 5)
         let max = await manager.maxSessions
         #expect(max == 5)
     }
 
-    @Test("Store and retrieve transport")
-    func storeAndRetrieveTransport() async throws {
+    @Test
+    func `Store and retrieve transport`() async {
         let manager = SessionManager()
         let transport = HTTPServerTransport()
 
@@ -39,16 +37,16 @@ struct SessionManagerTests {
         #expect(count == 1)
     }
 
-    @Test("Transport not found returns nil")
-    func transportNotFound() async {
+    @Test
+    func `Transport not found returns nil`() async {
         let manager = SessionManager()
 
         let retrieved = await manager.transport(forSessionId: "nonexistent")
         #expect(retrieved == nil)
     }
 
-    @Test("Remove transport")
-    func removeTransport() async throws {
+    @Test
+    func `Remove transport`() async {
         let manager = SessionManager()
         let transport = HTTPServerTransport()
 
@@ -66,8 +64,8 @@ struct SessionManagerTests {
         #expect(retrieved == nil)
     }
 
-    @Test("Active session IDs")
-    func activeSessionIds() async throws {
+    @Test
+    func `Active session IDs`() async {
         let manager = SessionManager()
 
         await manager.store(HTTPServerTransport(), forSessionId: "session-a")
@@ -78,8 +76,8 @@ struct SessionManagerTests {
         #expect(ids.sorted() == ["session-a", "session-b", "session-c"])
     }
 
-    @Test("Close all sessions")
-    func closeAll() async throws {
+    @Test
+    func `Close all sessions`() async {
         let manager = SessionManager()
 
         await manager.store(HTTPServerTransport(), forSessionId: "session-1")
@@ -96,8 +94,8 @@ struct SessionManagerTests {
 
     // MARK: - Capacity Limits
 
-    @Test("Capacity check")
-    func capacityCheck() async {
+    @Test
+    func `Capacity check`() async {
         let manager = SessionManager(maxSessions: 2)
 
         // Initially can add
@@ -120,8 +118,8 @@ struct SessionManagerTests {
         #expect(canAdd == true)
     }
 
-    @Test("Unlimited capacity")
-    func unlimitedCapacity() async {
+    @Test
+    func `Unlimited capacity`() async {
         let manager = SessionManager() // No maxSessions
 
         // Add many sessions
@@ -139,8 +137,8 @@ struct SessionManagerTests {
 
     // MARK: - Session Cleanup
 
-    @Test("Cleanup stale sessions")
-    func cleanUpStaleSessions() async throws {
+    @Test
+    func `Cleanup stale sessions`() async throws {
         let manager = SessionManager()
 
         // Store some sessions
@@ -157,8 +155,8 @@ struct SessionManagerTests {
         #expect(count == 0)
     }
 
-    @Test("Recent session not cleaned")
-    func recentSessionNotCleaned() async throws {
+    @Test
+    func `Recent session not cleaned`() async {
         let manager = SessionManager()
 
         await manager.store(HTTPServerTransport(), forSessionId: "recent-session")
@@ -173,8 +171,8 @@ struct SessionManagerTests {
 
     // MARK: - Multi-Client Simulation
 
-    @Test("Multiple clients sequential")
-    func multipleClientsSequential() async throws {
+    @Test
+    func `Multiple clients sequential`() async {
         let manager = SessionManager()
 
         // Simulate 10 clients connecting sequentially
@@ -190,8 +188,8 @@ struct SessionManagerTests {
         #expect(ids.count == 10)
     }
 
-    @Test("Multiple clients concurrent")
-    func multipleClientsConcurrent() async throws {
+    @Test
+    func `Multiple clients concurrent`() async {
         let manager = SessionManager()
 
         // Simulate 10 clients connecting concurrently
@@ -208,8 +206,8 @@ struct SessionManagerTests {
         #expect(count == 10)
     }
 
-    @Test("Concurrent access and removal")
-    func concurrentAccessAndRemoval() async throws {
+    @Test
+    func `Concurrent access and removal`() async {
         let manager = SessionManager()
 
         // Pre-populate with sessions

@@ -71,7 +71,7 @@ public struct OAuthMetadata: Codable, Sendable, Equatable {
         introspectionEndpoint: URL? = nil,
         introspectionEndpointAuthMethodsSupported: [String]? = nil,
         clientIdMetadataDocumentSupported: Bool? = nil,
-        serviceDocumentation: URL? = nil
+        serviceDocumentation: URL? = nil,
     ) {
         self.issuer = issuer
         self.authorizationEndpoint = authorizationEndpoint
@@ -180,7 +180,7 @@ public struct ProtectedResourceMetadata: Codable, Sendable, Equatable {
         tlsClientCertificateBoundAccessTokens: Bool? = nil,
         authorizationDetailsTypesSupported: [String]? = nil,
         dpopSigningAlgValuesSupported: [String]? = nil,
-        dpopBoundAccessTokensRequired: Bool? = nil
+        dpopBoundAccessTokensRequired: Bool? = nil,
     ) {
         self.resource = resource
         self.authorizationServers = authorizationServers
@@ -289,7 +289,7 @@ public struct OAuthClientMetadata: Codable, Sendable, Equatable {
         jwks: Value? = nil,
         softwareId: String? = nil,
         softwareVersion: String? = nil,
-        softwareStatement: String? = nil
+        softwareStatement: String? = nil,
     ) {
         self.redirectURIs = redirectURIs
         self.tokenEndpointAuthMethod = tokenEndpointAuthMethod
@@ -354,7 +354,7 @@ public struct OAuthClientInformation: Codable, Sendable, Equatable {
         clientId: String,
         clientSecret: String? = nil,
         clientIdIssuedAt: Int? = nil,
-        clientSecretExpiresAt: Int? = nil
+        clientSecretExpiresAt: Int? = nil,
     ) {
         self.clientId = clientId
         self.clientSecret = clientSecret

@@ -2,24 +2,22 @@
 // Copyright © Matt Zmuda
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Prompt Tests")
 struct PromptTests {
-    @Test("Prompt initialization with valid parameters")
-    func testPromptInitialization() throws {
+    @Test
+    func `Prompt initialization with valid parameters`() {
         let argument = Prompt.Argument(
             name: "test_arg",
             description: "A test argument",
-            required: true
+            required: true,
         )
 
         let prompt = Prompt(
             name: "test_prompt",
             description: "A test prompt",
-            arguments: [argument]
+            arguments: [argument],
         )
 
         #expect(prompt.name == "test_prompt")
@@ -30,8 +28,8 @@ struct PromptTests {
         #expect(prompt.arguments?[0].required == true)
     }
 
-    @Test("Prompt Message encoding and decoding")
-    func testPromptMessageEncodingDecoding() throws {
+    @Test
+    func `Prompt Message encoding and decoding`() throws {
         let textMessage: Prompt.Message = .user("Hello, world!")
 
         let encoder = JSONEncoder()
@@ -48,8 +46,8 @@ struct PromptTests {
         }
     }
 
-    @Test("Prompt Message Content types encoding and decoding")
-    func testPromptMessageContentTypes() throws {
+    @Test
+    func `Prompt Message Content types encoding and decoding`() throws {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
@@ -65,7 +63,7 @@ struct PromptTests {
 
         // Test audio content
         let audioContent = Prompt.Message.Content.audio(
-            data: "base64audiodata", mimeType: "audio/wav"
+            data: "base64audiodata", mimeType: "audio/wav",
         )
         let audioData = try encoder.encode(audioContent)
         let decodedAudio = try decoder.decode(Prompt.Message.Content.self, from: audioData)
@@ -91,7 +89,7 @@ struct PromptTests {
         let resourceContent = Prompt.Message.Content.resource(
             uri: "file://test.txt",
             mimeType: "text/plain",
-            text: "Sample text"
+            text: "Sample text",
         )
         let resourceData = try encoder.encode(resourceContent)
         let decodedResource = try decoder.decode(Prompt.Message.Content.self, from: resourceData)
@@ -104,8 +102,8 @@ struct PromptTests {
         }
     }
 
-    @Test("Prompt Reference validation")
-    func testPromptReference() throws {
+    @Test
+    func `Prompt Reference validation`() throws {
         let reference = Prompt.Reference(name: "test_prompt")
         #expect(reference.name == "test_prompt")
         #expect(reference.title == nil)
@@ -120,8 +118,8 @@ struct PromptTests {
         #expect(decoded.title == nil)
     }
 
-    @Test("Prompt Reference with title validation")
-    func testPromptReferenceWithTitle() throws {
+    @Test
+    func `Prompt Reference with title validation`() throws {
         let reference = Prompt.Reference(name: "test_prompt", title: "Test Prompt")
         #expect(reference.name == "test_prompt")
         #expect(reference.title == "Test Prompt")
@@ -136,14 +134,14 @@ struct PromptTests {
         #expect(decoded.title == "Test Prompt")
 
         // Verify JSON structure includes title
-        let jsonObject = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let jsonObject = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
         #expect(jsonObject["type"] as? String == "ref/prompt")
         #expect(jsonObject["name"] as? String == "test_prompt")
         #expect(jsonObject["title"] as? String == "Test Prompt")
     }
 
-    @Test("GetPrompt parameters validation")
-    func testGetPromptParameters() throws {
+    @Test
+    func `GetPrompt parameters validation`() {
         // Per MCP spec, prompt arguments must be string values
         let arguments: [String: String] = [
             "param1": "value1",
@@ -156,8 +154,8 @@ struct PromptTests {
         #expect(params.arguments?["param2"] == "42")
     }
 
-    @Test("GetPrompt result validation")
-    func testGetPromptResult() throws {
+    @Test
+    func `GetPrompt result validation`() {
         let messages: [Prompt.Message] = [
             .user("User message"),
             .assistant("Assistant response"),
@@ -170,8 +168,8 @@ struct PromptTests {
         #expect(result.messages[1].role == .assistant)
     }
 
-    @Test("ListPrompts parameters validation")
-    func testListPromptsParameters() throws {
+    @Test
+    func `ListPrompts parameters validation`() {
         let params = ListPrompts.Parameters(cursor: "next_page")
         #expect(params.cursor == "next_page")
 
@@ -179,13 +177,13 @@ struct PromptTests {
         #expect(emptyParams.cursor == nil)
     }
 
-    @Test("ListPrompts request decoding with omitted params")
-    func testListPromptsRequestDecodingWithOmittedParams() throws {
+    @Test
+    func `ListPrompts request decoding with omitted params`() throws {
         // Test decoding when params field is omitted
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"prompts/list"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListPrompts>.self, from: data)
@@ -194,13 +192,13 @@ struct PromptTests {
         #expect(decoded.method == ListPrompts.name)
     }
 
-    @Test("ListPrompts request decoding with null params")
-    func testListPromptsRequestDecodingWithNullParams() throws {
+    @Test
+    func `ListPrompts request decoding with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"prompts/list","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListPrompts>.self, from: data)
@@ -209,8 +207,8 @@ struct PromptTests {
         #expect(decoded.method == ListPrompts.name)
     }
 
-    @Test("ListPrompts result validation")
-    func testListPromptsResult() throws {
+    @Test
+    func `ListPrompts result validation`() {
         let prompts = [
             Prompt(name: "prompt1", description: "First prompt"),
             Prompt(name: "prompt2", description: "Second prompt"),
@@ -223,13 +221,13 @@ struct PromptTests {
         #expect(result.nextCursor == "next_page")
     }
 
-    @Test("PromptListChanged notification name validation")
-    func testPromptListChangedNotification() throws {
+    @Test
+    func `PromptListChanged notification name validation`() {
         #expect(PromptListChangedNotification.name == "notifications/prompts/list_changed")
     }
 
-    @Test("Prompt Message factory methods")
-    func testPromptMessageFactoryMethods() throws {
+    @Test
+    func `Prompt Message factory methods`() {
         // Test user message factory method
         let userMessage: Prompt.Message = .user("Hello, world!")
         #expect(userMessage.role == .user)
@@ -260,7 +258,8 @@ struct PromptTests {
 
         // Test with audio content
         let audioMessage: Prompt.Message = .assistant(
-            .audio(data: "base64audio", mimeType: "audio/wav"))
+            .audio(data: "base64audio", mimeType: "audio/wav"),
+        )
         #expect(audioMessage.role == .assistant)
         if case let .audio(data, mimeType, _, _) = audioMessage.content {
             #expect(data == "base64audio")
@@ -271,7 +270,8 @@ struct PromptTests {
 
         // Test with resource content
         let resourceMessage: Prompt.Message = .user(
-            .resource(uri: "file://test.txt", mimeType: "text/plain", text: "Sample text"))
+            .resource(uri: "file://test.txt", mimeType: "text/plain", text: "Sample text"),
+        )
         #expect(resourceMessage.role == .user)
         if case let .resource(resourceContent, _, _) = resourceMessage.content {
             #expect(resourceContent.uri == "file://test.txt")
@@ -282,8 +282,8 @@ struct PromptTests {
         }
     }
 
-    @Test("Prompt Content ExpressibleByStringLiteral")
-    func testPromptContentExpressibleByStringLiteral() throws {
+    @Test
+    func `Prompt Content ExpressibleByStringLiteral`() {
         // Test string literal assignment
         let content: Prompt.Message.Content = "Hello from string literal"
 
@@ -314,8 +314,8 @@ struct PromptTests {
         #expect(messages[2].role == .user)
     }
 
-    @Test("Prompt Content ExpressibleByStringInterpolation")
-    func testPromptContentExpressibleByStringInterpolation() throws {
+    @Test
+    func `Prompt Content ExpressibleByStringInterpolation`() {
         let userName = "Alice"
         let position = "Software Engineer"
         let company = "TechCorp"
@@ -332,7 +332,8 @@ struct PromptTests {
 
         // Test in message creation with interpolation
         let message: Prompt.Message = .user(
-            "Hi \(userName), I'm excited about the \(position) role at \(company)")
+            "Hi \(userName), I'm excited about the \(position) role at \(company)",
+        )
         if case let .text(text, _, _) = message.content {
             #expect(text == "Hi Alice, I'm excited about the Software Engineer role at TechCorp")
         } else {
@@ -343,21 +344,21 @@ struct PromptTests {
         let skills = ["Swift", "Python", "JavaScript"]
         let experience = 5
         let interviewMessage: Prompt.Message = .assistant(
-            "I see you have \(experience) years of experience with \(skills.joined(separator: ", ")). That's impressive!"
+            "I see you have \(experience) years of experience with \(skills.joined(separator: ", ")). That's impressive!",
         )
 
         if case let .text(text, _, _) = interviewMessage.content {
             #expect(
                 text
-                    == "I see you have 5 years of experience with Swift, Python, JavaScript. That's impressive!"
+                    == "I see you have 5 years of experience with Swift, Python, JavaScript. That's impressive!",
             )
         } else {
             #expect(Bool(false), "Expected text content")
         }
     }
 
-    @Test("Prompt Message factory methods with string interpolation")
-    func testPromptMessageFactoryMethodsWithStringInterpolation() throws {
+    @Test
+    func `Prompt Message factory methods with string interpolation`() {
         let candidateName = "Bob"
         let position = "Data Scientist"
         let company = "DataCorp"
@@ -365,7 +366,8 @@ struct PromptTests {
 
         // Test user message with interpolation
         let userMessage: Prompt.Message = .user(
-            "Hello, I'm \(candidateName) and I'm interviewing for the \(position) position")
+            "Hello, I'm \(candidateName) and I'm interviewing for the \(position) position",
+        )
         #expect(userMessage.role == .user)
         if case let .text(text, _, _) = userMessage.content {
             #expect(text == "Hello, I'm Bob and I'm interviewing for the Data Scientist position")
@@ -375,7 +377,7 @@ struct PromptTests {
 
         // Test assistant message with interpolation
         let assistantMessage: Prompt.Message = .assistant(
-            "Welcome \(candidateName)! Tell me about your \(experience) years of experience in data science"
+            "Welcome \(candidateName)! Tell me about your \(experience) years of experience in data science",
         )
         #expect(assistantMessage.role == .assistant)
         if case let .text(text, _, _) = assistantMessage.content {
@@ -390,7 +392,7 @@ struct PromptTests {
             .assistant("Welcome \(candidateName)! How many years of experience do you have?"),
             .user("I have \(experience) years of experience in the field"),
             .assistant(
-                "Great! \(experience) years is solid experience for a \(position) role at \(company)"
+                "Great! \(experience) years is solid experience for a \(position) role at \(company)",
             ),
         ]
 
@@ -404,8 +406,8 @@ struct PromptTests {
         }
     }
 
-    @Test("Prompt ergonomic API usage patterns")
-    func testPromptErgonomicAPIUsagePatterns() throws {
+    @Test
+    func `Prompt ergonomic API usage patterns`() throws {
         // Test various ergonomic usage patterns enabled by the new API
 
         // Pattern 1: Simple interview conversation
@@ -427,7 +429,7 @@ struct PromptTests {
             .assistant("Thank you! I'm excited about this \(role) opportunity"),
             .user("I see you have \(yearsExp) years of experience. Tell me about your background"),
             .assistant(
-                "In my \(yearsExp) years as a \(role), I've led multiple successful product launches"
+                "In my \(yearsExp) years as a \(role), I've led multiple successful product launches",
             ),
         ]
         #expect(dynamicConversation.count == 4)
@@ -438,7 +440,7 @@ struct PromptTests {
             .assistant(.image(data: "design_mockup_data", mimeType: "image/png")),
             .user("What do you think of the user flow?"),
             .assistant(
-                "The design looks clean and intuitive. I particularly like the navigation structure."
+                "The design looks clean and intuitive. I particularly like the navigation structure.",
             ),
         ]
         #expect(mixedContent.count == 4)
@@ -471,22 +473,21 @@ struct PromptTests {
 
 // MARK: - Prompt Pagination Tests
 
-@Suite("Prompt Pagination Tests")
 struct PromptPaginationTests {
-    @Test("ListPrompts cursor parameter encodes correctly")
-    func cursorParameterEncoding() throws {
+    @Test
+    func `ListPrompts cursor parameter encodes correctly`() throws {
         let testCursor = "test-cursor-123"
         let params = ListPrompts.Parameters(cursor: testCursor)
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(params)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonString.contains("\"cursor\":\"test-cursor-123\""))
     }
 
-    @Test("ListPrompts result with nextCursor encodes correctly")
-    func resultWithNextCursor() throws {
+    @Test
+    func `ListPrompts result with nextCursor encodes correctly`() throws {
         let prompts = [
             Prompt(name: "prompt1", description: "First prompt"),
             Prompt(name: "prompt2", description: "Second prompt"),
@@ -503,8 +504,8 @@ struct PromptPaginationTests {
         #expect(decoded.nextCursor == "next-page-token")
     }
 
-    @Test("ListPrompts result without nextCursor indicates end of pagination")
-    func resultWithoutNextCursor() throws {
+    @Test
+    func `ListPrompts result without nextCursor indicates end of pagination`() throws {
         let prompts = [
             Prompt(name: "final_prompt", description: "Final prompt"),
         ]
@@ -519,16 +520,16 @@ struct PromptPaginationTests {
         #expect(decoded.nextCursor == nil)
 
         // Verify null cursor is not included in JSON
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(!jsonString.contains("nextCursor"))
     }
 
-    @Test("ListPrompts request with cursor decodes correctly")
-    func requestWithCursorDecoding() throws {
+    @Test
+    func `ListPrompts request with cursor decodes correctly`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":"page-2","method":"prompts/list","params":{"cursor":"page-1-token"}}
         """
-        let jsonData = jsonString.data(using: .utf8)!
+        let jsonData = try #require(jsonString.data(using: .utf8))
 
         let decoded = try JSONDecoder().decode(Request<ListPrompts>.self, from: jsonData)
 
@@ -536,8 +537,8 @@ struct PromptPaginationTests {
         #expect(decoded.params.cursor == "page-1-token")
     }
 
-    @Test("Simulated multi-page prompt listing")
-    func simulatedMultiPagePromptListing() throws {
+    @Test
+    func `Simulated multi-page prompt listing`() throws {
         // Simulate a server that returns 20 prompts across multiple pages
         let allPrompts = (0 ..< 20).map { i in
             Prompt(name: "prompt_\(i)", description: "Prompt number \(i)")
@@ -581,8 +582,8 @@ struct PromptPaginationTests {
         #expect(promptNames == expectedNames)
     }
 
-    @Test("Paginated prompt listing")
-    func testPaginatedPromptListing() async throws {
+    @Test
+    func `Paginated prompt listing`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track pagination state
@@ -591,7 +592,7 @@ struct PromptPaginationTests {
         let server = Server(
             name: "PaginatedPromptServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         // Handler returns paginated prompts
@@ -632,14 +633,14 @@ struct PromptPaginationTests {
         await server.stop()
     }
 
-    @Test("Empty prompt listing result")
-    func testEmptyPromptListingResult() async throws {
+    @Test
+    func `Empty prompt listing result`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "EmptyPromptServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         // Handler returns empty prompt list
@@ -664,15 +665,14 @@ struct PromptPaginationTests {
 
 // MARK: - Prompt ResourceLink Tests
 
-@Suite("Prompt ResourceLink Tests")
 struct PromptResourceLinkTests {
-    @Test("Prompt Message with ResourceLink content encoding and decoding")
-    func testPromptMessageWithResourceLink() throws {
+    @Test
+    func `Prompt Message with ResourceLink content encoding and decoding`() throws {
         let resourceLink = ResourceLink(
             name: "main.rs",
             uri: "file:///project/src/main.rs",
             description: "Primary application entry point",
-            mimeType: "text/x-rust"
+            mimeType: "text/x-rust",
         )
 
         let message: Prompt.Message = .assistant(.resourceLink(resourceLink))
@@ -694,11 +694,11 @@ struct PromptResourceLinkTests {
         }
     }
 
-    @Test("Prompt Message with ResourceLink minimal fields")
-    func testPromptMessageWithResourceLinkMinimal() throws {
+    @Test
+    func `Prompt Message with ResourceLink minimal fields`() throws {
         let resourceLink = ResourceLink(
             name: "file.txt",
-            uri: "file:///path/to/file.txt"
+            uri: "file:///path/to/file.txt",
         )
 
         let message: Prompt.Message = .user(.resourceLink(resourceLink))
@@ -720,12 +720,12 @@ struct PromptResourceLinkTests {
         }
     }
 
-    @Test("GetPrompt result with mixed content types including ResourceLink")
-    func testGetPromptResultWithMixedContent() throws {
+    @Test
+    func `GetPrompt result with mixed content types including ResourceLink`() throws {
         let resourceLink = ResourceLink(
             name: "README.md",
             uri: "file:///project/README.md",
-            mimeType: "text/markdown"
+            mimeType: "text/markdown",
         )
 
         let messages: [Prompt.Message] = [
@@ -771,10 +771,9 @@ struct PromptResourceLinkTests {
 
 // MARK: - Prompt Advanced Features Tests
 
-@Suite("Prompt Advanced Features Tests")
 struct PromptAdvancedFeaturesTests {
-    @Test("Prompt with icons encoding and decoding")
-    func testPromptWithIcons() throws {
+    @Test
+    func `Prompt with icons encoding and decoding`() throws {
         let icons = [
             Icon(src: "https://example.com/icon.png", mimeType: "image/png", sizes: ["48x48", "96x96"]),
             Icon(src: "data:image/svg+xml;base64,PHN2Zz4=", mimeType: "image/svg+xml", sizes: ["any"], theme: .light),
@@ -784,7 +783,7 @@ struct PromptAdvancedFeaturesTests {
             name: "my_prompt",
             title: "My Prompt",
             description: "A prompt with icons",
-            icons: icons
+            icons: icons,
         )
 
         let encoder = JSONEncoder()
@@ -802,8 +801,8 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded.icons?[1].theme == .light)
     }
 
-    @Test("Prompt with _meta encoding and decoding")
-    func testPromptWithMeta() throws {
+    @Test
+    func `Prompt with _meta encoding and decoding`() throws {
         let meta: [String: Value] = [
             "customField": "customValue",
             "version": 2,
@@ -813,7 +812,7 @@ struct PromptAdvancedFeaturesTests {
         let prompt = Prompt(
             name: "meta_prompt",
             description: "A prompt with metadata",
-            _meta: meta
+            _meta: meta,
         )
 
         let encoder = JSONEncoder()
@@ -828,13 +827,13 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded._meta?["tags"]?.arrayValue?.count == 2)
     }
 
-    @Test("Prompt Argument with title encoding and decoding")
-    func testPromptArgumentWithTitle() throws {
+    @Test
+    func `Prompt Argument with title encoding and decoding`() throws {
         let argument = Prompt.Argument(
             name: "candidate_name",
             title: "Candidate Name",
             description: "The name of the candidate being interviewed",
-            required: true
+            required: true,
         )
 
         let encoder = JSONEncoder()
@@ -849,18 +848,18 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded.required == true)
     }
 
-    @Test("Prompt Message Content with annotations")
-    func testPromptMessageContentWithAnnotations() throws {
+    @Test
+    func `Prompt Message Content with annotations`() throws {
         let annotations = Annotations(
             audience: [.user, .assistant],
             priority: 0.8,
-            lastModified: "2025-01-03T12:00:00Z"
+            lastModified: "2025-01-03T12:00:00Z",
         )
 
         let content = Prompt.Message.Content.text(
             text: "Important message",
             annotations: annotations,
-            _meta: ["source": "test"]
+            _meta: ["source": "test"],
         )
 
         let encoder = JSONEncoder()
@@ -880,15 +879,15 @@ struct PromptAdvancedFeaturesTests {
         }
     }
 
-    @Test("Image content with annotations")
-    func testImageContentWithAnnotations() throws {
+    @Test
+    func `Image content with annotations`() throws {
         let annotations = Annotations(audience: [.user], priority: 0.5)
 
         let content = Prompt.Message.Content.image(
             data: "base64imagedata",
             mimeType: "image/png",
             annotations: annotations,
-            _meta: nil
+            _meta: nil,
         )
 
         let encoder = JSONEncoder()
@@ -907,15 +906,15 @@ struct PromptAdvancedFeaturesTests {
         }
     }
 
-    @Test("Audio content with annotations")
-    func testAudioContentWithAnnotations() throws {
+    @Test
+    func `Audio content with annotations`() throws {
         let annotations = Annotations(priority: 1.0)
 
         let content = Prompt.Message.Content.audio(
             data: "base64audiodata",
             mimeType: "audio/wav",
             annotations: annotations,
-            _meta: ["duration": 120]
+            _meta: ["duration": 120],
         )
 
         let encoder = JSONEncoder()
@@ -934,18 +933,18 @@ struct PromptAdvancedFeaturesTests {
         }
     }
 
-    @Test("Resource content with annotations")
-    func testResourceContentWithAnnotations() throws {
+    @Test
+    func `Resource content with annotations`() throws {
         let annotations = Annotations(
             audience: [.assistant],
-            lastModified: "2025-01-01T00:00:00Z"
+            lastModified: "2025-01-01T00:00:00Z",
         )
         let resourceContent = Resource.Content.text("File content", uri: "file:///test.txt", mimeType: "text/plain")
 
         let content = Prompt.Message.Content.resource(
             resource: resourceContent,
             annotations: annotations,
-            _meta: nil
+            _meta: nil,
         )
 
         let encoder = JSONEncoder()
@@ -964,8 +963,8 @@ struct PromptAdvancedFeaturesTests {
         }
     }
 
-    @Test("GetPrompt result with _meta")
-    func testGetPromptResultWithMeta() throws {
+    @Test
+    func `GetPrompt result with _meta`() throws {
         let messages: [Prompt.Message] = [
             .user("Hello"),
             .assistant("Hi there!"),
@@ -974,7 +973,7 @@ struct PromptAdvancedFeaturesTests {
         let result = GetPrompt.Result(
             description: "Test prompt",
             messages: messages,
-            _meta: ["generatedAt": "2025-01-03", "version": 1]
+            _meta: ["generatedAt": "2025-01-03", "version": 1],
         )
 
         let encoder = JSONEncoder()
@@ -989,8 +988,8 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded._meta?["version"]?.intValue == 1)
     }
 
-    @Test("ListPrompts result with _meta")
-    func testListPromptsResultWithMeta() throws {
+    @Test
+    func `ListPrompts result with _meta`() throws {
         let prompts = [
             Prompt(name: "prompt1", description: "First prompt"),
         ]
@@ -998,7 +997,7 @@ struct PromptAdvancedFeaturesTests {
         let result = ListPrompts.Result(
             prompts: prompts,
             nextCursor: nil,
-            _meta: ["totalCount": 100, "filteredBy": "category"]
+            _meta: ["totalCount": 100, "filteredBy": "category"],
         )
 
         let encoder = JSONEncoder()
@@ -1012,8 +1011,8 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded._meta?["filteredBy"]?.stringValue == "category")
     }
 
-    @Test("Full prompt with all optional fields")
-    func testFullPromptWithAllOptionalFields() throws {
+    @Test
+    func `Full prompt with all optional fields`() throws {
         let icons = [
             Icon(src: "https://example.com/icon.svg", mimeType: "image/svg+xml"),
         ]
@@ -1022,13 +1021,13 @@ struct PromptAdvancedFeaturesTests {
                 name: "role",
                 title: "Job Role",
                 description: "The role to interview for",
-                required: true
+                required: true,
             ),
             Prompt.Argument(
                 name: "level",
                 title: "Experience Level",
                 description: "Junior, Mid, or Senior",
-                required: false
+                required: false,
             ),
         ]
         let meta: [String: Value] = ["category": "interview", "author": "system"]
@@ -1039,7 +1038,7 @@ struct PromptAdvancedFeaturesTests {
             description: "A comprehensive technical interview prompt",
             arguments: arguments,
             _meta: meta,
-            icons: icons
+            icons: icons,
         )
 
         let encoder = JSONEncoder()
@@ -1059,8 +1058,8 @@ struct PromptAdvancedFeaturesTests {
         #expect(decoded.icons?[0].mimeType == "image/svg+xml")
     }
 
-    @Test("ResourceLink with all optional fields in prompt message")
-    func testResourceLinkWithAllFields() throws {
+    @Test
+    func `ResourceLink with all optional fields in prompt message`() throws {
         let annotations = Annotations(audience: [.user], priority: 0.9)
         let icons = [Icon(src: "https://example.com/file-icon.png")]
 
@@ -1073,7 +1072,7 @@ struct PromptAdvancedFeaturesTests {
             size: 1024,
             annotations: annotations,
             icons: icons,
-            _meta: ["editable": true]
+            _meta: ["editable": true],
         )
 
         let message: Prompt.Message = .user(.resourceLink(resourceLink))

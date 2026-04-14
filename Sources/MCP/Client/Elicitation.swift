@@ -69,7 +69,7 @@ public struct StringSchema: Hashable, Codable, Sendable {
         maxLength: Int? = nil,
         pattern: String? = nil,
         format: StringSchemaFormat? = nil,
-        defaultValue: String? = nil
+        defaultValue: String? = nil,
     ) {
         type = "string"
         self.title = title
@@ -113,7 +113,7 @@ public struct NumberSchema: Hashable, Codable, Sendable {
         description: String? = nil,
         minimum: Double? = nil,
         maximum: Double? = nil,
-        defaultValue: Double? = nil
+        defaultValue: Double? = nil,
     ) {
         type = isInteger ? "integer" : "number"
         self.title = title
@@ -149,7 +149,7 @@ public struct BooleanSchema: Hashable, Codable, Sendable {
     public init(
         title: String? = nil,
         description: String? = nil,
-        defaultValue: Bool? = nil
+        defaultValue: Bool? = nil,
     ) {
         type = "boolean"
         self.title = title
@@ -189,7 +189,7 @@ public struct UntitledEnumSchema: Hashable, Codable, Sendable {
         title: String? = nil,
         description: String? = nil,
         enumValues: [String],
-        defaultValue: String? = nil
+        defaultValue: String? = nil,
     ) {
         type = "string"
         self.title = title
@@ -216,7 +216,7 @@ public struct TitledEnumSchema: Hashable, Codable, Sendable {
         title: String? = nil,
         description: String? = nil,
         oneOf: [TitledEnumOption],
-        defaultValue: String? = nil
+        defaultValue: String? = nil,
     ) {
         type = "string"
         self.title = title
@@ -246,7 +246,7 @@ public struct LegacyTitledEnumSchema: Hashable, Codable, Sendable {
         description: String? = nil,
         enumValues: [String],
         enumNames: [String]? = nil,
-        defaultValue: String? = nil
+        defaultValue: String? = nil,
     ) {
         type = "string"
         self.title = title
@@ -296,7 +296,7 @@ public struct UntitledMultiSelectEnumSchema: Hashable, Codable, Sendable {
         minItems: Int? = nil,
         maxItems: Int? = nil,
         enumValues: [String],
-        defaultValue: [String]? = nil
+        defaultValue: [String]? = nil,
     ) {
         type = "array"
         self.title = title
@@ -338,7 +338,7 @@ public struct TitledMultiSelectEnumSchema: Hashable, Codable, Sendable {
         minItems: Int? = nil,
         maxItems: Int? = nil,
         options: [TitledEnumOption],
-        defaultValue: [String]? = nil
+        defaultValue: [String]? = nil,
     ) {
         type = "array"
         self.title = title
@@ -422,7 +422,7 @@ extension PrimitiveSchemaDefinition: Codable {
                 // Multi-select enum - check items for anyOf (titled) or enum (untitled)
                 if container.contains(.items) {
                     let itemsContainer = try container.nestedContainer(
-                        keyedBy: ItemsCodingKeys.self, forKey: .items
+                        keyedBy: ItemsCodingKeys.self, forKey: .items,
                     )
                     if itemsContainer.contains(.anyOf) {
                         let schema = try TitledMultiSelectEnumSchema(from: decoder)
@@ -434,7 +434,7 @@ extension PrimitiveSchemaDefinition: Codable {
                 } else {
                     throw DecodingError.dataCorruptedError(
                         forKey: .type, in: container,
-                        debugDescription: "Array type must have items property"
+                        debugDescription: "Array type must have items property",
                     )
                 }
             case "number", "integer":
@@ -446,7 +446,7 @@ extension PrimitiveSchemaDefinition: Codable {
             default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .type, in: container,
-                    debugDescription: "Unknown primitive schema type: \(type)"
+                    debugDescription: "Unknown primitive schema type: \(type)",
                 )
         }
     }
@@ -523,7 +523,7 @@ public struct ElicitRequestFormParams: Hashable, Codable, Sendable {
         message: String,
         requestedSchema: ElicitationSchema,
         _meta: RequestMeta? = nil,
-        task: TaskMetadata? = nil
+        task: TaskMetadata? = nil,
     ) {
         self.mode = mode
         self.message = message
@@ -552,7 +552,7 @@ public struct ElicitationSchema: Hashable, Codable, Sendable {
     public init(
         schema: String? = nil,
         properties: [String: PrimitiveSchemaDefinition],
-        required: [String]? = nil
+        required: [String]? = nil,
     ) {
         self.schema = schema
         type = "object"
@@ -602,8 +602,8 @@ extension ElicitValue: Codable {
                 ElicitValue.self,
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Expected String, Int, Double, Bool, or [String]"
-                )
+                    debugDescription: "Expected String, Int, Double, Bool, or [String]",
+                ),
             )
         }
     }
@@ -642,7 +642,7 @@ public struct ElicitResult: ResultWithExtraFields {
         action: ElicitAction,
         content: [String: ElicitValue]? = nil,
         _meta: [String: Value]? = nil,
-        extraFields: [String: Value]? = nil
+        extraFields: [String: Value]? = nil,
     ) {
         self.action = action
         self.content = content
@@ -698,7 +698,7 @@ public struct ElicitRequestURLParams: Hashable, Codable, Sendable {
         elicitationId: String,
         url: String,
         _meta: RequestMeta? = nil,
-        task: TaskMetadata? = nil
+        task: TaskMetadata? = nil,
     ) {
         mode = "url"
         self.message = message

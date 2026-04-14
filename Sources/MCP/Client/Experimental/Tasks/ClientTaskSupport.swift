@@ -81,7 +81,7 @@ public struct ExperimentalClientTaskHandlers: Sendable {
         cancelTask: CancelTaskHandler? = nil,
         getTaskPayload: GetTaskPayloadHandler? = nil,
         taskAugmentedSampling: TaskAugmentedSamplingHandler? = nil,
-        taskAugmentedElicitation: TaskAugmentedElicitationHandler? = nil
+        taskAugmentedElicitation: TaskAugmentedElicitationHandler? = nil,
     ) {
         self.getTask = getTask
         self.listTasks = listTasks
@@ -107,14 +107,14 @@ public struct ExperimentalClientTaskHandlers: Sendable {
         if hasAugmentedHandlers {
             requests = .init(
                 sampling: taskAugmentedSampling != nil ? .init(createMessage: .init()) : nil,
-                elicitation: taskAugmentedElicitation != nil ? .init(create: .init()) : nil
+                elicitation: taskAugmentedElicitation != nil ? .init(create: .init()) : nil,
             )
         }
 
         return .init(
             list: listTasks != nil ? .init() : nil,
             cancel: cancelTask != nil ? .init() : nil,
-            requests: requests
+            requests: requests,
         )
     }
 }
@@ -147,7 +147,7 @@ public final class ClientTaskSupport: Sendable {
     public init(
         store: any TaskStore,
         queue: any TaskMessageQueue,
-        handlers: ExperimentalClientTaskHandlers
+        handlers: ExperimentalClientTaskHandlers,
     ) {
         self.store = store
         self.queue = queue
@@ -162,7 +162,7 @@ public final class ClientTaskSupport: Sendable {
         ClientTaskSupport(
             store: InMemoryTaskStore(),
             queue: InMemoryTaskMessageQueue(),
-            handlers: handlers
+            handlers: handlers,
         )
     }
 }

@@ -43,7 +43,7 @@ public struct Icon: Hashable, Codable, Sendable {
         src: String,
         mimeType: String? = nil,
         sizes: [String]? = nil,
-        theme: Theme? = nil
+        theme: Theme? = nil,
     ) {
         self.src = src
         self.mimeType = mimeType

@@ -57,7 +57,7 @@ public extension Client {
         public init(
             timeout: Duration? = nil,
             resetTimeoutOnProgress: Bool = false,
-            maxTotalTimeout: Duration? = nil
+            maxTotalTimeout: Duration? = nil,
         ) {
             self.timeout = timeout
             self.resetTimeoutOnProgress = resetTimeoutOnProgress
@@ -92,7 +92,7 @@ public extension Client {
     /// - Throws: `MCPError.requestTimeout` if the timeout is exceeded.
     func send<M: Method>(
         _ request: Request<M>,
-        options: RequestOptions?
+        options: RequestOptions?,
     ) async throws -> M.Result {
         guard isProtocolConnected else {
             throw MCPError.internalError("Client connection not initialized")
@@ -105,13 +105,13 @@ public extension Client {
             let protocolOptions = ProtocolRequestOptions(
                 timeout: options?.timeout,
                 resetTimeoutOnProgress: options?.resetTimeoutOnProgress ?? false,
-                maxTotalTimeout: options?.maxTotalTimeout
+                maxTotalTimeout: options?.maxTotalTimeout,
             )
 
             let responseData = try await sendProtocolRequest(
                 requestData,
                 requestId: requestId,
-                options: protocolOptions
+                options: protocolOptions,
             )
 
             return try decoder.decode(M.Result.self, from: responseData)
@@ -122,12 +122,12 @@ public extension Client {
             if error is CancellationError || Task.isCancelled {
                 await sendCancellationNotification(
                     requestId: requestId,
-                    reason: "Client cancelled the request"
+                    reason: "Client cancelled the request",
                 )
             } else if case let .requestTimeout(t, _) = error as? MCPError {
                 await sendCancellationNotification(
                     requestId: requestId,
-                    reason: "Request timed out after \(t)"
+                    reason: "Request timed out after \(t)",
                 )
             }
             throw error
@@ -160,7 +160,7 @@ public extension Client {
     /// - Returns: The response result
     func send<M: Method>(
         _ request: Request<M>,
-        onProgress: @escaping ProgressCallback
+        onProgress: @escaping ProgressCallback,
     ) async throws -> M.Result {
         try await send(request, options: nil, onProgress: onProgress)
     }
@@ -176,7 +176,7 @@ public extension Client {
     func send<M: Method>(
         _ request: Request<M>,
         options: RequestOptions?,
-        onProgress: @escaping ProgressCallback
+        onProgress: @escaping ProgressCallback,
     ) async throws -> M.Result {
         guard isProtocolConnected else {
             throw MCPError.internalError("Client connection not initialized")
@@ -200,13 +200,13 @@ public extension Client {
                 let progress = Progress(
                     value: params.progress,
                     total: params.total,
-                    message: params.message
+                    message: params.message,
                 )
                 await onProgress(progress)
             },
             timeout: options?.timeout,
             resetTimeoutOnProgress: options?.resetTimeoutOnProgress ?? false,
-            maxTotalTimeout: options?.maxTotalTimeout
+            maxTotalTimeout: options?.maxTotalTimeout,
         )
 
         // Build metadata values to inject (progressToken).
@@ -223,7 +223,7 @@ public extension Client {
                 requestData,
                 requestId: requestId,
                 options: protocolOptions,
-                metaValues: metaValues
+                metaValues: metaValues,
             )
 
             return try decoder.decode(M.Result.self, from: responseData)
@@ -234,12 +234,12 @@ public extension Client {
             if error is CancellationError || Task.isCancelled {
                 await sendCancellationNotification(
                     requestId: requestId,
-                    reason: "Client cancelled the request"
+                    reason: "Client cancelled the request",
                 )
             } else if case let .requestTimeout(t, _) = error as? MCPError {
                 await sendCancellationNotification(
                     requestId: requestId,
-                    reason: "Request timed out after \(t)"
+                    reason: "Request timed out after \(t)",
                 )
             }
             throw error
@@ -289,7 +289,7 @@ public extension Client {
         // Cancel pending request and clean up progress/timeout state
         cancelProtocolPendingRequest(
             id: id,
-            error: MCPError.requestCancelled(reason: reason)
+            error: MCPError.requestCancelled(reason: reason),
         )
         cleanUpRequestProgress(requestId: id)
 
@@ -308,14 +308,14 @@ public extension Client {
         guard let transport = protocolState.transport else {
             logger?.debug(
                 "Cannot send cancellation notification - not connected",
-                metadata: ["requestId": "\(requestId)"]
+                metadata: ["requestId": "\(requestId)"],
             )
             return
         }
 
         let notification = CancelledNotification.message(.init(
             requestId: requestId,
-            reason: reason
+            reason: reason,
         ))
 
         do {
@@ -326,7 +326,7 @@ public extension Client {
                 metadata: [
                     "requestId": "\(requestId)",
                     "reason": "\(reason ?? "none")",
-                ]
+                ],
             )
         } catch {
             // Log but don't throw - cancellation notification is best-effort
@@ -336,7 +336,7 @@ public extension Client {
                 metadata: [
                     "requestId": "\(requestId)",
                     "error": "\(error)",
-                ]
+                ],
             )
         }
     }
@@ -359,7 +359,7 @@ public extension Client {
         /// The actual sending happens when the `withBatch` scope completes.
         /// - Returns: A `Task` that will eventually produce the result or throw an error.
         public func addRequest<M: Method>(_ request: Request<M>) async throws -> Task<
-            M.Result, Swift.Error
+            M.Result, Swift.Error,
         > {
             try requests.append(AnyRequest(request))
 
@@ -471,7 +471,7 @@ public extension Client {
         }
 
         logger?.debug(
-            "Sending batch request", metadata: ["count": "\(requests.count)"]
+            "Sending batch request", metadata: ["count": "\(requests.count)"],
         )
 
         // Encode the array of AnyMethod requests into a single JSON payload

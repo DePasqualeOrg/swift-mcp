@@ -1,24 +1,22 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - RequestInfo Tests
 
-@Suite("RequestInfo Tests")
 struct RequestInfoTests {
-    @Test("RequestInfo stores headers")
-    func testRequestInfoStoresHeaders() {
+    @Test
+    func `RequestInfo stores headers`() {
         let headers = ["Content-Type": "application/json", "X-Custom": "test"]
         let requestInfo = RequestInfo(headers: headers)
 
         #expect(requestInfo.headers == headers)
     }
 
-    @Test("RequestInfo.header() performs case-insensitive lookup")
-    func testRequestInfoHeaderCaseInsensitive() {
+    @Test
+    func `RequestInfo.header() performs case-insensitive lookup`() {
         let headers = ["Content-Type": "application/json", "X-Custom-Header": "value"]
         let requestInfo = RequestInfo(headers: headers)
 
@@ -30,16 +28,16 @@ struct RequestInfoTests {
         #expect(requestInfo.header("X-CUSTOM-HEADER") == "value")
     }
 
-    @Test("RequestInfo.header() returns nil for missing headers")
-    func testRequestInfoHeaderMissing() {
+    @Test
+    func `RequestInfo.header() returns nil for missing headers`() {
         let requestInfo = RequestInfo(headers: ["Content-Type": "application/json"])
 
         #expect(requestInfo.header("X-Missing") == nil)
         #expect(requestInfo.header("Authorization") == nil)
     }
 
-    @Test("RequestInfo is Hashable and Sendable")
-    func testRequestInfoIsHashableAndSendable() {
+    @Test
+    func `RequestInfo is Hashable and Sendable`() {
         let requestInfo1 = RequestInfo(headers: ["X-Test": "value"])
         let requestInfo2 = RequestInfo(headers: ["X-Test": "value"])
         let requestInfo3 = RequestInfo(headers: ["X-Test": "other"])
@@ -55,10 +53,9 @@ struct RequestInfoTests {
 
 // MARK: - RequestMeta.relatedTaskId Tests
 
-@Suite("RequestMeta.relatedTaskId Tests")
 struct RequestMetaRelatedTaskIdTests {
-    @Test("relatedTaskId extracts task ID from additionalFields")
-    func testRelatedTaskIdExtractsTaskId() {
+    @Test
+    func `relatedTaskId extracts task ID from additionalFields`() {
         let meta = RequestMeta(additionalFields: [
             "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-abc123")]),
         ])
@@ -66,22 +63,22 @@ struct RequestMetaRelatedTaskIdTests {
         #expect(meta.relatedTaskId == "task-abc123")
     }
 
-    @Test("relatedTaskId returns nil when no related task metadata")
-    func testRelatedTaskIdNilWhenNoMetadata() {
+    @Test
+    func `relatedTaskId returns nil when no related task metadata`() {
         let meta = RequestMeta()
 
         #expect(meta.relatedTaskId == nil)
     }
 
-    @Test("relatedTaskId returns nil when additionalFields is nil")
-    func testRelatedTaskIdNilWhenAdditionalFieldsNil() {
+    @Test
+    func `relatedTaskId returns nil when additionalFields is nil`() {
         let meta = RequestMeta(progressToken: .string("token"))
 
         #expect(meta.relatedTaskId == nil)
     }
 
-    @Test("relatedTaskId returns nil when key is missing")
-    func testRelatedTaskIdNilWhenKeyMissing() {
+    @Test
+    func `relatedTaskId returns nil when key is missing`() {
         let meta = RequestMeta(additionalFields: [
             "other-key": .object(["taskId": .string("task-123")]),
         ])
@@ -89,8 +86,8 @@ struct RequestMetaRelatedTaskIdTests {
         #expect(meta.relatedTaskId == nil)
     }
 
-    @Test("relatedTaskId returns nil when taskId is not a string")
-    func testRelatedTaskIdNilWhenTaskIdNotString() {
+    @Test
+    func `relatedTaskId returns nil when taskId is not a string`() {
         let meta = RequestMeta(additionalFields: [
             "io.modelcontextprotocol/related-task": .object(["taskId": .double(123)]),
         ])
@@ -98,8 +95,8 @@ struct RequestMetaRelatedTaskIdTests {
         #expect(meta.relatedTaskId == nil)
     }
 
-    @Test("relatedTaskId returns nil when value is not an object")
-    func testRelatedTaskIdNilWhenNotObject() {
+    @Test
+    func `relatedTaskId returns nil when value is not an object`() {
         let meta = RequestMeta(additionalFields: [
             "io.modelcontextprotocol/related-task": .string("not-an-object"),
         ])
@@ -107,13 +104,13 @@ struct RequestMetaRelatedTaskIdTests {
         #expect(meta.relatedTaskId == nil)
     }
 
-    @Test("relatedTaskId works with progressToken also set")
-    func testRelatedTaskIdWithProgressToken() {
+    @Test
+    func `relatedTaskId works with progressToken also set`() {
         let meta = RequestMeta(
             progressToken: .string("progress-123"),
             additionalFields: [
                 "io.modelcontextprotocol/related-task": .object(["taskId": .string("task-xyz")]),
-            ]
+            ],
         )
 
         #expect(meta.progressToken == .string("progress-123"))
@@ -136,27 +133,28 @@ struct RequestMetaRelatedTaskIdTests {
 
 // MARK: - Server RequestHandlerContext Tests
 
-@Suite("RequestHandlerContext Tests (Server)")
 struct ServerRequestHandlerContextTests {
     // MARK: - requestId Tests
 
     /// Test that handlers can access context.requestId.
     /// Based on Python SDK's test_context_injection: `assert ctx.request_id is not None`
-    @Test("Handler can access context.requestId")
-    func testHandlerCanAccessRequestId() async throws {
+    @Test
+    func `Handler can access context.requestId`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track the requestId received in handler
         actor RequestIdTracker {
             var receivedRequestId: RequestId?
-            func set(_ id: RequestId) { receivedRequestId = id }
+            func set(_ id: RequestId) {
+                receivedRequestId = id
+            }
         }
         let tracker = RequestIdTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -191,20 +189,22 @@ struct ServerRequestHandlerContextTests {
     }
 
     /// Test that context.requestId matches the actual JSON-RPC request ID.
-    @Test("context.requestId matches JSON-RPC request ID")
-    func testRequestIdMatchesJsonRpcId() async throws {
+    @Test
+    func `context.requestId matches JSON-RPC request ID`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor RequestIdTracker {
             var receivedRequestIds: [RequestId] = []
-            func add(_ id: RequestId) { receivedRequestIds.append(id) }
+            func add(_ id: RequestId) {
+                receivedRequestIds.append(id)
+            }
         }
         let tracker = RequestIdTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, context in
@@ -243,20 +243,22 @@ struct ServerRequestHandlerContextTests {
 
     /// Test that handlers can access context._meta when present.
     /// Based on TypeScript SDK's `extra._meta` access tests.
-    @Test("Handler can access context._meta when present")
-    func testHandlerCanAccessMeta() async throws {
+    @Test
+    func `Handler can access context._meta when present`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor MetaTracker {
             var receivedMeta: RequestMeta?
-            func set(_ meta: RequestMeta?) { receivedMeta = meta }
+            func set(_ meta: RequestMeta?) {
+                receivedMeta = meta
+            }
         }
         let tracker = MetaTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -281,8 +283,8 @@ struct ServerRequestHandlerContextTests {
             CallTool.request(.init(
                 name: "test_tool",
                 arguments: [:],
-                _meta: RequestMeta(progressToken: .string("test-token-123"))
-            ))
+                _meta: RequestMeta(progressToken: .string("test-token-123")),
+            )),
         )
 
         let receivedMeta = await tracker.receivedMeta
@@ -293,8 +295,8 @@ struct ServerRequestHandlerContextTests {
     }
 
     /// Test that context._meta is nil when not provided in request.
-    @Test("context._meta is nil when not provided")
-    func testMetaIsNilWhenNotProvided() async throws {
+    @Test
+    func `context._meta is nil when not provided`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor MetaTracker {
@@ -310,7 +312,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -342,8 +344,8 @@ struct ServerRequestHandlerContextTests {
 
     /// Test using context._meta?.progressToken as a convenience pattern.
     /// Based on Python SDK's test_176_progress_token.py showing progressToken access via context.
-    @Test("context._meta?.progressToken convenience pattern")
-    func testProgressTokenFromContextMeta() async throws {
+    @Test
+    func `context._meta?.progressToken convenience pattern`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor ProgressTracker {
@@ -357,7 +359,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -390,8 +392,8 @@ struct ServerRequestHandlerContextTests {
             CallTool.request(.init(
                 name: "progress_tool",
                 arguments: [:],
-                _meta: RequestMeta(progressToken: .string("ctx-token"))
-            ))
+                _meta: RequestMeta(progressToken: .string("ctx-token")),
+            )),
         )
 
         try await Task.sleep(for: .milliseconds(100))
@@ -408,14 +410,14 @@ struct ServerRequestHandlerContextTests {
     /// Test that handlers can use context.elicit() for bidirectional elicitation.
     /// Based on TypeScript SDK's `extra.sendRequest({ method: 'elicitation/create' })` tests
     /// in test/integration/test/taskLifecycle.test.ts and test/integration/test/server.test.ts.
-    @Test("Handler can use context.elicit() for form elicitation")
-    func testContextElicitForm() async throws {
+    @Test
+    func `Handler can use context.elicit() for form elicitation`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -431,8 +433,8 @@ struct ServerRequestHandlerContextTests {
                 message: "What is your name?",
                 requestedSchema: ElicitationSchema(
                     properties: ["name": .string(StringSchema(title: "Name"))],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )
 
             if result.action == .accept, let name = result.content?["name"]?.stringValue {
@@ -467,14 +469,14 @@ struct ServerRequestHandlerContextTests {
     }
 
     /// Test that context.elicit() handles user decline.
-    @Test("context.elicit() handles user decline")
-    func testContextElicitDecline() async throws {
+    @Test
+    func `context.elicit() handles user decline`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -487,8 +489,8 @@ struct ServerRequestHandlerContextTests {
             let result = try await context.elicit(
                 message: "Confirm?",
                 requestedSchema: ElicitationSchema(
-                    properties: ["ok": .boolean(BooleanSchema(title: "OK"))]
-                )
+                    properties: ["ok": .boolean(BooleanSchema(title: "OK"))],
+                ),
             )
 
             return switch result.action {
@@ -529,8 +531,8 @@ struct ServerRequestHandlerContextTests {
 
     /// Test that context.authInfo is nil for non-HTTP transports.
     /// Based on TypeScript SDK's `extra.authInfo` which is only populated for authenticated HTTP connections.
-    @Test("context.authInfo is nil for InMemoryTransport")
-    func testAuthInfoNilForInMemoryTransport() async throws {
+    @Test
+    func `context.authInfo is nil for InMemoryTransport`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor AuthInfoTracker {
@@ -546,7 +548,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -580,8 +582,8 @@ struct ServerRequestHandlerContextTests {
 
     /// Test that context.requestInfo is nil for non-HTTP transports.
     /// Based on TypeScript SDK's `extra.requestInfo` which is only populated for HTTP connections.
-    @Test("context.requestInfo is nil for InMemoryTransport")
-    func testRequestInfoNilForInMemoryTransport() async throws {
+    @Test
+    func `context.requestInfo is nil for InMemoryTransport`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor RequestInfoTracker {
@@ -597,7 +599,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -631,8 +633,8 @@ struct ServerRequestHandlerContextTests {
 
     /// Test that context.taskId extracts task ID from _meta when present.
     /// Based on TypeScript SDK's `extra.taskId` which is extracted from `_meta[RELATED_TASK_META_KEY]`.
-    @Test("context.taskId extracts task ID from _meta")
-    func testContextTaskIdFromMeta() async throws {
+    @Test
+    func `context.taskId extracts task ID from _meta`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
@@ -648,7 +650,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -675,8 +677,8 @@ struct ServerRequestHandlerContextTests {
                 arguments: [:],
                 _meta: RequestMeta(additionalFields: [
                     "io.modelcontextprotocol/related-task": .object(["taskId": .string("test-task-123")]),
-                ])
-            ))
+                ]),
+            )),
         )
 
         let wasChecked = await tracker.wasChecked
@@ -688,8 +690,8 @@ struct ServerRequestHandlerContextTests {
     }
 
     /// Test that context.taskId is nil when no related task metadata.
-    @Test("context.taskId is nil when no related task metadata")
-    func testContextTaskIdNilWhenNoTaskMeta() async throws {
+    @Test
+    func `context.taskId is nil when no related task metadata`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
@@ -705,7 +707,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -739,8 +741,8 @@ struct ServerRequestHandlerContextTests {
 
     /// Test that context.closeResponseStream is nil for non-HTTP transports.
     /// Based on TypeScript SDK's `extra.closeResponseStream` which is only available for HTTP/SSE transports.
-    @Test("context.closeResponseStream is nil for InMemoryTransport")
-    func testCloseSSEStreamNilForInMemoryTransport() async throws {
+    @Test
+    func `context.closeResponseStream is nil for InMemoryTransport`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor StreamClosureTracker {
@@ -756,7 +758,7 @@ struct ServerRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -769,7 +771,7 @@ struct ServerRequestHandlerContextTests {
             // Check that SSE stream closures are nil for InMemoryTransport
             await tracker.set(
                 closeSSE: context.closeResponseStream == nil,
-                closeStandalone: context.closeNotificationStream == nil
+                closeStandalone: context.closeNotificationStream == nil,
             )
             return CallTool.Result(content: [.text("OK")])
         }
@@ -792,23 +794,24 @@ struct ServerRequestHandlerContextTests {
 
 // MARK: - Client RequestHandlerContext Tests
 
-@Suite("RequestHandlerContext Tests (Client)")
 struct ClientRequestHandlerContextTests {
     /// Test that client handlers can access context.requestId.
-    @Test("Client handler can access context.requestId")
-    func testClientHandlerCanAccessRequestId() async throws {
+    @Test
+    func `Client handler can access context.requestId`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor RequestIdTracker {
             var receivedRequestId: RequestId?
-            func set(_ id: RequestId) { receivedRequestId = id }
+            func set(_ id: RequestId) {
+                receivedRequestId = id
+            }
         }
         let tracker = RequestIdTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -820,7 +823,7 @@ struct ClientRequestHandlerContextTests {
         await server.withRequestHandler(CallTool.self) { [server] _, _ in
             let result = try await server.elicit(.form(ElicitRequestFormParams(
                 message: "Test",
-                requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())])
+                requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())]),
             )))
             return CallTool.Result(content: [.text("Action: \(result.action)")])
         }
@@ -845,8 +848,8 @@ struct ClientRequestHandlerContextTests {
 
     /// Test that client handlers can access context.taskId when present.
     /// This matches the server's context.taskId convenience property.
-    @Test("Client handler can access context.taskId")
-    func testClientHandlerCanAccessTaskId() async throws {
+    @Test
+    func `Client handler can access context.taskId`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
@@ -862,7 +865,7 @@ struct ClientRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -878,7 +881,7 @@ struct ClientRequestHandlerContextTests {
                 requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())]),
                 _meta: RequestMeta(additionalFields: [
                     "io.modelcontextprotocol/related-task": .object(["taskId": .string("client-task-456")]),
-                ])
+                ]),
             )))
             return CallTool.Result(content: [.text("Action: \(result.action)")])
         }
@@ -904,8 +907,8 @@ struct ClientRequestHandlerContextTests {
     }
 
     /// Test that client context.taskId is nil when no related task metadata.
-    @Test("Client context.taskId is nil when no related task metadata")
-    func testClientContextTaskIdNilWhenNoTaskMeta() async throws {
+    @Test
+    func `Client context.taskId is nil when no related task metadata`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor TaskIdTracker {
@@ -921,7 +924,7 @@ struct ClientRequestHandlerContextTests {
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -934,7 +937,7 @@ struct ClientRequestHandlerContextTests {
             // Send elicitation WITHOUT task metadata
             let result = try await server.elicit(.form(ElicitRequestFormParams(
                 message: "Test",
-                requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())])
+                requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())]),
             )))
             return CallTool.Result(content: [.text("Action: \(result.action)")])
         }
@@ -960,20 +963,22 @@ struct ClientRequestHandlerContextTests {
     }
 
     /// Test that client handlers can access context._meta when present.
-    @Test("Client handler can access context._meta")
-    func testClientHandlerCanAccessMeta() async throws {
+    @Test
+    func `Client handler can access context._meta`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor MetaTracker {
             var receivedMeta: RequestMeta?
-            func set(_ meta: RequestMeta?) { receivedMeta = meta }
+            func set(_ meta: RequestMeta?) {
+                receivedMeta = meta
+            }
         }
         let tracker = MetaTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -986,7 +991,7 @@ struct ClientRequestHandlerContextTests {
             let result = try await server.elicit(.form(ElicitRequestFormParams(
                 message: "Test",
                 requestedSchema: ElicitationSchema(properties: ["x": .string(StringSchema())]),
-                _meta: RequestMeta(progressToken: .string("server-token"))
+                _meta: RequestMeta(progressToken: .string("server-token")),
             )))
             return CallTool.Result(content: [.text("Action: \(result.action)")])
         }
@@ -1016,20 +1021,19 @@ struct ClientRequestHandlerContextTests {
 
 /// Additional tests based on patterns from Python and TypeScript SDKs.
 /// These tests ensure feature parity across SDK implementations.
-@Suite("Additional RequestHandlerContext Tests")
 struct AdditionalRequestHandlerContextTests {
     // MARK: - context.elicitUrl() Tests
 
     /// Test that handlers can use context.elicitUrl() for URL elicitation.
     /// Based on Python SDK's ctx.session.elicit_url() and ctx.elicit_url() tests.
-    @Test("Handler can use context.elicitUrl() for URL elicitation")
-    func testContextElicitUrl() async throws {
+    @Test
+    func `Handler can use context.elicitUrl() for URL elicitation`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1044,7 +1048,7 @@ struct AdditionalRequestHandlerContextTests {
             let result = try await context.elicitUrl(
                 message: "Please authorize access to files",
                 url: "https://example.com/oauth/authorize",
-                elicitationId: "file-auth-123"
+                elicitationId: "file-auth-123",
             )
 
             return switch result.action {
@@ -1082,14 +1086,14 @@ struct AdditionalRequestHandlerContextTests {
     }
 
     /// Test that context.elicitUrl() handles user decline.
-    @Test("context.elicitUrl() handles user decline")
-    func testContextElicitUrlDecline() async throws {
+    @Test
+    func `context.elicitUrl() handles user decline`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1102,7 +1106,7 @@ struct AdditionalRequestHandlerContextTests {
             let result = try await context.elicitUrl(
                 message: "Authorize?",
                 url: "https://example.com/oauth",
-                elicitationId: "auth-decline-test"
+                elicitationId: "auth-decline-test",
             )
 
             return switch result.action {
@@ -1136,14 +1140,14 @@ struct AdditionalRequestHandlerContextTests {
 
     /// Test that context.elicit() handles cancel action.
     /// Based on TypeScript SDK's cancel action tests.
-    @Test("context.elicit() handles cancel action")
-    func testContextElicitCancel() async throws {
+    @Test
+    func `context.elicit() handles cancel action`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1156,8 +1160,8 @@ struct AdditionalRequestHandlerContextTests {
             let result = try await context.elicit(
                 message: "Confirm this action?",
                 requestedSchema: ElicitationSchema(
-                    properties: ["confirm": .boolean(BooleanSchema(title: "Confirm"))]
-                )
+                    properties: ["confirm": .boolean(BooleanSchema(title: "Confirm"))],
+                ),
             )
 
             return switch result.action {
@@ -1191,14 +1195,14 @@ struct AdditionalRequestHandlerContextTests {
 
     /// Test multiple sequential elicitation requests within a single handler.
     /// Based on TypeScript SDK's test for handling multiple sequential elicitation requests.
-    @Test("Handler can make multiple sequential elicitation requests")
-    func testMultipleSequentialElicitationRequests() async throws {
+    @Test
+    func `Handler can make multiple sequential elicitation requests`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1213,8 +1217,8 @@ struct AdditionalRequestHandlerContextTests {
                 message: "What is your name?",
                 requestedSchema: ElicitationSchema(
                     properties: ["name": .string(StringSchema(title: "Name"))],
-                    required: ["name"]
-                )
+                    required: ["name"],
+                ),
             )
 
             guard nameResult.action == .accept,
@@ -1228,8 +1232,8 @@ struct AdditionalRequestHandlerContextTests {
                 message: "What is your age?",
                 requestedSchema: ElicitationSchema(
                     properties: ["age": .number(NumberSchema(isInteger: true, title: "Age"))],
-                    required: ["age"]
-                )
+                    required: ["age"],
+                ),
             )
 
             guard ageResult.action == .accept,
@@ -1243,8 +1247,8 @@ struct AdditionalRequestHandlerContextTests {
                 message: "What is your city?",
                 requestedSchema: ElicitationSchema(
                     properties: ["city": .string(StringSchema(title: "City"))],
-                    required: ["city"]
-                )
+                    required: ["city"],
+                ),
             )
 
             guard cityResult.action == .accept,
@@ -1260,7 +1264,9 @@ struct AdditionalRequestHandlerContextTests {
 
         actor RequestCounter {
             var count = 0
-            func increment() { count += 1 }
+            func increment() {
+                count += 1
+            }
         }
         let counter = RequestCounter()
 
@@ -1301,20 +1307,22 @@ struct AdditionalRequestHandlerContextTests {
 
     /// Test that sampling handler can access context.requestId.
     /// Based on Python SDK's sampling callback context access patterns.
-    @Test("Sampling handler can access context.requestId")
-    func testSamplingHandlerCanAccessRequestId() async throws {
+    @Test
+    func `Sampling handler can access context.requestId`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor RequestIdTracker {
             var receivedRequestId: RequestId?
-            func set(_ id: RequestId) { receivedRequestId = id }
+            func set(_ id: RequestId) {
+                receivedRequestId = id
+            }
         }
         let tracker = RequestIdTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1326,7 +1334,7 @@ struct AdditionalRequestHandlerContextTests {
         await server.withRequestHandler(CallTool.self) { [server] _, _ in
             let params = SamplingParameters(
                 messages: [.user("Hello")],
-                maxTokens: 100
+                maxTokens: 100,
             )
             let result = try await server.createMessage(params)
             return CallTool.Result(content: [.text("LLM said: \(result.model)")])
@@ -1341,7 +1349,7 @@ struct AdditionalRequestHandlerContextTests {
                 model: "test-model",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: [.text("Hello from LLM")]
+                content: [.text("Hello from LLM")],
             )
         }
 
@@ -1357,20 +1365,22 @@ struct AdditionalRequestHandlerContextTests {
     }
 
     /// Test that sampling handler can access context._meta when present.
-    @Test("Sampling handler can access context._meta")
-    func testSamplingHandlerCanAccessMeta() async throws {
+    @Test
+    func `Sampling handler can access context._meta`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor MetaTracker {
             var receivedMeta: RequestMeta?
-            func set(_ meta: RequestMeta?) { receivedMeta = meta }
+            func set(_ meta: RequestMeta?) {
+                receivedMeta = meta
+            }
         }
         let tracker = MetaTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1383,7 +1393,7 @@ struct AdditionalRequestHandlerContextTests {
             let params = SamplingParameters(
                 messages: [.user("Hello")],
                 maxTokens: 100,
-                _meta: RequestMeta(progressToken: .string("sampling-token-123"))
+                _meta: RequestMeta(progressToken: .string("sampling-token-123")),
             )
             let result = try await server.createMessage(params)
             return CallTool.Result(content: [.text("LLM said: \(result.model)")])
@@ -1398,7 +1408,7 @@ struct AdditionalRequestHandlerContextTests {
                 model: "test-model",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: [.text("Hello from LLM")]
+                content: [.text("Hello from LLM")],
             )
         }
 
@@ -1418,20 +1428,22 @@ struct AdditionalRequestHandlerContextTests {
 
     /// Test that roots handler can access context.requestId.
     /// Based on Python SDK's list_roots callback context access patterns.
-    @Test("Roots handler can access context.requestId")
-    func testRootsHandlerCanAccessRequestId() async throws {
+    @Test
+    func `Roots handler can access context.requestId`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor RequestIdTracker {
             var receivedRequestId: RequestId?
-            func set(_ id: RequestId) { receivedRequestId = id }
+            func set(_ id: RequestId) {
+                receivedRequestId = id
+            }
         }
         let tracker = RequestIdTracker()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in

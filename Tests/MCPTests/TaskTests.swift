@@ -1,46 +1,42 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Task Type Tests
 
-@Suite("Task Type Tests")
 struct TaskTypeTests {
     // MARK: - TaskStatus Tests
 
     @Test(
-        "TaskStatus raw values match spec",
         arguments: [
             (TaskStatus.working, "working"),
             (TaskStatus.inputRequired, "input_required"),
             (TaskStatus.completed, "completed"),
             (TaskStatus.failed, "failed"),
             (TaskStatus.cancelled, "cancelled"),
-        ]
+        ],
     )
-    func taskStatusRawValues(testCase: (status: TaskStatus, rawValue: String)) {
+    func `TaskStatus raw values match spec`(testCase: (status: TaskStatus, rawValue: String)) {
         #expect(testCase.status.rawValue == testCase.rawValue)
     }
 
     @Test(
-        "TaskStatus.isTerminal returns correct values",
         arguments: [
             (TaskStatus.working, false),
             (TaskStatus.inputRequired, false),
             (TaskStatus.completed, true),
             (TaskStatus.failed, true),
             (TaskStatus.cancelled, true),
-        ]
+        ],
     )
-    func taskStatusIsTerminal(testCase: (status: TaskStatus, isTerminal: Bool)) {
+    func `TaskStatus.isTerminal returns correct values`(testCase: (status: TaskStatus, isTerminal: Bool)) {
         #expect(testCase.status.isTerminal == testCase.isTerminal)
     }
 
-    @Test("isTerminalStatus helper function matches TaskStatus.isTerminal")
-    func isTerminalStatusHelperFunction() {
+    @Test
+    func `isTerminalStatus helper function matches TaskStatus.isTerminal`() {
         #expect(isTerminalStatus(.working) == false)
         #expect(isTerminalStatus(.inputRequired) == false)
         #expect(isTerminalStatus(.completed) == true)
@@ -48,8 +44,8 @@ struct TaskTypeTests {
         #expect(isTerminalStatus(.cancelled) == true)
     }
 
-    @Test("TaskStatus encodes and decodes correctly")
-    func taskStatusEncodingDecoding() throws {
+    @Test
+    func `TaskStatus encodes and decodes correctly`() throws {
         let statuses: [TaskStatus] = [.working, .inputRequired, .completed, .failed, .cancelled]
 
         for status in statuses {
@@ -61,8 +57,8 @@ struct TaskTypeTests {
 
     // MARK: - MCPTask Tests
 
-    @Test("MCPTask encoding and decoding with all fields")
-    func mcpTaskFullEncodingDecoding() throws {
+    @Test
+    func `MCPTask encoding and decoding with all fields`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .working,
@@ -70,7 +66,7 @@ struct TaskTypeTests {
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:05Z",
             pollInterval: 1000,
-            statusMessage: "Processing..."
+            statusMessage: "Processing...",
         )
 
         let data = try JSONEncoder().encode(task)
@@ -85,25 +81,25 @@ struct TaskTypeTests {
         #expect(decoded.statusMessage == "Processing...")
     }
 
-    @Test("MCPTask with nil ttl encodes as null (per spec requirement)")
-    func mcpTaskNilTtlEncodesAsNull() throws {
+    @Test
+    func `MCPTask with nil ttl encodes as null (per spec requirement)`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .working,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:05Z"
+            lastUpdatedAt: "2024-01-15T10:30:05Z",
         )
 
         let data = try JSONEncoder().encode(task)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         // Per MCP spec, ttl must always be present (encoded as null when nil)
         #expect(jsonString.contains("\"ttl\":null"))
     }
 
-    @Test("MCPTask decodes ttl as null correctly")
-    func mcpTaskDecodesNullTtl() throws {
+    @Test
+    func `MCPTask decodes ttl as null correctly`() throws {
         let jsonString = """
         {
             "taskId": "task-123",
@@ -114,24 +110,24 @@ struct TaskTypeTests {
         }
         """
 
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
         let task = try JSONDecoder().decode(MCPTask.self, from: data)
 
         #expect(task.ttl == nil)
     }
 
-    @Test("MCPTask with optional fields omitted")
-    func mcpTaskOptionalFieldsOmitted() throws {
+    @Test
+    func `MCPTask with optional fields omitted`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .completed,
             ttl: 30000,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:10Z"
+            lastUpdatedAt: "2024-01-15T10:30:10Z",
         )
 
         let data = try JSONEncoder().encode(task)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         // Optional fields should not be present
         #expect(!jsonString.contains("pollInterval"))
@@ -140,8 +136,8 @@ struct TaskTypeTests {
 
     // MARK: - TaskMetadata Tests
 
-    @Test("TaskMetadata encoding and decoding")
-    func taskMetadataEncodingDecoding() throws {
+    @Test
+    func `TaskMetadata encoding and decoding`() throws {
         let metadata = TaskMetadata(ttl: 60000)
 
         let data = try JSONEncoder().encode(metadata)
@@ -150,8 +146,8 @@ struct TaskTypeTests {
         #expect(decoded.ttl == 60000)
     }
 
-    @Test("TaskMetadata with nil ttl")
-    func taskMetadataNilTtl() throws {
+    @Test
+    func `TaskMetadata with nil ttl`() throws {
         let metadata = TaskMetadata(ttl: nil)
 
         let data = try JSONEncoder().encode(metadata)
@@ -162,8 +158,8 @@ struct TaskTypeTests {
 
     // MARK: - RelatedTaskMetadata Tests
 
-    @Test("RelatedTaskMetadata encoding and decoding")
-    func relatedTaskMetadataEncodingDecoding() throws {
+    @Test
+    func `RelatedTaskMetadata encoding and decoding`() throws {
         let metadata = RelatedTaskMetadata(taskId: "task-456")
 
         let data = try JSONEncoder().encode(metadata)
@@ -174,30 +170,29 @@ struct TaskTypeTests {
 
     // MARK: - Metadata Key Tests
 
-    @Test("relatedTaskMetaKey has correct value")
-    func relatedTaskMetaKeyValue() {
+    @Test
+    func `relatedTaskMetaKey has correct value`() {
         #expect(relatedTaskMetaKey == "io.modelcontextprotocol/related-task")
     }
 
-    @Test("modelImmediateResponseKey has correct value")
-    func modelImmediateResponseKeyValue() {
+    @Test
+    func `modelImmediateResponseKey has correct value`() {
         #expect(modelImmediateResponseKey == "io.modelcontextprotocol/model-immediate-response")
     }
 }
 
 // MARK: - CreateTaskResult Tests
 
-@Suite("CreateTaskResult Tests")
 struct CreateTaskResultTests {
-    @Test("CreateTaskResult encoding and decoding")
-    func createTaskResultEncodingDecoding() throws {
+    @Test
+    func `CreateTaskResult encoding and decoding`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .working,
             ttl: 60000,
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:00Z",
-            pollInterval: 1000
+            pollInterval: 1000,
         )
 
         let result = CreateTaskResult(task: task)
@@ -211,14 +206,14 @@ struct CreateTaskResultTests {
         #expect(decoded.task.pollInterval == 1000)
     }
 
-    @Test("CreateTaskResult with model immediate response")
-    func createTaskResultWithModelImmediateResponse() throws {
+    @Test
+    func `CreateTaskResult with model immediate response`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .working,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:00Z"
+            lastUpdatedAt: "2024-01-15T10:30:00Z",
         )
 
         let result = CreateTaskResult(task: task, modelImmediateResponse: "Starting task...")
@@ -229,14 +224,14 @@ struct CreateTaskResultTests {
         #expect(decoded._meta?[modelImmediateResponseKey]?.stringValue == "Starting task...")
     }
 
-    @Test("CreateTaskResult with _meta")
-    func createTaskResultWithMeta() throws {
+    @Test
+    func `CreateTaskResult with _meta`() throws {
         let task = MCPTask(
             taskId: "task-123",
             status: .working,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:00Z"
+            lastUpdatedAt: "2024-01-15T10:30:00Z",
         )
 
         let meta: [String: Value] = [
@@ -256,15 +251,14 @@ struct CreateTaskResultTests {
 
 // MARK: - GetTask Tests
 
-@Suite("GetTask Method Tests")
 struct GetTaskMethodTests {
-    @Test("GetTask.name is correct")
-    func getTaskMethodName() {
+    @Test
+    func `GetTask.name is correct`() {
         #expect(GetTask.name == "tasks/get")
     }
 
-    @Test("GetTask.Parameters encoding and decoding")
-    func getTaskParametersEncodingDecoding() throws {
+    @Test
+    func `GetTask.Parameters encoding and decoding`() throws {
         let params = GetTask.Parameters(taskId: "task-123")
 
         let data = try JSONEncoder().encode(params)
@@ -273,8 +267,8 @@ struct GetTaskMethodTests {
         #expect(decoded.taskId == "task-123")
     }
 
-    @Test("GetTask.Result encoding and decoding")
-    func getTaskResultEncodingDecoding() throws {
+    @Test
+    func `GetTask.Result encoding and decoding`() throws {
         let result = GetTask.Result(
             taskId: "task-123",
             status: .completed,
@@ -282,7 +276,7 @@ struct GetTaskMethodTests {
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:30Z",
             pollInterval: 1000,
-            statusMessage: "Done"
+            statusMessage: "Done",
         )
 
         let data = try JSONEncoder().encode(result)
@@ -295,15 +289,15 @@ struct GetTaskMethodTests {
         #expect(decoded.statusMessage == "Done")
     }
 
-    @Test("GetTask.Result from MCPTask")
-    func getTaskResultFromMCPTask() throws {
+    @Test
+    func `GetTask.Result from MCPTask`() {
         let task = MCPTask(
             taskId: "task-456",
             status: .failed,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:15Z",
-            statusMessage: "Connection timeout"
+            statusMessage: "Connection timeout",
         )
 
         let result = GetTask.Result(task: task)
@@ -313,18 +307,18 @@ struct GetTaskMethodTests {
         #expect(result.statusMessage == "Connection timeout")
     }
 
-    @Test("GetTask.Result ttl encodes as null when nil")
-    func getTaskResultTtlEncodesAsNull() throws {
+    @Test
+    func `GetTask.Result ttl encodes as null when nil`() throws {
         let result = GetTask.Result(
             taskId: "task-123",
             status: .working,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:00Z"
+            lastUpdatedAt: "2024-01-15T10:30:00Z",
         )
 
         let data = try JSONEncoder().encode(result)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonString.contains("\"ttl\":null"))
     }
@@ -332,15 +326,14 @@ struct GetTaskMethodTests {
 
 // MARK: - GetTaskPayload Tests
 
-@Suite("GetTaskPayload Method Tests")
 struct GetTaskPayloadMethodTests {
-    @Test("GetTaskPayload.name is correct")
-    func getTaskPayloadMethodName() {
+    @Test
+    func `GetTaskPayload.name is correct`() {
         #expect(GetTaskPayload.name == "tasks/result")
     }
 
-    @Test("GetTaskPayload.Parameters encoding and decoding")
-    func getTaskPayloadParametersEncodingDecoding() throws {
+    @Test
+    func `GetTaskPayload.Parameters encoding and decoding`() throws {
         let params = GetTaskPayload.Parameters(taskId: "task-123")
 
         let data = try JSONEncoder().encode(params)
@@ -349,8 +342,8 @@ struct GetTaskPayloadMethodTests {
         #expect(decoded.taskId == "task-123")
     }
 
-    @Test("GetTaskPayload.Result with extraFields (flattened result)")
-    func getTaskPayloadResultWithExtraFields() throws {
+    @Test
+    func `GetTaskPayload.Result with extraFields (flattened result)`() throws {
         // Simulate a tools/call result flattened into extraFields
         let extraFields: [String: Value] = [
             "content": .array([
@@ -375,8 +368,8 @@ struct GetTaskPayloadMethodTests {
         #expect(decoded.extraFields?["isError"]?.boolValue == false)
     }
 
-    @Test("GetTaskPayload.Result fromResultValue convenience initializer")
-    func getTaskPayloadResultFromResultValue() throws {
+    @Test
+    func `GetTaskPayload.Result fromResultValue convenience initializer`() {
         let resultValue: Value = .object([
             "content": .array([.object(["type": .string("text"), "text": .string("Result")])]),
             "isError": .bool(false),
@@ -390,15 +383,14 @@ struct GetTaskPayloadMethodTests {
 
 // MARK: - ListTasks Tests
 
-@Suite("ListTasks Method Tests")
 struct ListTasksMethodTests {
-    @Test("ListTasks.name is correct")
-    func listTasksMethodName() {
+    @Test
+    func `ListTasks.name is correct`() {
         #expect(ListTasks.name == "tasks/list")
     }
 
-    @Test("ListTasks.Parameters encoding and decoding with cursor")
-    func listTasksParametersWithCursor() throws {
+    @Test
+    func `ListTasks.Parameters encoding and decoding with cursor`() throws {
         let params = ListTasks.Parameters(cursor: "page-2-token")
 
         let data = try JSONEncoder().encode(params)
@@ -407,30 +399,30 @@ struct ListTasksMethodTests {
         #expect(decoded.cursor == "page-2-token")
     }
 
-    @Test("ListTasks.Parameters empty initializer")
-    func listTasksParametersEmpty() throws {
+    @Test
+    func `ListTasks.Parameters empty initializer`() {
         let params = ListTasks.Parameters()
 
         #expect(params.cursor == nil)
         #expect(params._meta == nil)
     }
 
-    @Test("ListTasks.Result encoding and decoding")
-    func listTasksResultEncodingDecoding() throws {
+    @Test
+    func `ListTasks.Result encoding and decoding`() throws {
         let tasks = [
             MCPTask(
                 taskId: "task-1",
                 status: .completed,
                 ttl: nil,
                 createdAt: "2024-01-15T10:00:00Z",
-                lastUpdatedAt: "2024-01-15T10:05:00Z"
+                lastUpdatedAt: "2024-01-15T10:05:00Z",
             ),
             MCPTask(
                 taskId: "task-2",
                 status: .working,
                 ttl: 60000,
                 createdAt: "2024-01-15T10:10:00Z",
-                lastUpdatedAt: "2024-01-15T10:10:00Z"
+                lastUpdatedAt: "2024-01-15T10:10:00Z",
             ),
         ]
 
@@ -445,12 +437,12 @@ struct ListTasksMethodTests {
         #expect(decoded.nextCursor == "page-2")
     }
 
-    @Test("ListTasks.Result without nextCursor indicates end of pagination")
-    func listTasksResultWithoutNextCursor() throws {
+    @Test
+    func `ListTasks.Result without nextCursor indicates end of pagination`() throws {
         let result = ListTasks.Result(tasks: [], nextCursor: nil)
 
         let data = try JSONEncoder().encode(result)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(!jsonString.contains("nextCursor"))
     }
@@ -458,15 +450,14 @@ struct ListTasksMethodTests {
 
 // MARK: - CancelTask Tests
 
-@Suite("CancelTask Method Tests")
 struct CancelTaskMethodTests {
-    @Test("CancelTask.name is correct")
-    func cancelTaskMethodName() {
+    @Test
+    func `CancelTask.name is correct`() {
         #expect(CancelTask.name == "tasks/cancel")
     }
 
-    @Test("CancelTask.Parameters encoding and decoding")
-    func cancelTaskParametersEncodingDecoding() throws {
+    @Test
+    func `CancelTask.Parameters encoding and decoding`() throws {
         let params = CancelTask.Parameters(taskId: "task-123")
 
         let data = try JSONEncoder().encode(params)
@@ -475,15 +466,15 @@ struct CancelTaskMethodTests {
         #expect(decoded.taskId == "task-123")
     }
 
-    @Test("CancelTask.Result encoding and decoding")
-    func cancelTaskResultEncodingDecoding() throws {
+    @Test
+    func `CancelTask.Result encoding and decoding`() throws {
         let result = CancelTask.Result(
             taskId: "task-123",
             status: .cancelled,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:45Z",
-            statusMessage: "Cancelled by user"
+            statusMessage: "Cancelled by user",
         )
 
         let data = try JSONEncoder().encode(result)
@@ -494,14 +485,14 @@ struct CancelTaskMethodTests {
         #expect(decoded.statusMessage == "Cancelled by user")
     }
 
-    @Test("CancelTask.Result from MCPTask")
-    func cancelTaskResultFromMCPTask() throws {
+    @Test
+    func `CancelTask.Result from MCPTask`() {
         let task = MCPTask(
             taskId: "task-456",
             status: .cancelled,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:30:30Z"
+            lastUpdatedAt: "2024-01-15T10:30:30Z",
         )
 
         let result = CancelTask.Result(task: task)
@@ -513,15 +504,14 @@ struct CancelTaskMethodTests {
 
 // MARK: - TaskStatusNotification Tests
 
-@Suite("TaskStatusNotification Tests")
 struct TaskStatusNotificationTests {
-    @Test("TaskStatusNotification.name is correct")
-    func taskStatusNotificationName() {
+    @Test
+    func `TaskStatusNotification.name is correct`() {
         #expect(TaskStatusNotification.name == "notifications/tasks/status")
     }
 
-    @Test("TaskStatusNotification.Parameters encoding and decoding")
-    func taskStatusNotificationParametersEncodingDecoding() throws {
+    @Test
+    func `TaskStatusNotification.Parameters encoding and decoding`() throws {
         let params = TaskStatusNotification.Parameters(
             taskId: "task-123",
             status: .inputRequired,
@@ -529,7 +519,7 @@ struct TaskStatusNotificationTests {
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:10Z",
             pollInterval: 500,
-            statusMessage: "Waiting for user input"
+            statusMessage: "Waiting for user input",
         )
 
         let data = try JSONEncoder().encode(params)
@@ -542,14 +532,14 @@ struct TaskStatusNotificationTests {
         #expect(decoded.statusMessage == "Waiting for user input")
     }
 
-    @Test("TaskStatusNotification.Parameters from MCPTask")
-    func taskStatusNotificationFromMCPTask() {
+    @Test
+    func `TaskStatusNotification.Parameters from MCPTask`() {
         let task = MCPTask(
             taskId: "task-789",
             status: .completed,
             ttl: nil,
             createdAt: "2024-01-15T10:30:00Z",
-            lastUpdatedAt: "2024-01-15T10:31:00Z"
+            lastUpdatedAt: "2024-01-15T10:31:00Z",
         )
 
         let params = TaskStatusNotification.Parameters(task: task)
@@ -563,14 +553,13 @@ struct TaskStatusNotificationTests {
 
 // MARK: - Server Capabilities Tests
 
-@Suite("Server Tasks Capabilities Tests")
 struct ServerTasksCapabilitiesTests {
-    @Test("Server.Capabilities.Tasks encoding and decoding")
-    func serverTasksCapabilitiesEncodingDecoding() throws {
+    @Test
+    func `Server.Capabilities.Tasks encoding and decoding`() throws {
         let capabilities = Server.Capabilities.Tasks(
             list: .init(),
             cancel: .init(),
-            requests: .init(tools: .init(call: .init()))
+            requests: .init(tools: .init(call: .init())),
         )
 
         let data = try JSONEncoder().encode(capabilities)
@@ -581,8 +570,8 @@ struct ServerTasksCapabilitiesTests {
         #expect(decoded.requests?.tools?.call != nil)
     }
 
-    @Test("Server.Capabilities.Tasks.full() creates complete capability")
-    func serverTasksCapabilitiesFull() throws {
+    @Test
+    func `Server.Capabilities.Tasks.full() creates complete capability`() {
         let capabilities = Server.Capabilities.Tasks.full()
 
         #expect(capabilities.list != nil)
@@ -590,8 +579,8 @@ struct ServerTasksCapabilitiesTests {
         #expect(capabilities.requests?.tools?.call != nil)
     }
 
-    @Test("hasTaskAugmentedToolsCall helper")
-    func hasTaskAugmentedToolsCallHelper() {
+    @Test
+    func `hasTaskAugmentedToolsCall helper`() {
         // No capabilities
         #expect(hasTaskAugmentedToolsCall(nil) == false)
 
@@ -607,8 +596,8 @@ struct ServerTasksCapabilitiesTests {
         #expect(hasTaskAugmentedToolsCall(capsFull) == true)
     }
 
-    @Test("requireTaskAugmentedToolsCall throws when not supported")
-    func requireTaskAugmentedToolsCallThrows() throws {
+    @Test
+    func `requireTaskAugmentedToolsCall throws when not supported`() throws {
         #expect(throws: MCPError.self) {
             try requireTaskAugmentedToolsCall(nil)
         }
@@ -624,17 +613,16 @@ struct ServerTasksCapabilitiesTests {
 
 // MARK: - Client Capabilities Tests
 
-@Suite("Client Tasks Capabilities Tests")
 struct ClientTasksCapabilitiesTests {
-    @Test("Client.Capabilities.Tasks encoding and decoding")
-    func clientTasksCapabilitiesEncodingDecoding() throws {
+    @Test
+    func `Client.Capabilities.Tasks encoding and decoding`() throws {
         let capabilities = Client.Capabilities.Tasks(
             list: .init(),
             cancel: .init(),
             requests: .init(
                 sampling: .init(createMessage: .init()),
-                elicitation: .init(create: .init())
-            )
+                elicitation: .init(create: .init()),
+            ),
         )
 
         let data = try JSONEncoder().encode(capabilities)
@@ -646,8 +634,8 @@ struct ClientTasksCapabilitiesTests {
         #expect(decoded.requests?.elicitation?.create != nil)
     }
 
-    @Test("Client.Capabilities.Tasks.full() creates complete capability")
-    func clientTasksCapabilitiesFull() throws {
+    @Test
+    func `Client.Capabilities.Tasks.full() creates complete capability`() {
         let capabilities = Client.Capabilities.Tasks.full()
 
         #expect(capabilities.list != nil)
@@ -656,30 +644,30 @@ struct ClientTasksCapabilitiesTests {
         #expect(capabilities.requests?.elicitation?.create != nil)
     }
 
-    @Test("hasTaskAugmentedElicitation helper")
-    func hasTaskAugmentedElicitationHelper() {
+    @Test
+    func `hasTaskAugmentedElicitation helper`() {
         #expect(hasTaskAugmentedElicitation(nil) == false)
         #expect(hasTaskAugmentedElicitation(Client.Capabilities()) == false)
 
         let capsWithElicitation = Client.Capabilities(
-            tasks: .init(requests: .init(elicitation: .init(create: .init())))
+            tasks: .init(requests: .init(elicitation: .init(create: .init()))),
         )
         #expect(hasTaskAugmentedElicitation(capsWithElicitation) == true)
     }
 
-    @Test("hasTaskAugmentedSampling helper")
-    func hasTaskAugmentedSamplingHelper() {
+    @Test
+    func `hasTaskAugmentedSampling helper`() {
         #expect(hasTaskAugmentedSampling(nil) == false)
         #expect(hasTaskAugmentedSampling(Client.Capabilities()) == false)
 
         let capsWithSampling = Client.Capabilities(
-            tasks: .init(requests: .init(sampling: .init(createMessage: .init())))
+            tasks: .init(requests: .init(sampling: .init(createMessage: .init()))),
         )
         #expect(hasTaskAugmentedSampling(capsWithSampling) == true)
     }
 
-    @Test("requireTaskAugmentedElicitation throws when not supported")
-    func requireTaskAugmentedElicitationThrows() throws {
+    @Test
+    func `requireTaskAugmentedElicitation throws when not supported`() throws {
         #expect(throws: MCPError.self) {
             try requireTaskAugmentedElicitation(nil)
         }
@@ -689,8 +677,8 @@ struct ClientTasksCapabilitiesTests {
         try requireTaskAugmentedElicitation(caps)
     }
 
-    @Test("requireTaskAugmentedSampling throws when not supported")
-    func requireTaskAugmentedSamplingThrows() throws {
+    @Test
+    func `requireTaskAugmentedSampling throws when not supported`() throws {
         #expect(throws: MCPError.self) {
             try requireTaskAugmentedSampling(nil)
         }
@@ -703,12 +691,11 @@ struct ClientTasksCapabilitiesTests {
 
 // MARK: - InMemoryTaskStore Tests
 
-@Suite("InMemoryTaskStore Tests")
 struct InMemoryTaskStoreTests {
     let defaultSessionId = "session-1"
 
-    @Test("createTask creates task with working status")
-    func createTaskCreatesWorkingTask() async throws {
+    @Test
+    func `createTask creates task with working status`() async throws {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata(ttl: 60000)
 
@@ -719,8 +706,8 @@ struct InMemoryTaskStoreTests {
         #expect(!task.taskId.isEmpty)
     }
 
-    @Test("createTask with custom taskId")
-    func createTaskWithCustomId() async throws {
+    @Test
+    func `createTask with custom taskId`() async throws {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata(ttl: nil)
 
@@ -729,8 +716,8 @@ struct InMemoryTaskStoreTests {
         #expect(task.taskId == "custom-id-123")
     }
 
-    @Test("createTask throws on duplicate taskId")
-    func createTaskThrowsOnDuplicate() async throws {
+    @Test
+    func `createTask throws on duplicate taskId`() async throws {
         let store = InMemoryTaskStore()
         let metadata = TaskMetadata()
 
@@ -741,8 +728,8 @@ struct InMemoryTaskStoreTests {
         }
     }
 
-    @Test("getTask returns created task")
-    func getTaskReturnsCreatedTask() async throws {
+    @Test
+    func `getTask returns created task`() async throws {
         let store = InMemoryTaskStore()
         let created = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -752,8 +739,8 @@ struct InMemoryTaskStoreTests {
         #expect(retrieved?.status == created.status)
     }
 
-    @Test("getTask returns nil for non-existent task")
-    func getTaskReturnsNilForNonExistent() async {
+    @Test
+    func `getTask returns nil for non-existent task`() async {
         let store = InMemoryTaskStore()
 
         let result = await store.getTask(taskId: "non-existent", sessionId: defaultSessionId)
@@ -761,8 +748,8 @@ struct InMemoryTaskStoreTests {
         #expect(result == nil)
     }
 
-    @Test("updateTask changes status")
-    func updateTaskChangesStatus() async throws {
+    @Test
+    func `updateTask changes status`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -772,8 +759,8 @@ struct InMemoryTaskStoreTests {
         #expect(updated.statusMessage == "Done")
     }
 
-    @Test("updateTask throws when transitioning from terminal status")
-    func updateTaskThrowsFromTerminalStatus() async throws {
+    @Test
+    func `updateTask throws when transitioning from terminal status`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -786,8 +773,8 @@ struct InMemoryTaskStoreTests {
         }
     }
 
-    @Test("updateTask throws for non-existent task")
-    func updateTaskThrowsForNonExistent() async {
+    @Test
+    func `updateTask throws for non-existent task`() async {
         let store = InMemoryTaskStore()
 
         await #expect(throws: MCPError.self) {
@@ -795,8 +782,8 @@ struct InMemoryTaskStoreTests {
         }
     }
 
-    @Test("storeResult and getResult work correctly")
-    func storeAndGetResult() async throws {
+    @Test
+    func `storeResult and getResult work correctly`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -808,8 +795,8 @@ struct InMemoryTaskStoreTests {
         #expect(retrieved?.objectValue?["data"]?.stringValue == "test result")
     }
 
-    @Test("getResult returns nil when no result stored")
-    func getResultReturnsNilWhenNoResult() async throws {
+    @Test
+    func `getResult returns nil when no result stored`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -818,8 +805,8 @@ struct InMemoryTaskStoreTests {
         #expect(result == nil)
     }
 
-    @Test("listTasks returns all tasks for session")
-    func listTasksReturnsAllTasks() async throws {
+    @Test
+    func `listTasks returns all tasks for session`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
@@ -830,8 +817,8 @@ struct InMemoryTaskStoreTests {
         #expect(result.tasks.count == 3)
     }
 
-    @Test("listTasks pagination works correctly")
-    func listTasksPagination() async throws {
+    @Test
+    func `listTasks pagination works correctly`() async throws {
         let store = InMemoryTaskStore(pageSize: 2)
 
         // Create 5 tasks
@@ -855,8 +842,8 @@ struct InMemoryTaskStoreTests {
         #expect(page3Result.nextCursor == nil)
     }
 
-    @Test("listTasks throws invalidParams on invalid cursor")
-    func listTasksThrowsOnInvalidCursor() async throws {
+    @Test
+    func `listTasks throws invalidParams on invalid cursor`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
 
@@ -873,8 +860,8 @@ struct InMemoryTaskStoreTests {
         }
     }
 
-    @Test("listTasks throws when cursor task is deleted between pages")
-    func listTasksThrowsOnDeletedCursorTask() async throws {
+    @Test
+    func `listTasks throws when cursor task is deleted between pages`() async throws {
         let store = InMemoryTaskStore(pageSize: 1)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: defaultSessionId)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-2", sessionId: defaultSessionId)
@@ -901,8 +888,8 @@ struct InMemoryTaskStoreTests {
         }
     }
 
-    @Test("deleteTask removes task")
-    func deleteTaskRemovesTask() async throws {
+    @Test
+    func `deleteTask removes task`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -913,8 +900,8 @@ struct InMemoryTaskStoreTests {
         #expect(result == nil)
     }
 
-    @Test("deleteTask returns false for non-existent task")
-    func deleteTaskReturnsFalseForNonExistent() async {
+    @Test
+    func `deleteTask returns false for non-existent task`() async {
         let store = InMemoryTaskStore()
 
         let deleted = await store.deleteTask(taskId: "non-existent", sessionId: defaultSessionId)
@@ -922,8 +909,8 @@ struct InMemoryTaskStoreTests {
         #expect(deleted == false)
     }
 
-    @Test("waitForUpdate and notifyUpdate work together")
-    func waitForUpdateAndNotifyUpdate() async throws {
+    @Test
+    func `waitForUpdate and notifyUpdate work together`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-123", sessionId: defaultSessionId)
 
@@ -947,13 +934,12 @@ struct InMemoryTaskStoreTests {
 
 // MARK: - Session Isolation Tests
 
-@Suite("InMemoryTaskStore Session Isolation Tests")
 struct InMemoryTaskStoreSessionIsolationTests {
     let sessionA = "session-a"
     let sessionB = "session-b"
 
-    @Test("getTask returns nil for another session's task")
-    func getTaskCrossSessionReturnsNil() async throws {
+    @Test
+    func `getTask returns nil for another session's task`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -961,8 +947,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(result == nil)
     }
 
-    @Test("getTask returns task for owning session")
-    func getTaskSameSessionReturnsTask() async throws {
+    @Test
+    func `getTask returns task for owning session`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -971,8 +957,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(result?.taskId == "task-1")
     }
 
-    @Test("updateTask fails for another session's task with opaque error")
-    func updateTaskCrossSessionFails() async throws {
+    @Test
+    func `updateTask fails for another session's task with opaque error`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -985,8 +971,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         }
     }
 
-    @Test("storeResult fails for another session's task with opaque error")
-    func storeResultCrossSessionFails() async throws {
+    @Test
+    func `storeResult fails for another session's task with opaque error`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -999,8 +985,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         }
     }
 
-    @Test("getResult returns nil for another session's task")
-    func getResultCrossSessionReturnsNil() async throws {
+    @Test
+    func `getResult returns nil for another session's task`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
         try await store.storeResult(taskId: "task-1", result: .string("secret"), sessionId: sessionA)
@@ -1009,8 +995,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(result == nil)
     }
 
-    @Test("listTasks only returns tasks for the requesting session")
-    func listTasksSessionIsolation() async throws {
+    @Test
+    func `listTasks only returns tasks for the requesting session`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-task-1", sessionId: sessionA)
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "a-task-2", sessionId: sessionA)
@@ -1025,8 +1011,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(sessionBTasks.tasks[0].taskId == "b-task-1")
     }
 
-    @Test("deleteTask fails for another session's task")
-    func deleteTaskCrossSessionFails() async throws {
+    @Test
+    func `deleteTask fails for another session's task`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -1038,8 +1024,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(task != nil)
     }
 
-    @Test("Cross-session access is indistinguishable from non-existent task")
-    func crossSessionAccessOpaqueFailure() async throws {
+    @Test
+    func `Cross-session access is indistinguishable from non-existent task`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "task-1", sessionId: sessionA)
 
@@ -1060,8 +1046,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         #expect(nonExistentDelete == false)
     }
 
-    @Test("Task IDs are globally unique across sessions")
-    func taskIdsGloballyUnique() async throws {
+    @Test
+    func `Task IDs are globally unique across sessions`() async throws {
         let store = InMemoryTaskStore()
         _ = try await store.createTask(metadata: TaskMetadata(), taskId: "shared-id", sessionId: sessionA)
 
@@ -1072,8 +1058,8 @@ struct InMemoryTaskStoreSessionIsolationTests {
         }
     }
 
-    @Test("listTasks pagination respects session isolation")
-    func listTasksPaginationWithSessionIsolation() async throws {
+    @Test
+    func `listTasks pagination respects session isolation`() async throws {
         let store = InMemoryTaskStore(pageSize: 2)
 
         // Create tasks for two sessions
@@ -1102,15 +1088,14 @@ struct InMemoryTaskStoreSessionIsolationTests {
 
 // MARK: - InMemoryTaskMessageQueue Tests
 
-@Suite("InMemoryTaskMessageQueue Tests")
 struct InMemoryTaskMessageQueueTests {
-    @Test("enqueue and dequeue work correctly")
-    func enqueueAndDequeue() async throws {
+    @Test
+    func `enqueue and dequeue work correctly`() async throws {
         let queue = InMemoryTaskMessageQueue()
 
         let message = try QueuedMessage.notification(
             JSONEncoder().encode(["test": "data"]),
-            timestamp: Date()
+            timestamp: Date(),
         )
 
         try await queue.enqueue(taskId: "task-123", message: message, maxSize: nil)
@@ -1123,8 +1108,8 @@ struct InMemoryTaskMessageQueueTests {
         #expect(empty == nil)
     }
 
-    @Test("enqueue respects maxSize")
-    func enqueueRespectsMaxSize() async throws {
+    @Test
+    func `enqueue respects maxSize`() async throws {
         let queue = InMemoryTaskMessageQueue()
 
         let message = QueuedMessage.notification(Data(), timestamp: Date())
@@ -1137,14 +1122,14 @@ struct InMemoryTaskMessageQueueTests {
         }
     }
 
-    @Test("dequeueAll returns all messages")
-    func dequeueAllReturnsAllMessages() async throws {
+    @Test
+    func `dequeueAll returns all messages`() async throws {
         let queue = InMemoryTaskMessageQueue()
 
         for i in 0 ..< 3 {
             let message = try QueuedMessage.notification(
                 JSONEncoder().encode(["index": i]),
-                timestamp: Date()
+                timestamp: Date(),
             )
             try await queue.enqueue(taskId: "task-123", message: message, maxSize: nil)
         }
@@ -1157,8 +1142,8 @@ struct InMemoryTaskMessageQueueTests {
         #expect(empty == true)
     }
 
-    @Test("isEmpty returns correct value")
-    func isEmptyReturnsCorrectValue() async throws {
+    @Test
+    func `isEmpty returns correct value`() async throws {
         let queue = InMemoryTaskMessageQueue()
 
         #expect(await queue.isEmpty(taskId: "task-123") == true)
@@ -1173,8 +1158,8 @@ struct InMemoryTaskMessageQueueTests {
         #expect(await queue.isEmpty(taskId: "task-123") == true)
     }
 
-    @Test("enqueueWithResolver stores resolver")
-    func enqueueWithResolverStoresResolver() async throws {
+    @Test
+    func `enqueueWithResolver stores resolver`() async throws {
         let queue = InMemoryTaskMessageQueue()
         let resolver = Resolver<Value>()
 
@@ -1182,7 +1167,7 @@ struct InMemoryTaskMessageQueueTests {
         let queuedRequest = QueuedRequestWithResolver(
             message: message,
             resolver: resolver,
-            originalRequestId: .string("req-1")
+            originalRequestId: .string("req-1"),
         )
 
         try await queue.enqueueWithResolver(taskId: "task-123", request: queuedRequest, maxSize: nil)
@@ -1192,8 +1177,8 @@ struct InMemoryTaskMessageQueueTests {
         #expect(retrieved != nil)
     }
 
-    @Test("removeResolver removes and returns resolver")
-    func removeResolverRemovesAndReturns() async throws {
+    @Test
+    func `removeResolver removes and returns resolver`() async throws {
         let queue = InMemoryTaskMessageQueue()
         let resolver = Resolver<Value>()
 
@@ -1201,7 +1186,7 @@ struct InMemoryTaskMessageQueueTests {
         let queuedRequest = QueuedRequestWithResolver(
             message: message,
             resolver: resolver,
-            originalRequestId: .string("req-1")
+            originalRequestId: .string("req-1"),
         )
 
         try await queue.enqueueWithResolver(taskId: "task-123", request: queuedRequest, maxSize: nil)
@@ -1217,10 +1202,9 @@ struct InMemoryTaskMessageQueueTests {
 
 // MARK: - Resolver Tests
 
-@Suite("Resolver Tests")
 struct ResolverTests {
-    @Test("setResult and wait work correctly")
-    func setResultAndWait() async throws {
+    @Test
+    func `setResult and wait work correctly`() async throws {
         let resolver = Resolver<Value>()
 
         // Set result in background
@@ -1232,8 +1216,8 @@ struct ResolverTests {
         #expect(result.stringValue == "success")
     }
 
-    @Test("setError and wait throws correctly")
-    func setErrorAndWaitThrows() async throws {
+    @Test
+    func `setError and wait throws correctly`() async throws {
         let resolver = Resolver<Value>()
 
         // Set error in background
@@ -1246,8 +1230,8 @@ struct ResolverTests {
         }
     }
 
-    @Test("isDone returns correct value")
-    func isDoneReturnsCorrectValue() async {
+    @Test
+    func `isDone returns correct value`() async {
         let resolver = Resolver<Value>()
 
         #expect(await resolver.isDone == false)
@@ -1257,8 +1241,8 @@ struct ResolverTests {
         #expect(await resolver.isDone == true)
     }
 
-    @Test("setResult is idempotent")
-    func setResultIsIdempotent() async throws {
+    @Test
+    func `setResult is idempotent`() async throws {
         let resolver = Resolver<Value>()
 
         await resolver.setResult(.string("first"))
@@ -1271,10 +1255,9 @@ struct ResolverTests {
 
 // MARK: - QueuedMessage Tests
 
-@Suite("QueuedMessage Tests")
 struct QueuedMessageTests {
-    @Test("QueuedMessage.request stores data and timestamp")
-    func queuedMessageRequest() {
+    @Test
+    func `QueuedMessage.request stores data and timestamp`() {
         let data = Data("test".utf8)
         let timestamp = Date()
         let message = QueuedMessage.request(data, timestamp: timestamp)
@@ -1283,8 +1266,8 @@ struct QueuedMessageTests {
         #expect(message.timestamp == timestamp)
     }
 
-    @Test("QueuedMessage.notification stores data and timestamp")
-    func queuedMessageNotification() {
+    @Test
+    func `QueuedMessage.notification stores data and timestamp`() {
         let data = Data("notification".utf8)
         let timestamp = Date()
         let message = QueuedMessage.notification(data, timestamp: timestamp)
@@ -1293,8 +1276,8 @@ struct QueuedMessageTests {
         #expect(message.timestamp == timestamp)
     }
 
-    @Test("QueuedMessage.response stores data and timestamp")
-    func queuedMessageResponse() {
+    @Test
+    func `QueuedMessage.response stores data and timestamp`() {
         let data = Data("response".utf8)
         let timestamp = Date()
         let message = QueuedMessage.response(data, timestamp: timestamp)
@@ -1303,8 +1286,8 @@ struct QueuedMessageTests {
         #expect(message.timestamp == timestamp)
     }
 
-    @Test("QueuedMessage.error stores data and timestamp")
-    func queuedMessageError() {
+    @Test
+    func `QueuedMessage.error stores data and timestamp`() {
         let data = Data("error".utf8)
         let timestamp = Date()
         let message = QueuedMessage.error(data, timestamp: timestamp)
@@ -1316,15 +1299,14 @@ struct QueuedMessageTests {
 
 // MARK: - JSON Round-Trip Tests
 
-@Suite("Task JSON Round-Trip Tests")
 struct TaskJSONRoundTripTests {
-    @Test("Complete task workflow JSON encoding")
-    func completeTaskWorkflowJSON() throws {
+    @Test
+    func `Complete task workflow JSON encoding`() throws {
         // 1. Create task with metadata
         let createParams = CallTool.Parameters(
             name: "long_running_tool",
             arguments: ["input": .string("data")],
-            task: TaskMetadata(ttl: 60000)
+            task: TaskMetadata(ttl: 60000),
         )
 
         let createData = try JSONEncoder().encode(createParams)
@@ -1338,7 +1320,7 @@ struct TaskJSONRoundTripTests {
             ttl: 60000,
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:00Z",
-            pollInterval: 1000
+            pollInterval: 1000,
         )
         let createResult = CreateTaskResult(task: task, modelImmediateResponse: "Starting...")
 
@@ -1354,12 +1336,12 @@ struct TaskJSONRoundTripTests {
             ttl: 60000,
             createdAt: "2024-01-15T10:30:00Z",
             lastUpdatedAt: "2024-01-15T10:30:05Z",
-            statusMessage: "Waiting for input"
+            statusMessage: "Waiting for input",
         )
 
         let notificationData = try JSONEncoder().encode(notification)
         let decodedNotification = try JSONDecoder().decode(
-            TaskStatusNotification.Parameters.self, from: notificationData
+            TaskStatusNotification.Parameters.self, from: notificationData,
         )
         #expect(decodedNotification.status == .inputRequired)
 
@@ -1369,7 +1351,7 @@ struct TaskJSONRoundTripTests {
             extraFields: [
                 "content": .array([.object(["type": .string("text"), "text": .string("Result")])]),
                 "isError": .bool(false),
-            ]
+            ],
         )
 
         let payloadData = try JSONEncoder().encode(payloadResult)

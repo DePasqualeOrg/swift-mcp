@@ -137,7 +137,7 @@ public actor MCPServer {
         icons: [Icon]? = nil,
         websiteUrl: String? = nil,
         instructions: String? = nil,
-        capabilities: Server.Capabilities? = nil
+        capabilities: Server.Capabilities? = nil,
     ) {
         self.name = name
         self.version = version
@@ -189,7 +189,7 @@ public actor MCPServer {
             base: baseCapabilities,
             hasTools: hasTools,
             hasResources: hasResources,
-            hasPrompts: hasPrompts
+            hasPrompts: hasPrompts,
         )
 
         let session = Server(
@@ -200,7 +200,7 @@ public actor MCPServer {
             icons: icons,
             websiteUrl: websiteUrl,
             instructions: instructions,
-            capabilities: capabilities
+            capabilities: capabilities,
         )
 
         // Wire up handlers to shared registries
@@ -263,7 +263,7 @@ public actor MCPServer {
 
         let failedIDs = await withTaskGroup(
             of: ObjectIdentifier?.self,
-            returning: Set<ObjectIdentifier>.self
+            returning: Set<ObjectIdentifier>.self,
         ) { group in
             for session in currentSessions {
                 group.addTask {
@@ -319,7 +319,7 @@ public actor MCPServer {
             func toolError(_ message: String) -> CallTool.Result {
                 CallTool.Result(
                     content: [.text(message, annotations: nil, _meta: nil)],
-                    isError: true
+                    isError: true,
                 )
             }
 
@@ -343,7 +343,7 @@ public actor MCPServer {
             // Tool execution errors are returned with isError: true per MCP spec
             let context = HandlerContext(
                 handlerContext: handlerContext,
-                progressToken: request._meta?.progressToken
+                progressToken: request._meta?.progressToken,
             )
 
             let result: CallTool.Result
@@ -351,7 +351,7 @@ public actor MCPServer {
                 result = try await toolRegistry.execute(
                     name,
                     arguments: request.arguments,
-                    context: context
+                    context: context,
                 )
             } catch {
                 return toolError(errorMessage(error))
@@ -364,7 +364,7 @@ public actor MCPServer {
                     try validator.validate(structuredContent, against: outputSchema)
                 } else if !(result.isError ?? false) {
                     throw MCPError.invalidParams(
-                        "Tool '\(name)' has an output schema but no structured content was provided"
+                        "Tool '\(name)' has an output schema but no structured content was provided",
                     )
                 }
             }
@@ -398,7 +398,7 @@ public actor MCPServer {
                 let logger = await session?.logger
                 logger?.error(
                     "Error reading resource",
-                    metadata: ["uri": "\(request.uri)", "error": "\(error)"]
+                    metadata: ["uri": "\(request.uri)", "error": "\(error)"],
                 )
                 throw MCPError.internalError("Error reading resource \(request.uri)")
             }
@@ -413,13 +413,13 @@ public actor MCPServer {
         await session.withRequestHandler(GetPrompt.self) { [promptRegistry, weak session] request, handlerContext in
             let context = HandlerContext(
                 handlerContext: handlerContext,
-                progressToken: request._meta?.progressToken
+                progressToken: request._meta?.progressToken,
             )
             do {
                 return try await promptRegistry.getPrompt(
                     request.name,
                     arguments: request.arguments,
-                    context: context
+                    context: context,
                 )
             } catch let error as MCPError where error.code == ErrorCode.invalidParams {
                 // Registry errors (unknown prompt, disabled) only contain the
@@ -429,7 +429,7 @@ public actor MCPServer {
                 let logger = await session?.logger
                 logger?.error(
                     "Error getting prompt",
-                    metadata: ["name": "\(request.name)", "error": "\(error)"]
+                    metadata: ["name": "\(request.name)", "error": "\(error)"],
                 )
                 throw MCPError.internalError("Error getting prompt \(request.name)")
             }
@@ -607,7 +607,7 @@ public extension MCPServer {
         inputSchema: Value,
         inputType: Input.Type = Input.self,
         annotations: [AnnotationOption] = [],
-        handler: @escaping @Sendable (Input, HandlerContext) async throws -> Output
+        handler: @escaping @Sendable (Input, HandlerContext) async throws -> Output,
     ) async throws -> RegisteredTool {
         let onListChanged = toolListChangedCallback
         let registered = try await toolRegistry.registerClosure(
@@ -618,7 +618,7 @@ public extension MCPServer {
             outputSchema: outputSchema(for: Output.self),
             annotations: annotations,
             onListChanged: onListChanged,
-            handler: handler
+            handler: handler,
         )
         hasTools = true
         await notifyToolListChanged()
@@ -636,7 +636,7 @@ public extension MCPServer {
         name: String,
         description: String? = nil,
         annotations: [AnnotationOption] = [],
-        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput
+        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput,
     ) async throws -> RegisteredTool {
         let onListChanged = toolListChangedCallback
         let registered = try await toolRegistry.registerClosure(
@@ -644,7 +644,7 @@ public extension MCPServer {
             description: description,
             annotations: annotations,
             onListChanged: onListChanged,
-            handler: handler
+            handler: handler,
         )
         hasTools = true
         await notifyToolListChanged()
@@ -675,7 +675,7 @@ public extension MCPServer {
         name: String,
         description: String? = nil,
         mimeType: String? = nil,
-        read: @escaping @Sendable () async throws -> Resource.Contents
+        read: @escaping @Sendable () async throws -> Resource.Contents,
     ) async throws -> RegisteredResource {
         let registered = try await resourceRegistry.register(
             uri: uri,
@@ -683,7 +683,7 @@ public extension MCPServer {
             description: description,
             mimeType: mimeType,
             onListChanged: resourceListChangedCallback,
-            read: read
+            read: read,
         )
         hasResources = true
         await notifyResourceListChanged()
@@ -713,7 +713,7 @@ public extension MCPServer {
         description: String? = nil,
         mimeType: String? = nil,
         list: (@Sendable () async throws -> [Resource])? = nil,
-        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents
+        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents,
     ) async throws -> RegisteredResourceTemplate {
         let registered = try await resourceRegistry.registerTemplate(
             uriTemplate: uriTemplate,
@@ -722,7 +722,7 @@ public extension MCPServer {
             mimeType: mimeType,
             list: list,
             onListChanged: resourceListChangedCallback,
-            read: read
+            read: read,
         )
         hasResources = true
         await notifyResourceListChanged()
@@ -834,7 +834,7 @@ public extension MCPServer {
         title: String? = nil,
         description: String? = nil,
         arguments: [Prompt.Argument]? = nil,
-        handler: @escaping @Sendable ([String: String]?, HandlerContext) async throws -> [Prompt.Message]
+        handler: @escaping @Sendable ([String: String]?, HandlerContext) async throws -> [Prompt.Message],
     ) async throws -> RegisteredPrompt {
         let registered = try await promptRegistry.register(
             name: name,
@@ -842,7 +842,7 @@ public extension MCPServer {
             description: description,
             arguments: arguments,
             onListChanged: promptListChangedCallback,
-            handler: handler
+            handler: handler,
         )
         hasPrompts = true
         await notifyPromptListChanged()
@@ -871,13 +871,13 @@ public extension MCPServer {
         name: String,
         title: String? = nil,
         description: String? = nil,
-        handler: @escaping @Sendable () async throws -> [Prompt.Message]
+        handler: @escaping @Sendable () async throws -> [Prompt.Message],
     ) async throws -> RegisteredPrompt {
         try await registerPrompt(
             name: name,
             title: title,
             description: description,
-            arguments: nil
+            arguments: nil,
         ) { _, _ in
             try await handler()
         }

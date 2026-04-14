@@ -62,7 +62,7 @@ extension Client {
     func callToolAsTask(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> CreateTaskResult {
         try validateServerCapability(\.tasks, "Tasks")
         try validateServerCapability(\.tools, "Tools")
@@ -71,7 +71,7 @@ extension Client {
         let request = CallTool.request(.init(
             name: name,
             arguments: arguments,
-            task: taskMetadata
+            task: taskMetadata,
         ))
 
         // The server should return CreateTaskResult for task-augmented requests
@@ -129,7 +129,7 @@ extension Client {
     func callToolAsTaskAndWait(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> CallTool.Result {
         // Start the task
         let createResult = try await callToolAsTask(name: name, arguments: arguments, ttl: ttl)
@@ -153,7 +153,7 @@ extension Client {
     func callToolStream(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) -> AsyncThrowingStream<TaskStreamMessage, Error> {
         AsyncThrowingStream { continuation in
             let streamTask = Task {
@@ -181,7 +181,7 @@ extension Client {
                             createdAt: statusResult.createdAt,
                             lastUpdatedAt: statusResult.lastUpdatedAt,
                             pollInterval: statusResult.pollInterval,
-                            statusMessage: statusResult.statusMessage
+                            statusMessage: statusResult.statusMessage,
                         )
 
                         // Only yield if status or message changed

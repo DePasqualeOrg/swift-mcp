@@ -48,10 +48,14 @@ public actor TaskContext {
     private var _isCancelled = false
 
     /// Check if cancellation has been requested.
-    public var isCancelled: Bool { _isCancelled }
+    public var isCancelled: Bool {
+        _isCancelled
+    }
 
     /// The task ID.
-    public var taskId: String { task.taskId }
+    public var taskId: String {
+        task.taskId
+    }
 
     /// Create a task context.
     ///
@@ -102,7 +106,7 @@ public actor TaskContext {
             taskId: taskId,
             status: .working,
             statusMessage: message,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         task = updatedTask
     }
@@ -121,7 +125,7 @@ public actor TaskContext {
             taskId: taskId,
             status: .inputRequired,
             statusMessage: message,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         task = updatedTask
     }
@@ -138,7 +142,7 @@ public actor TaskContext {
             taskId: taskId,
             status: .completed,
             statusMessage: nil,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         task = updatedTask
     }
@@ -168,7 +172,7 @@ public actor TaskContext {
             taskId: taskId,
             status: .failed,
             statusMessage: error,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         task = updatedTask
     }
@@ -199,7 +203,7 @@ public actor TaskContext {
             taskId: taskId,
             status: .cancelled,
             statusMessage: message ?? "Cancelled",
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         task = updatedTask
     }
@@ -239,7 +243,7 @@ public func withTaskExecution(
     taskId: String,
     store: any TaskStore,
     sessionId: String,
-    work: @escaping @Sendable (TaskContext) async throws -> Void
+    work: @escaping @Sendable (TaskContext) async throws -> Void,
 ) async throws {
     let context = try await TaskContext.load(taskId: taskId, from: store, sessionId: sessionId)
 
@@ -282,7 +286,7 @@ public func generateTaskId() -> String {
 public func createTaskState(
     metadata: TaskMetadata,
     taskId: String? = nil,
-    pollInterval: Int = 500
+    pollInterval: Int = 500,
 ) -> MCPTask {
     let id = taskId ?? generateTaskId()
     let now = ISO8601DateFormatter().string(from: Date())
@@ -292,6 +296,6 @@ public func createTaskState(
         ttl: metadata.ttl,
         createdAt: now,
         lastUpdatedAt: now,
-        pollInterval: pollInterval
+        pollInterval: pollInterval,
     )
 }

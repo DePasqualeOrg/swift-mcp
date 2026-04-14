@@ -14,7 +14,7 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
         of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
         conformingTo _: [TypeSyntax],
-        in _: some MacroExpansionContext
+        in _: some MacroExpansionContext,
     ) throws -> [DeclSyntax] {
         // Ensure we're applied to a struct
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -37,7 +37,7 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo _: [TypeSyntax],
-        in _: some MacroExpansionContext
+        in _: some MacroExpansionContext,
     ) throws -> [ExtensionDeclSyntax] {
         // Validate it's a struct
         guard declaration.as(StructDeclSyntax.self) != nil else {
@@ -98,7 +98,7 @@ public struct OutputSchemaMacro: MemberMacro, ExtensionMacro {
                 properties.append(PropertyInfo(
                     name: name,
                     typeName: typeName,
-                    isOptional: isOptional
+                    isOptional: isOptional,
                 ))
             }
         }

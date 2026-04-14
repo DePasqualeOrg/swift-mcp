@@ -1,23 +1,21 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Client Capabilities Encoding Tests
 
-@Suite("Client Capabilities Encoding Tests")
 struct ClientCapabilitiesEncodingTests {
-    @Test("Empty client capabilities encodes correctly")
-    func testEmptyClientCapabilities() throws {
+    @Test
+    func `Empty client capabilities encodes correctly`() throws {
         let capabilities = Client.Capabilities()
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Empty capabilities should encode to empty object
         #expect(json == "{}")
@@ -32,17 +30,17 @@ struct ClientCapabilitiesEncodingTests {
         #expect(decoded.tasks == nil)
     }
 
-    @Test("Client capabilities with roots encodes correctly")
-    func testClientCapabilitiesWithRoots() throws {
+    @Test
+    func `Client capabilities with roots encodes correctly`() throws {
         let capabilities = Client.Capabilities(
-            roots: .init(listChanged: true)
+            roots: .init(listChanged: true),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"roots\""))
         #expect(json.contains("\"listChanged\":true"))
@@ -52,22 +50,22 @@ struct ClientCapabilitiesEncodingTests {
         #expect(decoded.roots?.listChanged == true)
     }
 
-    @Test("Client capabilities with experimental encodes correctly")
-    func testClientCapabilitiesWithExperimental() throws {
+    @Test
+    func `Client capabilities with experimental encodes correctly`() throws {
         let capabilities = Client.Capabilities(
             experimental: [
                 "feature": [
                     "enabled": .bool(true),
                     "count": .int(42),
                 ],
-            ]
+            ],
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"experimental\""))
         #expect(json.contains("\"feature\""))
@@ -79,13 +77,13 @@ struct ClientCapabilitiesEncodingTests {
         #expect(decoded.experimental?["feature"]?["count"] == .int(42))
     }
 
-    @Test("Client capabilities all fields roundtrip")
-    func testClientCapabilitiesAllFieldsRoundtrip() throws {
+    @Test
+    func `Client capabilities all fields roundtrip`() throws {
         let capabilities = Client.Capabilities(
             sampling: .init(context: .init(), tools: .init()),
             elicitation: .init(form: .init(applyDefaults: true), url: .init()),
             experimental: ["test": ["value": .string("data")]],
-            roots: .init(listChanged: true)
+            roots: .init(listChanged: true),
         )
 
         let encoder = JSONEncoder()
@@ -105,17 +103,16 @@ struct ClientCapabilitiesEncodingTests {
 
 // MARK: - Server Capabilities Encoding Tests
 
-@Suite("Server Capabilities Encoding Tests")
 struct ServerCapabilitiesEncodingTests {
-    @Test("Empty server capabilities encodes correctly")
-    func testEmptyServerCapabilities() throws {
+    @Test
+    func `Empty server capabilities encodes correctly`() throws {
         let capabilities = Server.Capabilities()
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Empty capabilities should encode to empty object
         #expect(json == "{}")
@@ -130,15 +127,15 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.experimental == nil)
     }
 
-    @Test("Server capabilities with logging encodes correctly")
-    func testServerCapabilitiesWithLogging() throws {
+    @Test
+    func `Server capabilities with logging encodes correctly`() throws {
         let capabilities = Server.Capabilities(
-            logging: .init()
+            logging: .init(),
         )
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"logging\""))
 
@@ -147,17 +144,17 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.logging != nil)
     }
 
-    @Test("Server capabilities with prompts listChanged true")
-    func testServerCapabilitiesWithPromptsListChangedTrue() throws {
+    @Test
+    func `Server capabilities with prompts listChanged true`() throws {
         let capabilities = Server.Capabilities(
-            prompts: .init(listChanged: true)
+            prompts: .init(listChanged: true),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"prompts\""))
         #expect(json.contains("\"listChanged\":true"))
@@ -167,10 +164,10 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.prompts?.listChanged == true)
     }
 
-    @Test("Server capabilities with prompts listChanged false")
-    func testServerCapabilitiesWithPromptsListChangedFalse() throws {
+    @Test
+    func `Server capabilities with prompts listChanged false`() throws {
         let capabilities = Server.Capabilities(
-            prompts: .init(listChanged: false)
+            prompts: .init(listChanged: false),
         )
 
         let encoder = JSONEncoder()
@@ -181,17 +178,17 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.prompts?.listChanged == false)
     }
 
-    @Test("Server capabilities with resources encodes correctly")
-    func testServerCapabilitiesWithResources() throws {
+    @Test
+    func `Server capabilities with resources encodes correctly`() throws {
         let capabilities = Server.Capabilities(
-            resources: .init(subscribe: true, listChanged: true)
+            resources: .init(subscribe: true, listChanged: true),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"resources\""))
         #expect(json.contains("\"subscribe\":true"))
@@ -203,10 +200,10 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.resources?.listChanged == true)
     }
 
-    @Test("Server capabilities with tools listChanged")
-    func testServerCapabilitiesWithToolsListChanged() throws {
+    @Test
+    func `Server capabilities with tools listChanged`() throws {
         let capabilities = Server.Capabilities(
-            tools: .init(listChanged: true)
+            tools: .init(listChanged: true),
         )
 
         let encoder = JSONEncoder()
@@ -217,15 +214,15 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.tools?.listChanged == true)
     }
 
-    @Test("Server capabilities with completions encodes correctly")
-    func testServerCapabilitiesWithCompletions() throws {
+    @Test
+    func `Server capabilities with completions encodes correctly`() throws {
         let capabilities = Server.Capabilities(
-            completions: .init()
+            completions: .init(),
         )
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"completions\""))
 
@@ -234,21 +231,21 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.completions != nil)
     }
 
-    @Test("Server capabilities with experimental encodes correctly")
-    func testServerCapabilitiesWithExperimental() throws {
+    @Test
+    func `Server capabilities with experimental encodes correctly`() throws {
         let capabilities = Server.Capabilities(
             experimental: [
                 "customFeature": [
                     "supported": .bool(true),
                 ],
-            ]
+            ],
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"experimental\""))
         #expect(json.contains("\"customFeature\""))
@@ -258,15 +255,15 @@ struct ServerCapabilitiesEncodingTests {
         #expect(decoded.experimental?["customFeature"]?["supported"] == .bool(true))
     }
 
-    @Test("Server capabilities all fields roundtrip")
-    func testServerCapabilitiesAllFieldsRoundtrip() throws {
+    @Test
+    func `Server capabilities all fields roundtrip`() throws {
         let capabilities = Server.Capabilities(
             logging: .init(),
             prompts: .init(listChanged: true),
             resources: .init(subscribe: true, listChanged: true),
             tools: .init(listChanged: false),
             completions: .init(),
-            experimental: ["test": ["enabled": .bool(true)]]
+            experimental: ["test": ["enabled": .bool(true)]],
         )
 
         let encoder = JSONEncoder()
@@ -287,24 +284,23 @@ struct ServerCapabilitiesEncodingTests {
 
 // MARK: - Initialize Request Encoding Tests
 
-@Suite("Initialize Request Encoding Tests")
 struct InitializeRequestEncodingTests {
-    @Test("Initialize parameters encodes with capabilities")
-    func testInitializeParametersEncoding() throws {
+    @Test
+    func `Initialize parameters encodes with capabilities`() throws {
         let params = Initialize.Parameters(
             protocolVersion: Version.latest,
             capabilities: Client.Capabilities(
                 sampling: .init(tools: .init()),
-                roots: .init(listChanged: true)
+                roots: .init(listChanged: true),
             ),
-            clientInfo: Client.Info(name: "TestClient", version: "1.0.0")
+            clientInfo: Client.Info(name: "TestClient", version: "1.0.0"),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(params)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"protocolVersion\":\"\(Version.latest)\""))
         #expect(json.contains("\"clientInfo\""))
@@ -314,8 +310,8 @@ struct InitializeRequestEncodingTests {
         #expect(json.contains("\"roots\""))
     }
 
-    @Test("Initialize parameters decodes correctly")
-    func testInitializeParametersDecoding() throws {
+    @Test
+    func `Initialize parameters decodes correctly`() throws {
         let json = """
         {
             "protocolVersion": "2025-11-25",
@@ -331,7 +327,7 @@ struct InitializeRequestEncodingTests {
         """
 
         let decoder = JSONDecoder()
-        let params = try decoder.decode(Initialize.Parameters.self, from: json.data(using: .utf8)!)
+        let params = try decoder.decode(Initialize.Parameters.self, from: #require(json.data(using: .utf8)))
 
         #expect(params.protocolVersion == Version.v2025_11_25)
         #expect(params.capabilities.sampling?.tools != nil)
@@ -340,12 +336,12 @@ struct InitializeRequestEncodingTests {
         #expect(params.clientInfo.version == "1.0.0")
     }
 
-    @Test("Initialize parameters defaults when fields missing")
-    func testInitializeParametersDefaults() throws {
+    @Test
+    func `Initialize parameters defaults when fields missing`() throws {
         let json = "{}"
 
         let decoder = JSONDecoder()
-        let params = try decoder.decode(Initialize.Parameters.self, from: json.data(using: .utf8)!)
+        let params = try decoder.decode(Initialize.Parameters.self, from: #require(json.data(using: .utf8)))
 
         // Should use defaults
         #expect(params.protocolVersion == Version.latest)
@@ -353,25 +349,25 @@ struct InitializeRequestEncodingTests {
         #expect(params.clientInfo.version == "0.0.0")
     }
 
-    @Test("Initialize result encodes with server capabilities")
-    func testInitializeResultEncoding() throws {
+    @Test
+    func `Initialize result encodes with server capabilities`() throws {
         let result = Initialize.Result(
             protocolVersion: Version.latest,
             capabilities: Server.Capabilities(
                 logging: .init(),
                 prompts: .init(listChanged: true),
                 resources: .init(subscribe: true, listChanged: true),
-                tools: .init(listChanged: false)
+                tools: .init(listChanged: false),
             ),
             serverInfo: Server.Info(name: "TestServer", version: "2.0.0"),
-            instructions: "Server instructions."
+            instructions: "Server instructions.",
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(result)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"protocolVersion\":\"\(Version.latest)\""))
         #expect(json.contains("\"serverInfo\""))
@@ -384,8 +380,8 @@ struct InitializeRequestEncodingTests {
         #expect(json.contains("\"tools\""))
     }
 
-    @Test("Initialize result decodes correctly")
-    func testInitializeResultDecoding() throws {
+    @Test
+    func `Initialize result decodes correctly`() throws {
         let json = """
         {
             "protocolVersion": "2025-11-25",
@@ -404,7 +400,7 @@ struct InitializeRequestEncodingTests {
         """
 
         let decoder = JSONDecoder()
-        let result = try decoder.decode(Initialize.Result.self, from: json.data(using: .utf8)!)
+        let result = try decoder.decode(Initialize.Result.self, from: #require(json.data(using: .utf8)))
 
         #expect(result.protocolVersion == Version.v2025_11_25)
         #expect(result.capabilities.logging != nil)
@@ -417,8 +413,8 @@ struct InitializeRequestEncodingTests {
         #expect(result.instructions == "Server instructions.")
     }
 
-    @Test("Initialize result roundtrip")
-    func testInitializeResultRoundtrip() throws {
+    @Test
+    func `Initialize result roundtrip`() throws {
         let original = Initialize.Result(
             protocolVersion: Version.latest,
             capabilities: Server.Capabilities(
@@ -426,15 +422,15 @@ struct InitializeRequestEncodingTests {
                 prompts: .init(listChanged: true),
                 resources: .init(subscribe: true, listChanged: true),
                 tools: .init(listChanged: false),
-                completions: .init()
+                completions: .init(),
             ),
             serverInfo: Server.Info(
                 name: "TestServer",
                 version: "2.0.0",
                 title: "Test Server Title",
-                description: "A test server"
+                description: "A test server",
             ),
-            instructions: "Follow these instructions."
+            instructions: "Follow these instructions.",
         )
 
         let encoder = JSONEncoder()
@@ -459,10 +455,9 @@ struct InitializeRequestEncodingTests {
 
 // MARK: - Capability Negotiation Integration Tests
 
-@Suite("Capability Negotiation Integration Tests")
 struct CapabilityNegotiationTests {
-    @Test("Client sends capabilities to server during initialization")
-    func testClientSendsCapabilitiesToServer() async throws {
+    @Test
+    func `Client sends capabilities to server during initialization`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Set up server with specific capabilities
@@ -472,8 +467,8 @@ struct CapabilityNegotiationTests {
             capabilities: .init(
                 logging: .init(),
                 prompts: .init(listChanged: true),
-                tools: .init()
-            )
+                tools: .init(),
+            ),
         )
 
         // Register a tools handler
@@ -486,7 +481,7 @@ struct CapabilityNegotiationTests {
         // Set up client with specific capabilities
         let client = Client(
             name: "CapabilityTestClient",
-            version: "1.0.0"
+            version: "1.0.0",
         )
 
         // Set capabilities via handlers before connecting
@@ -495,7 +490,7 @@ struct CapabilityNegotiationTests {
                 model: "test",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: []
+                content: [],
             )
         }
         await client.withRootsHandler(listChanged: true) { _ in [] }
@@ -512,8 +507,8 @@ struct CapabilityNegotiationTests {
         await server.stop()
     }
 
-    @Test("Server responds with its capabilities")
-    func testServerRespondsWithCapabilities() async throws {
+    @Test
+    func `Server responds with its capabilities`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Set up server with all capabilities
@@ -525,8 +520,8 @@ struct CapabilityNegotiationTests {
                 prompts: .init(listChanged: true),
                 resources: .init(subscribe: true, listChanged: true),
                 tools: .init(listChanged: true),
-                completions: .init()
-            )
+                completions: .init(),
+            ),
         )
 
         // Register handlers for capabilities that require them
@@ -545,7 +540,7 @@ struct CapabilityNegotiationTests {
         // Set up client
         let client = Client(
             name: "TestClient",
-            version: "1.0.0"
+            version: "1.0.0",
         )
 
         try await client.connect(transport: clientTransport)
@@ -564,15 +559,15 @@ struct CapabilityNegotiationTests {
         await server.stop()
     }
 
-    @Test("Client in strict mode fails on missing capability")
-    func testStrictModeFailsOnMissingCapability() async throws {
+    @Test
+    func `Client in strict mode fails on missing capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server without completions capability
         let server = Server(
             name: "LimitedServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -585,7 +580,7 @@ struct CapabilityNegotiationTests {
         let client = Client(
             name: "StrictClient",
             version: "1.0.0",
-            configuration: .strict
+            configuration: .strict,
         )
 
         try await client.connect(transport: clientTransport)
@@ -594,7 +589,7 @@ struct CapabilityNegotiationTests {
         do {
             _ = try await client.complete(
                 ref: .prompt(PromptReference(name: "test")),
-                argument: CompletionArgument(name: "arg", value: "val")
+                argument: CompletionArgument(name: "arg", value: "val"),
             )
             #expect(Bool(false), "Should have thrown error")
         } catch {
@@ -606,11 +601,11 @@ struct CapabilityNegotiationTests {
         await server.stop()
     }
 
-    @Test("serverCapabilities returns nil before connect")
-    func testServerCapabilitiesReturnsNilBeforeConnect() async throws {
+    @Test
+    func `serverCapabilities returns nil before connect`() async {
         let client = Client(
             name: "TestClient",
-            version: "1.0.0"
+            version: "1.0.0",
         )
 
         // Before connecting, server capabilities should be nil
@@ -618,8 +613,8 @@ struct CapabilityNegotiationTests {
         #expect(capabilities == nil)
     }
 
-    @Test("serverCapabilities returns capabilities after connect")
-    func testServerCapabilitiesReturnsCapabilitiesAfterConnect() async throws {
+    @Test
+    func `serverCapabilities returns capabilities after connect`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Set up server with specific capabilities
@@ -630,8 +625,8 @@ struct CapabilityNegotiationTests {
                 logging: .init(),
                 prompts: .init(listChanged: true),
                 resources: .init(subscribe: true, listChanged: false),
-                tools: .init(listChanged: true)
-            )
+                tools: .init(listChanged: true),
+            ),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -642,7 +637,7 @@ struct CapabilityNegotiationTests {
 
         let client = Client(
             name: "TestClient",
-            version: "1.0.0"
+            version: "1.0.0",
         )
 
         // Before connecting
@@ -668,10 +663,9 @@ struct CapabilityNegotiationTests {
 
 // MARK: - JSON Format Compatibility Tests
 
-@Suite("Capability JSON Format Compatibility Tests")
 struct CapabilityJSONCompatibilityTests {
-    @Test("Client capabilities matches TypeScript format")
-    func testClientCapabilitiesMatchesTypeScriptFormat() throws {
+    @Test
+    func `Client capabilities matches TypeScript format`() throws {
         // TypeScript format: { "sampling": {}, "roots": { "listChanged": true } }
         let typeScriptJSON = """
         {"sampling":{},"roots":{"listChanged":true}}
@@ -679,7 +673,7 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Client.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.sampling != nil)
@@ -689,15 +683,15 @@ struct CapabilityJSONCompatibilityTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Should match the TypeScript format
         #expect(json.contains("\"sampling\":{}"))
         #expect(json.contains("\"roots\":{\"listChanged\":true}"))
     }
 
-    @Test("Server capabilities matches TypeScript format")
-    func testServerCapabilitiesMatchesTypeScriptFormat() throws {
+    @Test
+    func `Server capabilities matches TypeScript format`() throws {
         // TypeScript format from protocol.test.ts
         let typeScriptJSON = """
         {"logging":{},"prompts":{"listChanged":true},"resources":{"subscribe":true},"tools":{"listChanged":false}}
@@ -705,7 +699,7 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Server.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Server.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.logging != nil)
@@ -714,8 +708,8 @@ struct CapabilityJSONCompatibilityTests {
         #expect(capabilities.tools?.listChanged == false)
     }
 
-    @Test("Client elicitation capability with form matches TypeScript format")
-    func testClientElicitationFormMatchesTypeScriptFormat() throws {
+    @Test
+    func `Client elicitation capability with form matches TypeScript format`() throws {
         // TypeScript format: { "elicitation": { "form": {} } }
         let typeScriptJSON = """
         {"elicitation":{"form":{}}}
@@ -723,15 +717,15 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Client.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.elicitation?.form != nil)
         #expect(capabilities.elicitation?.url == nil)
     }
 
-    @Test("Client elicitation capability with form applyDefaults matches TypeScript format")
-    func testClientElicitationFormApplyDefaultsMatchesTypeScriptFormat() throws {
+    @Test
+    func `Client elicitation capability with form applyDefaults matches TypeScript format`() throws {
         // TypeScript format: { "elicitation": { "form": { "applyDefaults": true } } }
         let typeScriptJSON = """
         {"elicitation":{"form":{"applyDefaults":true}}}
@@ -739,14 +733,14 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Client.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.elicitation?.form?.applyDefaults == true)
     }
 
-    @Test("Client elicitation capability with url matches TypeScript format")
-    func testClientElicitationURLMatchesTypeScriptFormat() throws {
+    @Test
+    func `Client elicitation capability with url matches TypeScript format`() throws {
         // TypeScript format: { "elicitation": { "url": {} } }
         let typeScriptJSON = """
         {"elicitation":{"url":{}}}
@@ -754,15 +748,15 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Client.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.elicitation?.form == nil)
         #expect(capabilities.elicitation?.url != nil)
     }
 
-    @Test("Client elicitation capability with both form and url matches TypeScript format")
-    func testClientElicitationBothMatchesTypeScriptFormat() throws {
+    @Test
+    func `Client elicitation capability with both form and url matches TypeScript format`() throws {
         // TypeScript format: { "elicitation": { "form": {}, "url": {} } }
         let typeScriptJSON = """
         {"elicitation":{"form":{},"url":{}}}
@@ -770,15 +764,15 @@ struct CapabilityJSONCompatibilityTests {
 
         let decoder = JSONDecoder()
         let capabilities = try decoder.decode(
-            Client.Capabilities.self, from: typeScriptJSON.data(using: .utf8)!
+            Client.Capabilities.self, from: #require(typeScriptJSON.data(using: .utf8)),
         )
 
         #expect(capabilities.elicitation?.form != nil)
         #expect(capabilities.elicitation?.url != nil)
     }
 
-    @Test("Initialize request matches Python format")
-    func testInitializeRequestMatchesPythonFormat() throws {
+    @Test
+    func `Initialize request matches Python format`() throws {
         // Python format from test_session.py
         let pythonJSON = """
         {
@@ -794,7 +788,7 @@ struct CapabilityJSONCompatibilityTests {
         """
 
         let decoder = JSONDecoder()
-        let params = try decoder.decode(Initialize.Parameters.self, from: pythonJSON.data(using: .utf8)!)
+        let params = try decoder.decode(Initialize.Parameters.self, from: #require(pythonJSON.data(using: .utf8)))
 
         #expect(params.protocolVersion == Version.v2025_11_25)
         #expect(params.capabilities.sampling != nil)
@@ -802,8 +796,8 @@ struct CapabilityJSONCompatibilityTests {
         #expect(params.clientInfo.version == "0.1.0")
     }
 
-    @Test("Initialize result matches Python format")
-    func testInitializeResultMatchesPythonFormat() throws {
+    @Test
+    func `Initialize result matches Python format`() throws {
         // Python format from test_session.py
         let pythonJSON = """
         {
@@ -823,7 +817,7 @@ struct CapabilityJSONCompatibilityTests {
         """
 
         let decoder = JSONDecoder()
-        let result = try decoder.decode(Initialize.Result.self, from: pythonJSON.data(using: .utf8)!)
+        let result = try decoder.decode(Initialize.Result.self, from: #require(pythonJSON.data(using: .utf8)))
 
         #expect(result.protocolVersion == Version.v2025_11_25)
         #expect(result.capabilities.logging != nil)
@@ -839,19 +833,18 @@ struct CapabilityJSONCompatibilityTests {
 
 // MARK: - Sampling Capability Tests (additional coverage)
 
-@Suite("Sampling Capability Encoding Tests")
 struct SamplingCapabilityEncodingTests {
-    @Test("Client sampling with no sub-capabilities encodes correctly")
-    func testClientSamplingBasic() throws {
+    @Test
+    func `Client sampling with no sub-capabilities encodes correctly`() throws {
         let capabilities = Client.Capabilities(
-            sampling: .init()
+            sampling: .init(),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         // Should have empty sampling object
         #expect(json == "{\"sampling\":{}}")
@@ -866,23 +859,22 @@ struct SamplingCapabilityEncodingTests {
 
 // MARK: - Tasks Capability Tests
 
-@Suite("Tasks Capability Encoding Tests")
 struct TasksCapabilityEncodingTests {
-    @Test("Server tasks capability encodes correctly")
-    func testServerTasksCapability() throws {
+    @Test
+    func `Server tasks capability encodes correctly`() throws {
         let capabilities = Server.Capabilities(
             tasks: .init(
                 list: .init(),
                 cancel: .init(),
-                requests: .init(tools: .init(call: .init()))
-            )
+                requests: .init(tools: .init(call: .init())),
+            ),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"tasks\""))
         #expect(json.contains("\"list\""))
@@ -897,20 +889,20 @@ struct TasksCapabilityEncodingTests {
         #expect(decoded.tasks?.requests?.tools?.call != nil)
     }
 
-    @Test("Client tasks capability encodes correctly")
-    func testClientTasksCapability() throws {
+    @Test
+    func `Client tasks capability encodes correctly`() throws {
         let capabilities = Client.Capabilities(
             tasks: .init(
                 list: .init(),
-                cancel: .init()
-            )
+                cancel: .init(),
+            ),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(capabilities)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"tasks\""))
         #expect(json.contains("\"list\""))
@@ -926,149 +918,148 @@ struct TasksCapabilityEncodingTests {
 
 // MARK: - Server Capability Merge Tests
 
-@Suite("Server Capability Merge Tests")
 struct ServerCapabilityMergeTests {
-    @Test("Auto-detects tools capability when not provided")
-    func autoDetectsTools() {
+    @Test
+    func `Auto-detects tools capability when not provided`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(),
             hasTools: true,
             hasResources: false,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.tools != nil)
         #expect(result.tools?.listChanged == true)
     }
 
-    @Test("Auto-detects resources capability when not provided")
-    func autoDetectsResources() {
+    @Test
+    func `Auto-detects resources capability when not provided`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(),
             hasTools: false,
             hasResources: true,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.resources != nil)
         #expect(result.resources?.subscribe == false)
         #expect(result.resources?.listChanged == true)
     }
 
-    @Test("Auto-detects prompts capability when not provided")
-    func autoDetectsPrompts() {
+    @Test
+    func `Auto-detects prompts capability when not provided`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(),
             hasTools: false,
             hasResources: false,
-            hasPrompts: true
+            hasPrompts: true,
         )
         #expect(result.prompts != nil)
         #expect(result.prompts?.listChanged == true)
     }
 
-    @Test("Defaults nil listChanged to true for tools")
-    func defaultsNilListChangedForTools() {
+    @Test
+    func `Defaults nil listChanged to true for tools`() {
         // User provides tools capability object but omits listChanged
         let result = ServerCapabilityHelpers.merge(
             base: .init(tools: .init()),
             hasTools: true,
             hasResources: false,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.tools?.listChanged == true)
     }
 
-    @Test("Defaults nil listChanged to true for resources")
-    func defaultsNilListChangedForResources() {
+    @Test
+    func `Defaults nil listChanged to true for resources`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(resources: .init()),
             hasTools: false,
             hasResources: true,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.resources?.listChanged == true)
     }
 
-    @Test("Defaults nil listChanged to true for prompts")
-    func defaultsNilListChangedForPrompts() {
+    @Test
+    func `Defaults nil listChanged to true for prompts`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(prompts: .init()),
             hasTools: false,
             hasResources: false,
-            hasPrompts: true
+            hasPrompts: true,
         )
         #expect(result.prompts?.listChanged == true)
     }
 
-    @Test("Preserves explicit listChanged false for tools")
-    func preservesExplicitFalseForTools() {
+    @Test
+    func `Preserves explicit listChanged false for tools`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(tools: .init(listChanged: false)),
             hasTools: true,
             hasResources: false,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.tools?.listChanged == false)
     }
 
-    @Test("Preserves explicit listChanged false for resources")
-    func preservesExplicitFalseForResources() {
+    @Test
+    func `Preserves explicit listChanged false for resources`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(resources: .init(listChanged: false)),
             hasTools: false,
             hasResources: true,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.resources?.listChanged == false)
     }
 
-    @Test("Preserves explicit listChanged false for prompts")
-    func preservesExplicitFalseForPrompts() {
+    @Test
+    func `Preserves explicit listChanged false for prompts`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(prompts: .init(listChanged: false)),
             hasTools: false,
             hasResources: false,
-            hasPrompts: true
+            hasPrompts: true,
         )
         #expect(result.prompts?.listChanged == false)
     }
 
-    @Test("Preserves explicit listChanged true")
-    func preservesExplicitTrue() {
+    @Test
+    func `Preserves explicit listChanged true`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(
                 prompts: .init(listChanged: true),
-                tools: .init(listChanged: true)
+                tools: .init(listChanged: true),
             ),
             hasTools: true,
             hasResources: false,
-            hasPrompts: true
+            hasPrompts: true,
         )
         #expect(result.tools?.listChanged == true)
         #expect(result.prompts?.listChanged == true)
     }
 
-    @Test("Does not create capability objects when feature is absent")
-    func doesNotCreateWhenFeatureAbsent() {
+    @Test
+    func `Does not create capability objects when feature is absent`() {
         let result = ServerCapabilityHelpers.merge(
             base: .init(),
             hasTools: false,
             hasResources: false,
-            hasPrompts: false
+            hasPrompts: false,
         )
         #expect(result.tools == nil)
         #expect(result.resources == nil)
         #expect(result.prompts == nil)
     }
 
-    @Test("Defaults nil listChanged even when feature has no handlers")
-    func defaultsListChangedWhenCapabilityProvidedWithoutFeature() {
+    @Test
+    func `Defaults nil listChanged even when feature has no handlers`() {
         // User explicitly provides capability object even though no handlers are registered.
         // The nil-defaulting applies to any existing capability object.
         let result = ServerCapabilityHelpers.merge(
             base: .init(tools: .init()),
             hasTools: false,
             hasResources: false,
-            hasPrompts: false
+            hasPrompts: false,
         )
         // Capability object was provided, so it's preserved, and listChanged gets defaulted
         #expect(result.tools != nil)
@@ -1078,25 +1069,29 @@ struct ServerCapabilityMergeTests {
 
 // MARK: - Notification Capability Validation Tests
 
-@Suite("Notification Capability Validation Tests")
 struct NotificationCapabilityValidationTests {
     /// Actor to track errors in a Sendable-compatible way.
     private actor ErrorTracker {
         var capturedError: (any Error)?
-        func capture(_ error: any Error) { capturedError = error }
-        func getError() -> (any Error)? { capturedError }
+        func capture(_ error: any Error) {
+            capturedError = error
+        }
+
+        func getError() -> (any Error)? {
+            capturedError
+        }
     }
 
     /// Test that sendResourceListChanged throws when resources capability is not declared.
-    @Test("sendResourceListChanged throws without resources capability")
-    func sendResourceListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `sendResourceListChanged throws without resources capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server WITHOUT resources capability
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         let errorTracker = ErrorTracker()
@@ -1136,15 +1131,15 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that sendResourceUpdated throws when resources capability is not declared.
-    @Test("sendResourceUpdated throws without resources capability")
-    func sendResourceUpdatedThrowsWithoutCapability() async throws {
+    @Test
+    func `sendResourceUpdated throws without resources capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server WITHOUT resources capability
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         let errorTracker = ErrorTracker()
@@ -1184,15 +1179,15 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that sendToolListChanged throws when tools capability is not declared.
-    @Test("sendToolListChanged throws without tools capability")
-    func sendToolListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `sendToolListChanged throws without tools capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server WITHOUT tools capability (only prompts)
         let server = Server(
             name: "NoToolsServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         let errorTracker = ErrorTracker()
@@ -1232,15 +1227,15 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that sendPromptListChanged throws when prompts capability is not declared.
-    @Test("sendPromptListChanged throws without prompts capability")
-    func sendPromptListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `sendPromptListChanged throws without prompts capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server WITHOUT prompts capability
         let server = Server(
             name: "NoPromptsServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         let errorTracker = ErrorTracker()
@@ -1280,13 +1275,13 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that Server.sendResourceListChanged throws when resources capability is not declared.
-    @Test("Server.sendResourceListChanged throws without resources capability")
-    func serverSendResourceListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `Server.sendResourceListChanged throws without resources capability`() async throws {
         // Server WITHOUT resources capability
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         do {
@@ -1300,13 +1295,13 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that Server.sendResourceUpdated throws when resources capability is not declared.
-    @Test("Server.sendResourceUpdated throws without resources capability")
-    func serverSendResourceUpdatedThrowsWithoutCapability() async throws {
+    @Test
+    func `Server.sendResourceUpdated throws without resources capability`() async throws {
         // Server WITHOUT resources capability
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         do {
@@ -1320,13 +1315,13 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that Server.sendToolListChanged throws when tools capability is not declared.
-    @Test("Server.sendToolListChanged throws without tools capability")
-    func serverSendToolListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `Server.sendToolListChanged throws without tools capability`() async throws {
         // Server WITHOUT tools capability
         let server = Server(
             name: "NoToolsServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         do {
@@ -1340,13 +1335,13 @@ struct NotificationCapabilityValidationTests {
     }
 
     /// Test that Server.sendPromptListChanged throws when prompts capability is not declared.
-    @Test("Server.sendPromptListChanged throws without prompts capability")
-    func serverSendPromptListChangedThrowsWithoutCapability() async throws {
+    @Test
+    func `Server.sendPromptListChanged throws without prompts capability`() async throws {
         // Server WITHOUT prompts capability
         let server = Server(
             name: "NoPromptsServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         do {
@@ -1362,17 +1357,16 @@ struct NotificationCapabilityValidationTests {
 
 // MARK: - Capability Auto-Inference Tests (Phase 0 Test Audit)
 
-@Suite("Capability Auto-Inference Tests")
 struct CapabilityAutoInferenceTests {
     /// Test that registering a sampling handler auto-infers the sampling capability.
-    @Test("Sampling capability inferred from handler registration", .timeLimit(.minutes(1)))
-    func testSamplingCapabilityInferred() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Sampling capability inferred from handler registration`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1389,7 +1383,7 @@ struct CapabilityAutoInferenceTests {
                 model: "test",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: []
+                content: [],
             )
         }
 
@@ -1406,14 +1400,14 @@ struct CapabilityAutoInferenceTests {
     }
 
     /// Test that registering a roots handler auto-infers the roots capability.
-    @Test("Roots capability inferred from handler registration", .timeLimit(.minutes(1)))
-    func testRootsCapabilityInferred() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Roots capability inferred from handler registration`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1441,14 +1435,14 @@ struct CapabilityAutoInferenceTests {
     }
 
     /// Test that registering an elicitation handler auto-infers the elicitation capability.
-    @Test("Elicitation capability inferred from handler registration", .timeLimit(.minutes(1)))
-    func testElicitationCapabilityInferred() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Elicitation capability inferred from handler registration`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1462,7 +1456,7 @@ struct CapabilityAutoInferenceTests {
 
         await client.withElicitationHandler(
             formMode: .enabled(applyDefaults: true),
-            urlMode: .enabled
+            urlMode: .enabled,
         ) { _, _ in
             Elicit.Result(action: .decline)
         }
@@ -1481,14 +1475,14 @@ struct CapabilityAutoInferenceTests {
     }
 
     /// Test that explicit capabilities override auto-inferred capabilities.
-    @Test("Explicit capabilities override auto-inferred", .timeLimit(.minutes(1)))
-    func testExplicitCapabilitiesOverrideInferred() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Explicit capabilities override auto-inferred`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1503,8 +1497,8 @@ struct CapabilityAutoInferenceTests {
             version: "1.0",
             // Explicit: sampling with context only (no tools)
             capabilities: .init(
-                sampling: .init(context: .init(), tools: nil)
-            )
+                sampling: .init(context: .init(), tools: nil),
+            ),
         )
 
         // Handler registration suggests tools support, but explicit says no
@@ -1513,7 +1507,7 @@ struct CapabilityAutoInferenceTests {
                 model: "test",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: []
+                content: [],
             )
         }
 
@@ -1530,14 +1524,14 @@ struct CapabilityAutoInferenceTests {
     }
 
     /// Test that multiple handler registrations all contribute to capabilities.
-    @Test("Multiple handlers contribute to capabilities", .timeLimit(.minutes(1)))
-    func testMultipleHandlersContributeToCapabilities() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Multiple handlers contribute to capabilities`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1554,7 +1548,7 @@ struct CapabilityAutoInferenceTests {
                 model: "test",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: []
+                content: [],
             )
         }
 
@@ -1582,8 +1576,8 @@ struct CapabilityAutoInferenceTests {
     }
 
     /// Test that registering handlers in different orders produces the same capabilities.
-    @Test("Registration order does not affect capabilities", .timeLimit(.minutes(1)))
-    func testRegistrationOrderIndependent() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Registration order does not affect capabilities`() async throws {
         // Test two clients with handlers registered in different orders
         let (clientTransport1, serverTransport1) = await InMemoryTransport.createConnectedPair()
         let (clientTransport2, serverTransport2) = await InMemoryTransport.createConnectedPair()

@@ -1,13 +1,11 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-
 import struct Foundation.Data
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.POSIXError
-
+import Logging
 @testable import MCP
 
 /// Mock transport for testing
@@ -46,27 +44,27 @@ actor MockTransport: Transport {
         self.logger = logger
     }
 
-    public func connect() async throws {
+    func connect() async throws {
         if shouldFailConnect {
             throw MCPError.transportError(POSIXError(.ECONNREFUSED))
         }
         isConnected = true
     }
 
-    public func disconnect() async {
+    func disconnect() async {
         isConnected = false
         dataStreamContinuation?.finish()
         dataStreamContinuation = nil
     }
 
-    public func send(_ message: Data, options _: TransportSendOptions) async throws {
+    func send(_ message: Data, options _: TransportSendOptions) async throws {
         if shouldFailSend {
             throw MCPError.transportError(POSIXError(.EIO))
         }
         sentData.append(message)
     }
 
-    public func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
+    func receive() -> AsyncThrowingStream<TransportMessage, Swift.Error> {
         AsyncThrowingStream<TransportMessage, Swift.Error> { continuation in
             dataStreamContinuation = continuation
             for message in dataToReceive {
@@ -147,7 +145,7 @@ actor MockTransport: Transport {
     /// - Returns: `true` if the count was reached, `false` if timeout occurred
     func waitForSentMessageCount(
         _ count: Int,
-        timeout: Duration = .seconds(2)
+        timeout: Duration = .seconds(2),
     ) async -> Bool {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         while ContinuousClock.now < deadline {
@@ -166,7 +164,7 @@ actor MockTransport: Transport {
     /// - Returns: `true` if a matching message was found, `false` if timeout occurred
     func waitForSentMessage(
         timeout: Duration = .seconds(2),
-        matching predicate: @escaping (String) -> Bool
+        matching predicate: @escaping (String) -> Bool,
     ) async -> Bool {
         let deadline = ContinuousClock.now.advanced(by: timeout)
         while ContinuousClock.now < deadline {

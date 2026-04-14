@@ -52,7 +52,7 @@ public final class ServerTaskContext: Sendable {
     ///
     /// This state may be accessed concurrently - for example, the task handler
     /// reads `isCancelled` while another context calls `requestCancellation()`.
-    private struct State: Sendable {
+    private struct State {
         var task: MCPTask
         var isCancelled: Bool = false
         var requestIdCounter: Int = 0
@@ -110,7 +110,7 @@ public final class ServerTaskContext: Sendable {
         queue: any TaskMessageQueue,
         sessionId: String,
         clientCapabilities: Client.Capabilities? = nil,
-        server: Server? = nil
+        server: Server? = nil,
     ) {
         #if canImport(os)
         state = OSAllocatedUnfairLock(initialState: State(task: task))
@@ -155,7 +155,7 @@ public final class ServerTaskContext: Sendable {
             taskId: taskId,
             status: .working,
             statusMessage: message,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -177,7 +177,7 @@ public final class ServerTaskContext: Sendable {
             taskId: taskId,
             status: .inputRequired,
             statusMessage: message,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -199,7 +199,7 @@ public final class ServerTaskContext: Sendable {
             taskId: taskId,
             status: .completed,
             statusMessage: nil,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -236,7 +236,7 @@ public final class ServerTaskContext: Sendable {
             taskId: taskId,
             status: .failed,
             statusMessage: error,
-            sessionId: sessionId
+            sessionId: sessionId,
         )
         state.withLock { $0.task = updatedTask }
         if notify {
@@ -309,7 +309,7 @@ public final class ServerTaskContext: Sendable {
     /// - Throws: MCPError if the client doesn't support elicitation or if the request fails
     public func elicit(
         message: String,
-        requestedSchema: ElicitationSchema
+        requestedSchema: ElicitationSchema,
     ) async throws -> ElicitResult {
         // Check client supports elicitation
         guard clientCapabilities?.elicitation?.form != nil else {
@@ -329,7 +329,7 @@ public final class ServerTaskContext: Sendable {
             mode: "form",
             message: message,
             requestedSchema: requestedSchema,
-            _meta: RequestMeta(additionalFields: relatedTaskMeta)
+            _meta: RequestMeta(additionalFields: relatedTaskMeta),
         )
 
         // Build JSON-RPC request
@@ -344,7 +344,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -413,7 +413,7 @@ public final class ServerTaskContext: Sendable {
     public func elicitUrl(
         message: String,
         url: String,
-        elicitationId: String
+        elicitationId: String,
     ) async throws -> ElicitResult {
         // Check client supports URL elicitation
         guard clientCapabilities?.elicitation?.url != nil else {
@@ -433,7 +433,7 @@ public final class ServerTaskContext: Sendable {
             message: message,
             elicitationId: elicitationId,
             url: url,
-            _meta: RequestMeta(additionalFields: relatedTaskMeta)
+            _meta: RequestMeta(additionalFields: relatedTaskMeta),
         )
 
         // Build JSON-RPC request
@@ -448,7 +448,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -523,7 +523,7 @@ public final class ServerTaskContext: Sendable {
         includeContext: Sampling.ContextInclusion? = nil,
         temperature: Double? = nil,
         stopSequences: [String]? = nil,
-        metadata: [String: Value]? = nil
+        metadata: [String: Value]? = nil,
     ) async throws -> CreateSamplingMessage.Result {
         // Check client supports sampling
         guard clientCapabilities?.sampling != nil else {
@@ -548,7 +548,7 @@ public final class ServerTaskContext: Sendable {
             maxTokens: maxTokens,
             stopSequences: stopSequences,
             metadata: metadata,
-            _meta: RequestMeta(additionalFields: relatedTaskMeta)
+            _meta: RequestMeta(additionalFields: relatedTaskMeta),
         )
 
         // Build JSON-RPC request
@@ -563,7 +563,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -633,7 +633,7 @@ public final class ServerTaskContext: Sendable {
     public func elicitAsTask(
         message: String,
         requestedSchema: ElicitationSchema,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> ElicitResult {
         // Check client supports task-augmented elicitation
         guard hasTaskAugmentedElicitation(clientCapabilities) else {
@@ -662,7 +662,7 @@ public final class ServerTaskContext: Sendable {
             message: message,
             requestedSchema: requestedSchema,
             _meta: RequestMeta(additionalFields: relatedTaskMeta),
-            task: TaskMetadata(ttl: ttl)
+            task: TaskMetadata(ttl: ttl),
         )
 
         // Build JSON-RPC request
@@ -677,7 +677,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -702,7 +702,7 @@ public final class ServerTaskContext: Sendable {
             // Get the final result from client DIRECTLY
             let result: ElicitResult = try await server.getClientTaskResultAs(
                 taskId: clientTaskId,
-                type: ElicitResult.self
+                type: ElicitResult.self,
             )
 
             // Restore status to working
@@ -734,7 +734,7 @@ public final class ServerTaskContext: Sendable {
         message: String,
         url: String,
         elicitationId: String,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> ElicitResult {
         // Check client supports task-augmented elicitation
         guard hasTaskAugmentedElicitation(clientCapabilities) else {
@@ -764,7 +764,7 @@ public final class ServerTaskContext: Sendable {
             elicitationId: elicitationId,
             url: url,
             _meta: RequestMeta(additionalFields: relatedTaskMeta),
-            task: TaskMetadata(ttl: ttl)
+            task: TaskMetadata(ttl: ttl),
         )
 
         // Build JSON-RPC request
@@ -779,7 +779,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -804,7 +804,7 @@ public final class ServerTaskContext: Sendable {
             // Get the final result from client DIRECTLY
             let result: ElicitResult = try await server.getClientTaskResultAs(
                 taskId: clientTaskId,
-                type: ElicitResult.self
+                type: ElicitResult.self,
             )
 
             // Restore status to working
@@ -874,7 +874,7 @@ public final class ServerTaskContext: Sendable {
         temperature: Double? = nil,
         stopSequences: [String]? = nil,
         metadata: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> CreateSamplingMessage.Result {
         // Check client supports task-augmented sampling
         guard hasTaskAugmentedSampling(clientCapabilities) else {
@@ -909,7 +909,7 @@ public final class ServerTaskContext: Sendable {
             stopSequences: stopSequences,
             metadata: metadata,
             _meta: RequestMeta(additionalFields: relatedTaskMeta),
-            task: TaskMetadata(ttl: ttl)
+            task: TaskMetadata(ttl: ttl),
         )
 
         // Build JSON-RPC request
@@ -924,7 +924,7 @@ public final class ServerTaskContext: Sendable {
         let queuedRequest = QueuedRequestWithResolver(
             message: .request(requestData, timestamp: Date()),
             resolver: resolver,
-            originalRequestId: requestId
+            originalRequestId: requestId,
         )
 
         do {
@@ -949,7 +949,7 @@ public final class ServerTaskContext: Sendable {
             // Get the final result from client DIRECTLY
             let result: CreateSamplingMessage.Result = try await server.getClientTaskResultAs(
                 taskId: clientTaskId,
-                type: CreateSamplingMessage.Result.self
+                type: CreateSamplingMessage.Result.self,
             )
 
             // Restore status to working

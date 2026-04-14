@@ -8,10 +8,9 @@
 
 @preconcurrency import Foundation
 import Logging
+@testable import MCP
 import os
 import Testing
-
-@testable import MCP
 
 // MARK: - Test trait
 
@@ -19,7 +18,7 @@ import Testing
 struct HTTPClientTransportTestSetupTrait: TestTrait, TestScoping {
     func provideScope(
         for _: Test, testCase _: Test.Case?,
-        performing function: @Sendable () async throws -> Void
+        performing function: @Sendable () async throws -> Void,
     ) async throws {
         // Clear handler before test
         MockURLProtocol.requestHandlerStorage.clearHandler()
@@ -33,7 +32,9 @@ struct HTTPClientTransportTestSetupTrait: TestTrait, TestScoping {
 }
 
 extension Trait where Self == HTTPClientTransportTestSetupTrait {
-    static var httpClientTransportSetup: Self { Self() }
+    static var httpClientTransportSetup: Self {
+        Self()
+    }
 }
 
 // MARK: - Mock Handler Registry
@@ -59,7 +60,7 @@ final class RequestHandlerStorage: Sendable {
                     domain: "MockURLProtocolError", code: 0,
                     userInfo: [
                         NSLocalizedDescriptionKey: "No request handler set",
-                    ]
+                    ],
                 )
             }
             return try handler(request)
@@ -121,12 +122,12 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
 
 // MARK: -
 
-@Suite("HTTP Client Transport Tests", .serialized)
+@Suite(.serialized)
 struct HTTPClientTransportTests {
     let testEndpoint = URL(string: "http://localhost:8080/test")!
 
-    @Test("Connect and Disconnect", .httpClientTransportSetup)
-    func testConnectAndDisconnect() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Connect and Disconnect`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -134,15 +135,15 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
 
         try await transport.connect()
         await transport.disconnect()
     }
 
-    @Test("Send and Receive JSON Response", .httpClientTransportSetup)
-    func testSendAndReceiveJSON() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Send and Receive JSON Response`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -150,7 +151,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -165,12 +166,12 @@ struct HTTPClientTransportTests {
             #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
             #expect(
                 request.value(forHTTPHeaderField: "Accept")
-                    == "application/json, text/event-stream"
+                    == "application/json, text/event-stream",
             )
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [HTTPHeader.contentType: "application/json"],
             )!
             return (response, responseData)
         }
@@ -184,8 +185,8 @@ struct HTTPClientTransportTests {
         #expect(receivedData?.data == responseData)
     }
 
-    @Test("Send and Receive Session ID", .httpClientTransportSetup)
-    func testSendAndReceiveSessionID() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Send and Receive Session ID`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -193,7 +194,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -208,7 +209,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: newSessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -219,8 +220,8 @@ struct HTTPClientTransportTests {
         #expect(storedSessionID == newSessionID)
     }
 
-    @Test("Send With Existing Session ID", .httpClientTransportSetup)
-    func testSendWithExistingSessionID() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Send With Existing Session ID`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -228,15 +229,17 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
         let initialSessionID = "existing-session-abc"
         let firstMessageData = #"{"jsonrpc":"2.0","method":"initialize","id":1}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
         let secondMessageData = #"{"jsonrpc":"2.0","method":"ping","id":2}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (request: URLRequest) in
@@ -247,7 +250,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: initialSessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -261,7 +264,7 @@ struct HTTPClientTransportTests {
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [HTTPHeader.contentType: "application/json"],
             )!
             return (response, Data())
         }
@@ -270,8 +273,8 @@ struct HTTPClientTransportTests {
         #expect(await transport.sessionID == initialSessionID)
     }
 
-    @Test("HTTP 404 Not Found Error", .httpClientTransportSetup)
-    func testHTTPNotFoundError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 404 Not Found Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -281,7 +284,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Not Found".utf8))
         }
@@ -290,7 +293,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -309,8 +312,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 500 Server Error", .httpClientTransportSetup)
-    func testHTTPServerError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 500 Server Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -320,7 +323,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 500, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 500, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Server Error".utf8))
         }
@@ -329,7 +332,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -348,16 +351,18 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("Session Expired Error (404 with Session ID)", .httpClientTransportSetup)
-    func testSessionExpiredError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Session Expired Error (404 with Session ID)`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
         let initialSessionID = "expired-session-xyz"
         let firstMessageData = #"{"jsonrpc":"2.0","method":"initialize","id":1}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
         let secondMessageData = #"{"jsonrpc":"2.0","method":"ping","id":2}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
 
         // Set up the first handler BEFORE creating the transport
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -367,7 +372,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: initialSessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -376,7 +381,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -388,7 +393,7 @@ struct HTTPClientTransportTests {
             [testEndpoint, initialSessionID] (request: URLRequest) in
             #expect(request.value(forHTTPHeaderField: HTTPHeader.sessionId) == initialSessionID)
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Not Found".utf8))
         }
@@ -409,8 +414,8 @@ struct HTTPClientTransportTests {
 
     // These tests verify handling of additional HTTP status codes per the MCP spec
 
-    @Test("HTTP 400 Bad Request Error", .httpClientTransportSetup)
-    func testHTTPBadRequestError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 400 Bad Request Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -419,7 +424,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 400, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 400, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Bad Request".utf8))
         }
@@ -428,7 +433,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -447,8 +452,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 401 Unauthorized Error", .httpClientTransportSetup)
-    func testHTTPUnauthorizedError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 401 Unauthorized Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -457,7 +462,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 401, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 401, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Unauthorized".utf8))
         }
@@ -466,7 +471,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -485,8 +490,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 403 Forbidden Error", .httpClientTransportSetup)
-    func testHTTPForbiddenError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 403 Forbidden Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -495,7 +500,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 403, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 403, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Forbidden".utf8))
         }
@@ -504,7 +509,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -523,8 +528,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 405 Method Not Allowed Error", .httpClientTransportSetup)
-    func testHTTPMethodNotAllowedError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 405 Method Not Allowed Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -533,7 +538,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 405, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 405, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Method Not Allowed".utf8))
         }
@@ -542,7 +547,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -561,8 +566,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 408 Request Timeout Error", .httpClientTransportSetup)
-    func testHTTPRequestTimeoutError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 408 Request Timeout Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -571,7 +576,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 408, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 408, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Request Timeout".utf8))
         }
@@ -580,7 +585,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -599,8 +604,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 429 Too Many Requests Error", .httpClientTransportSetup)
-    func testHTTPTooManyRequestsError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 429 Too Many Requests Error`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -609,7 +614,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 429, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 429, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data("Too Many Requests".utf8))
         }
@@ -618,7 +623,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -637,22 +642,23 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("HTTP 202 Accepted with no content", .httpClientTransportSetup)
-    func testHTTP202AcceptedNoContent() async throws {
+    @Test(.httpClientTransportSetup)
+    func `HTTP 202 Accepted with no content`() async throws {
         // TypeScript SDK tests: 'should send JSON-RPC messages via POST' with status 202
         // This verifies that 202 Accepted responses (no content body) are handled correctly
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
         let messageData = #"{"jsonrpc":"2.0","method":"notifications/initialized"}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             // Per MCP spec, notifications receive 202 Accepted with no body and no Content-Type
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 202, httpVersion: "HTTP/1.1",
-                headerFields: [:]
+                headerFields: [:],
             )!
             return (response, Data())
         }
@@ -661,7 +667,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -669,8 +675,8 @@ struct HTTPClientTransportTests {
         try await transport.send(messageData)
     }
 
-    @Test("Unexpected content-type throws error for requests", .httpClientTransportSetup)
-    func testUnexpectedContentTypeThrowsErrorForRequest() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Unexpected content-type throws error for requests`() async throws {
         // Per MCP spec: requests MUST receive application/json or text/event-stream
         // This aligns with TypeScript/Python SDKs which validate content-type for requests
         let configuration = URLSessionConfiguration.ephemeral
@@ -684,7 +690,7 @@ struct HTTPClientTransportTests {
             // Server returns unexpected content-type (text/plain instead of application/json)
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/plain"]
+                headerFields: [HTTPHeader.contentType: "text/plain"],
             )!
             return (response, Data("unexpected plain text response".utf8))
         }
@@ -693,7 +699,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -712,8 +718,8 @@ struct HTTPClientTransportTests {
         }
     }
 
-    @Test("Unexpected content-type ignored for notifications", .httpClientTransportSetup)
-    func testUnexpectedContentTypeIgnoredForNotification() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Unexpected content-type ignored for notifications`() async throws {
         // Per MCP spec: notifications expect 202 Accepted with no body
         // Content-type validation does not apply to notifications
         // This aligns with TypeScript/Python SDKs behavior
@@ -722,14 +728,15 @@ struct HTTPClientTransportTests {
 
         // Notification has "method" but NO "id" - content-type validation does not apply
         let messageData = #"{"jsonrpc":"2.0","method":"notifications/initialized"}"#.data(
-            using: .utf8)!
+            using: .utf8,
+        )!
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             // Server returns unexpected content-type with body (unusual but allowed for notifications)
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/plain"]
+                headerFields: [HTTPHeader.contentType: "text/plain"],
             )!
             return (response, Data("some unexpected response".utf8))
         }
@@ -738,7 +745,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -746,8 +753,8 @@ struct HTTPClientTransportTests {
         try await transport.send(messageData)
     }
 
-    @Test("Empty response with unexpected content-type does not throw", .httpClientTransportSetup)
-    func testEmptyResponseUnexpectedContentTypeNoError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Empty response with unexpected content-type does not throw`() async throws {
         // Even for requests, empty responses with unexpected content-type are acceptable
         // (e.g., server returns 200 OK with empty body instead of proper 202/204)
         let configuration = URLSessionConfiguration.ephemeral
@@ -761,7 +768,7 @@ struct HTTPClientTransportTests {
             // Server returns unexpected content-type but empty body
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/plain"]
+                headerFields: [HTTPHeader.contentType: "text/plain"],
             )!
             return (response, Data()) // Empty body
         }
@@ -770,7 +777,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -780,8 +787,8 @@ struct HTTPClientTransportTests {
 
     // MARK: - Protocol Version Header Tests
 
-    @Test("Protocol version header sent after initialization", .httpClientTransportSetup)
-    func testProtocolVersionHeaderSentAfterInit() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Protocol version header sent after initialization`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -789,7 +796,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -805,7 +812,7 @@ struct HTTPClientTransportTests {
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [HTTPHeader.contentType: "application/json"],
             )!
             return (response, Data())
         }
@@ -821,7 +828,7 @@ struct HTTPClientTransportTests {
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [HTTPHeader.contentType: "application/json"],
             )!
             return (response, Data())
         }
@@ -830,8 +837,8 @@ struct HTTPClientTransportTests {
 
     // MARK: - Session Termination Tests
 
-    @Test("Terminate session sends DELETE request", .httpClientTransportSetup)
-    func testTerminateSessionSendsDelete() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Terminate session sends DELETE request`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -839,7 +846,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -854,7 +861,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: sessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -868,7 +875,7 @@ struct HTTPClientTransportTests {
             #expect(request.value(forHTTPHeaderField: HTTPHeader.sessionId) == sessionID)
 
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 204, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 204, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data())
         }
@@ -879,8 +886,8 @@ struct HTTPClientTransportTests {
         #expect(await transport.sessionID == nil)
     }
 
-    @Test("Terminate session handles 405 gracefully", .httpClientTransportSetup)
-    func testTerminateSessionHandles405() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Terminate session handles 405 gracefully`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -888,7 +895,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -903,7 +910,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: sessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -913,7 +920,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 405, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 405, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data())
         }
@@ -926,8 +933,8 @@ struct HTTPClientTransportTests {
         #expect(await transport.sessionID == sessionID)
     }
 
-    @Test("Terminate session handles 404 (session expired)", .httpClientTransportSetup)
-    func testTerminateSessionHandles404() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Terminate session handles 404 (session expired)`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -935,7 +942,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -950,7 +957,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: sessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -960,7 +967,7 @@ struct HTTPClientTransportTests {
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint] (_: URLRequest) in
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data())
         }
@@ -972,8 +979,8 @@ struct HTTPClientTransportTests {
         #expect(await transport.sessionID == nil)
     }
 
-    @Test("Terminate session with no session ID does nothing", .httpClientTransportSetup)
-    func testTerminateSessionNoSessionId() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Terminate session with no session ID does nothing`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -981,7 +988,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -994,8 +1001,8 @@ struct HTTPClientTransportTests {
         #expect(await transport.sessionID == nil)
     }
 
-    @Test("Terminate session includes protocol version header", .httpClientTransportSetup)
-    func testTerminateSessionIncludesProtocolVersion() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Terminate session includes protocol version header`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -1003,7 +1010,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
         try await transport.connect()
 
@@ -1019,7 +1026,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "application/json",
                     HTTPHeader.sessionId: sessionID,
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1036,7 +1043,7 @@ struct HTTPClientTransportTests {
             #expect(request.value(forHTTPHeaderField: HTTPHeader.protocolVersion) == protocolVersion)
 
             let response = HTTPURLResponse(
-                url: testEndpoint, statusCode: 204, httpVersion: "HTTP/1.1", headerFields: nil
+                url: testEndpoint, statusCode: 204, httpVersion: "HTTP/1.1", headerFields: nil,
             )!
             return (response, Data())
         }
@@ -1046,8 +1053,8 @@ struct HTTPClientTransportTests {
 
     // Skip SSE tests on platforms that don't support streaming
     #if !canImport(FoundationNetworking)
-    @Test("Receive Server-Sent Event (SSE)", .httpClientTransportSetup)
-    func testReceiveSSE() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Receive Server-Sent Event (SSE)`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -1056,11 +1063,11 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         let eventString = "id: event1\ndata: {\"key\":\"value\"}\n\n"
-        let sseEventData = eventString.data(using: .utf8)!
+        let sseEventData = try #require(eventString.data(using: .utf8))
 
         // First, set up a handler for the initial POST that will provide a session ID
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -1070,7 +1077,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-123",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1086,11 +1093,12 @@ struct HTTPClientTransportTests {
             #expect(request.httpMethod == "GET")
             #expect(request.value(forHTTPHeaderField: "Accept") == "text/event-stream")
             #expect(
-                request.value(forHTTPHeaderField: HTTPHeader.sessionId) == "test-session-123")
+                request.value(forHTTPHeaderField: HTTPHeader.sessionId) == "test-session-123",
+            )
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
 
             return (response, sseEventData) // Will return empty Data for SSE
@@ -1109,8 +1117,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Receive Server-Sent Event (SSE) (CR-NL)", .httpClientTransportSetup)
-    func testReceiveSSE_CRNL() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Receive Server-Sent Event (SSE) (CR-NL)`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -1119,11 +1127,11 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         let eventString = "id: event1\r\ndata: {\"key\":\"value\"}\r\n\n"
-        let sseEventData = eventString.data(using: .utf8)!
+        let sseEventData = try #require(eventString.data(using: .utf8))
 
         // First, set up a handler for the initial POST that will provide a session ID
         // Use text/plain to prevent its (empty) body from being yielded to messageStream
@@ -1134,7 +1142,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-123",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1150,11 +1158,12 @@ struct HTTPClientTransportTests {
             #expect(request.httpMethod == "GET")
             #expect(request.value(forHTTPHeaderField: "Accept") == "text/event-stream")
             #expect(
-                request.value(forHTTPHeaderField: HTTPHeader.sessionId) == "test-session-123")
+                request.value(forHTTPHeaderField: HTTPHeader.sessionId) == "test-session-123",
+            )
 
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
 
             return (response, sseEventData)
@@ -1174,10 +1183,10 @@ struct HTTPClientTransportTests {
     }
 
     @Test(
-        "Client with HTTP Transport complete flow", .httpClientTransportSetup,
-        .timeLimit(.minutes(1))
+        .httpClientTransportSetup,
+        .timeLimit(.minutes(1)),
     )
-    func testClientFlow() async throws {
+    func `Client with HTTP Transport complete flow`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -1185,7 +1194,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
 
         let client = Client(name: "TestClient", version: "1.0.0")
@@ -1217,15 +1226,17 @@ struct HTTPClientTransportTests {
                 case "GET":
                     #expect(
                         request.allHTTPHeaderFields?["Accept"]?.contains("text/event-stream")
-                            == true)
+                            == true,
+                    )
                 case "POST":
                     #expect(
                         request.allHTTPHeaderFields?["Accept"]?.contains("application/json")
-                            == true
+                            == true,
                     )
                 default:
                     Issue.record(
-                        "Unsupported HTTP method \(String(describing: request.httpMethod))")
+                        "Unsupported HTTP method \(String(describing: request.httpMethod))",
+                    )
             }
 
             #expect(request.url == testEndpoint)
@@ -1242,7 +1253,7 @@ struct HTTPClientTransportTests {
                     userInfo: [
                         NSLocalizedDescriptionKey:
                             "Invalid JSON-RPC message \(#file):\(#line)",
-                    ]
+                    ],
                 )
             }
 
@@ -1254,14 +1265,14 @@ struct HTTPClientTransportTests {
                     protocolVersion: Version.latest,
                     capabilities: .init(tools: .init()),
                     serverInfo: .init(name: "Mock Server", version: "0.0.1"),
-                    instructions: nil
+                    instructions: nil,
                 )
                 let response = Initialize.response(id: .string(requestID), result: result)
                 let responseData = try JSONEncoder().encode(response)
 
                 let httpResponse = HTTPURLResponse(
                     url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                    headerFields: [HTTPHeader.contentType: "application/json"]
+                    headerFields: [HTTPHeader.contentType: "application/json"],
                 )!
                 return (httpResponse, responseData)
             } else if method == "tools/call" {
@@ -1285,14 +1296,14 @@ struct HTTPClientTransportTests {
 
                 let httpResponse = HTTPURLResponse(
                     url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                    headerFields: [HTTPHeader.contentType: "application/json"]
+                    headerFields: [HTTPHeader.contentType: "application/json"],
                 )!
                 return (httpResponse, responseData)
             } else if method == "notifications/initialized" {
                 // Per MCP spec, notifications receive 202 Accepted with no body and no Content-Type
                 let httpResponse = HTTPURLResponse(
                     url: testEndpoint, statusCode: 202, httpVersion: "HTTP/1.1",
-                    headerFields: [:]
+                    headerFields: [:],
                 )!
                 return (httpResponse, Data())
             } else {
@@ -1301,7 +1312,7 @@ struct HTTPClientTransportTests {
                     userInfo: [
                         NSLocalizedDescriptionKey:
                             "Unexpected request method: \(method) \(#file):\(#line)",
-                    ]
+                    ],
                 )
             }
         }
@@ -1327,9 +1338,9 @@ struct HTTPClientTransportTests {
         await client.disconnect()
     }
 
-    @Test("Request modifier functionality", .httpClientTransportSetup)
-    func testRequestModifier() async throws {
-        let testEndpoint = URL(string: "https://api.example.com/mcp")!
+    @Test(.httpClientTransportSetup)
+    func `Request modifier functionality`() async throws {
+        let testEndpoint = try #require(URL(string: "https://api.example.com/mcp"))
         let testToken = "test-bearer-token-12345"
 
         let configuration = URLSessionConfiguration.ephemeral
@@ -1339,12 +1350,13 @@ struct HTTPClientTransportTests {
             [testEndpoint, testToken] (request: URLRequest) in
             // Verify the Authorization header was added by the requestModifier
             #expect(
-                request.value(forHTTPHeaderField: "Authorization") == "Bearer \(testToken)")
+                request.value(forHTTPHeaderField: "Authorization") == "Bearer \(testToken)",
+            )
 
             // Return a successful response
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "application/json"]
+                headerFields: [HTTPHeader.contentType: "application/json"],
             )!
             return (response, Data())
         }
@@ -1357,11 +1369,11 @@ struct HTTPClientTransportTests {
             requestModifier: { request in
                 var modifiedRequest = request
                 modifiedRequest.addValue(
-                    "Bearer \(testToken)", forHTTPHeaderField: "Authorization"
+                    "Bearer \(testToken)", forHTTPHeaderField: "Authorization",
                 )
                 return modifiedRequest
             },
-            logger: nil
+            logger: nil,
         )
 
         try await transport.connect()
@@ -1376,8 +1388,8 @@ struct HTTPClientTransportTests {
 
     // These tests verify the reconnection logic aligns with TypeScript/Python SDKs
 
-    @Test("Custom reconnection options are respected", .httpClientTransportSetup)
-    func testCustomReconnectionOptions() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Custom reconnection options are respected`() {
         // TypeScript SDK test: 'should support custom reconnection options'
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -1386,7 +1398,7 @@ struct HTTPClientTransportTests {
             initialReconnectionDelay: 0.5,
             maxReconnectionDelay: 10.0,
             reconnectionDelayGrowFactor: 2.0,
-            maxRetries: 5
+            maxRetries: 5,
         )
 
         let transport = HTTPClientTransport(
@@ -1394,7 +1406,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: false,
             reconnectionOptions: customOptions,
-            logger: nil
+            logger: nil,
         )
 
         // Verify options were set correctly
@@ -1405,8 +1417,8 @@ struct HTTPClientTransportTests {
         #expect(options.maxRetries == 5)
     }
 
-    @Test("Exponential backoff options configuration", .httpClientTransportSetup)
-    func testExponentialBackoffConfiguration() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Exponential backoff options configuration`() {
         // TypeScript SDK test: 'should have exponential backoff with configurable maxRetries'
         // This test verifies that exponential backoff options can be configured
         let configuration = URLSessionConfiguration.ephemeral
@@ -1416,7 +1428,7 @@ struct HTTPClientTransportTests {
             initialReconnectionDelay: 0.1, // 100ms
             maxReconnectionDelay: 5.0, // 5000ms
             reconnectionDelayGrowFactor: 2.0,
-            maxRetries: 3
+            maxRetries: 3,
         )
 
         let transport = HTTPClientTransport(
@@ -1424,7 +1436,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: false,
             reconnectionOptions: customOptions,
-            logger: nil
+            logger: nil,
         )
 
         // Verify exponential backoff options are set correctly
@@ -1440,8 +1452,8 @@ struct HTTPClientTransportTests {
         // This is tested indirectly through reconnection behavior
     }
 
-    @Test("Resumption token callback is invoked", .httpClientTransportSetup)
-    func testResumptionTokenCallback() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Resumption token callback is invoked`() async throws {
         // TypeScript SDK test: related to 'onresumptiontoken' callback
         // Python SDK: 'on_resumption_token_update' callback
         // This test verifies the callback works by checking lastReceivedEventId
@@ -1454,7 +1466,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial POST to get session ID
@@ -1465,7 +1477,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-resumption",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1475,13 +1487,13 @@ struct HTTPClientTransportTests {
 
         // Set up SSE response with event ID (priming event)
         let sseWithEventId = "id: event-123\ndata: {\"test\":\"data\"}\n\n"
-        let sseData = sseWithEventId.data(using: .utf8)!
+        let sseData = try #require(sseWithEventId.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1497,8 +1509,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Last event ID is stored for resumption", .httpClientTransportSetup)
-    func testLastEventIdStoredForResumption() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Last event ID is stored for resumption`() async throws {
         // TypeScript SDK test: 'should pass lastEventId when reconnecting'
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -1508,7 +1520,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial POST
@@ -1519,7 +1531,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-last-event",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1529,13 +1541,13 @@ struct HTTPClientTransportTests {
 
         // Set up SSE response with event ID
         let sseWithEventId = "id: last-event-456\ndata: {}\n\n"
-        let sseData = sseWithEventId.data(using: .utf8)!
+        let sseData = try #require(sseWithEventId.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1549,8 +1561,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("State-only SSE event ID updates resumption state", .httpClientTransportSetup)
-    func testStateOnlyEventIdStoredForResumption() async throws {
+    @Test(.httpClientTransportSetup)
+    func `State-only SSE event ID updates resumption state`() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
 
@@ -1559,7 +1571,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         MockURLProtocol.requestHandlerStorage.setHandler {
@@ -1569,7 +1581,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-state-only-id",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1578,13 +1590,13 @@ struct HTTPClientTransportTests {
         try await transport.send(Data())
 
         let sseWithStateOnlyId = "id: state-only-789\n\n"
-        let sseData = sseWithStateOnlyId.data(using: .utf8)!
+        let sseData = try #require(sseWithStateOnlyId.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1597,8 +1609,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("SSE priming event with empty data does not throw", .httpClientTransportSetup)
-    func testPrimingEventEmptyDataNoError() async throws {
+    @Test(.httpClientTransportSetup)
+    func `SSE priming event with empty data does not throw`() async throws {
         // TypeScript SDK test: 'should not throw JSON parse error on priming events with empty data'
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -1608,7 +1620,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial POST
@@ -1619,7 +1631,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-priming",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1630,13 +1642,13 @@ struct HTTPClientTransportTests {
         // Priming event: has ID but empty data (this is valid per MCP spec)
         // Followed by a real message
         let sseWithPriming = "id: priming-123\ndata: \n\nid: msg-456\ndata: {\"result\":\"ok\"}\n\n"
-        let sseData = sseWithPriming.data(using: .utf8)!
+        let sseData = try #require(sseWithPriming.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1655,8 +1667,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Server retry directive does not cause errors", .httpClientTransportSetup)
-    func testServerRetryDirectiveHandled() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Server retry directive does not cause errors`() async throws {
         // TypeScript SDK test: 'should use server-provided retry value for reconnection delay'
         // Python SDK: 'test_streamable_http_client_respects_retry_interval'
         // This test verifies that SSE retry directives are handled without error
@@ -1668,7 +1680,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial POST
@@ -1679,7 +1691,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-retry",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1690,13 +1702,13 @@ struct HTTPClientTransportTests {
         // SSE response with retry directive (3000ms = 3 seconds)
         // The transport should parse this without error
         let sseWithRetry = "retry: 3000\nid: evt-1\ndata: {\"result\":\"ok\"}\n\n"
-        let sseData = sseWithRetry.data(using: .utf8)!
+        let sseData = try #require(sseWithRetry.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1711,8 +1723,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Default reconnection options use exponential backoff", .httpClientTransportSetup)
-    func testDefaultReconnectionOptions() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Default reconnection options use exponential backoff`() {
         // TypeScript SDK test: 'should fall back to exponential backoff when no server retry value'
         // This test verifies that default reconnection options are properly configured
         let configuration = URLSessionConfiguration.ephemeral
@@ -1723,7 +1735,7 @@ struct HTTPClientTransportTests {
             endpoint: testEndpoint,
             configuration: configuration,
             streaming: false,
-            logger: nil
+            logger: nil,
         )
 
         // Verify default options are set correctly
@@ -1741,8 +1753,8 @@ struct HTTPClientTransportTests {
         #expect(defaultOptions.maxRetries == 2)
     }
 
-    @Test("SSE notifications do not stop reconnection", .httpClientTransportSetup)
-    func testSSENotificationsDoNotStopReconnection() async throws {
+    @Test(.httpClientTransportSetup)
+    func `SSE notifications do not stop reconnection`() async throws {
         // This test verifies that server notifications via SSE don't incorrectly
         // mark receivedResponse=true (which would stop reconnection).
         // Per MCP spec and TypeScript/Python SDKs, only actual JSON-RPC responses
@@ -1758,7 +1770,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // SSE stream with:
@@ -1767,7 +1779,7 @@ struct HTTPClientTransportTests {
         // 3. A response (has id + result, no method) - SHOULD stop reconnection
         // Note: SSE format requires no leading spaces on field lines
         let sseWithMixedMessages = "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"method\":\"notifications/progress\",\"params\":{\"progress\":50}}\n\nid: evt-2\ndata: {\"jsonrpc\":\"2.0\",\"method\":\"sampling/createMessage\",\"id\":\"server-req-1\",\"params\":{}}\n\nid: evt-3\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"status\":\"ok\"}}\n\n"
-        let sseData = sseWithMixedMessages.data(using: .utf8)!
+        let sseData = try #require(sseWithMixedMessages.data(using: .utf8))
 
         // Set up a combined handler for both POST and SSE GET requests
         // This avoids the race condition where the SSE GET fires before the handler is set
@@ -1777,7 +1789,7 @@ struct HTTPClientTransportTests {
                 // SSE request
                 let response = HTTPURLResponse(
                     url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                    headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                    headerFields: [HTTPHeader.contentType: "text/event-stream"],
                 )!
                 return (response, sseData)
             } else {
@@ -1787,7 +1799,7 @@ struct HTTPClientTransportTests {
                     headerFields: [
                         HTTPHeader.contentType: "text/plain",
                         HTTPHeader.sessionId: "test-session-notifications",
-                    ]
+                    ],
                 )!
                 return (response, Data())
             }
@@ -1804,19 +1816,22 @@ struct HTTPClientTransportTests {
         // First: notification
         let msg1 = try await iterator.next()
         #expect(msg1 != nil)
-        let msg1String = String(data: msg1!.data, encoding: .utf8)!
+        let msg1Data = try #require(msg1?.data)
+        let msg1String = try #require(String(data: msg1Data, encoding: .utf8))
         #expect(msg1String.contains("notifications/progress"))
 
         // Second: server request
         let msg2 = try await iterator.next()
         #expect(msg2 != nil)
-        let msg2String = String(data: msg2!.data, encoding: .utf8)!
+        let msg2Data = try #require(msg2?.data)
+        let msg2String = try #require(String(data: msg2Data, encoding: .utf8))
         #expect(msg2String.contains("sampling/createMessage"))
 
         // Third: response
         let msg3 = try await iterator.next()
         #expect(msg3 != nil)
-        let msg3String = String(data: msg3!.data, encoding: .utf8)!
+        let msg3Data = try #require(msg3?.data)
+        let msg3String = try #require(String(data: msg3Data, encoding: .utf8))
         #expect(msg3String.contains("\"result\""))
 
         // The lastReceivedEventId should be evt-3 (last event with ID)
@@ -1826,8 +1841,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("SSE error response stops reconnection", .httpClientTransportSetup)
-    func testSSEErrorResponseStopsReconnection() async throws {
+    @Test(.httpClientTransportSetup)
+    func `SSE error response stops reconnection`() async throws {
         // Per JSON-RPC 2.0, error responses also count as responses and should
         // stop reconnection. An error response has id + error fields, no method.
         let configuration = URLSessionConfiguration.ephemeral
@@ -1838,21 +1853,21 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Use a combined handler so the background GET stream cannot race ahead
         // of the SSE setup and consume the initial POST handler instead.
         let sseWithError =
             "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32600,\"message\":\"Invalid request\"}}\n\n"
-        let sseData = sseWithError.data(using: .utf8)!
+        let sseData = try #require(sseWithError.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (request: URLRequest) in
             if request.httpMethod == "GET" {
                 let response = HTTPURLResponse(
                     url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                    headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                    headerFields: [HTTPHeader.contentType: "text/event-stream"],
                 )!
                 return (response, sseData)
             } else {
@@ -1861,7 +1876,7 @@ struct HTTPClientTransportTests {
                     headerFields: [
                         HTTPHeader.contentType: "text/plain",
                         HTTPHeader.sessionId: "test-session-error",
-                    ]
+                    ],
                 )!
                 return (response, Data())
             }
@@ -1878,15 +1893,16 @@ struct HTTPClientTransportTests {
 
         let msg = try await iterator.next()
         #expect(msg != nil)
-        let msgString = String(data: msg!.data, encoding: .utf8)!
+        let msgData = try #require(msg?.data)
+        let msgString = try #require(String(data: msgData, encoding: .utf8))
         #expect(msgString.contains("\"error\""))
         #expect(msgString.contains("\(ErrorCode.invalidRequest)"))
 
         await transport.disconnect()
     }
 
-    @Test("Response ID remapping with string ID", .httpClientTransportSetup)
-    func testResponseIdRemappingStringId() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Response ID remapping with string ID`() async throws {
         // This test verifies that response IDs are remapped to the original
         // request ID during stream resumption, aligning with TypeScript and
         // Python SDK behavior. This is a defensive feature for edge cases
@@ -1899,7 +1915,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial connection
@@ -1910,7 +1926,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-remap",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1921,13 +1937,13 @@ struct HTTPClientTransportTests {
         // The server sends id: "server-generated-id" but our original request had id: "original-req-42"
         let sseWithDifferentId =
             "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"server-generated-id\",\"result\":{\"status\":\"ok\"}}\n\n"
-        let sseData = sseWithDifferentId.data(using: .utf8)!
+        let sseData = try #require(sseWithDifferentId.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -1944,7 +1960,8 @@ struct HTTPClientTransportTests {
 
         let msg = try await iterator.next()
         #expect(msg != nil)
-        let msgString = String(data: msg!.data, encoding: .utf8)!
+        let msgData = try #require(msg?.data)
+        let msgString = try #require(String(data: msgData, encoding: .utf8))
 
         // The ID should be remapped to "original-req-42"
         #expect(msgString.contains("\"id\":\"original-req-42\""))
@@ -1954,8 +1971,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Response ID remapping with numeric ID", .httpClientTransportSetup)
-    func testResponseIdRemappingNumericId() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Response ID remapping with numeric ID`() async throws {
         // Test ID remapping with numeric IDs (JSON-RPC allows both string and number IDs)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -1965,7 +1982,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial connection
@@ -1976,7 +1993,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-remap-num",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -1986,13 +2003,13 @@ struct HTTPClientTransportTests {
         // SSE stream with a response that has id: 999 (different from original)
         let sseWithDifferentId =
             "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":999,\"result\":{\"value\":42}}\n\n"
-        let sseData = sseWithDifferentId.data(using: .utf8)!
+        let sseData = try #require(sseWithDifferentId.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -2009,7 +2026,8 @@ struct HTTPClientTransportTests {
 
         let msg = try await iterator.next()
         #expect(msg != nil)
-        let msgString = String(data: msg!.data, encoding: .utf8)!
+        let msgData = try #require(msg?.data)
+        let msgString = try #require(String(data: msgData, encoding: .utf8))
 
         // The ID should be remapped to 42 (numeric)
         #expect(msgString.contains("\"id\":42"))
@@ -2019,8 +2037,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("No ID remapping without originalRequestId", .httpClientTransportSetup)
-    func testNoRemappingWithoutOriginalRequestId() async throws {
+    @Test(.httpClientTransportSetup)
+    func `No ID remapping without originalRequestId`() async throws {
         // When originalRequestId is nil (default), IDs should NOT be remapped
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -2030,7 +2048,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial connection
@@ -2041,7 +2059,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-no-remap",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -2051,13 +2069,13 @@ struct HTTPClientTransportTests {
         // SSE stream with a response
         let sseResponse =
             "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"original-id\",\"result\":{\"status\":\"ok\"}}\n\n"
-        let sseData = sseResponse.data(using: .utf8)!
+        let sseData = try #require(sseResponse.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -2073,7 +2091,8 @@ struct HTTPClientTransportTests {
 
         let msg = try await iterator.next()
         #expect(msg != nil)
-        let msgString = String(data: msg!.data, encoding: .utf8)!
+        let msgData = try #require(msg?.data)
+        let msgString = try #require(String(data: msgData, encoding: .utf8))
 
         // The ID should remain as "original-id"
         #expect(msgString.contains("\"id\":\"original-id\""))
@@ -2081,8 +2100,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Error response ID remapping", .httpClientTransportSetup)
-    func testErrorResponseIdRemapping() async throws {
+    @Test(.httpClientTransportSetup)
+    func `Error response ID remapping`() async throws {
         // Per JSON-RPC 2.0, error responses are also responses and should have
         // their IDs remapped. This aligns with Python SDK behavior (which handles
         // both JSONRPCResponse and JSONRPCError), and is more complete than
@@ -2095,7 +2114,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial connection
@@ -2106,7 +2125,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-error-remap",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -2116,13 +2135,13 @@ struct HTTPClientTransportTests {
         // SSE stream with an ERROR response that has a different ID
         let sseWithError =
             "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"server-error-id\",\"error\":{\"code\":-32600,\"message\":\"Invalid request\"}}\n\n"
-        let sseData = sseWithError.data(using: .utf8)!
+        let sseData = try #require(sseWithError.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -2139,7 +2158,8 @@ struct HTTPClientTransportTests {
 
         let msg = try await iterator.next()
         #expect(msg != nil)
-        let msgString = String(data: msg!.data, encoding: .utf8)!
+        let msgData = try #require(msg?.data)
+        let msgString = try #require(String(data: msgData, encoding: .utf8))
 
         // The ID should be remapped to "my-failed-request"
         #expect(msgString.contains("\"id\":\"my-failed-request\""))
@@ -2150,8 +2170,8 @@ struct HTTPClientTransportTests {
         await transport.disconnect()
     }
 
-    @Test("ID remapping only affects responses, not requests/notifications", .httpClientTransportSetup)
-    func testIdRemappingOnlyAffectsResponses() async throws {
+    @Test(.httpClientTransportSetup)
+    func `ID remapping only affects responses, not requests/notifications`() async throws {
         // ID remapping should only apply to responses, not to server requests or notifications
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
@@ -2161,7 +2181,7 @@ struct HTTPClientTransportTests {
             configuration: configuration,
             streaming: true,
             sseInitializationTimeout: 1,
-            logger: nil
+            logger: nil,
         )
 
         // Set up handler for initial connection
@@ -2172,7 +2192,7 @@ struct HTTPClientTransportTests {
                 headerFields: [
                     HTTPHeader.contentType: "text/plain",
                     HTTPHeader.sessionId: "test-session-selective",
-                ]
+                ],
             )!
             return (response, Data())
         }
@@ -2185,13 +2205,13 @@ struct HTTPClientTransportTests {
         // 3. A response (has id + result, no method) - SHOULD be remapped
         // Note: SSE format requires no leading spaces on field lines
         let sseWithMixed = "id: evt-1\ndata: {\"jsonrpc\":\"2.0\",\"method\":\"sampling/createMessage\",\"id\":\"server-req-1\",\"params\":{}}\n\nid: evt-2\ndata: {\"jsonrpc\":\"2.0\",\"method\":\"notifications/progress\",\"params\":{\"progress\":50}}\n\nid: evt-3\ndata: {\"jsonrpc\":\"2.0\",\"id\":\"server-resp-id\",\"result\":{\"status\":\"ok\"}}\n\n"
-        let sseData = sseWithMixed.data(using: .utf8)!
+        let sseData = try #require(sseWithMixed.data(using: .utf8))
 
         MockURLProtocol.requestHandlerStorage.setHandler {
             [testEndpoint, sseData] (_: URLRequest) in
             let response = HTTPURLResponse(
                 url: testEndpoint, statusCode: 200, httpVersion: "HTTP/1.1",
-                headerFields: [HTTPHeader.contentType: "text/event-stream"]
+                headerFields: [HTTPHeader.contentType: "text/event-stream"],
             )!
             return (response, sseData)
         }
@@ -2209,21 +2229,24 @@ struct HTTPClientTransportTests {
         // First: server request - ID should NOT be remapped
         let msg1 = try await iterator.next()
         #expect(msg1 != nil)
-        let msg1String = String(data: msg1!.data, encoding: .utf8)!
+        let msg1Data = try #require(msg1?.data)
+        let msg1String = try #require(String(data: msg1Data, encoding: .utf8))
         #expect(msg1String.contains("\"id\":\"server-req-1\"")) // Original ID preserved
         #expect(msg1String.contains("sampling/createMessage"))
 
         // Second: notification - no ID field, should pass through unchanged
         let msg2 = try await iterator.next()
         #expect(msg2 != nil)
-        let msg2String = String(data: msg2!.data, encoding: .utf8)!
+        let msg2Data = try #require(msg2?.data)
+        let msg2String = try #require(String(data: msg2Data, encoding: .utf8))
         #expect(msg2String.contains("notifications/progress"))
         #expect(!msg2String.contains("my-original-request"))
 
         // Third: response - ID SHOULD be remapped
         let msg3 = try await iterator.next()
         #expect(msg3 != nil)
-        let msg3String = String(data: msg3!.data, encoding: .utf8)!
+        let msg3Data = try #require(msg3?.data)
+        let msg3String = try #require(String(data: msg3Data, encoding: .utf8))
         #expect(msg3String.contains("\"id\":\"my-original-request\"")) // Remapped ID
         #expect(!msg3String.contains("server-resp-id")) // Original ID replaced
         #expect(msg3String.contains("\"result\""))

@@ -40,7 +40,8 @@ public enum PKCE {
 
     /// Characters allowed in a PKCE code verifier (RFC 7636 §4.1).
     private static let unreservedCharacters = Array(
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~".utf8)
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~".utf8,
+    )
 
     /// Generates a cryptographically random code verifier.
     ///

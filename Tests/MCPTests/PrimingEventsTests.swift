@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for SSE priming events on POST streams.
 ///
@@ -36,7 +35,6 @@ import Testing
 ///
 /// The current tests verify that priming events are NOT sent for the currently supported
 /// protocol versions, which is the correct behavior for backwards compatibility.
-@Suite("Priming Events Tests")
 struct PrimingEventsTests {
     // MARK: - Test Helpers
 
@@ -44,7 +42,7 @@ struct PrimingEventsTests {
     func readFromStream(
         _ stream: AsyncThrowingStream<Data, Error>,
         maxChunks: Int = 1,
-        timeout: Duration = .seconds(2)
+        timeout: Duration = .seconds(2),
     ) async throws -> Data {
         var receivedData = Data()
 
@@ -88,11 +86,11 @@ struct PrimingEventsTests {
     /// chunks to receive the actual initialize response.
     func initializeAndWaitForResponse(
         transport: HTTPServerTransport,
-        protocolVersion: String = Version.latest
+        protocolVersion: String = Version.latest,
     ) async throws {
         let initRequest = TestPayloads.initializeRequest(protocolVersion: protocolVersion)
         let initResponse = await transport.handleRequest(
-            TestPayloads.postRequest(body: initRequest, protocolVersion: protocolVersion)
+            TestPayloads.postRequest(body: initRequest, protocolVersion: protocolVersion),
         )
 
         guard initResponse.statusCode == 200 else {
@@ -113,12 +111,11 @@ struct PrimingEventsTests {
 
     /// Creates a configured MCP Server with tools for testing
     func createTestServer() -> Server {
-        let server = Server(
+        Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
-        return server
     }
 
     /// Sets up tool handlers on the server
@@ -131,7 +128,7 @@ struct PrimingEventsTests {
                     inputSchema: [
                         "type": "object",
                         "properties": ["name": ["type": "string"]],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -154,8 +151,8 @@ struct PrimingEventsTests {
     // but the supported versions are "2024-11-05" and "2025-03-26". This means priming events
     // won't be sent until a newer protocol version is added. These tests verify the current behavior.
 
-    @Test("Priming event configuration - retryInterval can be configured")
-    func primingEventRetryIntervalConfig() async throws {
+    @Test
+    func `Priming event configuration - retryInterval can be configured`() {
         // Test that retryInterval can be set in transport options
         let options1 = HTTPServerTransportOptions(retryInterval: 5000)
         #expect(options1.retryInterval == 5000)
@@ -164,8 +161,8 @@ struct PrimingEventsTests {
         #expect(options2.retryInterval == nil)
     }
 
-    @Test("Priming events not sent for current supported protocol versions")
-    func primingEventsNotSentForCurrentVersions() async throws {
+    @Test
+    func `Priming events not sent for current supported protocol versions`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -177,8 +174,8 @@ struct PrimingEventsTests {
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
                 retryInterval: 5000,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -209,8 +206,8 @@ struct PrimingEventsTests {
 
     // MARK: - 4.2 Event ID on messages (even without priming events)
 
-    @Test("Event IDs are included in SSE messages when event store is configured")
-    func eventIdsIncludedInMessages() async throws {
+    @Test
+    func `Event IDs are included in SSE messages when event store is configured`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -221,8 +218,8 @@ struct PrimingEventsTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -253,8 +250,8 @@ struct PrimingEventsTests {
 
     // MARK: - Priming Event Content Tests
 
-    @Test("No priming event for old protocol versions (backwards compatibility)")
-    func noPrimingEventForOldProtocolVersions() async throws {
+    @Test
+    func `No priming event for old protocol versions (backwards compatibility)`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -266,8 +263,8 @@ struct PrimingEventsTests {
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
                 retryInterval: 5000,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -296,8 +293,8 @@ struct PrimingEventsTests {
         }
     }
 
-    @Test("No priming event when event store is not configured")
-    func noPrimingEventWithoutEventStore() async throws {
+    @Test
+    func `No priming event when event store is not configured`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -307,9 +304,9 @@ struct PrimingEventsTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
+                dnsRebindingProtection: .none,
                 // No eventStore
-            )
+            ),
         )
         try await server.start(transport: transport)
 
@@ -340,8 +337,8 @@ struct PrimingEventsTests {
 
     // MARK: - Close SSE Stream Tests
 
-    @Test("Close SSE stream for specific request")
-    func closeResponseStreamForSpecificRequest() async throws {
+    @Test
+    func `Close SSE stream for specific request`() async throws {
         let server = createTestServer()
 
         let eventStore = InMemoryEventStore()
@@ -352,8 +349,8 @@ struct PrimingEventsTests {
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
                 retryInterval: 1000,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
 
         // Set up a tool that takes time, allowing us to close the stream mid-execution
@@ -362,7 +359,7 @@ struct PrimingEventsTests {
                 Tool(
                     name: "slow-tool",
                     description: "A slow tool",
-                    inputSchema: ["type": "object"]
+                    inputSchema: ["type": "object"],
                 ),
             ])
         }
@@ -392,8 +389,8 @@ struct PrimingEventsTests {
 
     // MARK: - Retry Interval Configuration Tests
 
-    @Test("Retry interval is configurable in transport options")
-    func retryIntervalIsConfigurable() async throws {
+    @Test
+    func `Retry interval is configurable in transport options`() {
         // Test that different retry interval configurations can be set
         let options1 = HTTPServerTransportOptions(retryInterval: 1000)
         #expect(options1.retryInterval == 1000)

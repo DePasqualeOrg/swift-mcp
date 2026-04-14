@@ -48,7 +48,7 @@ public struct ServerAuthConfig: Sendable {
         tokenVerifier: any TokenVerifier,
         scopesSupported: [String]? = nil,
         resourceName: String? = nil,
-        resourceDocumentation: URL? = nil
+        resourceDocumentation: URL? = nil,
     ) {
         self.resource = resource
         self.authorizationServers = authorizationServers

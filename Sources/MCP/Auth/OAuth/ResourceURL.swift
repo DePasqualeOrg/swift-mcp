@@ -82,10 +82,10 @@ public enum ResourceURL {
 
         // Port must match (normalize nil to default)
         let requestedPort = effectivePort(
-            scheme: requestedComponents.scheme, port: requestedComponents.port
+            scheme: requestedComponents.scheme, port: requestedComponents.port,
         )
         let configuredPort = effectivePort(
-            scheme: configuredComponents.scheme, port: configuredComponents.port
+            scheme: configuredComponents.scheme, port: configuredComponents.port,
         )
         guard requestedPort == configuredPort else {
             return false
@@ -125,7 +125,7 @@ public enum ResourceURL {
     /// - Returns: The resource URL to use in OAuth requests
     public static func selectResourceURL(
         serverURL: URL,
-        protectedResourceMetadata: ProtectedResourceMetadata?
+        protectedResourceMetadata: ProtectedResourceMetadata?,
     ) -> URL {
         let canonical = canonicalize(serverURL) ?? serverURL
 

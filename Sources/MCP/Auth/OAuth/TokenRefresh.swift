@@ -30,7 +30,7 @@ public func refreshAccessToken(
     clientAuthMethod: ClientAuthenticationMethod,
     tokenEndpoint: URL,
     resource: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthTokens {
     var request = URLRequest(url: tokenEndpoint)
     request.httpMethod = "POST"
@@ -51,7 +51,7 @@ public func refreshAccessToken(
         body: &body,
         clientId: clientId,
         clientSecret: clientSecret,
-        method: clientAuthMethod
+        method: clientAuthMethod,
     )
 
     request.httpBody = formURLEncodedBody(body)
@@ -64,7 +64,8 @@ public func refreshAccessToken(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.tokenRefreshFailed(
-            "Token endpoint returned HTTP \(response.statusCode)")
+            "Token endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
@@ -76,7 +77,7 @@ public func refreshAccessToken(
                 tokenType: tokens.tokenType,
                 expiresIn: tokens.expiresIn,
                 scope: tokens.scope,
-                refreshToken: refreshToken
+                refreshToken: refreshToken,
             )
         }
         return tokens

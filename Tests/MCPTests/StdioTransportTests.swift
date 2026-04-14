@@ -2,9 +2,8 @@
 // Copyright © Matt Zmuda
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 #if canImport(System)
 import System
@@ -14,10 +13,9 @@ import System
 
 // MARK: - Basic Tests
 
-@Suite("Stdio Transport Tests")
 struct StdioTransportTests {
-    @Test("Connection")
-    func testStdioTransportConnection() async throws {
+    @Test
+    func connection() async throws {
         let (input, _) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -25,8 +23,8 @@ struct StdioTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Send Message")
-    func testStdioTransportSendMessage() async throws {
+    @Test
+    func `Send Message`() async throws {
         let (reader, output) = try FileDescriptor.pipe()
         let (input, _) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -34,7 +32,7 @@ struct StdioTransportTests {
 
         // Test sending a simple message
         let message = #"{"key":"value"}"#
-        try await transport.send(message.data(using: .utf8)!)
+        try await transport.send(#require(message.data(using: .utf8)))
 
         // Read and verify the output
         var buffer = [UInt8](repeating: 0, count: 1024)
@@ -42,14 +40,14 @@ struct StdioTransportTests {
             try reader.read(into: UnsafeMutableRawBufferPointer(pointer))
         }
         let data = Data(buffer[..<bytesRead])
-        let expectedOutput = message.data(using: .utf8)! + "\n".data(using: .utf8)!
+        let expectedOutput = try #require(message.data(using: .utf8)) + "\n".data(using: .utf8)!
         #expect(data == expectedOutput)
 
         await transport.disconnect()
     }
 
-    @Test("Receive Message")
-    func testStdioTransportReceiveMessage() async throws {
+    @Test
+    func `Receive Message`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -72,8 +70,8 @@ struct StdioTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Invalid JSON")
-    func testStdioTransportInvalidJSON() async throws {
+    @Test
+    func `Invalid JSON`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -81,7 +79,7 @@ struct StdioTransportTests {
 
         // Write invalid JSON to input pipe
         let invalidJSON = #"{ invalid json }"#
-        try writer.writeAll(invalidJSON.data(using: .utf8)!)
+        try writer.writeAll(#require(invalidJSON.data(using: .utf8)))
         try writer.close()
 
         let stream = await transport.receive()
@@ -92,13 +90,13 @@ struct StdioTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Send Error")
-    func testStdioTransportSendError() async throws {
+    @Test
+    func `Send Error`() async throws {
         let (input, _) = try FileDescriptor.pipe()
         let transport = StdioTransport(
             input: input,
             output: FileDescriptor(rawValue: -1), // Invalid fd
-            logger: nil
+            logger: nil,
         )
 
         do {
@@ -111,13 +109,13 @@ struct StdioTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Receive Error")
-    func testStdioTransportReceiveError() async throws {
+    @Test
+    func `Receive Error`() async throws {
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(
             input: FileDescriptor(rawValue: -1), // Invalid fd
             output: output,
-            logger: nil
+            logger: nil,
         )
 
         do {
@@ -133,10 +131,9 @@ struct StdioTransportTests {
 
 // MARK: - Multiple Message Tests (mirrors TypeScript server/stdio.test.ts)
 
-@Suite("Stdio Transport Multiple Message Tests")
 struct StdioTransportMultipleMessageTests {
-    @Test("Receive multiple messages")
-    func testReceiveMultipleMessages() async throws {
+    @Test
+    func `Receive multiple messages`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -170,8 +167,8 @@ struct StdioTransportMultipleMessageTests {
         await transport.disconnect()
     }
 
-    @Test("Send multiple messages")
-    func testSendMultipleMessages() async throws {
+    @Test
+    func `Send multiple messages`() async throws {
         let (reader, output) = try FileDescriptor.pipe()
         let (input, _) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -184,7 +181,7 @@ struct StdioTransportMultipleMessageTests {
         ]
 
         for message in messages {
-            try await transport.send(message.data(using: .utf8)!)
+            try await transport.send(#require(message.data(using: .utf8)))
         }
 
         // Read all output at once
@@ -193,7 +190,7 @@ struct StdioTransportMultipleMessageTests {
             try reader.read(into: UnsafeMutableRawBufferPointer(pointer))
         }
 
-        let receivedOutput = String(data: Data(buffer[..<bytesRead]), encoding: .utf8)!
+        let receivedOutput = try #require(String(data: Data(buffer[..<bytesRead]), encoding: .utf8))
         let lines = receivedOutput.split(separator: "\n").map(String.init)
 
         #expect(lines.count == 2)
@@ -206,10 +203,9 @@ struct StdioTransportMultipleMessageTests {
 
 // MARK: - Message Framing Tests (mirrors TypeScript core/shared/stdio.test.ts)
 
-@Suite("Stdio Transport Message Framing Tests")
 struct StdioTransportMessageFramingTests {
-    @Test("Partial messages are buffered until newline")
-    func testPartialMessagesBuffered() async throws {
+    @Test
+    func `Partial messages are buffered until newline`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -219,8 +215,8 @@ struct StdioTransportMessageFramingTests {
         let part1 = #"{"jsonrpc":"2.0","#
         let part2 = #""id":1,"method":"ping"}"# + "\n"
 
-        try writer.writeAll(part1.data(using: .utf8)!)
-        try writer.writeAll(part2.data(using: .utf8)!)
+        try writer.writeAll(#require(part1.data(using: .utf8)))
+        try writer.writeAll(#require(part2.data(using: .utf8)))
         try writer.close()
 
         let stream = await transport.receive()
@@ -234,8 +230,8 @@ struct StdioTransportMessageFramingTests {
         await transport.disconnect()
     }
 
-    @Test("CRLF line endings are normalized")
-    func testCRLFLineEndingsNormalized() async throws {
+    @Test
+    func `CRLF line endings are normalized`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -245,7 +241,7 @@ struct StdioTransportMessageFramingTests {
         let message1 = #"{"id":1}"#
         let message2 = #"{"id":2}"#
         let inputData = message1 + "\r\n" + message2 + "\r\n"
-        try writer.writeAll(inputData.data(using: .utf8)!)
+        try writer.writeAll(#require(inputData.data(using: .utf8)))
         try writer.close()
 
         let stream = await transport.receive()
@@ -265,8 +261,8 @@ struct StdioTransportMessageFramingTests {
         await transport.disconnect()
     }
 
-    @Test("Empty lines are ignored")
-    func testEmptyLinesIgnored() async throws {
+    @Test
+    func `Empty lines are ignored`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -274,7 +270,7 @@ struct StdioTransportMessageFramingTests {
 
         // Write messages with empty lines between them
         let inputData = "\n\n" + #"{"id":1}"# + "\n\n\n" + #"{"id":2}"# + "\n\n"
-        try writer.writeAll(inputData.data(using: .utf8)!)
+        try writer.writeAll(#require(inputData.data(using: .utf8)))
         try writer.close()
 
         let stream = await transport.receive()
@@ -294,8 +290,8 @@ struct StdioTransportMessageFramingTests {
         await transport.disconnect()
     }
 
-    @Test("Large message handling")
-    func testLargeMessageHandling() async throws {
+    @Test
+    func `Large message handling`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -320,16 +316,15 @@ struct StdioTransportMessageFramingTests {
 
 // MARK: - Bidirectional Communication Tests (mirrors Python test_stdio_server)
 
-@Suite("Stdio Transport Bidirectional Tests")
 struct StdioTransportBidirectionalTests {
-    @Test("Bidirectional message exchange")
-    func testBidirectionalMessageExchange() async throws {
+    @Test
+    func `Bidirectional message exchange`() async throws {
         // Create bidirectional pipes simulating client <-> server communication
         let (transportInput, clientWriter) = try FileDescriptor.pipe()
         let (clientReader, transportOutput) = try FileDescriptor.pipe()
 
         let transport = StdioTransport(
-            input: transportInput, output: transportOutput, logger: nil
+            input: transportInput, output: transportOutput, logger: nil,
         )
         try await transport.connect()
 
@@ -345,17 +340,17 @@ struct StdioTransportBidirectionalTests {
 
         // Transport sends a response back
         let response = #"{"jsonrpc":"2.0","id":1,"result":{"status":"ok"}}"#
-        try await transport.send(response.data(using: .utf8)!)
+        try await transport.send(#require(response.data(using: .utf8)))
 
         // Client reads the response
         var buffer = [UInt8](repeating: 0, count: 4096)
         let bytesRead = try buffer.withUnsafeMutableBufferPointer { pointer in
             try clientReader.read(into: UnsafeMutableRawBufferPointer(pointer))
         }
-        let receivedResponse = String(
-            data: Data(buffer[..<bytesRead]), encoding: .utf8
-        )!
-            .trimmingCharacters(in: .newlines)
+        let receivedResponse = try #require(String(
+            data: Data(buffer[..<bytesRead]), encoding: .utf8,
+        )?
+            .trimmingCharacters(in: .newlines))
         #expect(receivedResponse == response)
 
         try clientWriter.close()
@@ -365,10 +360,9 @@ struct StdioTransportBidirectionalTests {
 
 // MARK: - EOF Handling Tests
 
-@Suite("Stdio Transport EOF Handling Tests")
 struct StdioTransportEOFHandlingTests {
-    @Test("Stream ends on EOF")
-    func testStreamEndsOnEOF() async throws {
+    @Test
+    func `Stream ends on EOF`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -393,8 +387,8 @@ struct StdioTransportEOFHandlingTests {
         await transport.disconnect()
     }
 
-    @Test("Incomplete message discarded on EOF")
-    func testIncompleteMessageDiscardedOnEOF() async throws {
+    @Test
+    func `Incomplete message discarded on EOF`() async throws {
         let (input, writer) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -405,7 +399,7 @@ struct StdioTransportEOFHandlingTests {
         let incompleteMessage = #"{"id":2"# // Missing closing brace and newline
 
         try writer.writeAll((completeMessage + "\n").data(using: .utf8)!)
-        try writer.writeAll(incompleteMessage.data(using: .utf8)!)
+        try writer.writeAll(#require(incompleteMessage.data(using: .utf8)))
         try writer.close() // EOF while incomplete message in buffer
 
         let stream = await transport.receive()
@@ -425,10 +419,9 @@ struct StdioTransportEOFHandlingTests {
 
 // MARK: - Connection State Tests
 
-@Suite("Stdio Transport Connection State Tests")
 struct StdioTransportConnectionStateTests {
-    @Test("Send fails when not connected")
-    func testSendFailsWhenNotConnected() async throws {
+    @Test
+    func `Send fails when not connected`() async throws {
         let (input, _) = try FileDescriptor.pipe()
         let (_, output) = try FileDescriptor.pipe()
         let transport = StdioTransport(input: input, output: output, logger: nil)
@@ -436,7 +429,7 @@ struct StdioTransportConnectionStateTests {
         // Don't call connect() - should fail with ENOTCONN
 
         do {
-            try await transport.send(#"{"id":1}"#.data(using: .utf8)!)
+            try await transport.send(#require(#"{"id":1}"#.data(using: .utf8)))
             #expect(Bool(false), "Expected send to throw when not connected")
         } catch {
             #expect(error is MCPError)

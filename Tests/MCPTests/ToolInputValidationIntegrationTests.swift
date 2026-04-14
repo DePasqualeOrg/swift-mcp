@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Integration tests for server-side tool input validation.
 ///
@@ -11,10 +10,9 @@ import Testing
 /// tool inputs against their schemas before executing the tool handler.
 /// Specific constraint validation (enum, length, range, etc.) is covered
 /// by unit tests in JSONSchemaValidationTests.
-@Suite("Tool Input Validation Integration Tests")
 struct ToolInputValidationIntegrationTests {
-    @Test("Valid tool call with correct arguments succeeds")
-    func validToolCallSucceeds() async throws {
+    @Test
+    func `Valid tool call with correct arguments succeeds`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         try await mcpServer.register(
@@ -27,7 +25,7 @@ struct ToolInputValidationIntegrationTests {
                     "b": ["type": "number"],
                 ],
                 "required": ["a", "b"],
-            ]
+            ],
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
         }
@@ -41,15 +39,15 @@ struct ToolInputValidationIntegrationTests {
 
         let result = try await client.callTool(
             name: "add",
-            arguments: ["a": .int(5), "b": .int(3)]
+            arguments: ["a": .int(5), "b": .int(3)],
         )
 
         #expect(result.isError != true)
         #expect(result.content == [.text("8")])
     }
 
-    @Test("Missing required argument returns validation error")
-    func missingRequiredArgumentFails() async throws {
+    @Test
+    func `Missing required argument returns validation error`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         try await mcpServer.register(
@@ -62,7 +60,7 @@ struct ToolInputValidationIntegrationTests {
                     "b": ["type": "number"],
                 ],
                 "required": ["a", "b"],
-            ]
+            ],
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
         }
@@ -78,7 +76,7 @@ struct ToolInputValidationIntegrationTests {
         // not protocol errors. This allows LLMs to receive actionable feedback.
         let result = try await client.callTool(
             name: "add",
-            arguments: ["a": .int(5)]
+            arguments: ["a": .int(5)],
         )
 
         #expect(result.isError == true)
@@ -89,8 +87,8 @@ struct ToolInputValidationIntegrationTests {
         }
     }
 
-    @Test("Wrong argument type returns validation error")
-    func wrongArgumentTypeFails() async throws {
+    @Test
+    func `Wrong argument type returns validation error`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         try await mcpServer.register(
@@ -103,7 +101,7 @@ struct ToolInputValidationIntegrationTests {
                     "b": ["type": "number"],
                 ],
                 "required": ["a", "b"],
-            ]
+            ],
         ) { (args: AddArgs, _: HandlerContext) in
             String(args.a + args.b)
         }
@@ -119,7 +117,7 @@ struct ToolInputValidationIntegrationTests {
         // not protocol errors. This allows LLMs to receive actionable feedback.
         let result = try await client.callTool(
             name: "add",
-            arguments: ["a": .string("not a number"), "b": .int(3)]
+            arguments: ["a": .string("not a number"), "b": .int(3)],
         )
 
         #expect(result.isError == true)
@@ -130,8 +128,8 @@ struct ToolInputValidationIntegrationTests {
         }
     }
 
-    @Test("Tool handler is not called when validation fails")
-    func handlerNotCalledOnValidationFailure() async throws {
+    @Test
+    func `Tool handler is not called when validation fails`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         let handlerCalled = AtomicFlag()
@@ -145,7 +143,7 @@ struct ToolInputValidationIntegrationTests {
                     "value": ["type": "number"],
                 ],
                 "required": ["value"],
-            ]
+            ],
         ) { (_: ValueArgs, _: HandlerContext) in
             handlerCalled.set()
             return "executed"
@@ -162,7 +160,7 @@ struct ToolInputValidationIntegrationTests {
         // The key assertion here is that the handler is NOT called.
         let result = try await client.callTool(
             name: "guarded_tool",
-            arguments: ["value": .string("not a number")]
+            arguments: ["value": .string("not a number")],
         )
 
         #expect(result.isError == true)
@@ -172,12 +170,12 @@ struct ToolInputValidationIntegrationTests {
 
 // MARK: - Helper Types
 
-private struct AddArgs: Codable, Sendable {
+private struct AddArgs: Codable {
     let a: Int
     let b: Int
 }
 
-private struct ValueArgs: Codable, Sendable {
+private struct ValueArgs: Codable {
     let value: Int
 }
 

@@ -12,14 +12,12 @@ import System
 
 @testable import MCP
 
-@Suite("Progress Tests")
-struct ProgressTests {
+enum ProgressTests {
     // MARK: - ProgressToken Tests
 
-    @Suite("ProgressToken encoding/decoding")
     struct ProgressTokenTests {
-        @Test("String token encodes as JSON string")
-        func stringTokenEncoding() throws {
+        @Test
+        func `String token encodes as JSON string`() throws {
             let token: ProgressToken = .string("abc-123")
             let encoder = JSONEncoder()
             let data = try encoder.encode(token)
@@ -27,8 +25,8 @@ struct ProgressTests {
             #expect(json == "\"abc-123\"")
         }
 
-        @Test("Integer token encodes as JSON number")
-        func integerTokenEncoding() throws {
+        @Test
+        func `Integer token encodes as JSON number`() throws {
             let token: ProgressToken = .integer(42)
             let encoder = JSONEncoder()
             let data = try encoder.encode(token)
@@ -36,57 +34,57 @@ struct ProgressTests {
             #expect(json == "42")
         }
 
-        @Test("String token decodes from JSON string")
-        func stringTokenDecoding() throws {
+        @Test
+        func `String token decodes from JSON string`() throws {
             let json = "\"my-token\""
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let token = try decoder.decode(ProgressToken.self, from: data)
             #expect(token == .string("my-token"))
         }
 
-        @Test("Integer token decodes from JSON number")
-        func integerTokenDecoding() throws {
+        @Test
+        func `Integer token decodes from JSON number`() throws {
             let json = "123"
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let token = try decoder.decode(ProgressToken.self, from: data)
             #expect(token == .integer(123))
         }
 
-        @Test("Integer token zero decodes correctly")
-        func integerTokenZero() throws {
+        @Test
+        func `Integer token zero decodes correctly`() throws {
             // Edge case from Python SDK test #176 - progress token 0 should work
             let json = "0"
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let token = try decoder.decode(ProgressToken.self, from: data)
             #expect(token == .integer(0))
         }
 
-        @Test("Negative integer token decodes correctly")
-        func negativeIntegerToken() throws {
+        @Test
+        func `Negative integer token decodes correctly`() throws {
             let json = "-1"
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let token = try decoder.decode(ProgressToken.self, from: data)
             #expect(token == .integer(-1))
         }
 
-        @Test("String literal initialization")
-        func stringLiteralInit() {
+        @Test
+        func `String literal initialization`() {
             let token: ProgressToken = "my-token"
             #expect(token == .string("my-token"))
         }
 
-        @Test("Integer literal initialization")
-        func integerLiteralInit() {
+        @Test
+        func `Integer literal initialization`() {
             let token: ProgressToken = 42
             #expect(token == .integer(42))
         }
 
-        @Test("Round-trip encoding/decoding for string token")
-        func stringTokenRoundTrip() throws {
+        @Test
+        func `Round-trip encoding/decoding for string token`() throws {
             let original: ProgressToken = .string("test-token-abc")
             let encoder = JSONEncoder()
             let decoder = JSONDecoder()
@@ -95,8 +93,8 @@ struct ProgressTests {
             #expect(decoded == original)
         }
 
-        @Test("Round-trip encoding/decoding for integer token")
-        func integerTokenRoundTrip() throws {
+        @Test
+        func `Round-trip encoding/decoding for integer token`() throws {
             let original: ProgressToken = .integer(999)
             let encoder = JSONEncoder()
             let decoder = JSONDecoder()
@@ -105,10 +103,10 @@ struct ProgressTests {
             #expect(decoded == original)
         }
 
-        @Test("Invalid token type throws error")
-        func invalidTokenType() throws {
+        @Test
+        func `Invalid token type throws error`() throws {
             let json = "true" // Boolean is not a valid progress token
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             #expect(throws: DecodingError.self) {
                 _ = try decoder.decode(ProgressToken.self, from: data)
@@ -118,15 +116,14 @@ struct ProgressTests {
 
     // MARK: - ProgressNotification Tests
 
-    @Suite("ProgressNotification encoding/decoding")
     struct ProgressNotificationTests {
-        @Test("Notification with string token encodes correctly")
-        func notificationWithStringToken() throws {
+        @Test
+        func `Notification with string token encodes correctly`() throws {
             let params = ProgressNotification.Parameters(
                 progressToken: .string("abc-123"),
                 progress: 50.0,
                 total: 100.0,
-                message: "Halfway done"
+                message: "Halfway done",
             )
             let notification = ProgressNotification.message(params)
 
@@ -145,13 +142,13 @@ struct ProgressTests {
             #expect(notificationParams?["message"]?.stringValue == "Halfway done")
         }
 
-        @Test("Notification with integer token encodes correctly")
-        func notificationWithIntegerToken() throws {
+        @Test
+        func `Notification with integer token encodes correctly`() throws {
             let params = ProgressNotification.Parameters(
                 progressToken: .integer(42),
                 progress: 25.0,
                 total: 100.0,
-                message: "Quarter done"
+                message: "Quarter done",
             )
             let notification = ProgressNotification.message(params)
 
@@ -164,14 +161,14 @@ struct ProgressTests {
             #expect(notificationParams?["progress"].flatMap { Double($0) } == 25.0)
         }
 
-        @Test("Notification with zero token encodes correctly")
-        func notificationWithZeroToken() throws {
+        @Test
+        func `Notification with zero token encodes correctly`() throws {
             // Edge case from Python SDK test #176
             let params = ProgressNotification.Parameters(
                 progressToken: .integer(0),
                 progress: 0.0,
                 total: 10.0,
-                message: nil
+                message: nil,
             )
             let notification = ProgressNotification.message(params)
 
@@ -184,8 +181,8 @@ struct ProgressTests {
             #expect(notificationParams?["progress"].flatMap { Double($0) } == 0.0)
         }
 
-        @Test("Notification decodes from JSON with string token")
-        func decodeNotificationWithStringToken() throws {
+        @Test
+        func `Notification decodes from JSON with string token`() throws {
             let json = """
             {
                 "jsonrpc": "2.0",
@@ -198,7 +195,7 @@ struct ProgressTests {
                 }
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
 
@@ -209,8 +206,8 @@ struct ProgressTests {
             #expect(notification.params.message == "Almost done")
         }
 
-        @Test("Notification decodes from JSON with integer token")
-        func decodeNotificationWithIntegerToken() throws {
+        @Test
+        func `Notification decodes from JSON with integer token`() throws {
             let json = """
             {
                 "jsonrpc": "2.0",
@@ -222,7 +219,7 @@ struct ProgressTests {
                 }
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
 
@@ -232,8 +229,8 @@ struct ProgressTests {
             #expect(notification.params.message == nil)
         }
 
-        @Test("Notification without optional fields decodes correctly")
-        func decodeNotificationMinimalFields() throws {
+        @Test
+        func `Notification without optional fields decodes correctly`() throws {
             let json = """
             {
                 "jsonrpc": "2.0",
@@ -244,7 +241,7 @@ struct ProgressTests {
                 }
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
 
@@ -254,8 +251,8 @@ struct ProgressTests {
             #expect(notification.params.message == nil)
         }
 
-        @Test("Notification with _meta field decodes correctly")
-        func decodeNotificationWithMeta() throws {
+        @Test
+        func `Notification with _meta field decodes correctly`() throws {
             let json = """
             {
                 "jsonrpc": "2.0",
@@ -269,7 +266,7 @@ struct ProgressTests {
                 }
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let notification = try decoder.decode(Message<ProgressNotification>.self, from: data)
 
@@ -277,13 +274,13 @@ struct ProgressTests {
             #expect(notification.params._meta?["customField"]?.stringValue == "customValue")
         }
 
-        @Test("Round-trip encoding/decoding for notification")
-        func notificationRoundTrip() throws {
+        @Test
+        func `Round-trip encoding/decoding for notification`() throws {
             let params = ProgressNotification.Parameters(
                 progressToken: .string("round-trip-token"),
                 progress: 33.3,
                 total: 100.0,
-                message: "Processing..."
+                message: "Processing...",
             )
             let original = ProgressNotification.message(params)
 
@@ -302,10 +299,9 @@ struct ProgressTests {
 
     // MARK: - RequestMeta Tests
 
-    @Suite("RequestMeta encoding/decoding")
     struct RequestMetaTests {
-        @Test("RequestMeta with progressToken encodes correctly")
-        func requestMetaWithProgressToken() throws {
+        @Test
+        func `RequestMeta with progressToken encodes correctly`() throws {
             let meta = RequestMeta(progressToken: .string("request-token"))
             let encoder = JSONEncoder()
             let data = try encoder.encode(meta)
@@ -314,8 +310,8 @@ struct ProgressTests {
             #expect(json["progressToken"]?.stringValue == "request-token")
         }
 
-        @Test("RequestMeta with integer progressToken encodes correctly")
-        func requestMetaWithIntegerToken() throws {
+        @Test
+        func `RequestMeta with integer progressToken encodes correctly`() throws {
             let meta = RequestMeta(progressToken: .integer(42))
             let encoder = JSONEncoder()
             let data = try encoder.encode(meta)
@@ -324,14 +320,14 @@ struct ProgressTests {
             #expect(json["progressToken"]?.intValue == 42)
         }
 
-        @Test("RequestMeta with additional fields encodes correctly")
-        func requestMetaWithAdditionalFields() throws {
+        @Test
+        func `RequestMeta with additional fields encodes correctly`() throws {
             let meta = RequestMeta(
                 progressToken: .string("token"),
                 additionalFields: [
                     "customField": .string("customValue"),
                     "numericField": .int(123),
-                ]
+                ],
             )
             let encoder = JSONEncoder()
             let data = try encoder.encode(meta)
@@ -342,15 +338,15 @@ struct ProgressTests {
             #expect(json["numericField"]?.intValue == 123)
         }
 
-        @Test("RequestMeta decodes from JSON")
-        func requestMetaDecoding() throws {
+        @Test
+        func `RequestMeta decodes from JSON`() throws {
             let json = """
             {
                 "progressToken": "decoded-token",
                 "extraField": "extraValue"
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
 
@@ -358,28 +354,28 @@ struct ProgressTests {
             #expect(meta.additionalFields?["extraField"]?.stringValue == "extraValue")
         }
 
-        @Test("RequestMeta decodes integer progressToken from JSON")
-        func requestMetaIntegerTokenDecoding() throws {
+        @Test
+        func `RequestMeta decodes integer progressToken from JSON`() throws {
             let json = """
             {
                 "progressToken": 999
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
 
             #expect(meta.progressToken == .integer(999))
         }
 
-        @Test("RequestMeta without progressToken decodes correctly")
-        func requestMetaWithoutToken() throws {
+        @Test
+        func `RequestMeta without progressToken decodes correctly`() throws {
             let json = """
             {
                 "customField": "value"
             }
             """
-            let data = json.data(using: .utf8)!
+            let data = try #require(json.data(using: .utf8))
             let decoder = JSONDecoder()
             let meta = try decoder.decode(RequestMeta.self, from: data)
 
@@ -387,11 +383,11 @@ struct ProgressTests {
             #expect(meta.additionalFields?["customField"]?.stringValue == "value")
         }
 
-        @Test("Round-trip encoding/decoding for RequestMeta")
-        func requestMetaRoundTrip() throws {
+        @Test
+        func `Round-trip encoding/decoding for RequestMeta`() throws {
             let original = RequestMeta(
                 progressToken: .string("round-trip"),
-                additionalFields: ["key": .string("value")]
+                additionalFields: ["key": .string("value")],
             )
 
             let encoder = JSONEncoder()
@@ -408,7 +404,6 @@ struct ProgressTests {
 
     /// Integration tests for progress notifications through actual client/server communication.
     /// Based on Python SDK's test_progress_notifications.py tests.
-    @Suite("Progress notification integration")
     struct ProgressIntegrationTests {
         /// Test that server can send progress notifications to client during tool execution.
         /// Based on TypeScript SDK's "should send progress notifications with message field" test.
@@ -419,7 +414,7 @@ struct ProgressTests {
         /// 3. Server sends notifications using that token
         /// 4. Client receives and correlates by token
         @Test(.timeLimit(.minutes(1)))
-        func serverSendsProgressNotificationsToClient() async throws {
+        func `server sends progress notifications to client`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -429,12 +424,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track received progress updates
@@ -444,7 +439,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ProgressTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -452,7 +447,7 @@ struct ProgressTests {
                     Tool(
                         name: "slow_operation",
                         description: "A tool that reports progress",
-                        inputSchema: ["type": "object", "properties": ["steps": ["type": "integer"]]]
+                        inputSchema: ["type": "object", "properties": ["steps": ["type": "integer"]]],
                     ),
                 ])
             }
@@ -475,7 +470,7 @@ struct ProgressTests {
                         token: progressToken,
                         progress: Double(step),
                         total: Double(steps),
-                        message: "Completed step \(step) of \(steps)"
+                        message: "Completed step \(step) of \(steps)",
                     )
                 }
 
@@ -490,7 +485,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -502,8 +497,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "slow_operation",
                     arguments: ["steps": .int(3)],
-                    _meta: RequestMeta(progressToken: .string("progress-test-1"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("progress-test-1")),
+                )),
             )
 
             // Give time for notifications to be processed
@@ -547,7 +542,7 @@ struct ProgressTests {
         /// This tests the edge case where progressToken is 0 (a falsy value in many languages).
         /// The token must flow correctly: client → server → notification → client.
         @Test(.timeLimit(.minutes(1)))
-        func progressTokenZeroWorks() async throws {
+        func `progress token zero works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -557,12 +552,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -570,7 +565,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ZeroTokenServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -605,7 +600,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -617,8 +612,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "zero_token_tool",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .integer(0))
-                ))
+                    _meta: RequestMeta(progressToken: .integer(0)),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -641,7 +636,7 @@ struct ProgressTests {
         /// Test that server correctly extracts progressToken from request _meta.
         /// This matches the typical flow where client includes progressToken in _meta.
         @Test(.timeLimit(.minutes(1)))
-        func serverExtractsProgressTokenFromRequestMeta() async throws {
+        func `server extracts progress token from request meta`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -651,12 +646,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -664,7 +659,7 @@ struct ProgressTests {
             let server = Server(
                 name: "MetaExtractServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -684,7 +679,7 @@ struct ProgressTests {
                         token: token,
                         progress: 50.0,
                         total: 100.0,
-                        message: "Using token from _meta"
+                        message: "Using token from _meta",
                     )
                 }
 
@@ -698,7 +693,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -710,8 +705,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "meta_test",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .string("client-provided-token"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("client-provided-token")),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -732,7 +727,7 @@ struct ProgressTests {
         /// Test with integer progress token in full client-server roundtrip.
         /// Ensures integer tokens work end-to-end, not just in serialization.
         @Test(.timeLimit(.minutes(1)))
-        func integerTokenRoundtripIntegration() async throws {
+        func `integer token roundtrip integration`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -742,12 +737,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -755,7 +750,7 @@ struct ProgressTests {
             let server = Server(
                 name: "IntTokenServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -775,7 +770,7 @@ struct ProgressTests {
                         token: token,
                         progress: 100.0,
                         total: 100.0,
-                        message: "Complete"
+                        message: "Complete",
                     )
                 }
 
@@ -789,7 +784,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -801,8 +796,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "int_token_test",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .integer(12345))
-                ))
+                    _meta: RequestMeta(progressToken: .integer(12345)),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -818,7 +813,7 @@ struct ProgressTests {
 
         /// Test that sendMessage can be used to send notifications with custom parameters.
         @Test(.timeLimit(.minutes(1)))
-        func sendMessageWorksForCustomNotifications() async throws {
+        func `send message works for custom notifications`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -828,12 +823,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -841,7 +836,7 @@ struct ProgressTests {
             let server = Server(
                 name: "SendMessageServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -860,7 +855,7 @@ struct ProgressTests {
                     progressToken: .string("via-sendMessage"),
                     progress: 42.0,
                     total: 100.0,
-                    message: "Sent via sendMessage"
+                    message: "Sent via sendMessage",
                 )))
 
                 return CallTool.Result(content: [.text("Done")])
@@ -873,7 +868,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -895,7 +890,7 @@ struct ProgressTests {
 
         /// Test sendLogMessage convenience method.
         @Test(.timeLimit(.minutes(1)))
-        func sendLogMessageWorks() async throws {
+        func `send log message works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -905,12 +900,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -918,7 +913,7 @@ struct ProgressTests {
             let server = Server(
                 name: "LogTestServer",
                 version: "1.0.0",
-                capabilities: .init(logging: .init(), tools: .init())
+                capabilities: .init(logging: .init(), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -936,12 +931,12 @@ struct ProgressTests {
                 try await context.sendLogMessage(
                     level: .info,
                     logger: "test-logger",
-                    data: .string("Starting operation")
+                    data: .string("Starting operation"),
                 )
 
                 try await context.sendLogMessage(
                     level: .warning,
-                    data: .object(["status": .string("in-progress"), "step": .int(1)])
+                    data: .object(["status": .string("in-progress"), "step": .int(1)]),
                 )
 
                 return CallTool.Result(content: [.text("Done")])
@@ -953,7 +948,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -982,7 +977,7 @@ struct ProgressTests {
         /// When the client sets a minimum log level, the server should only
         /// send log messages at that level or higher (more severe).
         @Test(.timeLimit(.minutes(1)))
-        func logLevelFilteringWorks() async throws {
+        func `log level filtering works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -992,12 +987,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -1005,7 +1000,7 @@ struct ProgressTests {
             let server = Server(
                 name: "LogLevelTestServer",
                 version: "1.0.0",
-                capabilities: .init(logging: .init(), tools: .init())
+                capabilities: .init(logging: .init(), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1036,7 +1031,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -1076,7 +1071,7 @@ struct ProgressTests {
         /// This matches TypeScript SDK behavior where `client.setLoggingLevel('error')`
         /// throws "Server does not support logging" when capability is not declared.
         @Test(.timeLimit(.minutes(1)))
-        func setLoggingLevelThrowsWithoutCapability() async throws {
+        func `set logging level throws without capability`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1086,19 +1081,19 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Server WITHOUT logging capability
             let server = Server(
                 name: "NoLoggingServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init()) // No logging capability
+                capabilities: .init(tools: .init()), // No logging capability
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1121,7 +1116,7 @@ struct ProgressTests {
         /// The MCP spec uses syslog severity levels:
         /// debug < info < notice < warning < error < critical < alert < emergency
         @Test(.timeLimit(.minutes(1)))
-        func allEightLogLevelsWork() async throws {
+        func `all eight log levels work`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1131,12 +1126,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -1144,7 +1139,7 @@ struct ProgressTests {
             let server = Server(
                 name: "AllLevelsServer",
                 version: "1.0.0",
-                capabilities: .init(logging: .init(), tools: .init())
+                capabilities: .init(logging: .init(), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1177,7 +1172,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -1214,7 +1209,7 @@ struct ProgressTests {
         /// the server MAY decide which messages to send automatically."
         /// Our implementation sends all messages when no level is set.
         @Test(.timeLimit(.minutes(1)))
-        func defaultLoggingBehaviorSendsAllMessages() async throws {
+        func `default logging behavior sends all messages`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1224,12 +1219,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -1237,7 +1232,7 @@ struct ProgressTests {
             let server = Server(
                 name: "DefaultLogServer",
                 version: "1.0.0",
-                capabilities: .init(logging: .init(), tools: .init())
+                capabilities: .init(logging: .init(), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1265,7 +1260,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -1293,7 +1288,7 @@ struct ProgressTests {
         /// This matches TypeScript SDK behavior where `server.sendLoggingMessage()`
         /// can be called outside of request handlers.
         @Test(.timeLimit(.minutes(1)))
-        func serverLevelSendLogMessageWorks() async throws {
+        func `server level send log message works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1303,12 +1298,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -1316,7 +1311,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ServerLevelLogServer",
                 version: "1.0.0",
-                capabilities: .init(logging: .init(), tools: .init())
+                capabilities: .init(logging: .init(), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1339,7 +1334,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -1350,7 +1345,7 @@ struct ProgressTests {
             try await server.sendLogMessage(
                 level: .info,
                 logger: "server-logger",
-                data: .string("Server-level log message")
+                data: .string("Server-level log message"),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -1371,7 +1366,7 @@ struct ProgressTests {
         /// This matches TypeScript SDK behavior where logging messages are silently
         /// dropped when the server doesn't have the logging capability.
         @Test(.timeLimit(.minutes(1)))
-        func contextSendLogMessageSilentlyDropsWithoutCapability() async throws {
+        func `context send log message silently drops without capability`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1381,12 +1376,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedLogs = LogTracker()
@@ -1395,7 +1390,7 @@ struct ProgressTests {
             let server = Server(
                 name: "NoLogCapServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init()) // No logging capability!
+                capabilities: .init(tools: .init()), // No logging capability!
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1412,7 +1407,7 @@ struct ProgressTests {
                 // This should be silently dropped since logging capability is not declared
                 try await context.sendLogMessage(
                     level: .info,
-                    data: .string("This should be dropped")
+                    data: .string("This should be dropped"),
                 )
 
                 return CallTool.Result(content: [.text("Done")])
@@ -1424,7 +1419,7 @@ struct ProgressTests {
                 await receivedLogs.add(
                     level: message.params.level,
                     logger: message.params.logger,
-                    data: message.params.data
+                    data: message.params.data,
                 )
             }
 
@@ -1441,7 +1436,7 @@ struct ProgressTests {
 
         /// Test sendToolListChanged convenience method.
         @Test(.timeLimit(.minutes(1)))
-        func sendToolListChangedWorks() async throws {
+        func `send tool list changed works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1451,12 +1446,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let notificationReceived = NotificationTracker()
@@ -1464,7 +1459,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ToolChangeServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init(listChanged: true))
+                capabilities: .init(tools: .init(listChanged: true)),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1505,7 +1500,7 @@ struct ProgressTests {
         /// This tests that the server can notify the client when the list of
         /// available resources has changed.
         @Test(.timeLimit(.minutes(1)))
-        func sendResourceListChangedWorks() async throws {
+        func `send resource list changed works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1515,12 +1510,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let notificationReceived = NotificationTracker()
@@ -1528,7 +1523,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ResourceListChangeServer",
                 version: "1.0.0",
-                capabilities: .init(resources: .init(listChanged: true), tools: .init())
+                capabilities: .init(resources: .init(listChanged: true), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1569,7 +1564,7 @@ struct ProgressTests {
         /// This tests that the server can notify the client when the list of
         /// available prompts has changed.
         @Test(.timeLimit(.minutes(1)))
-        func sendPromptListChangedWorks() async throws {
+        func `send prompt list changed works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1579,12 +1574,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let notificationReceived = NotificationTracker()
@@ -1592,7 +1587,7 @@ struct ProgressTests {
             let server = Server(
                 name: "PromptListChangeServer",
                 version: "1.0.0",
-                capabilities: .init(prompts: .init(listChanged: true), tools: .init())
+                capabilities: .init(prompts: .init(listChanged: true), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1630,7 +1625,7 @@ struct ProgressTests {
 
         /// Test sendResourceUpdated convenience method.
         @Test(.timeLimit(.minutes(1)))
-        func sendResourceUpdatedWorks() async throws {
+        func `send resource updated works`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1640,12 +1635,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let notificationReceived = NotificationTracker()
@@ -1653,7 +1648,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ResourceUpdateServer",
                 version: "1.0.0",
-                capabilities: .init(resources: .init(subscribe: true), tools: .init())
+                capabilities: .init(resources: .init(subscribe: true), tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1697,7 +1692,7 @@ struct ProgressTests {
         /// - Client sends progress notifications using notify()
         /// - Server receives them via onNotification(ProgressNotification.self)
         @Test(.timeLimit(.minutes(1)))
-        func clientSendsProgressNotificationsToServer() async throws {
+        func `client sends progress notifications to server`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1707,12 +1702,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track progress updates received by server
@@ -1724,7 +1719,7 @@ struct ProgressTests {
             let server = Server(
                 name: "BidirectionalProgressServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             // Server registers handler to receive progress notifications from client
@@ -1733,7 +1728,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -1760,21 +1755,21 @@ struct ProgressTests {
                 progressToken: clientProgressToken,
                 progress: 0.33,
                 total: 1.0,
-                message: "Client progress 33%"
+                message: "Client progress 33%",
             )))
 
             try await client.notify(ProgressNotification.message(.init(
                 progressToken: clientProgressToken,
                 progress: 0.66,
                 total: 1.0,
-                message: "Client progress 66%"
+                message: "Client progress 66%",
             )))
 
             try await client.notify(ProgressNotification.message(.init(
                 progressToken: clientProgressToken,
                 progress: 1.0,
                 total: 1.0,
-                message: "Client progress 100%"
+                message: "Client progress 100%",
             )))
 
             // Give time for notifications to be processed
@@ -1800,7 +1795,7 @@ struct ProgressTests {
         /// Based on Python SDK's test_bidirectional_progress_notifications which tests both
         /// directions simultaneously.
         @Test(.timeLimit(.minutes(1)))
-        func bidirectionalProgressNotifications() async throws {
+        func `bidirectional progress notifications`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1810,12 +1805,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track progress updates received by both sides
@@ -1829,7 +1824,7 @@ struct ProgressTests {
             let server = Server(
                 name: "FullBidirectionalServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             // Server registers handler to receive progress notifications from client
@@ -1838,7 +1833,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -1859,14 +1854,14 @@ struct ProgressTests {
                     token: serverProgressToken,
                     progress: 0.5,
                     total: 1.0,
-                    message: "Server progress 50%"
+                    message: "Server progress 50%",
                 )
 
                 try await context.sendProgress(
                     token: serverProgressToken,
                     progress: 1.0,
                     total: 1.0,
-                    message: "Server progress 100%"
+                    message: "Server progress 100%",
                 )
 
                 return CallTool.Result(content: [.text("Done")])
@@ -1880,7 +1875,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -1892,14 +1887,14 @@ struct ProgressTests {
                 progressToken: clientProgressToken,
                 progress: 0.25,
                 total: 1.0,
-                message: "Client progress 25%"
+                message: "Client progress 25%",
             )))
 
             try await client.notify(ProgressNotification.message(.init(
                 progressToken: clientProgressToken,
                 progress: 0.75,
                 total: 1.0,
-                message: "Client progress 75%"
+                message: "Client progress 75%",
             )))
 
             // Call tool to trigger server→client progress
@@ -1935,7 +1930,7 @@ struct ProgressTests {
         /// This ensures that if a progress handler throws, the error is handled gracefully
         /// and subsequent operations continue to work.
         @Test(.timeLimit(.minutes(1)))
-        func progressNotificationHandlerExceptionDoesNotCrashSession() async throws {
+        func `progress notification handler exception does not crash session`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1945,12 +1940,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track that handler was called
@@ -1964,7 +1959,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ProgressExceptionServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1987,7 +1982,7 @@ struct ProgressTests {
                     token: progressToken,
                     progress: 50.0,
                     total: 100.0,
-                    message: "Halfway"
+                    message: "Halfway",
                 )
 
                 return CallTool.Result(content: [.text("progress_result")])
@@ -2009,8 +2004,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "progress_tool",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .string("exception-test-token"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("exception-test-token")),
+                )),
             )
 
             // Give time for notification to be processed
@@ -2037,7 +2032,7 @@ struct ProgressTests {
         /// Test that progress notifications with integer token 0 work in bidirectional flow.
         /// Edge case: token 0 is falsy in many languages but should be treated as valid.
         @Test(.timeLimit(.minutes(1)))
-        func clientSendsProgressWithZeroToken() async throws {
+        func `client sends progress with zero token`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2047,12 +2042,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let serverReceivedProgress = ProgressUpdateTracker()
@@ -2060,7 +2055,7 @@ struct ProgressTests {
             let server = Server(
                 name: "ZeroTokenClientServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.onNotification(ProgressNotification.self) { message in
@@ -2068,7 +2063,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -2086,7 +2081,7 @@ struct ProgressTests {
                 progressToken: .integer(0),
                 progress: 50.0,
                 total: 100.0,
-                message: "Progress with zero token"
+                message: "Progress with zero token",
             )))
 
             try await Task.sleep(for: .milliseconds(100))
@@ -2103,11 +2098,10 @@ struct ProgressTests {
 
     // MARK: - ProgressTracker Actor Tests
 
-    @Suite("ProgressTracker actor (server-side cumulative progress)")
     struct ProgressTrackerTests {
         /// Test that ProgressTracker accumulates progress correctly with advance(by:).
         @Test(.timeLimit(.minutes(1)))
-        func progressTrackerAdvanceAccumulatesProgress() async throws {
+        func `progress tracker advance accumulates progress`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2117,12 +2111,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -2130,7 +2124,7 @@ struct ProgressTests {
             let server = Server(
                 name: "TrackerAdvanceServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2165,7 +2159,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -2176,8 +2170,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "tracker_advance_test",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .string("tracker-test"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("tracker-test")),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -2200,7 +2194,7 @@ struct ProgressTests {
 
         /// Test that ProgressTracker.set(to:) sets absolute progress.
         @Test(.timeLimit(.minutes(1)))
-        func progressTrackerSetToAbsoluteValue() async throws {
+        func `progress tracker set to absolute value`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2210,12 +2204,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -2223,7 +2217,7 @@ struct ProgressTests {
             let server = Server(
                 name: "TrackerSetServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2258,7 +2252,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -2269,8 +2263,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "tracker_set_test",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .string("set-test"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("set-test")),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -2287,7 +2281,7 @@ struct ProgressTests {
 
         /// Test that ProgressTracker.update(message:) sends notification without changing progress.
         @Test(.timeLimit(.minutes(1)))
-        func progressTrackerUpdateMessageOnly() async throws {
+        func `progress tracker update message only`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2297,12 +2291,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -2310,7 +2304,7 @@ struct ProgressTests {
             let server = Server(
                 name: "TrackerUpdateServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2348,7 +2342,7 @@ struct ProgressTests {
                     token: message.params.progressToken,
                     progress: message.params.progress,
                     total: message.params.total,
-                    message: message.params.message
+                    message: message.params.message,
                 )
             }
 
@@ -2359,8 +2353,8 @@ struct ProgressTests {
                 CallTool.request(.init(
                     name: "tracker_update_test",
                     arguments: [:],
-                    _meta: RequestMeta(progressToken: .string("update-test"))
-                ))
+                    _meta: RequestMeta(progressToken: .string("update-test")),
+                )),
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -2388,11 +2382,10 @@ struct ProgressTests {
 
     // MARK: - Client onProgress Callback Tests
 
-    @Suite("Client send with onProgress callback")
     struct ClientOnProgressTests {
         /// Test that send(_:onProgress:) receives progress updates via callback.
         @Test(.timeLimit(.minutes(1)))
-        func clientReceivesProgressViaCallback() async throws {
+        func `client receives progress via callback`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2402,12 +2395,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedProgress = ProgressUpdateTracker()
@@ -2415,7 +2408,7 @@ struct ProgressTests {
             let server = Server(
                 name: "CallbackTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2457,10 +2450,10 @@ struct ProgressTests {
                             token: .string("callback"),
                             progress: progress.value,
                             total: progress.total,
-                            message: progress.message
+                            message: progress.message,
                         )
                     }
-                }
+                },
             )
 
             try await Task.sleep(for: .milliseconds(100))
@@ -2484,7 +2477,7 @@ struct ProgressTests {
 
         /// Test that send(_:onProgress:) automatically injects progressToken into _meta.
         @Test(.timeLimit(.minutes(1)))
-        func clientAutoInjectsProgressToken() async throws {
+        func `client auto injects progress token`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2494,12 +2487,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track whether server received a progress token
@@ -2508,7 +2501,7 @@ struct ProgressTests {
             let server = Server(
                 name: "AutoInjectServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2539,7 +2532,7 @@ struct ProgressTests {
             // The send(_:onProgress:) should auto-inject it
             _ = try await client.send(
                 CallTool.request(.init(name: "token_check", arguments: [:])),
-                onProgress: { _ in }
+                onProgress: { _ in },
             )
 
             // Verify server received a progress token
@@ -2550,11 +2543,10 @@ struct ProgressTests {
 
     // MARK: - Task-Augmented Progress Tests
 
-    @Suite("Task-augmented progress (progress continues after CreateTaskResult)")
     struct TaskAugmentedProgressTests {
         /// Test that TaskStatus.isTerminal correctly identifies terminal statuses.
-        @Test("TaskStatus.isTerminal identifies terminal states")
-        func taskStatusIsTerminal() {
+        @Test
+        func `TaskStatus.isTerminal identifies terminal states`() {
             #expect(TaskStatus.working.isTerminal == false)
             #expect(TaskStatus.inputRequired.isTerminal == false)
             #expect(TaskStatus.completed.isTerminal == true)
@@ -2564,8 +2556,8 @@ struct ProgressTests {
 
         /// Test that checkForTaskResponse correctly identifies task responses.
         /// This tests the internal logic by verifying the Value structure parsing.
-        @Test("Task response detection parses task.taskId from response")
-        func taskResponseDetection() throws {
+        @Test
+        func `Task response detection parses task.taskId from response`() {
             // CreateTaskResult structure: { "task": { "taskId": "...", "status": "...", ... } }
             let taskResponse: [String: Value] = [
                 "task": .object([
@@ -2591,8 +2583,8 @@ struct ProgressTests {
         }
 
         /// Test that non-task responses are correctly identified.
-        @Test("Non-task response detection returns nil taskId")
-        func nonTaskResponseDetection() throws {
+        @Test
+        func `Non-task response detection returns nil taskId`() {
             // Regular CallTool.Result structure (no task field)
             let regularResponse: [String: Value] = [
                 "content": .array([
@@ -2609,8 +2601,8 @@ struct ProgressTests {
         }
 
         /// Test TaskStatusNotification.Parameters decoding.
-        @Test("TaskStatusNotification.Parameters decodes correctly")
-        func taskStatusNotificationDecoding() throws {
+        @Test
+        func `TaskStatusNotification.Parameters decodes correctly`() throws {
             let json = """
             {
                 "taskId": "task-abc",
@@ -2624,7 +2616,7 @@ struct ProgressTests {
             let decoder = JSONDecoder()
             let params = try decoder.decode(
                 TaskStatusNotification.Parameters.self,
-                from: json.data(using: .utf8)!
+                from: #require(json.data(using: .utf8)),
             )
 
             #expect(params.taskId == "task-abc")
@@ -2633,8 +2625,8 @@ struct ProgressTests {
         }
 
         /// Test that terminal task status notification triggers cleanup.
-        @Test("Terminal task status triggers progress cleanup")
-        func terminalTaskStatusTriggersCleanup() throws {
+        @Test
+        func `Terminal task status triggers progress cleanup`() {
             // Test that the isTerminal check works as expected for cleanup logic
             let completedStatus = TaskStatus.completed
             let workingStatus = TaskStatus.working
@@ -2646,12 +2638,11 @@ struct ProgressTests {
 
     // MARK: - Progress Token Injection Tests (Phase 0 Test Audit)
 
-    @Suite("Progress token injection")
     struct ProgressTokenInjectionTests {
         /// Test that existing _meta fields (other than progressToken) are preserved when the SDK injects a progressToken.
         /// This verifies the encode-decode-mutate-encode pattern preserves other metadata.
-        @Test("Existing _meta fields are preserved when adding progressToken", .timeLimit(.minutes(1)))
-        func testMetaPreservation() async throws {
+        @Test(.timeLimit(.minutes(1)))
+        func `Existing _meta fields are preserved when adding progressToken`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2661,12 +2652,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track what _meta the server receives
@@ -2675,7 +2666,7 @@ struct ProgressTests {
             let server = Server(
                 name: "MetaPreserveServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2693,7 +2684,7 @@ struct ProgressTests {
                 if let meta = request._meta {
                     await metaTracker.record(
                         progressToken: meta.progressToken,
-                        additionalFields: meta.additionalFields
+                        additionalFields: meta.additionalFields,
                     )
                 }
 
@@ -2712,8 +2703,8 @@ struct ProgressTests {
                 arguments: [:],
                 _meta: RequestMeta(
                     progressToken: .string("user-provided-token"),
-                    additionalFields: ["customField": .string("custom-value")]
-                )
+                    additionalFields: ["customField": .string("custom-value")],
+                ),
             )
             let request = CallTool.request(id: requestId, params)
 
@@ -2733,8 +2724,8 @@ struct ProgressTests {
 
         /// Test that SDK-generated progress token overwrites any user-provided progressToken.
         /// Per TypeScript SDK behavior, the SDK always uses request ID as the progress token.
-        @Test("SDK-generated token overwrites user-provided progressToken", .timeLimit(.minutes(1)))
-        func testProgressTokenOverwrite() async throws {
+        @Test(.timeLimit(.minutes(1)))
+        func `SDK-generated token overwrites user-provided progressToken`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2744,12 +2735,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track what token the server receives
@@ -2758,7 +2749,7 @@ struct ProgressTests {
             let server = Server(
                 name: "TokenOverwriteServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2790,7 +2781,7 @@ struct ProgressTests {
             let params = CallTool.Parameters(
                 name: "overwrite_test",
                 arguments: [:],
-                _meta: RequestMeta(progressToken: .string("user-token-should-be-overwritten"))
+                _meta: RequestMeta(progressToken: .string("user-token-should-be-overwritten")),
             )
             let request = CallTool.request(id: requestId, params)
 
@@ -2801,14 +2792,14 @@ struct ProgressTests {
             let receivedToken = await tokenTracker.token
             #expect(
                 receivedToken == .string("my-unique-request-id"),
-                "progressToken should be the request ID, not user-provided value"
+                "progressToken should be the request ID, not user-provided value",
             )
         }
 
         /// Test that requests with minimal params still get _meta.progressToken injected.
         /// The SDK should create the _meta field if it doesn't exist.
-        @Test("Requests with minimal params get _meta.progressToken added", .timeLimit(.minutes(1)))
-        func testMinimalParamsRequestGetsProgressToken() async throws {
+        @Test(.timeLimit(.minutes(1)))
+        func `Requests with minimal params get _meta.progressToken added`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2818,12 +2809,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Track what token the server receives
@@ -2832,7 +2823,7 @@ struct ProgressTests {
             let server = Server(
                 name: "MinimalParamsServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2863,7 +2854,7 @@ struct ProgressTests {
             let requestId = RequestId.number(99)
             let params = CallTool.Parameters(
                 name: "minimal_test",
-                arguments: [:]
+                arguments: [:],
                 // Note: no _meta field - SDK should create it
             )
             let request = CallTool.request(id: requestId, params)
@@ -2879,7 +2870,7 @@ struct ProgressTests {
         /// Test that progress callbacks are correctly invoked with the token derived from request ID.
         /// This verifies the full round-trip: client sends with callback → server sends progress → callback invoked.
         @Test(.timeLimit(.minutes(1)))
-        func testProgressCallbackMatchesByRequestId() async throws {
+        func `progress callback matches by request id`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -2889,12 +2880,12 @@ struct ProgressTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedTokens = TokenTracker()
@@ -2902,7 +2893,7 @@ struct ProgressTests {
             let server = Server(
                 name: "TokenMatchServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -2936,7 +2927,7 @@ struct ProgressTests {
             let requestId = RequestId.number(12345)
             let request = CallTool.request(
                 id: requestId,
-                .init(name: "token_match_test", arguments: [:])
+                .init(name: "token_match_test", arguments: [:]),
             )
 
             let progressTracker = ProgressCallbackTracker()

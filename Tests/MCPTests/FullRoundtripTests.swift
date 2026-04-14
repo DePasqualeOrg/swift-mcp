@@ -1,27 +1,24 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for full client-server roundtrip flows through the HTTP transport layer
 /// with a real MCP Server instance.
 ///
 /// These tests follow the TypeScript SDK patterns from:
 /// - `test/integration/test/stateManagementStreamableHttp.test.ts`
-@Suite("Full Roundtrip Tests")
 struct FullRoundtripTests {
     // MARK: - Test Helpers
 
     /// Creates a configured MCP Server with tools for testing
     func createTestServer() -> Server {
-        let server = Server(
+        Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
-        return server
     }
 
     /// Sets up tool handlers on the server
@@ -37,7 +34,7 @@ struct FullRoundtripTests {
                         "properties": [
                             "name": ["type": "string", "description": "Name to greet"],
                         ],
-                    ]
+                    ],
                 ),
                 Tool(
                     name: "add",
@@ -49,7 +46,7 @@ struct FullRoundtripTests {
                             "b": ["type": "number", "description": "Second number"],
                         ],
                         "required": ["a", "b"],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -74,15 +71,15 @@ struct FullRoundtripTests {
 
     // MARK: - 2.1 Multiple client connections (stateless mode)
 
-    @Test("Multiple client connections in stateless mode")
-    func multipleClientConnectionsStateless() async throws {
+    @Test
+    func `Multiple client connections in stateless mode`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
         // Create transport in stateless mode (no sessionIdGenerator)
         // Disable DNS rebinding protection for direct handleRequest() testing
         let transport = HTTPServerTransport(
-            options: .init(dnsRebindingProtection: .none)
+            options: .init(dnsRebindingProtection: .none),
         )
         try await server.start(transport: transport)
 
@@ -118,8 +115,8 @@ struct FullRoundtripTests {
 
     // MARK: - 2.2 Operate with session management (stateful mode)
 
-    @Test("Operate with session management in stateful mode")
-    func operateWithSessionManagement() async throws {
+    @Test
+    func `Operate with session management in stateful mode`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -128,8 +125,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -156,8 +153,8 @@ struct FullRoundtripTests {
 
     // MARK: - 2.3 Full tool call roundtrip
 
-    @Test("Full tool call roundtrip with real server")
-    func fullToolCallRoundtrip() async throws {
+    @Test
+    func `Full tool call roundtrip with real server`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -166,8 +163,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -218,8 +215,8 @@ struct FullRoundtripTests {
 
     // MARK: - 2.4 Protocol version negotiation
 
-    @Test("Protocol version negotiation stores correct version")
-    func protocolVersionNegotiation() async throws {
+    @Test
+    func `Protocol version negotiation stores correct version`() async throws {
         let server = createTestServer()
 
         let sessionId = UUID().uuidString
@@ -227,8 +224,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -256,13 +253,13 @@ struct FullRoundtripTests {
         let pingResponse = await transport.handleRequest(HTTPRequest(
             method: "POST",
             headers: headers,
-            body: pingRequest.data(using: .utf8)
+            body: pingRequest.data(using: .utf8),
         ))
         #expect(pingResponse.statusCode == 200)
     }
 
-    @Test("Reject mismatched protocol version")
-    func rejectMismatchedProtocolVersion() async throws {
+    @Test
+    func `Reject mismatched protocol version`() async throws {
         let server = createTestServer()
 
         let sessionId = UUID().uuidString
@@ -270,8 +267,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -292,7 +289,7 @@ struct FullRoundtripTests {
         let response = await transport.handleRequest(HTTPRequest(
             method: "POST",
             headers: headers,
-            body: pingRequest.data(using: .utf8)
+            body: pingRequest.data(using: .utf8),
         ))
 
         // Should reject the mismatched version
@@ -301,8 +298,8 @@ struct FullRoundtripTests {
 
     // MARK: - Additional Integration Tests
 
-    @Test("Unknown tool returns error")
-    func unknownToolReturnsError() async throws {
+    @Test
+    func `Unknown tool returns error`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -311,8 +308,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 
@@ -332,8 +329,8 @@ struct FullRoundtripTests {
         }
     }
 
-    @Test("Batch requests work correctly")
-    func batchRequestsWorkCorrectly() async throws {
+    @Test
+    func `Batch requests work correctly`() async throws {
         let server = createTestServer()
         await setUpToolHandlers(server)
 
@@ -342,8 +339,8 @@ struct FullRoundtripTests {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: { sessionId },
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await server.start(transport: transport)
 

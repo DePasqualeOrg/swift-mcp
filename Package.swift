@@ -9,7 +9,7 @@ var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/apple/swift-system.git", from: "1.0.0"),
     .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
     .package(url: "https://github.com/DePasqualeOrg/swift-sse", .upToNextMinor(from: "0.1.0")),
-    .package(url: "https://github.com/ajevans99/swift-json-schema", from: "0.2.1"),
+    .package(url: "https://github.com/ajevans99/swift-json-schema", .upToNextMinor(from: "0.11.2")),
     .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "603.0.0"),
     .package(url: "https://github.com/swiftlang/swift-docc", branch: "main"),
     .package(url: "https://github.com/swiftlang/swift-docc-plugin", branch: "main"),
@@ -25,9 +25,10 @@ var targetDependencies: [Target.Dependency] = [
     .product(name: "Logging", package: "swift-log"),
     .product(name: "SSE", package: "swift-sse"),
     .product(name: "JSONSchema", package: "swift-json-schema"),
+    .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
     .product(
         name: "Crypto", package: "swift-crypto",
-        condition: .when(platforms: [.linux])
+        condition: .when(platforms: [.linux]),
     ),
 ]
 
@@ -50,25 +51,25 @@ testTargetDependencies.append(.product(name: "HummingbirdTesting", package: "hum
 let package = Package(
     name: "swift-mcp",
     platforms: [
-        .macOS("13.0"),
-        .macCatalyst("16.0"),
-        .iOS("16.0"),
-        .watchOS("9.0"),
-        .tvOS("16.0"),
+        .macOS("14.0"),
+        .macCatalyst("17.0"),
+        .iOS("17.0"),
+        .watchOS("10.0"),
+        .tvOS("17.0"),
         .visionOS("1.0"),
     ],
     products: [
         .library(
             name: "MCP",
-            targets: ["MCP"]
+            targets: ["MCP"],
         ),
         .library(
             name: "MCPTool",
-            targets: ["MCPTool"]
+            targets: ["MCPTool"],
         ),
         .library(
             name: "MCPPrompt",
-            targets: ["MCPPrompt"]
+            targets: ["MCPPrompt"],
         ),
     ],
     dependencies: dependencies,
@@ -78,39 +79,44 @@ let package = Package(
             dependencies: macroDependencies,
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
-            ]
+            ],
         ),
         .target(
             name: "MCP",
             dependencies: mcpTargetDependencies,
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
-            ]
+            ],
         ),
         .target(
             name: "MCPTool",
-            dependencies: ["MCP", "MCPMacros"],
+            dependencies: [
+                "MCP",
+                "MCPMacros",
+                .product(name: "JSONSchema", package: "swift-json-schema"),
+                .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
-            ]
+            ],
         ),
         .target(
             name: "MCPPrompt",
             dependencies: ["MCP", "MCPMacros"],
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
-            ]
+            ],
         ),
         .testTarget(
             name: "MCPTests",
-            dependencies: testTargetDependencies
+            dependencies: testTargetDependencies,
         ),
         .testTarget(
             name: "MCPMacroTests",
             dependencies: [
                 "MCPMacros",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-            ]
+            ],
         ),
-    ]
+    ],
 )

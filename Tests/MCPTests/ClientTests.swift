@@ -2,14 +2,12 @@
 // Copyright © Matt Zmuda
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Client Tests")
 struct ClientTests {
-    @Test("Client connect and disconnect")
-    func testClientConnectAndDisconnect() async throws {
+    @Test
+    func `Client connect and disconnect`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -28,8 +26,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -44,10 +42,9 @@ struct ClientTests {
     }
 
     @Test(
-        "Ping request",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testClientPing() async throws {
+    func `Ping request`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -65,8 +62,8 @@ struct ClientTests {
                     protocolVersion: Version.latest,
                     capabilities: .init(),
                     serverInfo: .init(name: "TestServer", version: "1.0"),
-                    instructions: nil
-                )
+                    instructions: nil,
+                ),
             )
 
             try await transport.queue(response: response)
@@ -100,8 +97,8 @@ struct ClientTests {
         try await Task.sleep(for: .milliseconds(50))
     }
 
-    @Test("Connection failure handling")
-    func testClientConnectionFailure() async {
+    @Test
+    func `Connection failure handling`() async {
         let transport = MockTransport()
         await transport.setFailConnect(true)
         let client = Client(name: "TestClient", version: "1.0")
@@ -120,8 +117,8 @@ struct ClientTests {
         }
     }
 
-    @Test("Send failure handling")
-    func testClientSendFailure() async throws {
+    @Test
+    func `Send failure handling`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -138,8 +135,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -169,8 +166,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Strict configuration - capabilities check")
-    func testStrictConfiguration() async throws {
+    @Test
+    func `Strict configuration - capabilities check`() async throws {
         let transport = MockTransport()
         let config = Client.Configuration.strict
         let client = Client(name: "TestClient", version: "1.0", configuration: config)
@@ -188,8 +185,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -225,8 +222,8 @@ struct ClientTests {
         try await Task.sleep(for: .milliseconds(50))
     }
 
-    @Test("Non-strict mode returns empty lists when server lacks capabilities")
-    func testNonStrictReturnsEmptyLists() async throws {
+    @Test
+    func `Non-strict mode returns empty lists when server lacks capabilities`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0", configuration: .default)
 
@@ -243,8 +240,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -282,8 +279,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Batch request - success")
-    func testBatchRequestSuccess() async throws {
+    @Test
+    func `Batch request - success`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -300,8 +297,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -372,8 +369,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Batch request - mixed success/error")
-    func testBatchRequestMixed() async throws {
+    @Test
+    func `Batch request - mixed success/error`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -390,8 +387,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -460,8 +457,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Batch request - empty")
-    func testBatchRequestEmpty() async throws {
+    @Test
+    func `Batch request - empty`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -478,8 +475,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -500,8 +497,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Notify method sends notifications")
-    func testClientNotify() async throws {
+    @Test
+    func `Notify method sends notifications`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -518,8 +515,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -543,7 +540,7 @@ struct ClientTests {
             let decoder = JSONDecoder()
             do {
                 let decodedNotification = try decoder.decode(
-                    Message<InitializedNotification>.self, from: data
+                    Message<InitializedNotification>.self, from: data,
                 )
                 #expect(decodedNotification.method == InitializedNotification.name)
             } catch {
@@ -556,8 +553,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Initialize sends initialized notification")
-    func testClientInitializeNotification() async throws {
+    @Test
+    func `Initialize sends initialized notification`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -577,8 +574,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
 
                 try await transport.queue(response: response)
@@ -598,7 +595,7 @@ struct ClientTests {
                         do {
                             let decoder = JSONDecoder()
                             let decodedNotification = try decoder.decode(
-                                Message<InitializedNotification>.self, from: notificationData
+                                Message<InitializedNotification>.self, from: notificationData,
                             )
                             #expect(decodedNotification.method == InitializedNotification.name)
                         } catch {
@@ -609,7 +606,7 @@ struct ClientTests {
                     }
                 } else {
                     #expect(
-                        Bool(false), "Expected both initialize request and initialized notification"
+                        Bool(false), "Expected both initialize request and initialized notification",
                     )
                 }
             }
@@ -635,8 +632,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Race condition between send error and response")
-    func testSendErrorResponseRace() async throws {
+    @Test
+    func `Race condition between send error and response`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -653,8 +650,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -696,8 +693,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Race condition between response and send error")
-    func testResponseSendErrorRace() async throws {
+    @Test
+    func `Race condition between response and send error`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -714,8 +711,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -760,10 +757,9 @@ struct ClientTests {
     }
 
     @Test(
-        "Unexpected transport closure with pending requests",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testUnexpectedTransportClosureWithPendingRequests() async throws {
+    func `Unexpected transport closure with pending requests`() async throws {
         // Based on: mcp-python-sdk/tests/client/test_stdio.py::test_stdio_client_bad_path
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
@@ -781,8 +777,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -827,8 +823,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Client rejects unsupported server protocol version")
-    func testClientRejectsUnsupportedProtocolVersion() async throws {
+    @Test
+    func `Client rejects unsupported server protocol version`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -846,8 +842,8 @@ struct ClientTests {
                         protocolVersion: "2099-01-01", // Future unsupported version
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -875,8 +871,8 @@ struct ClientTests {
         #expect(await transport.isConnected == false)
     }
 
-    @Test("Client accepts supported server protocol version")
-    func testClientAcceptsSupportedProtocolVersion() async throws {
+    @Test
+    func `Client accepts supported server protocol version`() async throws {
         let transport = MockTransport()
         let client = Client(name: "TestClient", version: "1.0")
 
@@ -896,8 +892,8 @@ struct ClientTests {
                         protocolVersion: olderSupportedVersion,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -918,8 +914,8 @@ struct ClientTests {
     // Based on TypeScript SDK: should initialize with matching protocol version
     // Based on Python SDK: test_client_session_initialize
 
-    @Test("Client sends latest protocol version in initialize request")
-    func testClientSendsLatestProtocolVersion() async throws {
+    @Test
+    func `Client sends latest protocol version in initialize request`() async throws {
         // TypeScript SDK: should initialize with matching protocol version
         // Python SDK: test_client_session_version_negotiation_success
         // Verifies that the client sends the latest protocol version in its initialize request
@@ -942,8 +938,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -957,8 +953,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Client info is correctly sent in initialize request")
-    func testClientInfoSentInInitializeRequest() async throws {
+    @Test
+    func `Client info is correctly sent in initialize request`() async throws {
         // Python SDK: test_client_session_custom_client_info, test_client_session_default_client_info
         // Verifies that the client's name and version are correctly included in the initialize request
         let transport = MockTransport()
@@ -983,8 +979,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -996,8 +992,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Client capabilities are sent in initialize request")
-    func testClientCapabilitiesSentInInitializeRequest() async throws {
+    @Test
+    func `Client capabilities are sent in initialize request`() async throws {
         // Python SDK: test_client_capabilities_default, test_client_capabilities_with_custom_callbacks
         // Verifies that client capabilities are correctly included in the initialize request
         let transport = MockTransport()
@@ -1009,7 +1005,7 @@ struct ClientTests {
                 model: "test",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: []
+                content: [],
             )
         }
         await client.withRootsHandler(listChanged: true) { _ in [] }
@@ -1032,8 +1028,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -1045,8 +1041,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Server capabilities accessible after initialization")
-    func testServerCapabilitiesAccessibleAfterInit() async throws {
+    @Test
+    func `Server capabilities accessible after initialization`() async throws {
         // Python SDK: test_get_server_capabilities
         // Verifies that serverCapabilities returns nil before connect and is populated after
         let transport = MockTransport()
@@ -1060,7 +1056,7 @@ struct ClientTests {
             logging: .init(),
             prompts: .init(listChanged: true),
             resources: .init(subscribe: true, listChanged: true),
-            tools: .init(listChanged: false)
+            tools: .init(listChanged: false),
         )
 
         // Set up a task to handle the initialize response
@@ -1076,8 +1072,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: serverCapabilities,
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -1099,8 +1095,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Instructions from server accessible in initialize result")
-    func testInstructionsAccessibleFromInitializeResult() async throws {
+    @Test
+    func `Instructions from server accessible in initialize result`() async throws {
         // TypeScript SDK: should initialize with matching protocol version (checks getInstructions())
         // Python SDK: test_client_session_initialize (checks result.instructions)
         // Verifies that instructions from the server's response are accessible
@@ -1121,8 +1117,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: "TestServer", version: "1.0"),
-                        instructions: serverInstructions
-                    )
+                        instructions: serverInstructions,
+                    ),
                 )
                 try await transport.queue(response: response)
             }
@@ -1137,8 +1133,8 @@ struct ClientTests {
         await client.disconnect()
     }
 
-    @Test("Server info accessible in initialize result")
-    func testServerInfoAccessibleFromInitializeResult() async throws {
+    @Test
+    func `Server info accessible in initialize result`() async throws {
         // TypeScript SDK: should connect new client to old, supported server version (checks getServerVersion())
         // Python SDK: test_client_session_initialize (checks result.serverInfo)
         // Verifies that server info from the response is accessible
@@ -1160,8 +1156,8 @@ struct ClientTests {
                         protocolVersion: Version.latest,
                         capabilities: .init(),
                         serverInfo: .init(name: serverName, version: serverVersion),
-                        instructions: nil
-                    )
+                        instructions: nil,
+                    ),
                 )
                 try await transport.queue(response: response)
             }

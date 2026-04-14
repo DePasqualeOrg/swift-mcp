@@ -96,7 +96,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
         storage: any TokenStorage,
         assertionProvider: @Sendable @escaping (String) async throws -> String,
         scopes: String? = nil,
-        httpClient: HTTPRequestHandler? = nil
+        httpClient: HTTPRequestHandler? = nil,
     ) {
         self.serverURL = serverURL
         self.clientId = clientId
@@ -129,7 +129,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
     }
 
     public func handleUnauthorized(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         do {
             return try await performTokenRequest(context: context)
@@ -156,12 +156,12 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
 
         let tokenURL = tokenEndpoint(
             from: cachedASMetadata,
-            authServerURL: cachedAuthServerURL ?? serverURL
+            authServerURL: cachedAuthServerURL ?? serverURL,
         )
 
         let resource = ResourceURL.selectResourceURL(
             serverURL: serverURL,
-            protectedResourceMetadata: cachedPRM
+            protectedResourceMetadata: cachedPRM,
         )
 
         // Use JWT assertion for client auth during refresh, matching the
@@ -177,7 +177,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
                 assertion: assertion,
                 tokenEndpoint: tokenURL,
                 resource: resource,
-                httpClient: httpClient
+                httpClient: httpClient,
             )
             try await storeTokens(newTokens)
             return newTokens
@@ -198,7 +198,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
     // MARK: - Token Request
 
     private func performTokenRequest(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         // 1. Discovery
         let (_, asMetadata) = try await performDiscovery(context: context)
@@ -206,7 +206,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
         // 2. Determine JWT audience: AS issuer URL, or token endpoint as fallback
         let tokenURL = tokenEndpoint(
             from: asMetadata,
-            authServerURL: cachedAuthServerURL ?? serverURL
+            authServerURL: cachedAuthServerURL ?? serverURL,
         )
         let audience = asMetadata?.issuer.absoluteString ?? tokenURL.absoluteString
 
@@ -216,7 +216,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
         // 4. Resource (always included per MCP spec 2025-11-25)
         let resource = ResourceURL.selectResourceURL(
             serverURL: serverURL,
-            protectedResourceMetadata: cachedPRM
+            protectedResourceMetadata: cachedPRM,
         )
 
         // 5. Scope: use 403 step-up scope if provided, otherwise configured scopes
@@ -228,7 +228,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
             tokenEndpoint: tokenURL,
             scope: scope,
             resource: resource,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
 
         // 7. Store tokens
@@ -239,7 +239,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
     // MARK: - Discovery
 
     private func performDiscovery(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> (URL, OAuthMetadata?) {
         if let authServerURL = cachedAuthServerURL {
             return (authServerURL, cachedASMetadata)
@@ -248,7 +248,7 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
         let prm = await discoverProtectedResourceMetadata(
             serverURL: serverURL,
             wwwAuthenticateResourceMetadataURL: context.resourceMetadataURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         cachedPRM = prm
 
@@ -266,14 +266,15 @@ public actor PrivateKeyJWTProvider: OAuthClientProvider {
         // validation impossible and enabling metadata injection attacks.
         guard let authServerURL = prm?.authorizationServers?.first else {
             throw OAuthError.discoveryFailed(
-                "Protected Resource Metadata did not provide an authorization server URL")
+                "Protected Resource Metadata did not provide an authorization server URL",
+            )
         }
         try validateEndpointURL(authServerURL)
         cachedAuthServerURL = authServerURL
 
         let asMetadata = await discoverAuthorizationServerMetadata(
             authServerURL: authServerURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         if let asMetadata {
             try validateIssuer(asMetadata, authServerURL: authServerURL)

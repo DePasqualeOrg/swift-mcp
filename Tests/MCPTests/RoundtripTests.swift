@@ -3,9 +3,8 @@
 
 import Foundation
 import Logging
-import Testing
-
 @testable import MCP
+import Testing
 
 #if canImport(System)
 import System
@@ -13,30 +12,29 @@ import System
 @preconcurrency import SystemPackage
 #endif
 
-@Suite("Roundtrip Tests")
 struct RoundtripTests {
     @Test(
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func testRoundtrip() async throws {
+    func roundtrip() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
         var logger = Logger(
             label: "mcp.test.initialize",
-            factory: { StreamLogHandler.standardError(label: $0) }
+            factory: { StreamLogHandler.standardError(label: $0) },
         )
         logger.logLevel = .debug
 
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
@@ -45,8 +43,8 @@ struct RoundtripTests {
             capabilities: .init(
                 prompts: .init(),
                 resources: .init(),
-                tools: .init()
-            )
+                tools: .init(),
+            ),
         )
         await server.withRequestHandler(ListTools.self) { _, _ in
             ListTools.Result(tools: [
@@ -60,7 +58,7 @@ struct RoundtripTests {
                             "b": ["type": "integer", "description": "The second number"],
                         ],
                         "required": ["a", "b"],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -73,7 +71,7 @@ struct RoundtripTests {
                   let b = request.arguments?["b"]?.intValue
             else {
                 return CallTool.Result(
-                    content: [.text("Did not receive valid arguments")], isError: true
+                    content: [.text("Did not receive valid arguments")], isError: true,
                 )
             }
 
@@ -87,13 +85,13 @@ struct RoundtripTests {
                     name: "Example Text",
                     uri: "test://example.txt",
                     description: "A test resource",
-                    mimeType: "text/plain"
+                    mimeType: "text/plain",
                 ),
                 Resource(
                     name: "Test Data",
                     uri: "test://data.json",
                     description: "JSON test data",
-                    mimeType: "application/json"
+                    mimeType: "application/json",
                 ),
             ])
         }

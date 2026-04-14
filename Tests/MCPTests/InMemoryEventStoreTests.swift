@@ -1,24 +1,22 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
 /// Tests for InMemoryEventStore - event storage for resumability support.
-@Suite("InMemory Event Store Tests")
 struct InMemoryEventStoreTests {
     // MARK: - Basic Operations
 
-    @Test("Initialization creates empty store")
-    func initialization() async {
+    @Test
+    func `Initialization creates empty store`() async {
         let store = InMemoryEventStore()
         let count = await store.eventCount
         #expect(count == 0)
     }
 
-    @Test("Store event")
-    func storeEvent() async throws {
+    @Test
+    func `Store event`() async throws {
         let store = InMemoryEventStore()
         let message = #"{"jsonrpc":"2.0","result":"test","id":"1"}"#.data(using: .utf8)!
 
@@ -31,8 +29,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 1)
     }
 
-    @Test("Store multiple events")
-    func storeMultipleEvents() async throws {
+    @Test
+    func `Store multiple events`() async throws {
         let store = InMemoryEventStore()
 
         for i in 0 ..< 5 {
@@ -44,8 +42,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 5)
     }
 
-    @Test("Stream ID for event ID")
-    func streamIdForEventId() async throws {
+    @Test
+    func `Stream ID for event ID`() async throws {
         let store = InMemoryEventStore()
         let message = #"{"jsonrpc":"2.0","result":"test","id":"1"}"#.data(using: .utf8)!
 
@@ -55,16 +53,16 @@ struct InMemoryEventStoreTests {
         #expect(streamId == "my-stream-id")
     }
 
-    @Test("Stream ID for unknown event ID returns nil")
-    func streamIdForUnknownEventId() async {
+    @Test
+    func `Stream ID for unknown event ID returns nil`() async {
         let store = InMemoryEventStore()
 
         let streamId = await store.streamIdForEventId("unknown-event-id")
         #expect(streamId == nil)
     }
 
-    @Test("Stream ID for event ID with underscores")
-    func streamIdForEventIdWithUnderscores() async throws {
+    @Test
+    func `Stream ID for event ID with underscores`() async throws {
         let store = InMemoryEventStore()
         let message = Data()
 
@@ -77,8 +75,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Event Replay
 
-    @Test("Replay events after")
-    func replayEventsAfter() async throws {
+    @Test
+    func `Replay events after`() async throws {
         let store = InMemoryEventStore()
 
         // Store some events
@@ -92,8 +90,13 @@ struct InMemoryEventStoreTests {
         // Replay events after the second one
         actor MessageCollector {
             var messages: [String] = []
-            func add(_ msg: String) { messages.append(msg) }
-            func get() -> [String] { messages }
+            func add(_ msg: String) {
+                messages.append(msg)
+            }
+
+            func get() -> [String] {
+                messages
+            }
         }
         let collector = MessageCollector()
 
@@ -110,8 +113,8 @@ struct InMemoryEventStoreTests {
         #expect(replayedMessages == ["2", "3", "4"]) // Events 2, 3, 4 (after event 1)
     }
 
-    @Test("Replay events only from same stream")
-    func replayEventsOnlyFromSameStream() async throws {
+    @Test
+    func `Replay events only from same stream`() async throws {
         let store = InMemoryEventStore()
 
         // Store events for two different streams
@@ -127,8 +130,13 @@ struct InMemoryEventStoreTests {
         // Replay from stream-1's first event
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func value() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func value() -> Int {
+                count
+            }
         }
         let counter = Counter()
 
@@ -141,8 +149,8 @@ struct InMemoryEventStoreTests {
         #expect(replayedCount == 1)
     }
 
-    @Test("Replay events with unknown event ID throws")
-    func replayEventsUnknownEventId() async {
+    @Test
+    func `Replay events with unknown event ID throws`() async {
         let store = InMemoryEventStore()
 
         await #expect(throws: EventStoreError.self) {
@@ -152,8 +160,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Cleanup
 
-    @Test("Clear removes all events")
-    func clear() async throws {
+    @Test
+    func `Clear removes all events`() async throws {
         let store = InMemoryEventStore()
 
         // Store some events
@@ -171,8 +179,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 0)
     }
 
-    @Test("Remove events for stream")
-    func removeEventsForStream() async throws {
+    @Test
+    func `Remove events for stream`() async throws {
         let store = InMemoryEventStore()
 
         // Store events for two streams
@@ -193,8 +201,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 2)
     }
 
-    @Test("Cleanup old events")
-    func cleanUpOldEvents() async throws {
+    @Test
+    func `Cleanup old events`() async throws {
         let store = InMemoryEventStore()
 
         // Store an event
@@ -211,8 +219,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 0)
     }
 
-    @Test("Cleanup does not remove recent events")
-    func cleanUpDoesNotRemoveRecentEvents() async throws {
+    @Test
+    func `Cleanup does not remove recent events`() async throws {
         let store = InMemoryEventStore()
 
         // Store an event
@@ -228,8 +236,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Concurrency
 
-    @Test("Concurrent store and retrieve")
-    func concurrentStoreAndRetrieve() async throws {
+    @Test
+    func `Concurrent store and retrieve`() async {
         let store = InMemoryEventStore()
 
         // Concurrently store events
@@ -246,8 +254,8 @@ struct InMemoryEventStoreTests {
         #expect(count == 100)
     }
 
-    @Test("Concurrent replay")
-    func concurrentReplay() async throws {
+    @Test
+    func `Concurrent replay`() async throws {
         let store = InMemoryEventStore()
 
         // Store events for multiple streams
@@ -267,7 +275,10 @@ struct InMemoryEventStoreTests {
         // Concurrently replay from each stream
         actor Counter {
             var value = 0
-            func increment() { value += 1 }
+            func increment() {
+                value += 1
+            }
+
             func reset() -> Int {
                 let v = value
                 value = 0
@@ -294,8 +305,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Event ID Format
 
-    @Test("Event ID contains stream ID")
-    func eventIdContainsStreamId() async throws {
+    @Test
+    func `Event ID contains stream ID`() async throws {
         let store = InMemoryEventStore()
         let message = Data()
 
@@ -304,8 +315,8 @@ struct InMemoryEventStoreTests {
         #expect(eventId.hasPrefix("unique-stream-123_"))
     }
 
-    @Test("Event IDs are unique")
-    func eventIdsAreUnique() async throws {
+    @Test
+    func `Event IDs are unique`() async throws {
         let store = InMemoryEventStore()
         let message = Data()
 
@@ -320,20 +331,20 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Max Events Per Stream
 
-    @Test("Default maxEventsPerStream is 100")
-    func defaultMaxEventsPerStream() async {
+    @Test
+    func `Default maxEventsPerStream is 100`() {
         let store = InMemoryEventStore()
         #expect(store.maxEventsPerStream == 100)
     }
 
-    @Test("Custom maxEventsPerStream is respected")
-    func customMaxEventsPerStream() async {
+    @Test
+    func `Custom maxEventsPerStream is respected`() {
         let store = InMemoryEventStore(maxEventsPerStream: 50)
         #expect(store.maxEventsPerStream == 50)
     }
 
-    @Test("Automatic eviction when max events reached")
-    func automaticEviction() async throws {
+    @Test
+    func `Automatic eviction when max events reached`() async throws {
         let store = InMemoryEventStore(maxEventsPerStream: 5)
         let message = Data("test".utf8)
 
@@ -369,8 +380,8 @@ struct InMemoryEventStoreTests {
         #expect(newStreamId == "stream")
     }
 
-    @Test("Eviction is per-stream")
-    func evictionIsPerStream() async throws {
+    @Test
+    func `Eviction is per-stream`() async throws {
         let store = InMemoryEventStore(maxEventsPerStream: 3)
         let message = Data("test".utf8)
 
@@ -397,8 +408,8 @@ struct InMemoryEventStoreTests {
         #expect(streamCount == 2)
     }
 
-    @Test("Replay works correctly after eviction")
-    func replayAfterEviction() async throws {
+    @Test
+    func `Replay works correctly after eviction`() async throws {
         let store = InMemoryEventStore(maxEventsPerStream: 5)
 
         // Store 5 events
@@ -419,8 +430,13 @@ struct InMemoryEventStoreTests {
         // eventIds[2] (id: "2") should still be valid and allow replay of 3, 4, 5, 6
         actor MessageCollector {
             var ids: [String] = []
-            func add(_ id: String) { ids.append(id) }
-            func get() -> [String] { ids }
+            func add(_ id: String) {
+                ids.append(id)
+            }
+
+            func get() -> [String] {
+                ids
+            }
         }
         let collector = MessageCollector()
 
@@ -436,8 +452,8 @@ struct InMemoryEventStoreTests {
         #expect(replayedIds == ["3", "4", "5", "6"])
     }
 
-    @Test("Stream count tracks active streams")
-    func streamCountTracksActiveStreams() async throws {
+    @Test
+    func `Stream count tracks active streams`() async throws {
         let store = InMemoryEventStore()
         let message = Data()
 
@@ -465,8 +481,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Priming Events
 
-    @Test("Priming events (empty data) are stored but skipped during replay")
-    func primingEventsSkippedDuringReplay() async throws {
+    @Test
+    func `Priming events (empty data) are stored but skipped during replay`() async throws {
         let store = InMemoryEventStore()
 
         // Store a regular event
@@ -492,8 +508,13 @@ struct InMemoryEventStoreTests {
         // (priming event should be skipped)
         actor MessageCollector {
             var messages: [Data] = []
-            func add(_ msg: Data) { messages.append(msg) }
-            func get() -> [Data] { messages }
+            func add(_ msg: Data) {
+                messages.append(msg)
+            }
+
+            func get() -> [Data] {
+                messages
+            }
         }
         let collector = MessageCollector()
 
@@ -506,8 +527,8 @@ struct InMemoryEventStoreTests {
         #expect(replayedMessages[0] == msg2) // The second regular message
     }
 
-    @Test("Replay events in strict chronological order")
-    func replayEventsInChronologicalOrder() async throws {
+    @Test
+    func `Replay events in strict chronological order`() async throws {
         let store = InMemoryEventStore()
 
         // Store events with explicit ordering in their content
@@ -521,8 +542,13 @@ struct InMemoryEventStoreTests {
         // Replay from the first event
         actor OrderCollector {
             var orders: [Int] = []
-            func add(_ order: Int) { orders.append(order) }
-            func get() -> [Int] { orders }
+            func add(_ order: Int) {
+                orders.append(order)
+            }
+
+            func get() -> [Int] {
+                orders
+            }
         }
         let collector = OrderCollector()
 
@@ -545,8 +571,8 @@ struct InMemoryEventStoreTests {
         }
     }
 
-    @Test("Replay from most recent event returns empty")
-    func replayFromMostRecentEventReturnsEmpty() async throws {
+    @Test
+    func `Replay from most recent event returns empty`() async throws {
         let store = InMemoryEventStore()
 
         // Store some events
@@ -559,8 +585,13 @@ struct InMemoryEventStoreTests {
         // Replay from the most recent event - nothing should be replayed
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func value() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func value() -> Int {
+                count
+            }
         }
         let counter = Counter()
 
@@ -573,8 +604,8 @@ struct InMemoryEventStoreTests {
         #expect(replayedCount == 0) // Nothing to replay after the most recent event
     }
 
-    @Test("Replay returns correct stream ID")
-    func replayReturnsCorrectStreamId() async throws {
+    @Test
+    func `Replay returns correct stream ID`() async throws {
         let store = InMemoryEventStore()
 
         // Store events on different streams
@@ -597,8 +628,8 @@ struct InMemoryEventStoreTests {
 
     // MARK: - Edge Cases
 
-    @Test("Store and replay with special characters in stream ID")
-    func storeAndReplayWithSpecialStreamId() async throws {
+    @Test
+    func `Store and replay with special characters in stream ID`() async throws {
         let store = InMemoryEventStore()
 
         // Test with various special characters that might be in a stream ID
@@ -615,8 +646,13 @@ struct InMemoryEventStoreTests {
         // Verify replay works
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func value() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func value() -> Int {
+                count
+            }
         }
         let counter = Counter()
 
@@ -628,8 +664,8 @@ struct InMemoryEventStoreTests {
         #expect(await counter.value() == 1)
     }
 
-    @Test("Multiple streams interleaved storage and replay")
-    func multipleStreamsInterleavedStorageAndReplay() async throws {
+    @Test
+    func `Multiple streams interleaved storage and replay`() async throws {
         let store = InMemoryEventStore()
 
         // Interleave storage across multiple streams
@@ -651,8 +687,13 @@ struct InMemoryEventStoreTests {
         // Replay from stream-1's first event
         actor MessageCollector {
             var sequences: [Int] = []
-            func add(_ seq: Int) { sequences.append(seq) }
-            func get() -> [Int] { sequences }
+            func add(_ seq: Int) {
+                sequences.append(seq)
+            }
+
+            func get() -> [Int] {
+                sequences
+            }
         }
         let collector = MessageCollector()
 

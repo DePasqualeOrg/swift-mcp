@@ -31,7 +31,7 @@ public func protectedResourceMetadataResponse(config: ServerAuthConfig) -> HTTPR
         scopesSupported: config.scopesSupported,
         bearerMethodsSupported: ["header"],
         resourceName: config.resourceName,
-        resourceDocumentation: config.resourceDocumentation
+        resourceDocumentation: config.resourceDocumentation,
     )
 
     let body: Data
@@ -49,7 +49,7 @@ public func protectedResourceMetadataResponse(config: ServerAuthConfig) -> HTTPR
             HTTPHeader.contentType: "application/json",
             HTTPHeader.cacheControl: "public, max-age=3600",
         ],
-        body: body
+        body: body,
     )
 }
 

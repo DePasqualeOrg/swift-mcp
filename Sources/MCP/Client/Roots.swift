@@ -34,11 +34,11 @@ public struct Root: Hashable, Codable, Sendable {
     public init(
         uri: String,
         name: String? = nil,
-        _meta: [String: Value]? = nil
+        _meta: [String: Value]? = nil,
     ) {
         precondition(
             uri.hasPrefix(Self.requiredURIPrefix),
-            "Root URI must start with '\(Self.requiredURIPrefix)', got: \(uri)"
+            "Root URI must start with '\(Self.requiredURIPrefix)', got: \(uri)",
         )
         self.uri = uri
         self.name = name
@@ -52,7 +52,7 @@ public struct Root: Hashable, Codable, Sendable {
             throw DecodingError.dataCorruptedError(
                 forKey: .uri,
                 in: container,
-                debugDescription: "Root URI must start with '\(Self.requiredURIPrefix)', got: \(uri)"
+                debugDescription: "Root URI must start with '\(Self.requiredURIPrefix)', got: \(uri)",
             )
         }
         self.uri = uri
@@ -97,7 +97,7 @@ public enum ListRoots: Method {
         public init(
             roots: [Root],
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.roots = roots
             self._meta = _meta

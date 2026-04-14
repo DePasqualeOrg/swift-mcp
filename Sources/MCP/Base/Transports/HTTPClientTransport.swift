@@ -190,7 +190,7 @@ public actor HTTPClientTransport: Transport {
         reconnectionOptions: HTTPReconnectionOptions = .default,
         requestModifier: @escaping (URLRequest) -> URLRequest = { $0 },
         authProvider: (any OAuthClientProvider)? = nil,
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         // Create configuration with MCP-appropriate timeouts
         // (Cannot use .mcp extension on Linux since URLSessionConfiguration cannot be extended)
@@ -206,7 +206,7 @@ public actor HTTPClientTransport: Transport {
             reconnectionOptions: reconnectionOptions,
             requestModifier: requestModifier,
             authProvider: authProvider,
-            logger: logger
+            logger: logger,
         )
     }
     #else
@@ -233,7 +233,7 @@ public actor HTTPClientTransport: Transport {
         reconnectionOptions: HTTPReconnectionOptions = .default,
         requestModifier: @escaping (URLRequest) -> URLRequest = { $0 },
         authProvider: (any OAuthClientProvider)? = nil,
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         self.init(
             endpoint: endpoint,
@@ -243,7 +243,7 @@ public actor HTTPClientTransport: Transport {
             reconnectionOptions: reconnectionOptions,
             requestModifier: requestModifier,
             authProvider: authProvider,
-            logger: logger
+            logger: logger,
         )
     }
     #endif
@@ -256,7 +256,7 @@ public actor HTTPClientTransport: Transport {
         reconnectionOptions: HTTPReconnectionOptions = .default,
         requestModifier: @escaping (URLRequest) -> URLRequest = { $0 },
         authProvider: (any OAuthClientProvider)? = nil,
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         self.endpoint = endpoint
         self.session = session
@@ -275,7 +275,7 @@ public actor HTTPClientTransport: Transport {
             logger
                 ?? Logger(
                     label: "mcp.transport.http.client",
-                    factory: { _ in SwiftLogNoOpLogHandler() }
+                    factory: { _ in SwiftLogNoOpLogHandler() },
                 )
     }
 
@@ -401,7 +401,8 @@ public actor HTTPClientTransport: Transport {
 
             default:
                 throw MCPError.internalError(
-                    "Failed to terminate session: HTTP \(httpResponse.statusCode)")
+                    "Failed to terminate session: HTTP \(httpResponse.statusCode)",
+                )
         }
     }
 
@@ -478,14 +479,14 @@ public actor HTTPClientTransport: Transport {
                 response: authError.response,
                 data: data,
                 expectsContentType: expectsContentType,
-                authState: &authState
+                authState: &authState,
             )
         } catch let scopeError as InsufficientScopeError {
             try await handleInsufficientScope(
                 response: scopeError.response,
                 data: data,
                 expectsContentType: expectsContentType,
-                authState: &authState
+                authState: &authState,
             )
         }
     }
@@ -495,7 +496,7 @@ public actor HTTPClientTransport: Transport {
         response: HTTPURLResponse,
         data: Data,
         expectsContentType: Bool,
-        authState: inout AuthRetryState
+        authState: inout AuthRetryState,
     ) async throws {
         guard let authProvider else {
             throw MCPError.internalError("Authentication required")
@@ -514,7 +515,7 @@ public actor HTTPClientTransport: Transport {
         let context = UnauthorizedContext(
             resourceMetadataURL: challenge?.resourceMetadataURL,
             scope: challenge?.scope,
-            wwwAuthenticate: wwwAuth
+            wwwAuthenticate: wwwAuth,
         )
 
         logger.debug("Handling 401 with auth provider", metadata: [
@@ -536,7 +537,7 @@ public actor HTTPClientTransport: Transport {
         response: HTTPURLResponse,
         data: Data,
         expectsContentType: Bool,
-        authState: inout AuthRetryState
+        authState: inout AuthRetryState,
     ) async throws {
         guard let authProvider else {
             throw MCPError.internalError("Access forbidden")
@@ -568,7 +569,7 @@ public actor HTTPClientTransport: Transport {
         let context = UnauthorizedContext(
             resourceMetadataURL: challenge?.resourceMetadataURL,
             scope: challenge?.scope,
-            wwwAuthenticate: wwwAuth
+            wwwAuthenticate: wwwAuth,
         )
 
         logger.debug("Handling 403 insufficient_scope with auth provider", metadata: [
@@ -698,7 +699,7 @@ public actor HTTPClientTransport: Transport {
                         "type": "\(block.dispatchedEvent?.eventType ?? "none")",
                         "id": "\(block.id ?? "none")",
                         "retry": "\(block.retry.map(String.init) ?? "none")",
-                    ]
+                    ],
                 )
 
                 if let eventId = block.id {
@@ -710,7 +711,7 @@ public actor HTTPClientTransport: Transport {
                     serverRetryDelay = TimeInterval(retryMs) / 1000.0
                     logger.debug(
                         "Server retry directive received",
-                        metadata: ["retryMs": "\(retryMs)"]
+                        metadata: ["retryMs": "\(retryMs)"],
                     )
                 }
 
@@ -877,7 +878,8 @@ public actor HTTPClientTransport: Transport {
 
             default:
                 throw MCPError.internalError(
-                    "Unexpected HTTP response: \(response.statusCode) (\(contentType))")
+                    "Unexpected HTTP response: \(response.statusCode) (\(contentType))",
+                )
         }
     }
 
@@ -922,7 +924,7 @@ public actor HTTPClientTransport: Transport {
         // SSE is not fully supported on Linux
         if streaming {
             logger.warning(
-                "SSE streaming was requested but is not fully supported on Linux. SSE connection will not be attempted."
+                "SSE streaming was requested but is not fully supported on Linux. SSE connection will not be attempted.",
             )
         }
         #else
@@ -965,16 +967,16 @@ public actor HTTPClientTransport: Transport {
                 logger.trace("SSE streaming task proceeding after initial sessionID signal.")
             } else {
                 logger.warning(
-                    "Timeout waiting for initial sessionID signal. SSE stream will proceed (sessionID might be nil)."
+                    "Timeout waiting for initial sessionID signal. SSE stream will proceed (sessionID might be nil).",
                 )
             }
         } else if sessionID != nil {
             logger.trace(
-                "Initial sessionID already available. Proceeding with SSE streaming task immediately."
+                "Initial sessionID already available. Proceeding with SSE streaming task immediately.",
             )
         } else {
             logger.trace(
-                "Proceeding with SSE connection attempt; sessionID is nil. This might be expected for stateless servers or if initialize hasn't provided one yet."
+                "Proceeding with SSE connection attempt; sessionID is nil. This might be expected for stateless servers or if initialize hasn't provided one yet.",
             )
         }
 
@@ -1003,7 +1005,7 @@ public actor HTTPClientTransport: Transport {
                         if reconnectionAttempt >= reconnectionOptions.maxRetries {
                             logger.error(
                                 "Maximum reconnection attempts exceeded",
-                                metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"]
+                                metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"],
                             )
                             await onEventStreamStatusChanged?(.failed)
                             break
@@ -1017,7 +1019,7 @@ public actor HTTPClientTransport: Transport {
                             metadata: [
                                 "attempt": "\(reconnectionAttempt)",
                                 "delay": "\(delay)s",
-                            ]
+                            ],
                         )
 
                         try? await Task.sleep(for: .seconds(delay))
@@ -1036,7 +1038,7 @@ public actor HTTPClientTransport: Transport {
                     if reconnectionAttempt >= reconnectionOptions.maxRetries {
                         logger.error(
                             "Maximum reconnection attempts exceeded",
-                            metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"]
+                            metadata: ["maxRetries": "\(reconnectionOptions.maxRetries)"],
                         )
                         await onEventStreamStatusChanged?(.failed)
                         break
@@ -1051,7 +1053,7 @@ public actor HTTPClientTransport: Transport {
                         metadata: [
                             "attempt": "\(reconnectionAttempt)",
                             "delay": "\(delay)s",
-                        ]
+                        ],
                     )
 
                     try? await Task.sleep(for: .seconds(delay))
@@ -1095,7 +1097,7 @@ public actor HTTPClientTransport: Transport {
     /// - Throws: MCPError for connection failures or server errors
     private func connectToEventStream(
         resumptionToken: String? = nil,
-        originalRequestId: RequestId? = nil
+        originalRequestId: RequestId? = nil,
     ) async throws -> SSEStreamDisposition {
         guard isConnected else { return .finished }
 
@@ -1181,7 +1183,7 @@ public actor HTTPClientTransport: Transport {
     private func processSSE(
         _ stream: URLSession.AsyncBytes,
         isReconnectable: Bool,
-        originalRequestId: RequestId? = nil
+        originalRequestId: RequestId? = nil,
     ) async throws -> SSEStreamDisposition {
         // Track whether we've received a priming event (event with ID)
         // Per spec, server SHOULD send a priming event with ID before closing
@@ -1202,7 +1204,7 @@ public actor HTTPClientTransport: Transport {
                         "type": "\(block.dispatchedEvent?.eventType ?? "none")",
                         "id": "\(block.id ?? "none")",
                         "retry": "\(block.retry.map(String.init) ?? "none")",
-                    ]
+                    ],
                 )
 
                 // Update last event ID if provided
@@ -1219,7 +1221,7 @@ public actor HTTPClientTransport: Transport {
                     serverRetryDelay = TimeInterval(retryMs) / 1000.0
                     logger.debug(
                         "Server retry directive received",
-                        metadata: ["retryMs": "\(retryMs)"]
+                        metadata: ["retryMs": "\(retryMs)"],
                     )
                 }
 
@@ -1254,7 +1256,7 @@ public actor HTTPClientTransport: Transport {
             if needsReconnect, isConnected, !Task.isCancelled {
                 logger.debug(
                     "SSE stream ended gracefully, will reconnect",
-                    metadata: ["lastEventId": "\(lastEventId ?? "none")"]
+                    metadata: ["lastEventId": "\(lastEventId ?? "none")"],
                 )
 
                 // For GET streams (isReconnectable=true), the outer loop in
@@ -1310,7 +1312,7 @@ public actor HTTPClientTransport: Transport {
                 if attempt >= maxRetries {
                     logger.error(
                         "POST SSE reconnection: max attempts exceeded",
-                        metadata: ["maxRetries": "\(maxRetries)"]
+                        metadata: ["maxRetries": "\(maxRetries)"],
                     )
                     return
                 }
@@ -1325,7 +1327,7 @@ public actor HTTPClientTransport: Transport {
                         "attempt": "\(attempt + 1)",
                         "delay": "\(delay)s",
                         "lastEventId": "\(eventId)",
-                    ]
+                    ],
                 )
 
                 try? await Task.sleep(for: .seconds(delay))
@@ -1342,7 +1344,7 @@ public actor HTTPClientTransport: Transport {
                 } catch {
                     logger.error(
                         "POST SSE reconnection failed: \(error)",
-                        metadata: ["attempt": "\(attempt + 1)"]
+                        metadata: ["attempt": "\(attempt + 1)"],
                     )
                     // Continue to next iteration for retry
                 }

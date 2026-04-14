@@ -40,7 +40,7 @@ public struct Resource: Hashable, Codable, Sendable {
         size: Int? = nil,
         annotations: Annotations? = nil,
         _meta: [String: Value]? = nil,
-        icons: [Icon]? = nil
+        icons: [Icon]? = nil,
     ) {
         self.name = name
         self.title = title
@@ -152,7 +152,7 @@ public struct Resource: Hashable, Codable, Sendable {
             mimeType: String? = nil,
             annotations: Annotations? = nil,
             _meta: [String: Value]? = nil,
-            icons: [Icon]? = nil
+            icons: [Icon]? = nil,
         ) {
             self.uriTemplate = uriTemplate
             self.name = name
@@ -204,7 +204,7 @@ public struct ResourceLink: Hashable, Codable, Sendable {
         size: Int? = nil,
         annotations: Annotations? = nil,
         icons: [Icon]? = nil,
-        _meta: [String: Value]? = nil
+        _meta: [String: Value]? = nil,
     ) {
         self.name = name
         self.title = title
@@ -237,7 +237,7 @@ public struct ResourceLink: Hashable, Codable, Sendable {
         if let type, type != "resource_link" {
             throw DecodingError.dataCorruptedError(
                 forKey: .type, in: container,
-                debugDescription: "Expected type 'resource_link', got '\(type)'"
+                debugDescription: "Expected type 'resource_link', got '\(type)'",
             )
         }
         name = try container.decode(String.self, forKey: .name)
@@ -303,7 +303,7 @@ public enum ListResources: Method {
             resources: [Resource],
             nextCursor: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.resources = resources
             self.nextCursor = nextCursor
@@ -361,7 +361,7 @@ public enum ReadResource: Method {
         public init(
             contents: [Resource.Content],
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.contents = contents
             self._meta = _meta
@@ -423,7 +423,7 @@ public enum ListResourceTemplates: Method {
             templates: [Resource.Template],
             nextCursor: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.templates = templates
             self.nextCursor = nextCursor

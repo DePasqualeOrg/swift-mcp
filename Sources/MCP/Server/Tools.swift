@@ -105,7 +105,7 @@ public struct Tool: Hashable, Codable, Sendable {
             readOnlyHint: Bool? = nil,
             destructiveHint: Bool? = nil,
             idempotentHint: Bool? = nil,
-            openWorldHint: Bool? = nil
+            openWorldHint: Bool? = nil,
         ) {
             self.title = title
             self.readOnlyHint = readOnlyHint
@@ -131,7 +131,7 @@ public struct Tool: Hashable, Codable, Sendable {
         _meta: [String: Value]? = nil,
         icons: [Icon]? = nil,
         execution: Execution? = nil,
-        annotations: Annotations = nil
+        annotations: Annotations = nil,
     ) {
         self.name = name
         self.title = title
@@ -229,7 +229,7 @@ public struct Tool: Hashable, Codable, Sendable {
                     self = .resourceLink(link)
                 default:
                     throw DecodingError.dataCorruptedError(
-                        forKey: .type, in: container, debugDescription: "Unknown tool content type"
+                        forKey: .type, in: container, debugDescription: "Unknown tool content type",
                     )
             }
         }
@@ -345,7 +345,7 @@ public enum ListTools: Method {
             tools: [Tool],
             nextCursor: String? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.tools = tools
             self.nextCursor = nextCursor
@@ -397,7 +397,7 @@ public enum CallTool: Method {
             name: String,
             arguments: [String: Value]? = nil,
             task: TaskMetadata? = nil,
-            _meta: RequestMeta? = nil
+            _meta: RequestMeta? = nil,
         ) {
             self.name = name
             self.arguments = arguments
@@ -428,7 +428,7 @@ public enum CallTool: Method {
             structuredContent: Value? = nil,
             isError: Bool? = nil,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.content = content
             self.structuredContent = structuredContent

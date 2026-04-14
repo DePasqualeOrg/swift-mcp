@@ -24,17 +24,15 @@ import System
 /// Based on:
 /// - Python SDK: tests/server/test_cancel_handling.py
 /// - TypeScript SDK: packages/core/test/shared/protocol.test.ts
-@Suite("Cancellation Tests")
-struct CancellationTests {
+enum CancellationTests {
     // MARK: - CancelledNotification Encoding/Decoding Tests
 
-    @Suite("CancelledNotification encoding/decoding")
     struct CancelledNotificationEncodingTests {
-        @Test("Encodes with requestId and reason")
-        func encodesWithRequestIdAndReason() throws {
+        @Test
+        func `Encodes with requestId and reason`() throws {
             let params = CancelledNotification.Parameters(
                 requestId: .string("req-123"),
-                reason: "User cancelled the operation"
+                reason: "User cancelled the operation",
             )
             let notification = CancelledNotification.message(params)
 
@@ -51,11 +49,11 @@ struct CancellationTests {
             #expect(notificationParams?["reason"]?.stringValue == "User cancelled the operation")
         }
 
-        @Test("Encodes with integer requestId")
-        func encodesWithIntegerRequestId() throws {
+        @Test
+        func `Encodes with integer requestId`() throws {
             let params = CancelledNotification.Parameters(
                 requestId: .number(42),
-                reason: "Timeout"
+                reason: "Timeout",
             )
             let notification = CancelledNotification.message(params)
 
@@ -68,8 +66,8 @@ struct CancellationTests {
             #expect(notificationParams?["reason"]?.stringValue == "Timeout")
         }
 
-        @Test("Encodes with only requestId")
-        func encodesWithOnlyRequestId() throws {
+        @Test
+        func `Encodes with only requestId`() throws {
             let params = CancelledNotification.Parameters(requestId: .string("req-456"))
             let notification = CancelledNotification.message(params)
 
@@ -82,8 +80,8 @@ struct CancellationTests {
             #expect(notificationParams?["reason"] == nil)
         }
 
-        @Test("Encodes with only reason (protocol 2025-11-25+)")
-        func encodesWithOnlyReason() throws {
+        @Test
+        func `Encodes with only reason (protocol 2025-11-25+)`() throws {
             // In protocol 2025-11-25+, requestId is optional
             let params = CancelledNotification.Parameters(reason: "General cancellation")
             let notification = CancelledNotification.message(params)
@@ -97,8 +95,8 @@ struct CancellationTests {
             #expect(notificationParams?["reason"]?.stringValue == "General cancellation")
         }
 
-        @Test("Encodes with no parameters (protocol 2025-11-25+)")
-        func encodesWithNoParameters() throws {
+        @Test
+        func `Encodes with no parameters (protocol 2025-11-25+)`() throws {
             // In protocol 2025-11-25+, both requestId and reason are optional
             let params = CancelledNotification.Parameters()
             let notification = CancelledNotification.message(params)
@@ -113,8 +111,8 @@ struct CancellationTests {
             #expect(json["params"] != nil)
         }
 
-        @Test("Decodes with requestId and reason")
-        func decodesWithRequestIdAndReason() throws {
+        @Test
+        func `Decodes with requestId and reason`() throws {
             let jsonString = """
             {
                 "jsonrpc": "2.0",
@@ -125,9 +123,9 @@ struct CancellationTests {
                 }
             }
             """
-            let data = jsonString.data(using: .utf8)!
+            let data = try #require(jsonString.data(using: .utf8))
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data
+                Message<CancelledNotification>.self, from: data,
             )
 
             #expect(decoded.method == "notifications/cancelled")
@@ -135,8 +133,8 @@ struct CancellationTests {
             #expect(decoded.params.reason == "Operation timed out")
         }
 
-        @Test("Decodes with integer requestId")
-        func decodesWithIntegerRequestId() throws {
+        @Test
+        func `Decodes with integer requestId`() throws {
             let jsonString = """
             {
                 "jsonrpc": "2.0",
@@ -147,17 +145,17 @@ struct CancellationTests {
                 }
             }
             """
-            let data = jsonString.data(using: .utf8)!
+            let data = try #require(jsonString.data(using: .utf8))
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data
+                Message<CancelledNotification>.self, from: data,
             )
 
             #expect(decoded.params.requestId == .number(123))
             #expect(decoded.params.reason == "Client disconnected")
         }
 
-        @Test("Decodes with empty params")
-        func decodesWithEmptyParams() throws {
+        @Test
+        func `Decodes with empty params`() throws {
             let jsonString = """
             {
                 "jsonrpc": "2.0",
@@ -165,9 +163,9 @@ struct CancellationTests {
                 "params": {}
             }
             """
-            let data = jsonString.data(using: .utf8)!
+            let data = try #require(jsonString.data(using: .utf8))
             let decoded = try JSONDecoder().decode(
-                Message<CancelledNotification>.self, from: data
+                Message<CancelledNotification>.self, from: data,
             )
 
             #expect(decoded.method == "notifications/cancelled")
@@ -175,12 +173,12 @@ struct CancellationTests {
             #expect(decoded.params.reason == nil)
         }
 
-        @Test("Round-trip encoding/decoding preserves all fields")
-        func roundTripPreservesAllFields() throws {
+        @Test
+        func `Round-trip encoding/decoding preserves all fields`() throws {
             let original = CancelledNotification.Parameters(
                 requestId: .string("round-trip-test"),
                 reason: "Testing round-trip encoding",
-                _meta: ["key": .string("value")]
+                _meta: ["key": .string("value")],
             )
             let notification = CancelledNotification.message(original)
 
@@ -195,29 +193,28 @@ struct CancellationTests {
             #expect(decoded.params._meta?["key"]?.stringValue == "value")
         }
 
-        @Test("Notification name is correct")
-        func notificationNameIsCorrect() {
+        @Test
+        func `Notification name is correct`() {
             #expect(CancelledNotification.name == "notifications/cancelled")
         }
     }
 
     // MARK: - JSON Format Compatibility Tests
 
-    @Suite("CancelledNotification JSON format")
     struct CancelledNotificationJSONFormatTests {
-        @Test("Matches TypeScript SDK format with all fields")
-        func matchesTypeScriptFormatAllFields() throws {
+        @Test
+        func `Matches TypeScript SDK format with all fields`() throws {
             // TypeScript SDK format for cancelled notification
             let params = CancelledNotification.Parameters(
                 requestId: .string("test-request"),
-                reason: "User cancelled"
+                reason: "User cancelled",
             )
             let notification = CancelledNotification.message(params)
 
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
             let data = try encoder.encode(notification)
-            let jsonString = String(data: data, encoding: .utf8)!
+            let jsonString = try #require(String(data: data, encoding: .utf8))
 
             // Verify JSON structure matches expected format
             #expect(jsonString.contains("\"jsonrpc\":\"2.0\""))
@@ -227,12 +224,12 @@ struct CancellationTests {
             #expect(jsonString.contains("\"reason\":\"User cancelled\""))
         }
 
-        @Test("Matches Python SDK format")
-        func matchesPythonFormat() throws {
+        @Test
+        func `Matches Python SDK format`() throws {
             // Python SDK test uses CancelledNotificationParams with requestId and reason
             let params = CancelledNotification.Parameters(
                 requestId: .string("first-request-id"),
-                reason: "Testing server recovery"
+                reason: "Testing server recovery",
             )
             let notification = CancelledNotification.message(params)
 
@@ -253,7 +250,6 @@ struct CancellationTests {
 
     // MARK: - Integration Tests
 
-    @Suite("Cancellation integration")
     struct CancellationIntegrationTests {
         /// Actor to track received cancellation notifications
         private actor CancellationTracker {
@@ -263,15 +259,20 @@ struct CancellationTests {
                 cancellations.append(params)
             }
 
-            var count: Int { cancellations.count }
-            var all: [CancelledNotification.Parameters] { cancellations }
+            var count: Int {
+                cancellations.count
+            }
+
+            var all: [CancelledNotification.Parameters] {
+                cancellations
+            }
         }
 
         /// Test that client can send a CancelledNotification to the server.
         ///
         /// This tests the basic notification flow from client to server.
         @Test(.timeLimit(.minutes(1)))
-        func clientSendsCancelledNotificationToServer() async throws {
+        func `client sends cancelled notification to server`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -281,12 +282,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let cancellationTracker = CancellationTracker()
@@ -295,7 +296,7 @@ struct CancellationTests {
             let server = Server(
                 name: "CancellationTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.onNotification(CancelledNotification.self) { message in
@@ -316,7 +317,7 @@ struct CancellationTests {
             // Send a cancellation notification
             let cancelParams = CancelledNotification.Parameters(
                 requestId: .string("req-to-cancel"),
-                reason: "User requested cancellation"
+                reason: "User requested cancellation",
             )
             try await client.notify(CancelledNotification.message(cancelParams))
 
@@ -340,7 +341,7 @@ struct CancellationTests {
         /// The key insight is that cancellation notifications should not break the server's
         /// ability to handle subsequent requests.
         @Test(.timeLimit(.minutes(1)))
-        func serverRemainsFunctionalAfterCancel() async throws {
+        func `server remains functional after cancel`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -350,12 +351,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let callCounter = CallCounter()
@@ -365,7 +366,7 @@ struct CancellationTests {
             let server = Server(
                 name: "RecoveryTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.onNotification(CancelledNotification.self) { message in
@@ -377,7 +378,7 @@ struct CancellationTests {
                     Tool(
                         name: "test_tool",
                         description: "A tool for testing cancellation recovery",
-                        inputSchema: ["type": "object"]
+                        inputSchema: ["type": "object"],
                     ),
                 ])
             }
@@ -397,7 +398,7 @@ struct CancellationTests {
 
             // First tool call - should succeed
             let result1 = try await client.send(
-                CallTool.request(.init(name: "test_tool", arguments: [:]))
+                CallTool.request(.init(name: "test_tool", arguments: [:])),
             )
             if case let .text(text, _, _) = result1.content.first {
                 #expect(text == "Call number: 1")
@@ -408,7 +409,7 @@ struct CancellationTests {
             // Send cancellation notification (simulating a cancelled request)
             let cancelParams = CancelledNotification.Parameters(
                 requestId: .string("some-cancelled-request"),
-                reason: "Testing server recovery"
+                reason: "Testing server recovery",
             )
             try await client.notify(CancelledNotification.message(cancelParams))
 
@@ -421,7 +422,7 @@ struct CancellationTests {
 
             // Second tool call - should also succeed (server recovered)
             let result2 = try await client.send(
-                CallTool.request(.init(name: "test_tool", arguments: [:]))
+                CallTool.request(.init(name: "test_tool", arguments: [:])),
             )
             if case let .text(text, _, _) = result2.content.first {
                 #expect(text == "Call number: 2")
@@ -439,7 +440,7 @@ struct CancellationTests {
         /// The server may need to cancel a pending request (e.g., if it takes too long
         /// or if the server is shutting down).
         @Test(.timeLimit(.minutes(1)))
-        func serverSendsCancelledNotificationToClient() async throws {
+        func `server sends cancelled notification to client`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -449,12 +450,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let clientCancellationReceived = ClientCancellationTracker()
@@ -462,7 +463,7 @@ struct CancellationTests {
             let server = Server(
                 name: "ServerCancelTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -480,7 +481,7 @@ struct CancellationTests {
                 // This simulates the server cancelling a client's pending request
                 try await context.sendNotification(CancelledNotification.message(.init(
                     requestId: .string("client-pending-request"),
-                    reason: "Server is cancelling this request"
+                    reason: "Server is cancelling this request",
                 )))
 
                 return CallTool.Result(content: [.text("Cancel notification sent")])
@@ -498,7 +499,7 @@ struct CancellationTests {
 
             // Call the tool that triggers a cancellation notification
             let result = try await client.send(
-                CallTool.request(.init(name: "trigger_cancel", arguments: [:]))
+                CallTool.request(.init(name: "trigger_cancel", arguments: [:])),
             )
 
             // Verify tool completed
@@ -522,7 +523,7 @@ struct CancellationTests {
 
         /// Test multiple cancellation notifications can be processed.
         @Test(.timeLimit(.minutes(1)))
-        func multipleCancellationNotifications() async throws {
+        func `multiple cancellation notifications`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -532,12 +533,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let cancellationTracker = CancellationTracker()
@@ -545,7 +546,7 @@ struct CancellationTests {
             let server = Server(
                 name: "MultipleCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.onNotification(CancelledNotification.self) { message in
@@ -565,7 +566,7 @@ struct CancellationTests {
             for i in 1 ... 5 {
                 let cancelParams = CancelledNotification.Parameters(
                     requestId: .string("req-\(i)"),
-                    reason: "Cancellation \(i)"
+                    reason: "Cancellation \(i)",
                 )
                 try await client.notify(CancelledNotification.message(cancelParams))
             }
@@ -581,11 +582,11 @@ struct CancellationTests {
             for i in 1 ... 5 {
                 let expected = CancelledNotification.Parameters(
                     requestId: .string("req-\(i)"),
-                    reason: "Cancellation \(i)"
+                    reason: "Cancellation \(i)",
                 )
                 #expect(
                     cancellations.contains { $0.requestId == expected.requestId },
-                    "Should contain cancellation for req-\(i)"
+                    "Should contain cancellation for req-\(i)",
                 )
             }
         }
@@ -594,7 +595,7 @@ struct CancellationTests {
         ///
         /// In newer protocol versions, the requestId is optional.
         @Test(.timeLimit(.minutes(1)))
-        func cancellationWithoutRequestId() async throws {
+        func `cancellation without request id`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -604,12 +605,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let cancellationTracker = CancellationTracker()
@@ -617,7 +618,7 @@ struct CancellationTests {
             let server = Server(
                 name: "NoRequestIdCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.onNotification(CancelledNotification.self) { message in
@@ -635,7 +636,7 @@ struct CancellationTests {
 
             // Send cancellation without requestId (general cancellation)
             let cancelParams = CancelledNotification.Parameters(
-                reason: "General operation cancellation"
+                reason: "General operation cancellation",
             )
             try await client.notify(CancelledNotification.message(cancelParams))
 
@@ -656,14 +657,13 @@ struct CancellationTests {
 
     // MARK: - Server Context Cancellation Tests
 
-    @Suite("Server.Context cancellation")
     struct ServerContextCancellationTests {
         /// Test that Server.Context.sendCancelled works correctly.
         ///
         /// The Server.Context has a sendCancelled convenience method for sending
         /// cancellation notifications.
         @Test(.timeLimit(.minutes(1)))
-        func serverContextSendCancelled() async throws {
+        func `server context send cancelled`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -673,12 +673,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let clientCancellationReceived = ClientCancellationTracker()
@@ -686,7 +686,7 @@ struct CancellationTests {
             let server = Server(
                 name: "ContextCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -703,7 +703,7 @@ struct CancellationTests {
                 // Use the context's sendMessage to send a CancelledNotification
                 try await context.sendNotification(CancelledNotification.message(.init(
                     requestId: .string("ctx-cancel-request"),
-                    reason: "Cancelled via server context"
+                    reason: "Cancelled via server context",
                 )))
 
                 return CallTool.Result(content: [.text("Cancellation sent via context")])
@@ -720,7 +720,7 @@ struct CancellationTests {
 
             // Call the tool
             let result = try await client.send(
-                CallTool.request(.init(name: "cancel_via_context", arguments: [:]))
+                CallTool.request(.init(name: "cancel_via_context", arguments: [:])),
             )
 
             if case let .text(text, _, _) = result.content.first {
@@ -744,7 +744,6 @@ struct CancellationTests {
 
     // MARK: - Client Task Cancellation Tests
 
-    @Suite("Client Swift Task cancellation")
     struct ClientTaskCancellationTests {
         /// Actor to track received cancellation notifications
         private actor CancellationTracker {
@@ -754,8 +753,13 @@ struct CancellationTests {
                 cancellations.append(params)
             }
 
-            var count: Int { cancellations.count }
-            var all: [CancelledNotification.Parameters] { cancellations }
+            var count: Int {
+                cancellations.count
+            }
+
+            var all: [CancelledNotification.Parameters] {
+                cancellations
+            }
         }
 
         /// Test that cancelling a Swift Task that's waiting for a response properly cleans up.
@@ -764,7 +768,7 @@ struct CancellationTests {
         /// cancels the Task waiting for a response, the pending request is cleaned up
         /// and an appropriate error is thrown.
         @Test(.timeLimit(.minutes(1)))
-        func clientTaskCancellationCleansUpPendingRequest() async throws {
+        func `client task cancellation cleans up pending request`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -774,12 +778,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let toolCallStarted = ToolCallStartedTracker()
@@ -787,7 +791,7 @@ struct CancellationTests {
             let server = Server(
                 name: "TaskCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -822,7 +826,7 @@ struct CancellationTests {
             // Start a tool call in a separate Task that we can cancel
             let callTask = Task {
                 try await client.send(
-                    CallTool.request(.init(name: "slow_tool", arguments: [:]))
+                    CallTool.request(.init(name: "slow_tool", arguments: [:])),
                 )
             }
 
@@ -847,7 +851,7 @@ struct CancellationTests {
                     error == .connectionClosed ||
                         errorDescription.contains("cancel") ||
                         errorDescription.contains("No response received"),
-                    "Error should be related to cancellation or no response: \(error)"
+                    "Error should be related to cancellation or no response: \(error)",
                 )
             }
 
@@ -860,7 +864,7 @@ struct CancellationTests {
 
         /// Test that multiple concurrent requests can be individually cancelled.
         @Test(.timeLimit(.minutes(1)))
-        func multipleConcurrentRequestsCancellation() async throws {
+        func `multiple concurrent requests cancellation`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -870,18 +874,18 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let server = Server(
                 name: "ConcurrentCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -909,13 +913,13 @@ struct CancellationTests {
             // Start two concurrent requests
             let fastTask = Task {
                 try await client.send(
-                    CallTool.request(.init(name: "variable_tool", arguments: ["delay": .double(0.1)]))
+                    CallTool.request(.init(name: "variable_tool", arguments: ["delay": .double(0.1)])),
                 )
             }
 
             let slowTask = Task {
                 try await client.send(
-                    CallTool.request(.init(name: "variable_tool", arguments: ["delay": .double(10.0)]))
+                    CallTool.request(.init(name: "variable_tool", arguments: ["delay": .double(10.0)])),
                 )
             }
 
@@ -948,7 +952,7 @@ struct CancellationTests {
         /// This mirrors the TypeScript SDK's behavior where AbortSignal abort triggers
         /// sending notifications/cancelled.
         @Test(.timeLimit(.minutes(1)))
-        func clientTaskCancellationSendsCancelledNotification() async throws {
+        func `client task cancellation sends cancelled notification`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -958,12 +962,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let cancellationReceived = CancellationTracker()
@@ -972,7 +976,7 @@ struct CancellationTests {
             let server = Server(
                 name: "ClientCancellationNotificationServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             // Track cancellation notifications received by the server
@@ -1008,7 +1012,7 @@ struct CancellationTests {
             let request = Request<CallTool>(
                 id: knownRequestId,
                 method: CallTool.name,
-                params: CallTool.Parameters(name: "slow_tool", arguments: [:])
+                params: CallTool.Parameters(name: "slow_tool", arguments: [:]),
             )
 
             // Start the request in a Task we can cancel
@@ -1037,14 +1041,13 @@ struct CancellationTests {
 
     // MARK: - Protocol-Level Cancellation Tests
 
-    @Suite("Protocol-level cancellation (CancelledNotification aborts in-flight handlers)")
     struct ProtocolLevelCancellationTests {
         /// Test that when a CancelledNotification is received, the in-flight request handler
         /// is cancelled and no response is sent.
         ///
         /// This mirrors the Python SDK's `test_server_remains_functional_after_cancel` test.
         @Test(.timeLimit(.minutes(1)))
-        func serverCancelsInFlightRequestOnNotification() async throws {
+        func `server cancels in flight request on notification`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1054,12 +1057,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let handlerStarted = ToolCallStartedTracker()
@@ -1068,7 +1071,7 @@ struct CancellationTests {
             let server = Server(
                 name: "ProtocolCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1108,7 +1111,7 @@ struct CancellationTests {
             let toolCallRequest = Request<CallTool>(
                 id: knownRequestId,
                 method: CallTool.name,
-                params: CallTool.Parameters(name: "slow_tool", arguments: [:])
+                params: CallTool.Parameters(name: "slow_tool", arguments: [:]),
             )
 
             // Start a slow tool call in a separate Task
@@ -1122,7 +1125,7 @@ struct CancellationTests {
             // Send cancellation notification from client to server with the known request ID
             try await client.notify(CancelledNotification.message(.init(
                 requestId: knownRequestId,
-                reason: "Test cancellation"
+                reason: "Test cancellation",
             )))
 
             // Give time for cancellation to propagate
@@ -1147,7 +1150,7 @@ struct CancellationTests {
         /// Test that response is suppressed when Task.isCancelled is true
         /// even if the handler completes normally.
         @Test(.timeLimit(.minutes(1)))
-        func serverSuppressesResponseWhenCancelled() async throws {
+        func `server suppresses response when cancelled`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1157,12 +1160,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let handlerStarted = ToolCallStartedTracker()
@@ -1170,7 +1173,7 @@ struct CancellationTests {
             let server = Server(
                 name: "SuppressResponseServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1204,7 +1207,7 @@ struct CancellationTests {
             let toolCallRequest = Request<CallTool>(
                 id: knownRequestId,
                 method: CallTool.name,
-                params: CallTool.Parameters(name: "quick_tool", arguments: [:])
+                params: CallTool.Parameters(name: "quick_tool", arguments: [:]),
             )
 
             // Start a tool call
@@ -1218,7 +1221,7 @@ struct CancellationTests {
             // Send cancellation immediately
             try await client.notify(CancelledNotification.message(.init(
                 requestId: knownRequestId,
-                reason: "Suppress response test"
+                reason: "Suppress response test",
             )))
 
             // Cancel the client task as well since no response will come
@@ -1231,7 +1234,7 @@ struct CancellationTests {
 
         /// Test that server shutdown cancels all in-flight handlers.
         @Test(.timeLimit(.minutes(1)))
-        func serverShutdownCancelsInFlightHandlers() async throws {
+        func `server shutdown cancels in flight handlers`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1241,12 +1244,12 @@ struct CancellationTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let handlerStarted = ToolCallStartedTracker()
@@ -1255,7 +1258,7 @@ struct CancellationTests {
             let server = Server(
                 name: "ShutdownCancelServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1289,7 +1292,7 @@ struct CancellationTests {
             // Start a very slow tool call
             let callTask = Task {
                 try await client.send(
-                    CallTool.request(.init(name: "very_slow_tool", arguments: [:]))
+                    CallTool.request(.init(name: "very_slow_tool", arguments: [:])),
                 )
             }
 
@@ -1314,11 +1317,10 @@ struct CancellationTests {
 
 // MARK: - Request Timeout Tests
 
-@Suite("Request timeout")
 struct RequestTimeoutTests {
     /// Test that request timeout triggers cancellation and throws the correct error.
     @Test(.timeLimit(.minutes(1)))
-    func requestTimeoutTriggersError() async throws {
+    func `request timeout triggers error`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1328,18 +1330,18 @@ struct RequestTimeoutTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "TimeoutServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1367,7 +1369,7 @@ struct RequestTimeoutTests {
         do {
             _ = try await client.send(
                 CallTool.request(.init(name: "slow_tool", arguments: [:])),
-                options: .init(timeout: .milliseconds(100))
+                options: .init(timeout: .milliseconds(100)),
             )
             Issue.record("Expected request to timeout")
         } catch let error as MCPError {
@@ -1390,7 +1392,7 @@ struct RequestTimeoutTests {
 
     /// Test that request without timeout waits indefinitely (until completed).
     @Test(.timeLimit(.minutes(1)))
-    func requestWithoutTimeoutWaitsForResponse() async throws {
+    func `request without timeout waits for response`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1400,18 +1402,18 @@ struct RequestTimeoutTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let server = Server(
             name: "NoTimeoutServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -1438,7 +1440,7 @@ struct RequestTimeoutTests {
         // Send request without timeout - should complete normally
         let result = try await client.send(
             CallTool.request(.init(name: "fast_tool", arguments: [:])),
-            options: nil
+            options: nil,
         )
 
         if case let .text(text, _, _) = result.content.first {
@@ -1453,7 +1455,7 @@ struct RequestTimeoutTests {
 
     /// Test that timeout sends CancelledNotification to server.
     @Test(.timeLimit(.minutes(1)))
-    func timeoutSendsCancelledNotification() async throws {
+    func `timeout sends cancelled notification`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1463,12 +1465,12 @@ struct RequestTimeoutTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let cancellationReceived = CancellationReceivedTracker()
@@ -1476,7 +1478,7 @@ struct RequestTimeoutTests {
         let server = Server(
             name: "CancellationTrackingServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         // Track cancellation notifications
@@ -1509,7 +1511,7 @@ struct RequestTimeoutTests {
         do {
             _ = try await client.send(
                 CallTool.request(.init(name: "slow_tool", arguments: [:])),
-                options: .init(timeout: .milliseconds(100))
+                options: .init(timeout: .milliseconds(100)),
             )
         } catch {
             // Expected timeout error
@@ -1524,7 +1526,7 @@ struct RequestTimeoutTests {
 
         if count > 0 {
             let cancellations = await cancellationReceived.all
-            let lastCancellation = cancellations.last!
+            let lastCancellation = try #require(cancellations.last)
             #expect(lastCancellation.reason?.contains("timed out") == true)
         }
 
@@ -1543,8 +1545,13 @@ private actor CancellationReceivedTracker {
         cancellations.append(params)
     }
 
-    var count: Int { cancellations.count }
-    var all: [CancelledNotification.Parameters] { cancellations }
+    var count: Int {
+        cancellations.count
+    }
+
+    var all: [CancelledNotification.Parameters] {
+        cancellations
+    }
 }
 
 /// Actor to track when a tool call has started
@@ -1575,8 +1582,13 @@ private actor HandlerCompletionTracker {
         _cancelled = true
     }
 
-    var wasCompleted: Bool { _completed }
-    var wasCancelled: Bool { _cancelled }
+    var wasCompleted: Bool {
+        _completed
+    }
+
+    var wasCancelled: Bool {
+        _cancelled
+    }
 }
 
 /// Actor to track cancellation notifications received by the client
@@ -1587,8 +1599,13 @@ private actor ClientCancellationTracker {
         cancellations.append(params)
     }
 
-    var count: Int { cancellations.count }
-    var all: [CancelledNotification.Parameters] { cancellations }
+    var count: Int {
+        cancellations.count
+    }
+
+    var all: [CancelledNotification.Parameters] {
+        cancellations
+    }
 }
 
 // MARK: - Client.cancelRequest() Tests
@@ -1597,13 +1614,12 @@ private actor ClientCancellationTracker {
 ///
 /// This API allows explicit cancellation of in-flight requests by ID,
 /// similar to TypeScript SDK's AbortController pattern.
-@Suite("Client.cancelRequest() API")
 struct ClientCancelRequestAPITests {
     /// Test that cancelRequest properly cancels an in-flight request and sends CancelledNotification.
     ///
     /// Based on Python SDK's test pattern where cancellation is sent for a specific request ID.
     @Test(.timeLimit(.minutes(1)))
-    func cancelRequestSendsCancelledNotificationAndThrowsError() async throws {
+    func `cancel request sends cancelled notification and throws error`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1613,12 +1629,12 @@ struct ClientCancelRequestAPITests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let cancellationReceived = CancellationReceivedTracker()
@@ -1627,7 +1643,7 @@ struct ClientCancelRequestAPITests {
         let server = Server(
             name: "CancelRequestAPIServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         // Track cancellation notifications
@@ -1663,7 +1679,7 @@ struct ClientCancelRequestAPITests {
         let request = Request<CallTool>(
             id: knownRequestId,
             method: CallTool.name,
-            params: CallTool.Parameters(name: "slow_tool", arguments: [:])
+            params: CallTool.Parameters(name: "slow_tool", arguments: [:]),
         )
 
         // Start the request in a separate Task
@@ -1715,7 +1731,7 @@ struct ClientCancelRequestAPITests {
     /// Per MCP spec: "The receiver MUST NOT assume that the request will be cancelled;
     /// it MAY still complete normally."
     @Test(.timeLimit(.minutes(1)))
-    func cancelRequestForUnknownIdIsNoOp() async throws {
+    func `cancel request for unknown id is no op`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1725,12 +1741,12 @@ struct ClientCancelRequestAPITests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let cancellationReceived = CancellationReceivedTracker()
@@ -1738,7 +1754,7 @@ struct ClientCancelRequestAPITests {
         let server = Server(
             name: "CancelUnknownServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.onNotification(CancelledNotification.self) { message in
@@ -1773,7 +1789,7 @@ struct ClientCancelRequestAPITests {
 
     /// Test that cancelRequest can be called without a reason.
     @Test(.timeLimit(.minutes(1)))
-    func cancelRequestWithoutReason() async throws {
+    func `cancel request without reason`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -1783,12 +1799,12 @@ struct ClientCancelRequestAPITests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let cancellationReceived = CancellationReceivedTracker()
@@ -1796,7 +1812,7 @@ struct ClientCancelRequestAPITests {
         let server = Server(
             name: "CancelNoReasonServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.onNotification(CancelledNotification.self) { message in

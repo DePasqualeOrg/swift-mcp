@@ -25,7 +25,9 @@ actor AsyncEvent {
         }
     }
 
-    var isSignaled: Bool { signaled }
+    var isSignaled: Bool {
+        signaled
+    }
 }
 
 /// An actor that counts calls and exposes the current value.
@@ -39,7 +41,9 @@ actor CallCounter {
         return count
     }
 
-    var value: Int { count }
+    var value: Int {
+        count
+    }
 }
 
 /// An actor that tracks the order of events for verification.
@@ -50,7 +54,9 @@ actor CallOrderTracker {
         order.append(event)
     }
 
-    var events: [String] { order }
+    var events: [String] {
+        order
+    }
 }
 
 /// Polls a condition until it returns `true` or the timeout expires.
@@ -63,7 +69,7 @@ actor CallOrderTracker {
 func pollUntil(
     timeout: Duration = .seconds(2),
     interval: Duration = .milliseconds(20),
-    condition: () async -> Bool
+    condition: () async -> Bool,
 ) async -> Bool {
     let deadline = ContinuousClock.now.advanced(by: timeout)
     while ContinuousClock.now < deadline {

@@ -37,7 +37,7 @@ public actor InMemoryTransport: Transport {
             logger
                 ?? Logger(
                     label: "mcp.transport.in-memory",
-                    factory: { _ in SwiftLogNoOpLogHandler() }
+                    factory: { _ in SwiftLogNoOpLogHandler() },
                 )
 
         // Create message stream
@@ -55,7 +55,7 @@ public actor InMemoryTransport: Transport {
     /// - Parameter logger: Optional logger instance shared by both transports
     /// - Returns: A tuple of (clientTransport, serverTransport) ready for use
     public static func createConnectedPair(
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) async -> (client: InMemoryTransport, server: InMemoryTransport) {
         let clientLogger: Logger
         let serverLogger: Logger
@@ -68,11 +68,11 @@ public actor InMemoryTransport: Transport {
             // Create default loggers with appropriate labels
             clientLogger = Logger(
                 label: "mcp.transport.in-memory.client",
-                factory: { _ in SwiftLogNoOpLogHandler() }
+                factory: { _ in SwiftLogNoOpLogHandler() },
             )
             serverLogger = Logger(
                 label: "mcp.transport.in-memory.server",
-                factory: { _ in SwiftLogNoOpLogHandler() }
+                factory: { _ in SwiftLogNoOpLogHandler() },
             )
         }
 
@@ -109,7 +109,8 @@ public actor InMemoryTransport: Transport {
 
         guard pairedTransport != nil else {
             throw MCPError.internalError(
-                "Transport not paired. Use createConnectedPair() to create paired transports.")
+                "Transport not paired. Use createConnectedPair() to create paired transports.",
+            )
         }
 
         isConnected = true

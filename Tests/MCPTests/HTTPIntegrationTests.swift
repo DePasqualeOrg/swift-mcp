@@ -20,7 +20,7 @@ import FoundationNetworking
 /// Uses TestHTTPServer (Hummingbird) to run a real HTTP server and URLSession
 /// to make real HTTP requests, similar to Python (httpx) and TypeScript (fetch) SDKs.
 /// This ensures Host headers are set correctly and DNS rebinding protection works.
-@Suite("HTTP Integration Tests", .serialized)
+@Suite(.serialized)
 struct HTTPIntegrationTests {
     // MARK: - Test Message Templates
 
@@ -29,10 +29,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Initialization Tests
 
-    @Test("Initialize server and generate session ID")
-    func initializeServerAndGenerateSessionId() async throws {
+    @Test
+    func `Initialize server and generate session ID`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -43,10 +43,10 @@ struct HTTPIntegrationTests {
         #expect(response.value(forHTTPHeaderField: HTTPHeader.sessionId) != nil)
     }
 
-    @Test("Reject second initialization request")
-    func rejectSecondInitializationRequest() async throws {
+    @Test
+    func `Reject second initialization request`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -54,7 +54,7 @@ struct HTTPIntegrationTests {
         let (_, response1) = try await server.post(body: Self.initializeMessage)
         #expect(response1.statusCode == 200)
 
-        let sessionId = response1.value(forHTTPHeaderField: HTTPHeader.sessionId)!
+        let sessionId = try #require(response1.value(forHTTPHeaderField: HTTPHeader.sessionId))
 
         // Second initialize - should fail
         let secondInitMessage = TestPayloads.initializeRequest(id: "init-2", clientName: "test-client")
@@ -63,10 +63,10 @@ struct HTTPIntegrationTests {
         #expect(response2.statusCode == 400)
     }
 
-    @Test("Reject batch initialize request")
-    func rejectBatchInitializeRequest() async throws {
+    @Test
+    func `Reject batch initialize request`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -81,10 +81,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Session Validation Tests
 
-    @Test("Reject requests without valid session ID")
-    func rejectRequestsWithoutValidSessionId() async throws {
+    @Test
+    func `Reject requests without valid session ID`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -97,10 +97,10 @@ struct HTTPIntegrationTests {
         #expect(response.statusCode == 400)
     }
 
-    @Test("Reject invalid session ID")
-    func rejectInvalidSessionId() async throws {
+    @Test
+    func `Reject invalid session ID`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -119,10 +119,10 @@ struct HTTPIntegrationTests {
     // because URLSession closes the connection after receiving the response. This behavior
     // is tested in HTTPServerTransportTests with direct handleRequest() calls.
 
-    @Test("Reject GET requests without Accept header for SSE")
-    func rejectGETRequestsWithoutAcceptHeader() async throws {
+    @Test
+    func `Reject GET requests without Accept header for SSE`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -142,10 +142,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Content Type Validation
 
-    @Test("Reject POST requests without proper Accept header")
-    func rejectPOSTRequestsWithoutProperAcceptHeader() async throws {
+    @Test
+    func `Reject POST requests without proper Accept header`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -165,10 +165,10 @@ struct HTTPIntegrationTests {
         #expect(response.statusCode == 406)
     }
 
-    @Test("Reject unsupported Content-Type")
-    func rejectUnsupportedContentType() async throws {
+    @Test
+    func `Reject unsupported Content-Type`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -190,10 +190,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Notification Handling
 
-    @Test("Handle JSON-RPC batch notification messages with 202 response")
-    func handleJSONRPCBatchNotificationMessagesWith202Response() async throws {
+    @Test
+    func `Handle JSON-RPC batch notification messages with 202 response`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -211,10 +211,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - JSON Parsing
 
-    @Test("Handle invalid JSON data properly")
-    func handleInvalidJSONDataProperly() async throws {
+    @Test
+    func `Handle invalid JSON data properly`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -236,18 +236,23 @@ struct HTTPIntegrationTests {
 
     // MARK: - DELETE Tests
 
-    @Test("Handle DELETE requests and close session properly")
-    func handleDELETERequestsAndCloseSession() async throws {
+    @Test
+    func `Handle DELETE requests and close session properly`() async throws {
         actor ClosedState {
             var closed = false
-            func markClosed() { closed = true }
-            func isClosed() -> Bool { closed }
+            func markClosed() {
+                closed = true
+            }
+
+            func isClosed() -> Bool {
+                closed
+            }
         }
         let state = ClosedState()
 
         let server = try await TestHTTPServer.create(
             sessionIdGenerator: { "test-session" },
-            onSessionClosed: { _ in await state.markClosed() }
+            onSessionClosed: { _ in await state.markClosed() },
         )
         defer { Task { await server.stop() } }
 
@@ -262,10 +267,10 @@ struct HTTPIntegrationTests {
         #expect(closed == true)
     }
 
-    @Test("Reject DELETE requests with invalid session ID")
-    func rejectDELETERequestsWithInvalidSessionId() async throws {
+    @Test
+    func `Reject DELETE requests with invalid session ID`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "valid-session" }
+            sessionIdGenerator: { "valid-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -280,10 +285,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Protocol Version Tests
 
-    @Test("Accept requests with matching protocol version")
-    func acceptRequestsWithMatchingProtocolVersion() async throws {
+    @Test
+    func `Accept requests with matching protocol version`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -296,10 +301,10 @@ struct HTTPIntegrationTests {
         #expect(response.statusCode == 200)
     }
 
-    @Test("Reject unsupported protocol version")
-    func rejectUnsupportedProtocolVersion() async throws {
+    @Test
+    func `Reject unsupported protocol version`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "test-session" }
+            sessionIdGenerator: { "test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -321,12 +326,17 @@ struct HTTPIntegrationTests {
 
     // MARK: - Session Callbacks
 
-    @Test("Session initialized callback fires")
-    func sessionInitializedCallbackFires() async throws {
+    @Test
+    func `Session initialized callback fires`() async throws {
         actor CallbackTracker {
             var sessionId: String?
-            func set(_ id: String) { sessionId = id }
-            func get() -> String? { sessionId }
+            func set(_ id: String) {
+                sessionId = id
+            }
+
+            func get() -> String? {
+                sessionId
+            }
         }
         let tracker = CallbackTracker()
 
@@ -334,7 +344,7 @@ struct HTTPIntegrationTests {
             sessionIdGenerator: { "callback-test-session" },
             onSessionInitialized: { sessionId in
                 await tracker.set(sessionId)
-            }
+            },
         )
         defer { Task { await server.stop() } }
 
@@ -346,10 +356,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Method Not Allowed Tests
 
-    @Test("Reject unsupported HTTP methods with 405")
-    func rejectUnsupportedHttpMethods() async throws {
+    @Test
+    func `Reject unsupported HTTP methods with 405`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "method-test-session" }
+            sessionIdGenerator: { "method-test-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -368,10 +378,10 @@ struct HTTPIntegrationTests {
 
     // MARK: - Session Termination Tests
 
-    @Test("Requests to terminated session fail with 404")
-    func requestsToTerminatedSessionFail() async throws {
+    @Test
+    func `Requests to terminated session fail with 404`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "terminated-session" }
+            sessionIdGenerator: { "terminated-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -395,17 +405,17 @@ struct HTTPIntegrationTests {
         if let text = String(data: data, encoding: .utf8) {
             #expect(
                 text.lowercased().contains("terminated") || text.lowercased().contains("session"),
-                "Error message should indicate session termination"
+                "Error message should indicate session termination",
             )
         }
     }
 
     // MARK: - Backwards Compatibility Tests
 
-    @Test("Backwards compatibility - accept requests without protocol version header")
-    func backwardsCompatibilityNoProtocolVersion() async throws {
+    @Test
+    func `Backwards compatibility - accept requests without protocol version header`() async throws {
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { "compat-session" }
+            sessionIdGenerator: { "compat-session" },
         )
         defer { Task { await server.stop() } }
 
@@ -430,14 +440,14 @@ struct HTTPIntegrationTests {
 
     // MARK: - Real HTTP with DNS Rebinding Protection
 
-    @Test("Real HTTP request includes Host header automatically")
-    func realHTTPRequestIncludesHostHeader() async throws {
+    @Test
+    func `Real HTTP request includes Host header automatically`() async throws {
         // This test verifies that real HTTP requests via URLSession include Host headers,
         // which is how DNS rebinding protection works in production.
         // TestHTTPServer uses default DNS rebinding protection (.localhost())
 
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -449,14 +459,14 @@ struct HTTPIntegrationTests {
         #expect(response.statusCode == 200)
     }
 
-    @Test("DNS rebinding attack blocked with spoofed Host header")
-    func dnsRebindingAttackBlocked() async throws {
+    @Test
+    func `DNS rebinding attack blocked with spoofed Host header`() async throws {
         // This test verifies that DNS rebinding protection actually blocks attacks.
         // We use curl to send a request with a spoofed Host header (simulating an attack).
         // URLSession can't do this because it automatically sets Host based on URL.
 
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 
@@ -492,12 +502,12 @@ struct HTTPIntegrationTests {
         #expect(statusCode == "421", "Expected 421 for spoofed Host, got \(statusCode)")
     }
 
-    @Test("DNS rebinding attack blocked with missing Host header")
-    func dnsRebindingAttackBlockedMissingHost() async throws {
+    @Test
+    func `DNS rebinding attack blocked with missing Host header`() async throws {
         // Verify that requests without a Host header are rejected
 
         let server = try await TestHTTPServer.create(
-            sessionIdGenerator: { UUID().uuidString }
+            sessionIdGenerator: { UUID().uuidString },
         )
         defer { Task { await server.stop() } }
 

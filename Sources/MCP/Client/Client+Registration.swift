@@ -8,7 +8,7 @@ public extension Client {
     /// Register a handler for a notification.
     func onNotification<N: Notification>(
         _: N.Type,
-        handler: @escaping @Sendable (Message<N>) async throws -> Void
+        handler: @escaping @Sendable (Message<N>) async throws -> Void,
     ) {
         registeredHandlers.notificationHandlers[N.name, default: []].append(TypedNotificationHandler(handler))
     }
@@ -39,11 +39,11 @@ public extension Client {
     /// }
     /// ```
     func setFallbackRequestHandler(
-        _ handler: @escaping @Sendable (Request<AnyMethod>, RequestHandlerContext) async throws -> Response<AnyMethod>
+        _ handler: @escaping @Sendable (Request<AnyMethod>, RequestHandlerContext) async throws -> Response<AnyMethod>,
     ) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         registeredHandlers.fallbackRequestHandler = AnyClientRequestHandler(handler)
     }
@@ -68,11 +68,11 @@ public extension Client {
     /// }
     /// ```
     func setFallbackNotificationHandler(
-        _ handler: @escaping @Sendable (Message<AnyNotification>) async throws -> Void
+        _ handler: @escaping @Sendable (Message<AnyNotification>) async throws -> Void,
     ) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         registeredHandlers.fallbackNotificationHandler = AnyNotificationHandler(handler)
     }
@@ -113,13 +113,13 @@ public extension Client {
         token: ProgressToken,
         progress: Double,
         total: Double? = nil,
-        message: String? = nil
+        message: String? = nil,
     ) async throws {
         try await notify(ProgressNotification.message(.init(
             progressToken: token,
             progress: progress,
             total: total,
-            message: message
+            message: message,
         )))
     }
 
@@ -133,7 +133,8 @@ public extension Client {
     func sendRootsChanged() async throws {
         guard capabilities.roots?.listChanged == true else {
             throw MCPError.invalidRequest(
-                "Client does not support roots.listChanged capability")
+                "Client does not support roots.listChanged capability",
+            )
         }
         try await notify(RootsListChangedNotification.message(.init()))
     }
@@ -166,7 +167,7 @@ public extension Client {
     ///   - handler: The handler function that receives parameters and context, returns a result
     func withRequestHandler<M: Method>(
         _: M.Type,
-        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
+        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {
         registeredHandlers.requestHandlers[M.name] = TypedClientRequestHandler<M>(handler)
     }
@@ -204,11 +205,11 @@ public extension Client {
     /// - Precondition: Must not be called after `connect()`.
     func withRootsHandler(
         listChanged: Bool = false,
-        handler: @escaping @Sendable (RequestHandlerContext) async throws -> [Root]
+        handler: @escaping @Sendable (RequestHandlerContext) async throws -> [Root],
     ) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         registeredHandlers.rootsConfig = ClientHandlerRegistry.RootsConfig(listChanged: listChanged)
         withRequestHandler(ListRoots.self) { _, context in
@@ -260,7 +261,7 @@ public extension Client {
     func withTasksCapability(_ config: Capabilities.Tasks) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         registeredHandlers.tasksConfig = config
     }
@@ -311,11 +312,11 @@ public extension Client {
     func withSamplingHandler(
         supportsContext: Bool = false,
         supportsTools: Bool = false,
-        handler: @escaping @Sendable (ClientSamplingRequest.Parameters, RequestHandlerContext) async throws -> ClientSamplingRequest.Result
+        handler: @escaping @Sendable (ClientSamplingRequest.Parameters, RequestHandlerContext) async throws -> ClientSamplingRequest.Result,
     ) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         registeredHandlers.samplingConfig = ClientHandlerRegistry.SamplingConfig(supportsContext: supportsContext, supportsTools: supportsTools)
         withRequestHandler(ClientSamplingRequest.self, handler: handler)
@@ -372,15 +373,15 @@ public extension Client {
     func withElicitationHandler(
         formMode: FormModeConfig? = .enabled(),
         urlMode: URLModeConfig? = nil,
-        handler: @escaping @Sendable (Elicit.Parameters, RequestHandlerContext) async throws -> Elicit.Result
+        handler: @escaping @Sendable (Elicit.Parameters, RequestHandlerContext) async throws -> Elicit.Result,
     ) {
         precondition(
             !registeredHandlers.isLocked,
-            "Cannot register handlers after connect(). Register all handlers before calling connect()."
+            "Cannot register handlers after connect(). Register all handlers before calling connect().",
         )
         precondition(
             formMode != nil || urlMode != nil,
-            "At least one elicitation mode (formMode or urlMode) must be enabled."
+            "At least one elicitation mode (formMode or urlMode) must be enabled.",
         )
         registeredHandlers.elicitationConfig = ClientHandlerRegistry.ElicitationConfig(formMode: formMode, urlMode: urlMode)
         withRequestHandler(Elicit.self, handler: handler)
@@ -394,7 +395,7 @@ public extension Client {
     ///
     /// - Important: This is an internal API that may change without notice.
     internal func _setTaskAugmentedSamplingHandler(
-        _ handler: @escaping ExperimentalClientTaskHandlers.TaskAugmentedSamplingHandler
+        _ handler: @escaping ExperimentalClientTaskHandlers.TaskAugmentedSamplingHandler,
     ) {
         registeredHandlers.taskAugmentedSamplingHandler = handler
     }
@@ -407,7 +408,7 @@ public extension Client {
     ///
     /// - Important: This is an internal API that may change without notice.
     internal func _setTaskAugmentedElicitationHandler(
-        _ handler: @escaping ExperimentalClientTaskHandlers.TaskAugmentedElicitationHandler
+        _ handler: @escaping ExperimentalClientTaskHandlers.TaskAugmentedElicitationHandler,
     ) {
         registeredHandlers.taskAugmentedElicitationHandler = handler
     }

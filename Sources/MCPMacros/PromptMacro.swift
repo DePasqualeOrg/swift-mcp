@@ -25,7 +25,7 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
         of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
         conformingTo _: [TypeSyntax],
-        in context: some MacroExpansionContext
+        in context: some MacroExpansionContext,
     ) throws -> [DeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
             throw PromptMacroError.notAStruct
@@ -67,7 +67,7 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo _: [TypeSyntax],
-        in _: some MacroExpansionContext
+        in _: some MacroExpansionContext,
     ) throws -> [ExtensionDeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
             return []
@@ -128,7 +128,7 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
     private static func extractPromptInfo(
         from structDecl: StructDeclSyntax,
-        context _: some MacroExpansionContext
+        context _: some MacroExpansionContext,
     ) throws -> PromptInfo {
         var name: String?
         var description: String?
@@ -228,13 +228,13 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
             title: title,
             arguments: arguments,
             outputType: outputType,
-            hasContextParameter: hasContextParameter
+            hasContextParameter: hasContextParameter,
         )
     }
 
     private static func extractArgumentInfo(
         from varDecl: VariableDeclSyntax,
-        binding: PatternBindingSyntax
+        binding: PatternBindingSyntax,
     ) -> ArgumentInfo? {
         guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
             return nil
@@ -301,7 +301,7 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
             title: title,
             description: argDescription,
             isOptional: isOptional,
-            requiredOverride: requiredOverride
+            requiredOverride: requiredOverride,
         )
     }
 
@@ -378,17 +378,17 @@ public struct PromptMacro: MemberMacro, ExtensionMacro {
 
             if arg.isOptional {
                 parseStatements.append(
-                    "_instance.\(prop) = _args[\"\(key)\"]"
+                    "_instance.\(prop) = _args[\"\(key)\"]",
                 )
             } else if isRequired {
                 parseStatements.append(
-                    "guard let _\(prop) = _args[\"\(key)\"] else { throw MCPError.invalidParams(\"Missing required argument: '\(key)'\") }"
+                    "guard let _\(prop) = _args[\"\(key)\"] else { throw MCPError.invalidParams(\"Missing required argument: '\(key)'\") }",
                 )
                 parseStatements.append("_instance.\(prop) = _\(prop)")
             } else {
                 // Non-optional but not required - use empty string default
                 parseStatements.append(
-                    "_instance.\(prop) = _args[\"\(key)\"] ?? \"\""
+                    "_instance.\(prop) = _args[\"\(key)\"] ?? \"\"",
                 )
             }
         }

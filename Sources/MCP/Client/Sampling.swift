@@ -52,7 +52,9 @@ public struct ModelPreferences: Hashable, Codable, Sendable {
     /// A hint suggesting a model name or family.
     public struct Hint: Hashable, Codable, Sendable {
         public let name: String?
-        public init(name: String? = nil) { self.name = name }
+        public init(name: String? = nil) {
+            self.name = name
+        }
     }
 
     public let hints: [Hint]?
@@ -64,7 +66,7 @@ public struct ModelPreferences: Hashable, Codable, Sendable {
         hints: [Hint]? = nil,
         costPriority: UnitInterval? = nil,
         speedPriority: UnitInterval? = nil,
-        intelligencePriority: UnitInterval? = nil
+        intelligencePriority: UnitInterval? = nil,
     ) {
         self.hints = hints
         self.costPriority = costPriority
@@ -223,7 +225,7 @@ public struct ToolResultContent: Hashable, Codable, Sendable {
         content: [Tool.Content] = [],
         structuredContent: Value? = nil,
         isError: Bool? = nil,
-        _meta: [String: Value]? = nil
+        _meta: [String: Value]? = nil,
     ) {
         type = "tool_result"
         self.toolUseId = toolUseId
@@ -250,21 +252,21 @@ extension Sampling.Message.ContentBlock: Codable {
                 self = try .text(
                     container.decode(String.self, forKey: .text),
                     annotations: container.decodeIfPresent(Annotations.self, forKey: .annotations),
-                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta),
                 )
             case "image":
                 self = try .image(
                     data: container.decode(String.self, forKey: .data),
                     mimeType: container.decode(String.self, forKey: .mimeType),
                     annotations: container.decodeIfPresent(Annotations.self, forKey: .annotations),
-                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta),
                 )
             case "audio":
                 self = try .audio(
                     data: container.decode(String.self, forKey: .data),
                     mimeType: container.decode(String.self, forKey: .mimeType),
                     annotations: container.decodeIfPresent(Annotations.self, forKey: .annotations),
-                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta)
+                    _meta: container.decodeIfPresent([String: Value].self, forKey: ._meta),
                 )
             case "tool_use":
                 self = try .toolUse(ToolUseContent(from: decoder))
@@ -273,7 +275,7 @@ extension Sampling.Message.ContentBlock: Codable {
             default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .type, in: container,
-                    debugDescription: "Unknown content type: \(type)"
+                    debugDescription: "Unknown content type: \(type)",
                 )
         }
     }
@@ -353,7 +355,7 @@ public struct SamplingParameters: Hashable, Codable, Sendable {
         stopSequences: [String]? = nil,
         metadata: [String: Value]? = nil,
         _meta: RequestMeta? = nil,
-        task: TaskMetadata? = nil
+        task: TaskMetadata? = nil,
     ) {
         self.messages = messages
         self.modelPreferences = modelPreferences
@@ -399,7 +401,7 @@ public enum CreateSamplingMessage: Method {
             role: Role,
             content: Sampling.Message.ContentBlock,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.model = model
             self.stopReason = stopReason
@@ -430,7 +432,7 @@ public enum CreateSamplingMessage: Method {
                 guard let firstBlock = blocks.first else {
                     throw DecodingError.dataCorruptedError(
                         forKey: .content, in: container,
-                        debugDescription: "Content array is empty"
+                        debugDescription: "Content array is empty",
                     )
                 }
                 content = firstBlock
@@ -472,16 +474,45 @@ public enum CreateSamplingMessageWithTools: Method {
         public let toolChoice: ToolChoice?
 
         // Convenience accessors
-        public var messages: [Sampling.Message] { base.messages }
-        public var modelPreferences: Sampling.ModelPreferences? { base.modelPreferences }
-        public var systemPrompt: String? { base.systemPrompt }
-        public var includeContext: Sampling.ContextInclusion? { base.includeContext }
-        public var temperature: Double? { base.temperature }
-        public var maxTokens: Int { base.maxTokens }
-        public var stopSequences: [String]? { base.stopSequences }
-        public var metadata: [String: Value]? { base.metadata }
-        public var _meta: RequestMeta? { base._meta }
-        public var task: TaskMetadata? { base.task }
+        public var messages: [Sampling.Message] {
+            base.messages
+        }
+
+        public var modelPreferences: Sampling.ModelPreferences? {
+            base.modelPreferences
+        }
+
+        public var systemPrompt: String? {
+            base.systemPrompt
+        }
+
+        public var includeContext: Sampling.ContextInclusion? {
+            base.includeContext
+        }
+
+        public var temperature: Double? {
+            base.temperature
+        }
+
+        public var maxTokens: Int {
+            base.maxTokens
+        }
+
+        public var stopSequences: [String]? {
+            base.stopSequences
+        }
+
+        public var metadata: [String: Value]? {
+            base.metadata
+        }
+
+        public var _meta: RequestMeta? {
+            base._meta
+        }
+
+        public var task: TaskMetadata? {
+            base.task
+        }
 
         public init(
             messages: [Sampling.Message],
@@ -495,7 +526,7 @@ public enum CreateSamplingMessageWithTools: Method {
             tools: [Tool],
             toolChoice: ToolChoice? = nil,
             _meta: RequestMeta? = nil,
-            task: TaskMetadata? = nil
+            task: TaskMetadata? = nil,
         ) {
             base = SamplingParameters(
                 messages: messages,
@@ -507,7 +538,7 @@ public enum CreateSamplingMessageWithTools: Method {
                 stopSequences: stopSequences,
                 metadata: metadata,
                 _meta: _meta,
-                task: task
+                task: task,
             )
             self.tools = tools
             self.toolChoice = toolChoice
@@ -532,7 +563,7 @@ public enum CreateSamplingMessageWithTools: Method {
                 stopSequences: container.decodeIfPresent([String].self, forKey: .stopSequences),
                 metadata: container.decodeIfPresent([String: Value].self, forKey: .metadata),
                 _meta: container.decodeIfPresent(RequestMeta.self, forKey: ._meta),
-                task: container.decodeIfPresent(TaskMetadata.self, forKey: .task)
+                task: container.decodeIfPresent(TaskMetadata.self, forKey: .task),
             )
             tools = try container.decode([Tool].self, forKey: .tools)
             toolChoice = try container.decodeIfPresent(ToolChoice.self, forKey: .toolChoice)
@@ -572,7 +603,7 @@ public enum CreateSamplingMessageWithTools: Method {
             role: Role,
             content: Sampling.Message.ContentBlock,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.model = model
             self.stopReason = stopReason
@@ -588,7 +619,7 @@ public enum CreateSamplingMessageWithTools: Method {
             role: Role,
             content: [Sampling.Message.ContentBlock],
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.model = model
             self.stopReason = stopReason
@@ -651,16 +682,45 @@ public struct ClientSamplingParameters: Hashable, Codable, Sendable {
     public let toolChoice: ToolChoice?
 
     // Convenience accessors
-    public var messages: [Sampling.Message] { base.messages }
-    public var modelPreferences: Sampling.ModelPreferences? { base.modelPreferences }
-    public var systemPrompt: String? { base.systemPrompt }
-    public var includeContext: Sampling.ContextInclusion? { base.includeContext }
-    public var temperature: Double? { base.temperature }
-    public var maxTokens: Int { base.maxTokens }
-    public var stopSequences: [String]? { base.stopSequences }
-    public var metadata: [String: Value]? { base.metadata }
-    public var _meta: RequestMeta? { base._meta }
-    public var task: TaskMetadata? { base.task }
+    public var messages: [Sampling.Message] {
+        base.messages
+    }
+
+    public var modelPreferences: Sampling.ModelPreferences? {
+        base.modelPreferences
+    }
+
+    public var systemPrompt: String? {
+        base.systemPrompt
+    }
+
+    public var includeContext: Sampling.ContextInclusion? {
+        base.includeContext
+    }
+
+    public var temperature: Double? {
+        base.temperature
+    }
+
+    public var maxTokens: Int {
+        base.maxTokens
+    }
+
+    public var stopSequences: [String]? {
+        base.stopSequences
+    }
+
+    public var metadata: [String: Value]? {
+        base.metadata
+    }
+
+    public var _meta: RequestMeta? {
+        base._meta
+    }
+
+    public var task: TaskMetadata? {
+        base.task
+    }
 
     /// Whether this request includes tool support.
     public var hasTools: Bool {
@@ -679,7 +739,7 @@ public struct ClientSamplingParameters: Hashable, Codable, Sendable {
         tools: [Tool]? = nil,
         toolChoice: ToolChoice? = nil,
         _meta: RequestMeta? = nil,
-        task: TaskMetadata? = nil
+        task: TaskMetadata? = nil,
     ) {
         base = SamplingParameters(
             messages: messages,
@@ -691,7 +751,7 @@ public struct ClientSamplingParameters: Hashable, Codable, Sendable {
             stopSequences: stopSequences,
             metadata: metadata,
             _meta: _meta,
-            task: task
+            task: task,
         )
         self.tools = tools
         self.toolChoice = toolChoice
@@ -715,7 +775,7 @@ public struct ClientSamplingParameters: Hashable, Codable, Sendable {
             stopSequences: container.decodeIfPresent([String].self, forKey: .stopSequences),
             metadata: container.decodeIfPresent([String: Value].self, forKey: .metadata),
             _meta: container.decodeIfPresent(RequestMeta.self, forKey: ._meta),
-            task: container.decodeIfPresent(TaskMetadata.self, forKey: .task)
+            task: container.decodeIfPresent(TaskMetadata.self, forKey: .task),
         )
         tools = try container.decodeIfPresent([Tool].self, forKey: .tools)
         toolChoice = try container.decodeIfPresent(ToolChoice.self, forKey: .toolChoice)

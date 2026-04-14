@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for resumability support - verifying that clients can reconnect and resume
 /// receiving events after disconnection using InMemoryEventStore integration with
@@ -31,7 +30,6 @@ import Testing
 ///
 /// The server-side resumability is tested here; client-side reconnection with
 /// resumption token is tested in HTTPClientTransportTests and ClientReconnectionTests.
-@Suite("Resumability Tests")
 struct ResumabilityTests {
     // MARK: - Test Helpers
 
@@ -72,7 +70,7 @@ struct ResumabilityTests {
     func readFromStream(
         _ stream: AsyncThrowingStream<Data, Error>,
         maxChunks: Int = 1,
-        timeout: Duration = .seconds(2)
+        timeout: Duration = .seconds(2),
     ) async throws -> Data {
         var receivedData = Data()
 
@@ -109,8 +107,8 @@ struct ResumabilityTests {
 
     // MARK: - 1.1 Store and include event IDs in server SSE messages
 
-    @Test("Store and include event IDs in server SSE messages")
-    func storeAndIncludeEventIds() async throws {
+    @Test
+    func `Store and include event IDs in server SSE messages`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -118,8 +116,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -155,7 +153,7 @@ struct ResumabilityTests {
 
         // Give a small delay then send notification
         try await Task.sleep(for: .milliseconds(50))
-        try await transport.send(notification.data(using: .utf8)!)
+        try await transport.send(#require(notification.data(using: .utf8)))
 
         // Wait for read to complete
         let receivedData = try await readTask.value
@@ -178,8 +176,8 @@ struct ResumabilityTests {
 
     // MARK: - 1.2 Store and replay MCP server tool notifications
 
-    @Test("Store and replay MCP server notifications")
-    func storeAndReplayServerNotifications() async throws {
+    @Test
+    func `Store and replay MCP server notifications`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -187,8 +185,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -216,7 +214,7 @@ struct ResumabilityTests {
         let notification1 = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"First notification"}}
         """
-        try await transport.send(notification1.data(using: .utf8)!)
+        try await transport.send(#require(notification1.data(using: .utf8)))
 
         let receivedData1 = try await readTask1.value
         let events1 = parseSSEEvents(receivedData1)
@@ -234,7 +232,7 @@ struct ResumabilityTests {
         let notification2 = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
         """
-        try await transport.send(notification2.data(using: .utf8)!)
+        try await transport.send(#require(notification2.data(using: .utf8)))
 
         // Reconnect with Last-Event-ID to get missed messages
         let getRequest2 = TestPayloads.getRequest(sessionId: sessionId, lastEventId: firstEventId)
@@ -260,8 +258,8 @@ struct ResumabilityTests {
 
     // MARK: - 1.3 Store and replay multiple notifications
 
-    @Test("Store and replay multiple notifications sent while client is disconnected")
-    func storeAndReplayMultipleNotifications() async throws {
+    @Test
+    func `Store and replay multiple notifications sent while client is disconnected`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -269,8 +267,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -298,7 +296,7 @@ struct ResumabilityTests {
         let initialNotification = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Initial notification"}}
         """
-        try await transport.send(initialNotification.data(using: .utf8)!)
+        try await transport.send(#require(initialNotification.data(using: .utf8)))
 
         let receivedData1 = try await readTask1.value
         let events1 = parseSSEEvents(receivedData1)
@@ -316,7 +314,7 @@ struct ResumabilityTests {
             let notification = """
             {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Missed notification \(i)"}}
             """
-            try await transport.send(notification.data(using: .utf8)!)
+            try await transport.send(#require(notification.data(using: .utf8)))
         }
 
         // Reconnect with the Last-Event-ID to get all missed messages
@@ -342,8 +340,8 @@ struct ResumabilityTests {
 
     // MARK: - Event Store Integration
 
-    @Test("Event store receives events with correct stream ID")
-    func eventStoreReceivesEventsWithCorrectStreamId() async throws {
+    @Test
+    func `Event store receives events with correct stream ID`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -351,8 +349,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -381,7 +379,7 @@ struct ResumabilityTests {
         let notification = """
         {"jsonrpc":"2.0","method":"test/notification","params":{}}
         """
-        try await transport.send(notification.data(using: .utf8)!)
+        try await transport.send(#require(notification.data(using: .utf8)))
 
         // Wait for read to complete
         _ = try await readTask.value
@@ -391,8 +389,8 @@ struct ResumabilityTests {
         #expect(eventCount >= 1, "At least one event should be stored")
     }
 
-    @Test("Replay returns correct stream ID")
-    func replayReturnsCorrectStreamId() async throws {
+    @Test
+    func `Replay returns correct stream ID`() async throws {
         let eventStore = InMemoryEventStore()
 
         // Store some test events directly
@@ -409,8 +407,13 @@ struct ResumabilityTests {
         // Replay events after the first one
         actor MessageCollector {
             var messages: [String] = []
-            func add(_ msg: String) { messages.append(msg) }
-            func get() -> [String] { messages }
+            func add(_ msg: String) {
+                messages.append(msg)
+            }
+
+            func get() -> [String] {
+                messages
+            }
         }
         let collector = MessageCollector()
 
@@ -428,8 +431,8 @@ struct ResumabilityTests {
 
     // MARK: - Edge Cases
 
-    @Test("Replay with unknown event ID returns error")
-    func replayWithUnknownEventIdReturnsError() async throws {
+    @Test
+    func `Replay with unknown event ID returns error`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -437,8 +440,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -454,13 +457,13 @@ struct ResumabilityTests {
         #expect(getResponse.statusCode == 400, "Should return 400 for unknown event ID")
     }
 
-    @Test("Transport without event store does not include event IDs")
-    func transportWithoutEventStoreDoesNotIncludeEventIds() async throws {
+    @Test
+    func `Transport without event store does not include event IDs`() async throws {
         let sessionId = "test-session-\(UUID().uuidString)"
 
         // Transport without event store
         let transport = HTTPServerTransport(
-            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none)
+            options: .init(sessionIdGenerator: { sessionId }, dnsRebindingProtection: .none),
         )
         try await transport.connect()
 
@@ -489,7 +492,7 @@ struct ResumabilityTests {
         let notification = """
         {"jsonrpc":"2.0","method":"test/notification","params":{}}
         """
-        try await transport.send(notification.data(using: .utf8)!)
+        try await transport.send(#require(notification.data(using: .utf8)))
 
         let receivedData = try await readTask.value
         let events = parseSSEEvents(receivedData)
@@ -504,8 +507,8 @@ struct ResumabilityTests {
 
     /// Creates a GET request with protocol version >= 2025-11-25 to enable priming events
 
-    @Test("Replay sends a new priming event after replayed events")
-    func replaySendsNewPrimingEventAfterReplayedEvents() async throws {
+    @Test
+    func `Replay sends a new priming event after replayed events`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -514,8 +517,8 @@ struct ResumabilityTests {
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
                 retryInterval: 5000, // Include retry to make priming event more visible
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -546,7 +549,7 @@ struct ResumabilityTests {
         let notification = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Test notification"}}
         """
-        try await transport.send(notification.data(using: .utf8)!)
+        try await transport.send(#require(notification.data(using: .utf8)))
 
         let receivedData1 = try await readTask1.value
         let events1 = parseSSEEvents(receivedData1)
@@ -575,7 +578,7 @@ struct ResumabilityTests {
         let notification2 = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"Second notification"}}
         """
-        try await transport.send(notification2.data(using: .utf8)!)
+        try await transport.send(#require(notification2.data(using: .utf8)))
 
         // Reconnect with Last-Event-ID pointing to the notification
         // This should replay the second notification AND send a new priming event
@@ -605,8 +608,8 @@ struct ResumabilityTests {
         #expect(newPrimingEvent != nil, "Should have a NEW priming event after replay for resumability")
     }
 
-    @Test("Priming events (empty data) are skipped during replay")
-    func primingEventsAreSkippedDuringReplay() async throws {
+    @Test
+    func `Priming events (empty data) are skipped during replay`() async throws {
         // Per MCP spec: "replay messages that would have been sent after the last event ID"
         // Priming events have empty data and are NOT messages - they should be skipped during replay.
         // This aligns with Python SDK behavior which skips None messages during replay.
@@ -632,8 +635,13 @@ struct ResumabilityTests {
         // Replay events after the first priming event
         actor MessageCollector {
             var messages: [Data] = []
-            func add(_ msg: Data) { messages.append(msg) }
-            func get() -> [Data] { messages }
+            func add(_ msg: Data) {
+                messages.append(msg)
+            }
+
+            func get() -> [Data] {
+                messages
+            }
         }
         let collector = MessageCollector()
 
@@ -655,8 +663,8 @@ struct ResumabilityTests {
         }
     }
 
-    @Test("GET without Last-Event-ID opens fresh stream")
-    func getWithoutLastEventIdOpensFreshStream() async throws {
+    @Test
+    func `GET without Last-Event-ID opens fresh stream`() async throws {
         let eventStore = InMemoryEventStore()
         let sessionId = "test-session-\(UUID().uuidString)"
 
@@ -664,8 +672,8 @@ struct ResumabilityTests {
             options: .init(
                 sessionIdGenerator: { sessionId },
                 eventStore: eventStore,
-                dnsRebindingProtection: .none
-            )
+                dnsRebindingProtection: .none,
+            ),
         )
         try await transport.connect()
 
@@ -676,9 +684,9 @@ struct ResumabilityTests {
         // Store some events in the event store manually
         _ = try await eventStore.storeEvent(
             streamId: "_GET_stream",
-            message: """
+            message: #require("""
             {"jsonrpc":"2.0","method":"old/notification","params":{}}
-            """.data(using: .utf8)!
+            """.data(using: .utf8)),
         )
 
         // Open SSE stream WITHOUT Last-Event-ID

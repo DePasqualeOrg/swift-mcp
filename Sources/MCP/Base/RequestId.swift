@@ -58,7 +58,7 @@ extension RequestId: Codable {
             self = .number(number)
         } else {
             throw DecodingError.dataCorruptedError(
-                in: container, debugDescription: "ID must be string or number"
+                in: container, debugDescription: "ID must be string or number",
             )
         }
     }

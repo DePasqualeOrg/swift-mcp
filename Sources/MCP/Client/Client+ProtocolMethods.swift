@@ -176,7 +176,7 @@ public extension Client {
     func callTool(
         name: String,
         arguments: [String: Value]? = nil,
-        onProgress: @escaping ProgressCallback
+        onProgress: @escaping ProgressCallback,
     ) async throws -> CallTool.Result {
         try validateServerCapability(\.tools, "Tools")
         let request = CallTool.request(.init(name: name, arguments: arguments))
@@ -198,7 +198,7 @@ public extension Client {
             } else if !(result.isError ?? false) {
                 // Tool has outputSchema but server returned no structuredContent
                 throw MCPError.invalidParams(
-                    "Tool '\(name)' has an output schema but server returned no structured content"
+                    "Tool '\(name)' has an output schema but server returned no structured content",
                 )
             }
         }
@@ -219,7 +219,7 @@ public extension Client {
     func complete(
         ref: CompletionReference,
         argument: CompletionArgument,
-        context: CompletionContext? = nil
+        context: CompletionContext? = nil,
     ) async throws -> Complete.Result {
         try validateServerCapability(\.completions, "Completions")
         let request = Complete.request(.init(ref: ref, argument: argument, context: context))

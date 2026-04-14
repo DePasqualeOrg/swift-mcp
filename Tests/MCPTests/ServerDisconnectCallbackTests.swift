@@ -1,12 +1,10 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
 /// Tests for Server.setOnDisconnect callback behavior.
-@Suite("Server Disconnect Callback Tests")
 struct ServerDisconnectCallbackTests {
     // MARK: - Helpers
 
@@ -14,21 +12,26 @@ struct ServerDisconnectCallbackTests {
         Server(
             name: "test-server",
             version: "1.0",
-            capabilities: .init(tools: .init(listChanged: true))
+            capabilities: .init(tools: .init(listChanged: true)),
         )
     }
 
     // MARK: - Callback Invocation
 
-    @Test("Callback invoked on transport disconnect")
-    func callbackInvokedOnDisconnect() async throws {
+    @Test
+    func `Callback invoked on transport disconnect`() async throws {
         let server = createServer()
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor Flag {
             var value = false
-            func set() { value = true }
-            func get() -> Bool { value }
+            func set() {
+                value = true
+            }
+
+            func get() -> Bool {
+                value
+            }
         }
 
         let disconnectCalled = Flag()
@@ -56,15 +59,20 @@ struct ServerDisconnectCallbackTests {
         #expect(wasCalled, "onDisconnect callback should be invoked when transport disconnects")
     }
 
-    @Test("Callback invoked when server transport disconnects")
-    func callbackInvokedWhenServerTransportDisconnects() async throws {
+    @Test
+    func `Callback invoked when server transport disconnects`() async throws {
         let server = createServer()
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor Flag {
             var value = false
-            func set() { value = true }
-            func get() -> Bool { value }
+            func set() {
+                value = true
+            }
+
+            func get() -> Bool {
+                value
+            }
         }
 
         let disconnectCalled = Flag()
@@ -86,15 +94,20 @@ struct ServerDisconnectCallbackTests {
         #expect(wasCalled, "onDisconnect callback should be invoked when server transport disconnects")
     }
 
-    @Test("Callback not invoked during normal operation")
-    func callbackNotInvokedDuringNormalOperation() async throws {
+    @Test
+    func `Callback not invoked during normal operation`() async throws {
         let server = createServer()
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func get() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func get() -> Int {
+                count
+            }
         }
 
         let callCount = Counter()
@@ -130,8 +143,8 @@ struct ServerDisconnectCallbackTests {
         await client.disconnect()
     }
 
-    @Test("Nil callback does not cause issues on disconnect")
-    func nilCallbackHandledGracefully() async throws {
+    @Test
+    func `Nil callback does not cause issues on disconnect`() async throws {
         let server = createServer()
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
@@ -154,18 +167,29 @@ struct ServerDisconnectCallbackTests {
         // No assertion needed - test passes if no crash occurs
     }
 
-    @Test("Callback can be replaced before disconnect")
-    func callbackCanBeReplaced() async throws {
+    @Test
+    func `Callback can be replaced before disconnect`() async throws {
         let server = createServer()
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor Tracker {
             var firstCalled = false
             var secondCalled = false
-            func markFirst() { firstCalled = true }
-            func markSecond() { secondCalled = true }
-            func getFirst() -> Bool { firstCalled }
-            func getSecond() -> Bool { secondCalled }
+            func markFirst() {
+                firstCalled = true
+            }
+
+            func markSecond() {
+                secondCalled = true
+            }
+
+            func getFirst() -> Bool {
+                firstCalled
+            }
+
+            func getSecond() -> Bool {
+                secondCalled
+            }
         }
 
         let tracker = Tracker()
@@ -198,15 +222,20 @@ struct ServerDisconnectCallbackTests {
         #expect(!firstCalled, "First callback should not be called after replacement")
     }
 
-    @Test("Callback invoked after server stop")
-    func callbackInvokedAfterServerStop() async throws {
+    @Test
+    func `Callback invoked after server stop`() async throws {
         let server = createServer()
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         actor Flag {
             var value = false
-            func set() { value = true }
-            func get() -> Bool { value }
+            func set() {
+                value = true
+            }
+
+            func get() -> Bool {
+                value
+            }
         }
 
         let disconnectCalled = Flag()

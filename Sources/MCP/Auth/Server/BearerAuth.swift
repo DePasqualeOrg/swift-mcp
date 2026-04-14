@@ -41,7 +41,7 @@ public enum AuthenticationResult: Sendable {
 ///   or ``AuthenticationResult/unauthorized(_:)`` with a 401 response.
 public func authenticateRequest(
     _ request: HTTPRequest,
-    config: ServerAuthConfig
+    config: ServerAuthConfig,
 ) async -> AuthenticationResult {
     // Extract Authorization header
     guard let authHeader = request.header(HTTPHeader.authorization) else {
@@ -49,8 +49,8 @@ public func authenticateRequest(
             unauthorizedResponse(
                 error: "invalid_token",
                 description: "Missing Authorization header",
-                config: config
-            )
+                config: config,
+            ),
         )
     }
 
@@ -63,8 +63,8 @@ public func authenticateRequest(
             unauthorizedResponse(
                 error: "invalid_token",
                 description: "Invalid Authorization header format",
-                config: config
-            )
+                config: config,
+            ),
         )
     }
 
@@ -75,8 +75,8 @@ public func authenticateRequest(
             unauthorizedResponse(
                 error: "invalid_token",
                 description: "Empty bearer token",
-                config: config
-            )
+                config: config,
+            ),
         )
     }
 
@@ -86,8 +86,8 @@ public func authenticateRequest(
             unauthorizedResponse(
                 error: "invalid_token",
                 description: "Token validation failed",
-                config: config
-            )
+                config: config,
+            ),
         )
     }
 
@@ -99,8 +99,8 @@ public func authenticateRequest(
                 unauthorizedResponse(
                     error: "invalid_token",
                     description: "Token has expired",
-                    config: config
-                )
+                    config: config,
+                ),
             )
         }
     }
@@ -114,8 +114,8 @@ public func authenticateRequest(
                 unauthorizedResponse(
                     error: "invalid_token",
                     description: "Token has invalid resource identifier",
-                    config: config
-                )
+                    config: config,
+                ),
             )
         }
         if !ResourceURL.matches(requested: tokenResourceURL, configured: config.resource) {
@@ -123,8 +123,8 @@ public func authenticateRequest(
                 unauthorizedResponse(
                     error: "invalid_token",
                     description: "Token not valid for this resource",
-                    config: config
-                )
+                    config: config,
+                ),
             )
         }
     }
@@ -149,7 +149,7 @@ public func buildWWWAuthenticateHeader(
     error: String,
     description: String? = nil,
     resourceMetadataURL: URL,
-    scope: String? = nil
+    scope: String? = nil,
 ) -> String {
     var parts = ["Bearer"]
     var params: [String] = []
@@ -197,14 +197,14 @@ public func buildWWWAuthenticateHeader(
 public func insufficientScopeResponse(
     scope: String,
     description: String? = nil,
-    config: ServerAuthConfig
+    config: ServerAuthConfig,
 ) -> HTTPResponse {
     let prmURL = protectedResourceMetadataURL(for: config.resource)
     let wwwAuth = buildWWWAuthenticateHeader(
         error: "insufficient_scope",
         description: description,
         resourceMetadataURL: prmURL,
-        scope: scope
+        scope: scope,
     )
 
     let errorDescription = description ?? "Insufficient scope"
@@ -212,8 +212,8 @@ public func insufficientScopeResponse(
     do {
         body = try JSONEncoder().encode(
             OAuthTokenErrorResponse(
-                error: "insufficient_scope", errorDescription: errorDescription
-            )
+                error: "insufficient_scope", errorDescription: errorDescription,
+            ),
         )
     } catch {
         body = Data()
@@ -225,7 +225,7 @@ public func insufficientScopeResponse(
             "www-authenticate": wwwAuth,
             HTTPHeader.contentType: "application/json",
         ],
-        body: body
+        body: body,
     )
 }
 
@@ -243,7 +243,7 @@ private func quotedString(_ value: String) -> String {
 private func unauthorizedResponse(
     error: String,
     description: String,
-    config: ServerAuthConfig
+    config: ServerAuthConfig,
 ) -> HTTPResponse {
     let prmURL = protectedResourceMetadataURL(for: config.resource)
     let scope = config.scopesSupported?.joined(separator: " ")
@@ -251,13 +251,13 @@ private func unauthorizedResponse(
         error: error,
         description: description,
         resourceMetadataURL: prmURL,
-        scope: scope
+        scope: scope,
     )
 
     let body: Data
     do {
         body = try JSONEncoder().encode(
-            OAuthTokenErrorResponse(error: error, errorDescription: description)
+            OAuthTokenErrorResponse(error: error, errorDescription: description),
         )
     } catch {
         body = Data()
@@ -269,6 +269,6 @@ private func unauthorizedResponse(
             "www-authenticate": wwwAuth,
             HTTPHeader.contentType: "application/json",
         ],
-        body: body
+        body: body,
     )
 }

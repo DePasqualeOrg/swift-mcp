@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Integration roundtrip tests that verify full client-server communication flows.
 ///
@@ -18,7 +17,6 @@ import Testing
 /// - `test_elicitation` - Server requesting user input from client
 /// - `test_notifications` - Logging and list change notifications
 
-@Suite("Integration Roundtrip Tests")
 struct IntegrationRoundtripTests {
     // MARK: - Basic Tools Roundtrip Tests
 
@@ -28,14 +26,14 @@ struct IntegrationRoundtripTests {
     /// 1. Client lists tools
     /// 2. Client calls tools with arguments
     /// 3. Server executes and returns results
-    @Test("Basic tools roundtrip - list and call")
-    func testBasicToolsRoundtrip() async throws {
+    @Test
+    func `Basic tools roundtrip - list and call`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ToolServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         // Register tools
@@ -51,7 +49,7 @@ struct IntegrationRoundtripTests {
                             "b": ["type": "integer", "description": "Second number"],
                         ],
                         "required": ["a", "b"],
-                    ]
+                    ],
                 ),
                 Tool(
                     name: "get_weather",
@@ -62,7 +60,7 @@ struct IntegrationRoundtripTests {
                             "city": ["type": "string", "description": "City name"],
                         ],
                         "required": ["city"],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -83,7 +81,7 @@ struct IntegrationRoundtripTests {
                 default:
                     return CallTool.Result(
                         content: [.text("Unknown tool: \(request.name)")],
-                        isError: true
+                        isError: true,
                     )
             }
         }
@@ -110,7 +108,7 @@ struct IntegrationRoundtripTests {
         // Test sum tool
         let sumResult = try await client.callTool(
             name: "sum",
-            arguments: ["a": 5, "b": 3]
+            arguments: ["a": 5, "b": 3],
         )
         #expect(sumResult.content.count == 1)
         if case let .text(text, _, _) = sumResult.content[0] {
@@ -122,7 +120,7 @@ struct IntegrationRoundtripTests {
         // Test weather tool
         let weatherResult = try await client.callTool(
             name: "get_weather",
-            arguments: ["city": "London"]
+            arguments: ["city": "London"],
         )
         #expect(weatherResult.content.count == 1)
         if case let .text(text, _, _) = weatherResult.content[0] {
@@ -139,14 +137,14 @@ struct IntegrationRoundtripTests {
     /// Tests that calling an unknown tool returns an error.
     ///
     /// Based on TypeScript SDK's integration tests for error handling.
-    @Test("Unknown tool returns error")
-    func testUnknownToolReturnsError() async throws {
+    @Test
+    func `Unknown tool returns error`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ToolServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -161,7 +159,7 @@ struct IntegrationRoundtripTests {
             }
             return CallTool.Result(
                 content: [.text("Unknown tool: \(request.name)")],
-                isError: true
+                isError: true,
             )
         }
 
@@ -173,7 +171,7 @@ struct IntegrationRoundtripTests {
         // Call unknown tool
         let result = try await client.callTool(
             name: "nonexistent_tool",
-            arguments: [:]
+            arguments: [:],
         )
 
         #expect(result.isError == true)
@@ -193,14 +191,14 @@ struct IntegrationRoundtripTests {
     /// 1. Client lists resources
     /// 2. Client reads resources
     /// 3. Server returns resource contents
-    @Test("Basic resources roundtrip - list and read")
-    func testBasicResourcesRoundtrip() async throws {
+    @Test
+    func `Basic resources roundtrip - list and read`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ResourceServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init())
+            capabilities: .init(resources: .init()),
         )
 
         // Register resources
@@ -210,13 +208,13 @@ struct IntegrationRoundtripTests {
                     name: "readme",
                     uri: "file://documents/readme",
                     description: "Project readme file",
-                    mimeType: "text/plain"
+                    mimeType: "text/plain",
                 ),
                 Resource(
                     name: "settings",
                     uri: "config://settings",
                     description: "Application settings",
-                    mimeType: "application/json"
+                    mimeType: "application/json",
                 ),
             ])
         }
@@ -291,14 +289,14 @@ struct IntegrationRoundtripTests {
     /// 2. Client gets a prompt with arguments
     /// 3. Server substitutes arguments into prompt messages
     /// 4. Client receives the formatted prompt
-    @Test("GetPrompt roundtrip with argument substitution")
-    func testGetPromptRoundtrip() async throws {
+    @Test
+    func `GetPrompt roundtrip with argument substitution`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "PromptServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         // Register prompts
@@ -309,14 +307,14 @@ struct IntegrationRoundtripTests {
                     description: "Reviews code and provides feedback",
                     arguments: [
                         Prompt.Argument(name: "code", description: "The code to review", required: true),
-                    ]
+                    ],
                 ),
                 Prompt(
                     name: "debug_error",
                     description: "Helps debug an error",
                     arguments: [
                         Prompt.Argument(name: "error", description: "The error message", required: true),
-                    ]
+                    ],
                 ),
             ])
         }
@@ -330,7 +328,7 @@ struct IntegrationRoundtripTests {
                         description: "Code review prompt",
                         messages: [
                             .user("Please review this code:\n\n\(code)"),
-                        ]
+                        ],
                     )
 
                 case "debug_error":
@@ -341,7 +339,7 @@ struct IntegrationRoundtripTests {
                             .user("I'm seeing this error:"),
                             .user(.text(error)),
                             .assistant("I'll help debug that error. Let me analyze it."),
-                        ]
+                        ],
                     )
 
                 default:
@@ -368,7 +366,7 @@ struct IntegrationRoundtripTests {
         let codeToReview = "def hello():\n    print('Hello')"
         let reviewResult = try await client.getPrompt(
             name: "review_code",
-            arguments: ["code": codeToReview]
+            arguments: ["code": codeToReview],
         )
         #expect(reviewResult.messages.count == 1)
         if case let .text(text, _, _) = reviewResult.messages[0].content {
@@ -382,7 +380,7 @@ struct IntegrationRoundtripTests {
         let errorMessage = "TypeError: 'NoneType' object is not subscriptable"
         let debugResult = try await client.getPrompt(
             name: "debug_error",
-            arguments: ["error": errorMessage]
+            arguments: ["error": errorMessage],
         )
         #expect(debugResult.messages.count == 3)
         #expect(debugResult.messages[0].role == .user)
@@ -419,14 +417,14 @@ struct IntegrationRoundtripTests {
     /// 1. Client calls a long-running tool with a progress token
     /// 2. Server sends progress notifications during execution
     /// 3. Client receives and tracks progress updates
-    @Test("Progress notifications during tool execution")
-    func testProgressNotificationsDuringToolExecution() async throws {
+    @Test
+    func `Progress notifications during tool execution`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ProgressServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -440,7 +438,7 @@ struct IntegrationRoundtripTests {
                             "task_name": ["type": "string"],
                             "steps": ["type": "integer"],
                         ],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -459,7 +457,7 @@ struct IntegrationRoundtripTests {
                     progressToken: .string("progress-token"),
                     progress: progress,
                     total: 1.0,
-                    message: message
+                    message: message,
                 )))
 
                 // Simulate work
@@ -482,7 +480,7 @@ struct IntegrationRoundtripTests {
             await clientProgressUpdates.append(
                 progress: message.params.progress,
                 total: message.params.total,
-                message: message.params.message
+                message: message.params.message,
             )
         }
 
@@ -491,7 +489,7 @@ struct IntegrationRoundtripTests {
         // Call tool
         let result = try await client.callTool(
             name: "long_running_task",
-            arguments: ["task_name": "Test Task", "steps": 3]
+            arguments: ["task_name": "Test Task", "steps": 3],
         )
 
         // Give notifications time to be processed
@@ -531,14 +529,14 @@ struct IntegrationRoundtripTests {
     /// 2. Server sends CreateSamplingMessage request to client
     /// 3. Client's sampling callback processes the request
     /// 4. Server receives the LLM response and completes the tool
-    @Test("Sampling roundtrip - server requests LLM from client")
-    func testSamplingRoundtrip() async throws {
+    @Test
+    func `Sampling roundtrip - server requests LLM from client`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "SamplingServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -551,7 +549,7 @@ struct IntegrationRoundtripTests {
                         "properties": [
                             "topic": ["type": "string"],
                         ],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -564,8 +562,8 @@ struct IntegrationRoundtripTests {
                 CreateSamplingMessage.Parameters(
                     messages: [.user("Write a short poem about \(topic)")],
                     systemPrompt: "You are a creative poet.",
-                    maxTokens: 100
-                )
+                    maxTokens: 100,
+                ),
             )
 
             // Return the LLM response
@@ -592,7 +590,7 @@ struct IntegrationRoundtripTests {
                 model: "test-model",
                 stopReason: .endTurn,
                 role: .assistant,
-                content: .text("This is a simulated LLM response for testing")
+                content: .text("This is a simulated LLM response for testing"),
             )
         }
 
@@ -601,7 +599,7 @@ struct IntegrationRoundtripTests {
         // Call the tool that triggers sampling
         let result = try await client.callTool(
             name: "generate_poem",
-            arguments: ["topic": "nature"]
+            arguments: ["topic": "nature"],
         )
 
         // Verify sampling callback was invoked
@@ -635,14 +633,14 @@ struct IntegrationRoundtripTests {
     /// 2. Server sends elicitation request to client
     /// 3. Client's elicitation callback processes the request
     /// 4. Server receives the user response and completes the tool
-    @Test("Elicitation roundtrip - server requests user input from client")
-    func testElicitationRoundtrip() async throws {
+    @Test
+    func `Elicitation roundtrip - server requests user input from client`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ElicitationServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -657,7 +655,7 @@ struct IntegrationRoundtripTests {
                             "time": ["type": "string"],
                             "party_size": ["type": "integer"],
                         ],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -675,15 +673,15 @@ struct IntegrationRoundtripTests {
                         properties: [
                             "checkAlternative": .boolean(BooleanSchema(
                                 title: "Try Alternative",
-                                description: "Would you like to try an alternative date?"
+                                description: "Would you like to try an alternative date?",
                             )),
                             "alternativeDate": .string(StringSchema(
                                 title: "Alternative Date",
-                                description: "Enter an alternative date"
+                                description: "Enter an alternative date",
                             )),
                         ],
-                        required: ["checkAlternative"]
-                    )
+                        required: ["checkAlternative"],
+                    ),
                 )))
 
                 if elicitResult.action == .accept,
@@ -726,7 +724,7 @@ struct IntegrationRoundtripTests {
                         content: [
                             "checkAlternative": .bool(true),
                             "alternativeDate": .string("2024-12-26"),
-                        ]
+                        ],
                     )
                 }
             }
@@ -743,7 +741,7 @@ struct IntegrationRoundtripTests {
                 "date": "2024-12-25",
                 "time": "19:00",
                 "party_size": 4,
-            ]
+            ],
         )
 
         // Verify elicitation was invoked
@@ -766,7 +764,7 @@ struct IntegrationRoundtripTests {
                 "date": "2024-12-20",
                 "time": "20:00",
                 "party_size": 2,
-            ]
+            ],
         )
 
         // Verify no additional elicitation was triggered
@@ -793,14 +791,14 @@ struct IntegrationRoundtripTests {
     /// 1. Client calls a tool that generates log messages
     /// 2. Server sends log notifications at various levels
     /// 3. Client receives and collects the log messages
-    @Test("Logging notifications during tool execution")
-    func testLoggingNotificationsDuringToolExecution() async throws {
+    @Test
+    func `Logging notifications during tool execution`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "LoggingServer",
             version: "1.0.0",
-            capabilities: .init(logging: .init(), tools: .init())
+            capabilities: .init(logging: .init(), tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -813,7 +811,7 @@ struct IntegrationRoundtripTests {
                         "properties": [
                             "data": ["type": "string"],
                         ],
-                    ]
+                    ],
                 ),
             ])
         }
@@ -825,22 +823,22 @@ struct IntegrationRoundtripTests {
             try await context.sendNotification(LogMessageNotification.message(.init(
                 level: .debug,
                 logger: "process",
-                data: .string("Starting to process data")
+                data: .string("Starting to process data"),
             )))
             try await context.sendNotification(LogMessageNotification.message(.init(
                 level: .info,
                 logger: "process",
-                data: .string("Processing: \(data)")
+                data: .string("Processing: \(data)"),
             )))
             try await context.sendNotification(LogMessageNotification.message(.init(
                 level: .warning,
                 logger: "process",
-                data: .string("Data contains special characters")
+                data: .string("Data contains special characters"),
             )))
             try await context.sendNotification(LogMessageNotification.message(.init(
                 level: .error,
                 logger: "process",
-                data: .string("Simulated error for testing")
+                data: .string("Simulated error for testing"),
             )))
 
             return CallTool.Result(content: [.text("Processed: \(data)")])
@@ -863,7 +861,7 @@ struct IntegrationRoundtripTests {
         // Call tool that generates log messages
         let result = try await client.callTool(
             name: "process_data",
-            arguments: ["data": "test_data"]
+            arguments: ["data": "test_data"],
         )
 
         // Verify tool completed
@@ -894,14 +892,14 @@ struct IntegrationRoundtripTests {
     /// Tests resource list changed notifications.
     ///
     /// Based on Python SDK's `test_notifications` (resource notifications part).
-    @Test("Resource list changed notification during tool execution")
-    func testResourceListChangedNotification() async throws {
+    @Test
+    func `Resource list changed notification during tool execution`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "ResourceNotificationServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(listChanged: true), tools: .init())
+            capabilities: .init(resources: .init(listChanged: true), tools: .init()),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -909,7 +907,7 @@ struct IntegrationRoundtripTests {
                 Tool(
                     name: "create_resource",
                     description: "Creates a new resource",
-                    inputSchema: ["type": "object"]
+                    inputSchema: ["type": "object"],
                 ),
             ])
         }
@@ -963,8 +961,8 @@ struct IntegrationRoundtripTests {
     /// 2. Server sends tool list changed notification (triggered via a tool call)
     /// 3. Client receives notification and re-fetches tools
     /// 4. Client sees updated tool list
-    @Test("Tool list changed notification with refresh")
-    func testToolListChangedNotificationWithRefresh() async throws {
+    @Test
+    func `Tool list changed notification with refresh`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track available tools (mutable)
@@ -973,7 +971,7 @@ struct IntegrationRoundtripTests {
         let server = Server(
             name: "DynamicToolServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init(listChanged: true))
+            capabilities: .init(tools: .init(listChanged: true)),
         )
 
         // Dynamic tool list handler
@@ -990,7 +988,7 @@ struct IntegrationRoundtripTests {
                     await toolRegistry.addTool(Tool(
                         name: toolName,
                         description: "Dynamically added",
-                        inputSchema: ["type": "object"]
+                        inputSchema: ["type": "object"],
                     ))
                     try await context.sendToolListChanged()
                     return CallTool.Result(content: [.text("Added tool: \(toolName)")])
@@ -1005,12 +1003,12 @@ struct IntegrationRoundtripTests {
         await toolRegistry.addTool(Tool(
             name: "initial_tool",
             description: "Initial tool",
-            inputSchema: ["type": "object"]
+            inputSchema: ["type": "object"],
         ))
         await toolRegistry.addTool(Tool(
             name: "add_tool",
             description: "Tool that adds a new tool",
-            inputSchema: ["type": "object", "properties": ["name": ["type": "string"]]]
+            inputSchema: ["type": "object", "properties": ["name": ["type": "string"]]],
         ))
 
         let client = Client(name: "DynamicToolClient", version: "1.0.0")
@@ -1054,8 +1052,8 @@ struct IntegrationRoundtripTests {
     /// Tests that client receives prompt list changed notification and can refresh the list.
     ///
     /// Based on TypeScript SDK's `should handle prompt list changed notification with auto refresh`.
-    @Test("Prompt list changed notification with refresh")
-    func testPromptListChangedNotificationWithRefresh() async throws {
+    @Test
+    func `Prompt list changed notification with refresh`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track available prompts (mutable)
@@ -1064,7 +1062,7 @@ struct IntegrationRoundtripTests {
         let server = Server(
             name: "DynamicPromptServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init(listChanged: true), tools: .init())
+            capabilities: .init(prompts: .init(listChanged: true), tools: .init()),
         )
 
         // Dynamic prompt list handler
@@ -1091,7 +1089,7 @@ struct IntegrationRoundtripTests {
             let promptName = request.arguments?["name"]?.stringValue ?? "unnamed"
             await promptRegistry.addPrompt(Prompt(
                 name: promptName,
-                description: "Dynamically added"
+                description: "Dynamically added",
             ))
             try await context.sendPromptListChanged()
             return CallTool.Result(content: [.text("Added prompt: \(promptName)")])
@@ -1102,7 +1100,7 @@ struct IntegrationRoundtripTests {
         // Add initial prompt
         await promptRegistry.addPrompt(Prompt(
             name: "initial_prompt",
-            description: "Initial prompt"
+            description: "Initial prompt",
         ))
 
         let client = Client(name: "DynamicPromptClient", version: "1.0.0")

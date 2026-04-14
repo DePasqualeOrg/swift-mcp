@@ -87,7 +87,9 @@ public struct RequestHandlerContext: Sendable {
     private let serverCapabilities: Server.Capabilities?
 
     /// Check if the request has been cancelled.
-    public var isCancelled: Bool { Task.isCancelled }
+    public var isCancelled: Bool {
+        Task.isCancelled
+    }
 
     /// Throw `CancellationError` if the request has been cancelled.
     public func checkCancellation() throws {
@@ -133,7 +135,7 @@ public struct RequestHandlerContext: Sendable {
         token: ProgressToken,
         progress: Double,
         total: Double? = nil,
-        message: String? = nil
+        message: String? = nil,
     ) async throws {
         try await _sendNotification(
             ProgressNotification.message(
@@ -141,8 +143,10 @@ public struct RequestHandlerContext: Sendable {
                     progressToken: token,
                     progress: progress,
                     total: total,
-                    message: message
-                )))
+                    message: message,
+                ),
+            ),
+        )
     }
 
     /// Send raw data to the peer.
@@ -175,12 +179,14 @@ public struct RequestHandlerContext: Sendable {
     public func sendLogMessage(
         level: LoggingLevel,
         logger: String? = nil,
-        data: Value
+        data: Value,
     ) async throws {
         guard await shouldSendLogMessage(at: level) else { return }
         try await _sendNotification(
             LogMessageNotification.message(
-                .init(level: level, logger: logger, data: data)))
+                .init(level: level, logger: logger, data: data),
+            ),
+        )
     }
 
     /// Send a resource list changed notification to the client.
@@ -232,7 +238,9 @@ public struct RequestHandlerContext: Sendable {
     public func sendCancelled(requestId: RequestId? = nil, reason: String? = nil) async throws {
         try await _sendNotification(
             CancelledNotification.message(
-                .init(requestId: requestId, reason: reason)))
+                .init(requestId: requestId, reason: reason),
+            ),
+        )
     }
 
     /// Send an elicitation complete notification to the client.
@@ -241,7 +249,9 @@ public struct RequestHandlerContext: Sendable {
     public func sendElicitationComplete(elicitationId: String) async throws {
         try await _sendNotification(
             ElicitationCompleteNotification.message(
-                .init(elicitationId: elicitationId)))
+                .init(elicitationId: elicitationId),
+            ),
+        )
     }
 
     /// Send a task status notification to the client.
@@ -259,12 +269,12 @@ public struct RequestHandlerContext: Sendable {
     /// - Returns: The elicitation result from the client
     public func elicit(
         message: String,
-        requestedSchema: ElicitationSchema
+        requestedSchema: ElicitationSchema,
     ) async throws -> ElicitResult {
         let params = ElicitRequestFormParams(
             mode: "form",
             message: message,
-            requestedSchema: requestedSchema
+            requestedSchema: requestedSchema,
         )
         let request = Elicit.request(id: .random, .form(params))
         let encoder = JSONEncoder()
@@ -285,12 +295,12 @@ public struct RequestHandlerContext: Sendable {
     public func elicitUrl(
         message: String,
         url: String,
-        elicitationId: String
+        elicitationId: String,
     ) async throws -> ElicitResult {
         let params = ElicitRequestURLParams(
             message: message,
             elicitationId: elicitationId,
-            url: url
+            url: url,
         )
         let request = Elicit.request(id: .random, .url(params))
         let encoder = JSONEncoder()
@@ -314,7 +324,7 @@ public struct RequestHandlerContext: Sendable {
         sendRequest: @escaping @Sendable (Data) async throws -> Data,
         sendData: (@Sendable (Data) async throws -> Void)? = nil,
         shouldSendLogMessage: (@Sendable (LoggingLevel) async -> Bool)? = nil,
-        serverCapabilities: Server.Capabilities? = nil
+        serverCapabilities: Server.Capabilities? = nil,
     ) {
         self.sessionId = sessionId
         self.requestId = requestId
@@ -339,7 +349,7 @@ public struct RequestHandlerContext: Sendable {
 /// Uses `Data` as the intermediate type, requiring a Value→Data→T round trip.
 /// A custom `ValueDecoder` could avoid re-encoding, but the overhead is negligible
 /// for typical MCP payloads.
-package struct ProtocolPendingRequest: Sendable {
+package struct ProtocolPendingRequest {
     private let _resume: @Sendable (Result<Data, any Error>) -> Void
 
     init<T>(continuation: AsyncThrowingStream<T, any Error>.Continuation, transform: @escaping @Sendable (Data) throws -> T) {
@@ -396,7 +406,7 @@ public struct ProtocolRequestOptions: Sendable {
         onProgress: ProtocolProgressCallback? = nil,
         timeout: Duration? = nil,
         resetTimeoutOnProgress: Bool = false,
-        maxTotalTimeout: Duration? = nil
+        maxTotalTimeout: Duration? = nil,
     ) {
         self.progressToken = progressToken
         self.onProgress = onProgress
@@ -460,7 +470,7 @@ package actor TimeoutController {
                 if elapsed >= maxTotal {
                     throw MCPError.requestTimeout(
                         timeout: maxTotal,
-                        message: "Request exceeded maximum total timeout"
+                        message: "Request exceeded maximum total timeout",
                     )
                 }
             }
@@ -471,7 +481,7 @@ package actor TimeoutController {
             if timeUntilDeadline <= .zero {
                 throw MCPError.requestTimeout(
                     timeout: timeout,
-                    message: "Request timed out"
+                    message: "Request timed out",
                 )
             }
 
@@ -512,7 +522,7 @@ public enum MessagePreprocessResult: Sendable {
 // MARK: - Connection State
 
 /// Connection lifecycle state machine.
-package enum ProtocolConnectionState: Sendable {
+package enum ProtocolConnectionState {
     case disconnected
     case connecting
     case connected(transport: any Transport)

@@ -25,13 +25,13 @@ public struct TextResource: ResourceProvider {
         name: String,
         content: String,
         description: String? = nil,
-        mimeType: String = "text/plain"
+        mimeType: String = "text/plain",
     ) {
         definition = Resource(
             name: name,
             uri: uri,
             description: description,
-            mimeType: mimeType
+            mimeType: mimeType,
         )
         self.content = content
     }
@@ -51,13 +51,13 @@ public struct BinaryResource: ResourceProvider {
         name: String,
         data: Data,
         description: String? = nil,
-        mimeType: String = "application/octet-stream"
+        mimeType: String = "application/octet-stream",
     ) {
         definition = Resource(
             name: name,
             uri: uri,
             description: description,
-            mimeType: mimeType
+            mimeType: mimeType,
         )
         self.data = data
     }
@@ -77,13 +77,13 @@ public struct FunctionResource: ResourceProvider {
         name: String,
         description: String? = nil,
         mimeType: String? = nil,
-        read: @escaping @Sendable () async throws -> Resource.Contents
+        read: @escaping @Sendable () async throws -> Resource.Contents,
     ) {
         definition = Resource(
             name: name,
             uri: uri,
             description: description,
-            mimeType: mimeType
+            mimeType: mimeType,
         )
         readHandler = read
     }
@@ -111,7 +111,7 @@ public struct FileResource: ResourceProvider {
         name: String? = nil,
         path: String,
         description: String? = nil,
-        mimeType: String? = nil
+        mimeType: String? = nil,
     ) {
         let resolvedUri = uri ?? "file://\(path)"
         let resolvedName = name ?? URL(fileURLWithPath: path).lastPathComponent
@@ -121,7 +121,7 @@ public struct FileResource: ResourceProvider {
             name: resolvedName,
             uri: resolvedUri,
             description: description,
-            mimeType: resolvedMimeType
+            mimeType: resolvedMimeType,
         )
         self.path = path
     }
@@ -209,7 +209,7 @@ public struct DirectoryResource: Sendable {
         path: String,
         uriPrefix: String,
         recursive: Bool = false,
-        allowedExtensions: [String]? = nil
+        allowedExtensions: [String]? = nil,
     ) {
         self.path = path
         self.uriPrefix = uriPrefix
@@ -230,7 +230,7 @@ public struct DirectoryResource: Sendable {
         guard let enumerator = fileManager.enumerator(
             at: directoryURL,
             includingPropertiesForKeys: [.isRegularFileKey],
-            options: options
+            options: options,
         ) else {
             throw MCPError.internalError("Cannot enumerate directory: \(path)")
         }
@@ -258,7 +258,7 @@ public struct DirectoryResource: Sendable {
 
             resources.append(FileResource(
                 uri: uri,
-                path: fileURL.path
+                path: fileURL.path,
             ))
         }
 
@@ -307,14 +307,14 @@ public struct ManagedResourceTemplate: Sendable {
         description: String? = nil,
         mimeType: String? = nil,
         list: (@Sendable () async throws -> [Resource])? = nil,
-        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents
+        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents,
     ) {
         self.uriTemplate = uriTemplate
         definition = Resource.Template(
             uriTemplate: uriTemplate,
             name: name,
             description: description,
-            mimeType: mimeType
+            mimeType: mimeType,
         )
         readHandler = read
         listHandler = list
@@ -329,14 +329,14 @@ public struct ManagedResourceTemplate: Sendable {
         pattern = pattern.replacingOccurrences(
             of: "\\\\\\{([^}]+)\\\\\\}",
             with: "(?<$1>[^/]+)",
-            options: .regularExpression
+            options: .regularExpression,
         )
         pattern = "^" + pattern + "$"
 
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(
                   in: uri,
-                  range: NSRange(uri.startIndex..., in: uri)
+                  range: NSRange(uri.startIndex..., in: uri),
               )
         else {
             return nil
@@ -367,7 +367,7 @@ public struct ManagedResourceTemplate: Sendable {
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
         let matches = regex.matches(
             in: uriTemplate,
-            range: NSRange(uriTemplate.startIndex..., in: uriTemplate)
+            range: NSRange(uriTemplate.startIndex..., in: uriTemplate),
         )
         return matches.compactMap { match in
             guard let range = Range(match.range(at: 1), in: uriTemplate) else { return nil }
@@ -381,13 +381,13 @@ public struct ManagedResourceTemplate: Sendable {
 /// Registry for managing resources and resource templates.
 public actor ResourceRegistry {
     /// Internal storage for static resources.
-    private struct ResourceEntry: Sendable {
+    private struct ResourceEntry {
         let provider: any ResourceProvider
         var enabled: Bool = true
     }
 
     /// Internal storage for resource templates.
-    private struct TemplateEntry: Sendable {
+    private struct TemplateEntry {
         let template: ManagedResourceTemplate
         var enabled: Bool = true
     }
@@ -413,7 +413,7 @@ public actor ResourceRegistry {
     @discardableResult
     public func register(
         _ resource: any ResourceProvider,
-        onListChanged: (@Sendable () async -> Void)? = nil
+        onListChanged: (@Sendable () async -> Void)? = nil,
     ) throws -> RegisteredResource {
         let uri = resource.definition.uri
         guard resources[uri] == nil else {
@@ -441,14 +441,14 @@ public actor ResourceRegistry {
         description: String? = nil,
         mimeType: String? = nil,
         onListChanged: (@Sendable () async -> Void)? = nil,
-        read: @escaping @Sendable () async throws -> Resource.Contents
+        read: @escaping @Sendable () async throws -> Resource.Contents,
     ) throws -> RegisteredResource {
         let resource = FunctionResource(
             uri: uri,
             name: name,
             description: description,
             mimeType: mimeType,
-            read: read
+            read: read,
         )
         return try register(resource, onListChanged: onListChanged)
     }
@@ -465,7 +465,7 @@ public actor ResourceRegistry {
     @discardableResult
     public func register(
         _ template: ManagedResourceTemplate,
-        onListChanged: (@Sendable () async -> Void)? = nil
+        onListChanged: (@Sendable () async -> Void)? = nil,
     ) throws -> RegisteredResourceTemplate {
         guard templates[template.uriTemplate] == nil else {
             throw MCPError.invalidParams("Resource template '\(template.uriTemplate)' is already registered")
@@ -494,7 +494,7 @@ public actor ResourceRegistry {
         mimeType: String? = nil,
         list: (@Sendable () async throws -> [Resource])? = nil,
         onListChanged: (@Sendable () async -> Void)? = nil,
-        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents
+        read: @escaping @Sendable (String, [String: String]) async throws -> Resource.Contents,
     ) throws -> RegisteredResourceTemplate {
         let template = ManagedResourceTemplate(
             uriTemplate: uriTemplate,
@@ -502,7 +502,7 @@ public actor ResourceRegistry {
             description: description,
             mimeType: mimeType,
             list: list,
-            read: read
+            read: read,
         )
         return try register(template, onListChanged: onListChanged)
     }

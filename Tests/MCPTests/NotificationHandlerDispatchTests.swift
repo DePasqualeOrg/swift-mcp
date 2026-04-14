@@ -1,15 +1,13 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for notification handler dispatch behavior.
 ///
 /// Notification handlers are dispatched via AsyncStream (outside the message loop)
 /// so that handlers can make requests back to the server without deadlocking.
-@Suite("Notification Handler Dispatch Tests")
 struct NotificationHandlerDispatchTests {
     // MARK: - Helpers
 
@@ -26,7 +24,7 @@ struct NotificationHandlerDispatchTests {
         let server = Server(
             name: "test-server",
             version: "1.0",
-            capabilities: .init(tools: .init(listChanged: true))
+            capabilities: .init(tools: .init(listChanged: true)),
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -48,21 +46,27 @@ struct NotificationHandlerDispatchTests {
             client: client,
             server: server,
             clientTransport: clientTransport,
-            serverTransport: serverTransport
+            serverTransport: serverTransport,
         )
     }
 
     // MARK: - Handler Makes Protocol Request
 
-    @Test("Handler can call protocol methods without deadlocking",
-          .timeLimit(.minutes(1)))
-    func handlerCanCallProtocolMethods() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Handler can call protocol methods without deadlocking`() async throws {
         let pair = try await createConnectedPair()
 
         actor ResultHolder {
             var tools: [Tool]?
-            func set(_ tools: [Tool]) { self.tools = tools }
-            func get() -> [Tool]? { tools }
+            func set(_ tools: [Tool]) {
+                self.tools = tools
+            }
+
+            func get() -> [Tool]? {
+                tools
+            }
         }
 
         let holder = ResultHolder()
@@ -98,14 +102,19 @@ struct NotificationHandlerDispatchTests {
 
     // MARK: - Multiple Handlers
 
-    @Test("Multiple handlers for the same notification type all execute")
-    func multipleHandlersExecute() async throws {
+    @Test
+    func `Multiple handlers for the same notification type all execute`() async throws {
         let pair = try await createConnectedPair()
 
         actor Counter {
             var count = 0
-            func increment() { count += 1 }
-            func get() -> Int { count }
+            func increment() {
+                count += 1
+            }
+
+            func get() -> Int {
+                count
+            }
         }
 
         let counter1 = Counter()
@@ -142,14 +151,19 @@ struct NotificationHandlerDispatchTests {
 
     // MARK: - Handler Errors
 
-    @Test("Handler errors are logged, not fatal")
-    func handlerErrorsAreNonFatal() async throws {
+    @Test
+    func `Handler errors are logged, not fatal`() async throws {
         let pair = try await createConnectedPair()
 
         actor CallTracker {
             var called = false
-            func markCalled() { called = true }
-            func wasCalled() -> Bool { called }
+            func markCalled() {
+                called = true
+            }
+
+            func wasCalled() -> Bool {
+                called
+            }
         }
 
         let tracker = CallTracker()
@@ -178,8 +192,8 @@ struct NotificationHandlerDispatchTests {
         await pair.client.disconnect()
     }
 
-    @Test("Client continues to function after notification handler throws")
-    func clientContinuesAfterHandlerThrows() async throws {
+    @Test
+    func `Client continues to function after notification handler throws`() async throws {
         let pair = try await createConnectedPair()
 
         // Register a failing handler

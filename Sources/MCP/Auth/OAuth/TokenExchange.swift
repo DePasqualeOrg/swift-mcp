@@ -33,7 +33,7 @@ public func exchangeAuthorizationCode(
     clientAuthMethod: ClientAuthenticationMethod,
     tokenEndpoint: URL,
     resource: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthTokens {
     var request = URLRequest(url: tokenEndpoint)
     request.httpMethod = "POST"
@@ -56,7 +56,7 @@ public func exchangeAuthorizationCode(
         body: &body,
         clientId: clientId,
         clientSecret: clientSecret,
-        method: clientAuthMethod
+        method: clientAuthMethod,
     )
 
     request.httpBody = formURLEncodedBody(body)
@@ -68,14 +68,16 @@ public func exchangeAuthorizationCode(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.authorizationFailed(
-            "Token endpoint returned HTTP \(response.statusCode)")
+            "Token endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
         return try JSONDecoder().decode(OAuthTokens.self, from: data)
     } catch {
         throw OAuthError.authorizationFailed(
-            "Invalid token response: \(error.localizedDescription)")
+            "Invalid token response: \(error.localizedDescription)",
+        )
     }
 }
 
@@ -88,7 +90,7 @@ public func exchangeAuthorizationCode(
 /// - Returns: The token endpoint URL
 public func tokenEndpoint(
     from metadata: OAuthMetadata?,
-    authServerURL: URL
+    authServerURL: URL,
 ) -> URL {
     if let endpoint = metadata?.tokenEndpoint {
         return endpoint
@@ -105,7 +107,7 @@ public func tokenEndpoint(
 /// - Returns: The authorization endpoint URL
 public func authorizationEndpoint(
     from metadata: OAuthMetadata?,
-    authServerURL: URL
+    authServerURL: URL,
 ) -> URL {
     if let endpoint = metadata?.authorizationEndpoint {
         return endpoint

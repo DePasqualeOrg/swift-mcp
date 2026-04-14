@@ -79,7 +79,7 @@ struct Add {
 /// Tools/resources/prompts are registered once and shared across all sessions.
 let mcpServer = MCPServer(
     name: "hummingbird-mcp-example",
-    version: "1.0.0"
+    version: "1.0.0",
 )
 
 /// Register tools using the high-level API
@@ -170,7 +170,7 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
                 status: .serviceUnavailable,
                 message: "Server at capacity",
                 code: ErrorCode.internalError,
-                extraHeaders: headers
+                extraHeaders: headers,
             )
         }
 
@@ -190,8 +190,8 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
                 onSessionClosed: { sessionId in
                     await sessionManager.remove(sessionId)
                     logger.info("Session closed: \(sessionId)")
-                }
-            )
+                },
+            ),
         )
 
         // Create a new Server instance wired to the shared registries
@@ -200,7 +200,7 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
         // Store the session
         await sessionManager.store(
             ExampleSessionManager.Session(server: server, transport: newTransport),
-            forId: newSessionId
+            forId: newSessionId,
         )
         transport = newTransport
 
@@ -211,14 +211,14 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
         return mcpErrorResponse(
             status: .notFound,
             message: "Session expired. Try reconnecting.",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     } else {
         // No session ID and not an initialize request
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
@@ -226,7 +226,7 @@ func handlePost(request: Request, context _: MCPRequestContext) async throws -> 
     let mcpRequest = MCP.HTTPRequest(
         method: "POST",
         headers: extractHeaders(from: request),
-        body: data
+        body: data,
     )
 
     // Handle the request
@@ -242,20 +242,20 @@ func handleGet(request: Request, context _: MCPRequestContext) async throws -> R
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
     guard let session = await sessionManager.session(forId: sessionId) else {
         return mcpErrorResponse(
             status: .notFound,
             message: "Session not found",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
     let mcpRequest = MCP.HTTPRequest(
         method: "GET",
-        headers: extractHeaders(from: request)
+        headers: extractHeaders(from: request),
     )
 
     let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -269,20 +269,20 @@ func handleDelete(request: Request, context _: MCPRequestContext) async throws -
         return mcpErrorResponse(
             status: .badRequest,
             message: "Missing \(HTTPHeader.sessionId) header",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
     guard let session = await sessionManager.session(forId: sessionId) else {
         return mcpErrorResponse(
             status: .notFound,
             message: "Session not found",
-            code: ErrorCode.invalidRequest
+            code: ErrorCode.invalidRequest,
         )
     }
 
     let mcpRequest = MCP.HTTPRequest(
         method: "DELETE",
-        headers: extractHeaders(from: request)
+        headers: extractHeaders(from: request),
     )
 
     let mcpResponse = await session.transport.handleRequest(mcpRequest)
@@ -330,7 +330,7 @@ func buildResponse(from mcpResponse: MCP.HTTPResponse) -> Response {
         return Response(
             status: status,
             headers: responseHeaders,
-            body: responseBody
+            body: responseBody,
         )
     } else if let body = mcpResponse.body {
         if responseHeaders[contentTypeName] == nil {
@@ -340,13 +340,13 @@ func buildResponse(from mcpResponse: MCP.HTTPResponse) -> Response {
         return Response(
             status: status,
             headers: responseHeaders,
-            body: .init(byteBuffer: .init(data: body))
+            body: .init(byteBuffer: .init(data: body)),
         )
     } else {
         // No content (e.g., 202 Accepted for notifications)
         return Response(
             status: status,
-            headers: responseHeaders
+            headers: responseHeaders,
         )
     }
 }
@@ -355,7 +355,7 @@ func mcpErrorResponse(
     status: HTTPResponse.Status,
     message: String,
     code: Int = ErrorCode.internalError,
-    extraHeaders: HTTPFields = HTTPFields()
+    extraHeaders: HTTPFields = HTTPFields(),
 ) -> Response {
     var headers = extraHeaders
     let contentTypeName = HTTPField.Name(HTTPHeader.contentType)!
@@ -366,12 +366,12 @@ func mcpErrorResponse(
     return Response(
         status: status,
         headers: headers,
-        body: .init(byteBuffer: .init(data: bodyData))
+        body: .init(byteBuffer: .init(data: bodyData)),
     )
 }
 
 /// Async sequence wrapper for SSE stream
-struct SSEResponseSequence: AsyncSequence, Sendable {
+struct SSEResponseSequence: AsyncSequence {
     typealias Element = ByteBuffer
 
     let stream: AsyncThrowingStream<Data, Error>
@@ -416,7 +416,7 @@ struct HummingbirdMCPExample {
         // Create and run application
         let app = Application(
             router: router,
-            configuration: .init(address: .hostname(serverHost, port: serverPort))
+            configuration: .init(address: .hostname(serverHost, port: serverPort)),
         )
 
         logger.info("Starting MCP server on http://\(serverHost):\(serverPort)/mcp")

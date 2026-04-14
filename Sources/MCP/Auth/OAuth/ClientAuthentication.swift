@@ -43,7 +43,7 @@ public func applyClientAuthentication(
     body: inout [String: String],
     clientId: String,
     clientSecret: String?,
-    method: ClientAuthenticationMethod
+    method: ClientAuthenticationMethod,
 ) throws {
     switch method {
         case .none:
@@ -54,7 +54,8 @@ public func applyClientAuthentication(
             // HTTP Basic: Authorization: Basic base64(urlEncode(id):urlEncode(secret))
             guard let clientSecret else {
                 throw OAuthError.invalidClient(
-                    "client_secret_basic authentication requires a client secret")
+                    "client_secret_basic authentication requires a client secret",
+                )
             }
             let encodedId =
                 clientId.addingPercentEncoding(withAllowedCharacters: .urlQueryValueAllowed) ?? clientId
@@ -70,7 +71,8 @@ public func applyClientAuthentication(
             body["client_id"] = clientId
             guard let clientSecret else {
                 throw OAuthError.invalidClient(
-                    "client_secret_post authentication requires a client secret")
+                    "client_secret_post authentication requires a client secret",
+                )
             }
             body["client_secret"] = clientSecret
     }
@@ -91,7 +93,7 @@ public func applyClientAuthentication(
 public func selectClientAuthenticationMethod(
     serverSupported: [String]?,
     clientPreferred: String?,
-    hasClientSecret: Bool = false
+    hasClientSecret: Bool = false,
 ) -> ClientAuthenticationMethod {
     // RFC 8414 §2: default is client_secret_basic if not specified
     let supported = serverSupported ?? ["client_secret_basic"]

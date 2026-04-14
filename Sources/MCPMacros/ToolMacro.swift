@@ -11,7 +11,13 @@ import SwiftSyntaxMacros
 /// - `static let name: String` — The tool name
 /// - `static let description: String` — The tool description
 /// - `static let annotations: [AnnotationOption]` (optional) — Tool behavior annotations
-/// - `static let strictSchema: Bool` (optional) — Strict JSON Schema flag (defaults to `false`)
+/// - `static let strictSchema: Bool` (optional) — Opt-in assertion that the tool's
+///   schema is strict JSON Schema-compatible. Defaults to `false`. When set to `true`,
+///   the generated `toolDefinition` accessor traps at first access (typically when the
+///   tool is registered) if the schema is not strict-compatible. The MCP wire format
+///   accepts any valid JSON Schema for tool inputs; this flag is purely a
+///   declaration-site self-check for tools shared with hosts that enforce a stricter
+///   subset.
 /// - Properties with `@Parameter` attribute — Tool parameters
 /// - `func perform()` or `func perform(context:)` — The execution method
 ///
@@ -28,7 +34,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         of _: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
         conformingTo _: [TypeSyntax],
-        in context: some MacroExpansionContext
+        in context: some MacroExpansionContext,
     ) throws -> [DeclSyntax] {
         // Ensure we're applied to a struct
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -94,7 +100,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         // Generate toolDefinition
         let toolDefinitionDecl = generateToolDefinition(
             toolInfo: toolInfo,
-            accessPrefix: accessPrefix
+            accessPrefix: accessPrefix,
         )
         members.append(toolDefinitionDecl)
 
@@ -112,7 +118,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo _: [TypeSyntax],
-        in context: some MacroExpansionContext
+        in context: some MacroExpansionContext,
     ) throws -> [ExtensionDeclSyntax] {
         // Validate before adding conformance
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
@@ -257,11 +263,11 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     private static func diagnoseAndAbort(
         message: String,
         node: some SyntaxProtocol,
-        in context: some MacroExpansionContext
+        in context: some MacroExpansionContext,
     ) throws -> Never {
         context.diagnose(Diagnostic(
             node: Syntax(node),
-            message: ToolMacroDiagnostic.error(message)
+            message: ToolMacroDiagnostic.error(message),
         ))
         throw AbortMacroExpansion()
     }
@@ -294,7 +300,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     private static func extractToolInfo(
         from structDecl: StructDeclSyntax,
-        context: some MacroExpansionContext
+        context: some MacroExpansionContext,
     ) throws -> ToolInfo {
         var name: String?
         var nameSyntax: SyntaxProtocol?
@@ -320,7 +326,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     try diagnoseAndAbort(
                         message: "@Parameter cannot be applied to static property '\(propName)'. Tool parameters must be instance properties.",
                         node: varDecl,
-                        in: context
+                        in: context,
                     )
                 }
 
@@ -387,7 +393,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                     try diagnoseAndAbort(
                         message: "@Tool requires 'perform()' to be an instance method, not static.",
                         node: funcDecl.name,
-                        in: context
+                        in: context,
                     )
                 }
                 performDecl = funcDecl
@@ -421,7 +427,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             try diagnoseAndAbort(
                 message: "@Tool requires 'perform()' to take no arguments besides an optional 'context: HandlerContext'. Use '@Parameter' properties on the struct to declare inputs.",
                 node: performDecl.signature.parameterClause,
-                in: context
+                in: context,
             )
         }
         if let contextParam = contextParams.first {
@@ -430,7 +436,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                 try diagnoseAndAbort(
                     message: "The 'context' parameter of 'perform()' must be of type 'HandlerContext' (or 'MCP.HandlerContext'); got '\(typeName)'.",
                     node: contextParam.type,
-                    in: context
+                    in: context,
                 )
             }
         }
@@ -440,21 +446,21 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             try diagnoseAndAbort(
                 message: "@Tool requires 'perform()' to be marked 'async'",
                 node: performDecl.name,
-                in: context
+                in: context,
             )
         }
         if performDecl.signature.effectSpecifiers?.throwsClause == nil {
             try diagnoseAndAbort(
                 message: "@Tool requires 'perform()' to be marked 'throws'",
                 node: performDecl.name,
-                in: context
+                in: context,
             )
         }
         if performDecl.signature.returnClause == nil {
             try diagnoseAndAbort(
                 message: "@Tool requires 'perform()' to return a value conforming to 'ToolOutput'",
                 node: performDecl.name,
-                in: context
+                in: context,
             )
         }
 
@@ -468,8 +474,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             context.diagnose(Diagnostic(
                 node: Syntax(performDecl),
                 message: ToolMacroDiagnostic.warning(
-                    "'perform()' has more restrictive access (\(accessLevelName(performAccess))) than the enclosing struct (\(accessLevelName(structAccess))). If the return type is similarly restricted, the generated '_perform()' bridge will fail to compile."
-                )
+                    "'perform()' has more restrictive access (\(accessLevelName(performAccess))) than the enclosing struct (\(accessLevelName(structAccess))). If the return type is similarly restricted, the generated '_perform()' bridge will fail to compile.",
+                ),
             ))
         }
 
@@ -487,8 +493,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                 context.diagnose(Diagnostic(
                     node: Syntax(node),
                     message: ToolMacroDiagnostic.error(
-                        "Duplicate @Parameter key '\(param.jsonKey)'. Each @Parameter key must be unique."
-                    )
+                        "Duplicate @Parameter key '\(param.jsonKey)'. Each @Parameter key must be unique.",
+                    ),
                 ))
             }
             throw AbortMacroExpansion()
@@ -500,7 +506,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         {
             context.diagnose(Diagnostic(
                 node: Syntax(syntax),
-                message: ToolMacroDiagnostic.warning(styleWarning)
+                message: ToolMacroDiagnostic.warning(styleWarning),
             ))
         }
 
@@ -514,7 +520,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             outputType: outputType,
             annotations: annotations,
             strictSchema: strictSchema,
-            hasContextParameter: hasContextParameter
+            hasContextParameter: hasContextParameter,
         )
     }
 
@@ -545,7 +551,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     private static func validateAnnotations(
         _ annotations: [String],
         syntax: SyntaxProtocol?,
-        context: some MacroExpansionContext
+        context: some MacroExpansionContext,
     ) throws {
         // Check for duplicates
         var seen: Set<String> = []
@@ -562,8 +568,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                 context.diagnose(Diagnostic(
                     node: Syntax(syntax),
                     message: ToolMacroDiagnostic.warning(
-                        "'.idempotent' is redundant when '.readOnly' is specified (readOnly implies idempotent)"
-                    )
+                        "'.idempotent' is redundant when '.readOnly' is specified (readOnly implies idempotent)",
+                    ),
                 ))
             }
         }
@@ -572,7 +578,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
     private static func extractParameterInfo(
         from varDecl: VariableDeclSyntax,
         binding: PatternBindingSyntax,
-        context _: some MacroExpansionContext
+        context _: some MacroExpansionContext,
     ) throws -> ParameterInfo? {
         guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
             return nil
@@ -673,7 +679,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             maxLength: maxLength,
             minimum: minimum,
             maximum: maximum,
-            declSyntax: varDecl
+            declSyntax: varDecl,
         )
     }
 
@@ -681,103 +687,55 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
 
     private static func generateToolDefinition(
         toolInfo: ToolInfo,
-        accessPrefix: String
+        accessPrefix: String,
     ) -> DeclSyntax {
-        // Generate properties for each parameter
-        var propertiesEntries: [String] = []
-
-        for param in toolInfo.parameters {
-            var propEntries: [String] = []
-
-            // Get base type for schema
-            let baseType = param.typeName
-            let schemaType = getJSONSchemaType(for: baseType)
-
-            // Use nullable type for optional params and default params in strict mode
-            if param.isOptional || (toolInfo.strictSchema && param.hasDefault) {
-                propEntries.append(
-                    "\"type\": .array([.string(\"\(schemaType)\"), .string(\"null\")])")
+        let descriptorEntries = toolInfo.parameters.map { param in
+            let defaultValueLiteral = if let defaultVal = param.defaultValue {
+                convertToValueLiteral(defaultVal, type: param.typeName)
             } else {
-                propEntries.append("\"type\": .string(\"\(schemaType)\")")
+                "nil"
             }
+            let titleLiteral = param.title.map { "\"\($0)\"" } ?? "nil"
+            let descriptionLiteral = param.description.map { "\"\($0)\"" } ?? "nil"
+            let minLengthLiteral = param.minLength ?? "nil"
+            let maxLengthLiteral = param.maxLength ?? "nil"
+            let minimumLiteral = param.minimum ?? "nil"
+            let maximumLiteral = param.maximum ?? "nil"
 
-            if let title = param.title {
-                propEntries.append("\"title\": .string(\"\(title)\")")
-            }
+            return """
+            MCPTool.ToolMacroSupport.makeSchemaParameterDescriptor(
+                name: "\(param.jsonKey)",
+                title: \(titleLiteral),
+                description: \(descriptionLiteral),
+                schema: \(param.typeName).schema,
+                isOptional: \(param.isOptional),
+                hasDefault: \(param.hasDefault),
+                defaultValue: \(defaultValueLiteral),
+                minLength: \(minLengthLiteral),
+                maxLength: \(maxLengthLiteral),
+                minimum: \(minimumLiteral),
+                maximum: \(maximumLiteral)
+            )
+            """
+        }.joined(separator: ",\n                ")
 
-            if let desc = param.description {
-                propEntries.append("\"description\": .string(\"\(desc)\")")
-            }
+        let descriptorsLiteral = descriptorEntries.isEmpty ? "[]" : "[\n                \(descriptorEntries)\n            ]"
 
-            // Add type-specific properties
-            let additionalProps = getJSONSchemaProperties(for: baseType)
-            for (key, value) in additionalProps {
-                propEntries.append("\"\(key)\": \(value)")
-            }
-
-            // Add constraints
-            if let minLen = param.minLength {
-                propEntries.append("\"minLength\": .int(\(minLen))")
-            }
-            if let maxLen = param.maxLength {
-                propEntries.append("\"maxLength\": .int(\(maxLen))")
-            }
-            if let min = param.minimum {
-                propEntries.append("\"minimum\": .double(\(min))")
-            }
-            if let max = param.maximum {
-                propEntries.append("\"maximum\": .double(\(max))")
-            }
-
-            // Add default value if present
-            if let defaultVal = param.defaultValue {
-                let defaultExpr = convertToValueLiteral(defaultVal, type: baseType)
-                propEntries.append("\"default\": \(defaultExpr)")
-            }
-
-            // Merge in runtime jsonSchemaProperties for enums and other custom types
-            let propObject = ".object([\(propEntries.joined(separator: ", "))].merging(\(baseType).jsonSchemaProperties) { _, new in new })"
-            propertiesEntries.append("\"\(param.jsonKey)\": \(propObject)")
-        }
-
-        let propertiesStr = propertiesEntries.joined(separator: ", ")
-
-        // Required fields
-        let requiredFields: [String] = if toolInfo.strictSchema {
-            // Strict mode: all properties must be required (optionality expressed via nullable types)
-            toolInfo.parameters.map { ".string(\"\($0.jsonKey)\")" }
-        } else {
-            toolInfo.parameters
-                .filter { !$0.isOptional && !$0.hasDefault }
-                .map { ".string(\"\($0.jsonKey)\")" }
-        }
-        let requiredStr = requiredFields.joined(separator: ", ")
-
-        // Handle empty properties - use [:] for empty dictionary literal
-        let propertiesLiteral = propertiesStr.isEmpty ? "[:]" : "[\n            \(propertiesStr)\n        ]"
-
-        // Build schema entries
-        var schemaEntries = [
-            "\"type\": .string(\"object\")",
-            "\"properties\": .object(\(propertiesLiteral))",
-            "\"required\": .array([\(requiredStr)])",
-        ]
-
-        // Add additionalProperties: false if strictSchema is enabled
-        if toolInfo.strictSchema {
-            schemaEntries.append("\"additionalProperties\": .bool(false)")
-        }
-
-        let schemaLiteral = schemaEntries.joined(separator: ",\n                    ")
-
+        let strictValidationStmt = toolInfo.strictSchema
+            ? "// try! is intentional: a strict-schema mismatch is a programmer error, trap loudly.\n            try! MCPTool.ToolMacroSupport.validateStrictCompatibility(_schema, toolName: name)\n            "
+            : ""
         return """
         \(raw: accessPrefix)static var toolDefinition: MCP.Tool {
-            MCP.Tool(
+            // try! is intentional: schema-build failures here (e.g. duplicate parameter names)
+            // are programmer errors that should trap at registration rather than silently
+            // shipping an empty schema to clients.
+            let _schema = try! MCPTool.ToolMacroSupport.buildObjectSchema(
+                parameters: \(raw: descriptorsLiteral)
+            )
+            \(raw: strictValidationStmt)return MCP.Tool(
                 name: name,
                 description: description,
-                inputSchema: .object([
-                    \(raw: schemaLiteral)
-                ]),
+                inputSchema: .object(_schema),
                 outputSchema: outputSchema(for: Output.self),
                 annotations: AnnotationOption.buildAnnotations(from: annotations)
             )
@@ -803,21 +761,23 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             let type = param.typeName
 
             if param.isOptional {
-                // Optional: use flatMap with explicit type
+                // Optional: parse only if present and non-null; leave as nil otherwise.
                 parseStatements.append(
-                    "_instance.\(prop) = _args[\"\(key)\"].flatMap(\(type).init(parameterValue:))"
+                    "if let _value = _args[\"\(key)\"], !_value.isNull { _instance.\(prop) = try MCPTool.ToolMacroSupport.parseParameter(\(type).schema, from: _value, parameterName: \"\(key)\") }",
                 )
             } else if param.hasDefault {
-                // Has default: only use default if key is absent or null; throw if wrong type
+                // Has default: only parse if key is present and non-null; otherwise keep the struct's default.
                 parseStatements.append(
-                    "if let _value = _args[\"\(key)\"], !_value.isNull { guard let _parsed = \(type)(parameterValue: _value) else { throw MCPError.invalidParams(\"Invalid type for '\(key)': expected \(type)\") }; _instance.\(prop) = _parsed }"
+                    "if let _value = _args[\"\(key)\"], !_value.isNull { _instance.\(prop) = try MCPTool.ToolMacroSupport.parseParameter(\(type).schema, from: _value, parameterName: \"\(key)\") }",
                 )
             } else {
-                // Required: guard and throw - generate two separate statements
+                // Required: must be present; parse throws with detail if the value shape is wrong.
                 parseStatements.append(
-                    "guard let _\(prop)Value = _args[\"\(key)\"], let _\(prop) = \(type)(parameterValue: _\(prop)Value) else { throw MCPError.invalidParams(\"Invalid type for '\(key)': expected \(type)\") }"
+                    "guard let _\(prop)Value = _args[\"\(key)\"] else { throw MCPError.invalidParams(\"Missing required parameter '\(key)'\") }",
                 )
-                parseStatements.append("_instance.\(prop) = _\(prop)")
+                parseStatements.append(
+                    "_instance.\(prop) = try MCPTool.ToolMacroSupport.parseParameter(\(type).schema, from: _\(prop)Value, parameterName: \"\(key)\")",
+                )
             }
         }
 
@@ -831,123 +791,6 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
             return _instance
         }
         """
-    }
-
-    // MARK: - Type Mapping Helpers
-
-    /// Checks if a type string represents a dictionary type `[Key: Value]` at the top level.
-    /// This properly handles nested types like `[[String: String]]` (array of dictionaries).
-    private static func isDictionaryType(_ inner: String) -> Bool {
-        // Find colon that's at the top level (not inside nested brackets)
-        var bracketDepth = 0
-        for char in inner {
-            switch char {
-                case "[": bracketDepth += 1
-                case "]": bracketDepth -= 1
-                case ":":
-                    // Only count as dictionary if colon is at top level
-                    if bracketDepth == 0 {
-                        return true
-                    }
-                default: break
-            }
-        }
-        return false
-    }
-
-    /// Extracts the value type from a dictionary type string `[Key: Value]`.
-    /// Returns nil if not a valid dictionary type.
-    private static func extractDictionaryValueType(_ inner: String) -> String? {
-        var bracketDepth = 0
-        for (index, char) in inner.enumerated() {
-            switch char {
-                case "[": bracketDepth += 1
-                case "]": bracketDepth -= 1
-                case ":":
-                    if bracketDepth == 0 {
-                        let afterColon = inner.index(inner.startIndex, offsetBy: index + 1)
-                        return String(inner[afterColon...]).trimmingCharacters(in: .whitespaces)
-                    }
-                default: break
-            }
-        }
-        return nil
-    }
-
-    private static func getJSONSchemaType(for swiftType: String) -> String {
-        switch swiftType {
-            case "String": return "string"
-            case "Int": return "integer"
-            case "Double": return "number"
-            case "Bool": return "boolean"
-            case "Date": return "string"
-            case "Data": return "string"
-            default:
-                // Check for collection types [T] or [K: V]
-                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
-                    let inner = String(swiftType.dropFirst().dropLast())
-                    // Dictionary type [String: T] - check for top-level colon only
-                    if isDictionaryType(inner) {
-                        return "object"
-                    }
-                    // Array type [T] (including nested arrays like [[String: String]])
-                    return "array"
-                }
-                // Could be an enum or other type - default to string
-                return "string"
-        }
-    }
-
-    private static func getJSONSchemaProperties(for swiftType: String) -> [(String, String)] {
-        switch swiftType {
-            case "Date":
-                return [("format", ".string(\"date-time\")")]
-            case "Data":
-                return [("contentEncoding", ".string(\"base64\")")]
-            default:
-                // Check for collection types [T] or [K: V]
-                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
-                    let inner = String(swiftType.dropFirst().dropLast())
-                    // Dictionary type [String: T] - check for top-level colon only
-                    if let valueType = extractDictionaryValueType(inner) {
-                        let valueSchema = generateSchemaObject(for: valueType)
-                        return [("additionalProperties", valueSchema)]
-                    }
-                    // Array type [T] - use recursive schema generation for nested arrays
-                    let elementSchema = generateSchemaObject(for: inner)
-                    return [("items", elementSchema)]
-                }
-                return []
-        }
-    }
-
-    /// Generates a complete schema object string for a Swift type, handling nested types recursively.
-    private static func generateSchemaObject(for swiftType: String) -> String {
-        let schemaType = getJSONSchemaType(for: swiftType)
-        var parts = ["\"type\": .string(\"\(schemaType)\")"]
-
-        // Add type-specific properties
-        switch swiftType {
-            case "Date":
-                parts.append("\"format\": .string(\"date-time\")")
-            case "Data":
-                parts.append("\"contentEncoding\": .string(\"base64\")")
-            default:
-                if swiftType.hasPrefix("["), swiftType.hasSuffix("]") {
-                    let inner = String(swiftType.dropFirst().dropLast())
-                    // Dictionary type [String: T] - check for top-level colon only
-                    if let valueType = extractDictionaryValueType(inner) {
-                        let valueSchema = generateSchemaObject(for: valueType)
-                        parts.append("\"additionalProperties\": \(valueSchema)")
-                    } else {
-                        // Array [T] (including nested arrays)
-                        let elementSchema = generateSchemaObject(for: inner)
-                        parts.append("\"items\": \(elementSchema)")
-                    }
-                }
-        }
-
-        return ".object([\(parts.joined(separator: ", "))])"
     }
 
     private static func convertToValueLiteral(_ value: String, type: String) -> String {
@@ -1027,7 +870,7 @@ struct ToolMacroDiagnostic: DiagnosticMessage {
         ToolMacroDiagnostic(
             message: message,
             diagnosticID: MessageID(domain: "ToolMacro", id: "warning"),
-            severity: .warning
+            severity: .warning,
         )
     }
 
@@ -1035,7 +878,7 @@ struct ToolMacroDiagnostic: DiagnosticMessage {
         ToolMacroDiagnostic(
             message: message,
             diagnosticID: MessageID(domain: "ToolMacro", id: "error"),
-            severity: .error
+            severity: .error,
         )
     }
 }
@@ -1098,7 +941,7 @@ extension ToolMacro {
 extension ToolMacro {
     /// Valid characters for tool names: A-Z, a-z, 0-9, _, -, .
     private static let validToolNameCharacters = CharacterSet(
-        charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-."
+        charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.",
     )
 
     /// Validates a tool name and returns an error message if invalid, or nil if valid.

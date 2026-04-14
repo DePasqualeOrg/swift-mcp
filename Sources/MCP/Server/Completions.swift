@@ -96,7 +96,7 @@ extension CompletionReference: Codable {
             default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .type, in: container,
-                    debugDescription: "Unknown reference type: \(type)"
+                    debugDescription: "Unknown reference type: \(type)",
                 )
         }
     }
@@ -255,7 +255,7 @@ public enum Complete: Method {
             ref: CompletionReference,
             argument: CompletionArgument,
             context: CompletionContext? = nil,
-            _meta: RequestMeta? = nil
+            _meta: RequestMeta? = nil,
         ) {
             self.ref = ref
             self.argument = argument
@@ -288,7 +288,7 @@ public enum Complete: Method {
         public init(
             completion: CompletionSuggestions,
             _meta: [String: Value]? = nil,
-            extraFields: [String: Value]? = nil
+            extraFields: [String: Value]? = nil,
         ) {
             self.completion = completion
             self._meta = _meta

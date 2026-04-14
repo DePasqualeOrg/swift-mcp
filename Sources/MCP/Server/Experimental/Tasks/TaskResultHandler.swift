@@ -49,7 +49,7 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
     public func handle(
         taskId: String,
         sessionId: String,
-        sendMessage: @Sendable (Data) async throws -> Void
+        sendMessage: @Sendable (Data) async throws -> Void,
     ) async throws -> GetTaskPayload.Result {
         while true {
             // Check task exists
@@ -70,7 +70,7 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
                 // Flatten result fields into extraFields
                 return GetTaskPayload.Result(
                     fromResultValue: result,
-                    _meta: relatedTaskMeta
+                    _meta: relatedTaskMeta,
                 )
             }
 
@@ -86,7 +86,7 @@ public final class TaskResultHandler: Sendable, ResponseRouter {
     ///   - sendMessage: Closure to send messages to the client
     private func deliverQueuedMessages(
         taskId: String,
-        sendMessage: @Sendable (Data) async throws -> Void
+        sendMessage: @Sendable (Data) async throws -> Void,
     ) async throws {
         while let message = await queue.dequeue(taskId: taskId) {
             // Send the message to the client

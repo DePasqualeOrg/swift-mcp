@@ -22,7 +22,7 @@ public struct RequestMeta: Hashable, Codable, Sendable {
 
     public init(
         progressToken: ProgressToken? = nil,
-        additionalFields: [String: Value]? = nil
+        additionalFields: [String: Value]? = nil,
     ) {
         self.progressToken = progressToken
         self.additionalFields = additionalFields
@@ -61,7 +61,9 @@ public struct RequestMeta: Hashable, Codable, Sendable {
 
     private struct DynamicCodingKey: CodingKey {
         var stringValue: String
-        var intValue: Int? { nil }
+        var intValue: Int? {
+            nil
+        }
 
         init?(stringValue: String) {
             self.stringValue = stringValue
@@ -126,8 +128,8 @@ extension ProgressToken: Codable {
                 ProgressToken.self,
                 DecodingError.Context(
                     codingPath: decoder.codingPath,
-                    debugDescription: "Expected string or integer for ProgressToken"
-                )
+                    debugDescription: "Expected string or integer for ProgressToken",
+                ),
             )
         }
     }
@@ -185,7 +187,7 @@ public struct ProgressNotification: Notification {
             progress: Double,
             total: Double? = nil,
             message: String? = nil,
-            _meta: [String: Value]? = nil
+            _meta: [String: Value]? = nil,
         ) {
             self.progressToken = progressToken
             self.progress = progress
@@ -271,7 +273,7 @@ public actor ProgressTracker {
     public init(
         token: ProgressToken,
         total: Double? = nil,
-        context: RequestHandlerContext
+        context: RequestHandlerContext,
     ) {
         self.token = token
         self.total = total
@@ -289,7 +291,7 @@ public actor ProgressTracker {
             token: token,
             progress: current,
             total: total,
-            message: message
+            message: message,
         )
     }
 
@@ -307,7 +309,7 @@ public actor ProgressTracker {
             token: token,
             progress: current,
             total: total,
-            message: message
+            message: message,
         )
     }
 
@@ -321,7 +323,7 @@ public actor ProgressTracker {
             token: token,
             progress: current,
             total: total,
-            message: message
+            message: message,
         )
     }
 }

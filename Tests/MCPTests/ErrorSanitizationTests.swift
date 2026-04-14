@@ -1,13 +1,11 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests that the server sanitizes errors from resource and prompt handlers
 /// before sending them to clients, preventing leakage of sensitive information.
-@Suite("Error Sanitization Tests")
 struct ErrorSanitizationTests {
     /// Set up an MCPServer with a connected client for testing error responses.
     private func makeConnectedPair() async throws -> (MCPServer, Client) {
@@ -26,15 +24,14 @@ struct ErrorSanitizationTests {
     // MARK: - Resource Error Sanitization
 
     @Test(
-        "Resource provider throwing non-MCPError returns sanitized message",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func resourceNonMCPErrorSanitized() async throws {
+    func `Resource provider throwing non-MCPError returns sanitized message`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         _ = try await mcpServer.registerResource(
             uri: "test://sensitive",
-            name: "sensitive_resource"
+            name: "sensitive_resource",
         ) {
             throw URLError(.badServerResponse)
         }
@@ -51,15 +48,14 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Resource provider throwing MCPError with sensitive details returns sanitized message",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func resourceMCPErrorWithSensitiveDetailsSanitized() async throws {
+    func `Resource provider throwing MCPError with sensitive details returns sanitized message`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         _ = try await mcpServer.registerResource(
             uri: "test://db-resource",
-            name: "db_resource"
+            name: "db_resource",
         ) {
             throw MCPError.internalError("Database connection failed: host=prod-db.internal:5432 user=admin password=secret123")
         }
@@ -79,16 +75,15 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Resource not found is forwarded unchanged",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func resourceNotFoundForwardedUnchanged() async throws {
+    func `Resource not found is forwarded unchanged`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         // Register a resource so the server has resource capability
         _ = try await mcpServer.registerResource(
             uri: "test://exists",
-            name: "existing_resource"
+            name: "existing_resource",
         ) {
             .text("data", uri: "test://exists")
         }
@@ -105,15 +100,14 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Disabled resource returns invalidParams unchanged",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func disabledResourceForwardedUnchanged() async throws {
+    func `Disabled resource returns invalidParams unchanged`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         let resource = try await mcpServer.registerResource(
             uri: "test://disableable",
-            name: "disableable_resource"
+            name: "disableable_resource",
         ) {
             .text("data", uri: "test://disableable")
         }
@@ -132,15 +126,14 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Resource template provider error is sanitized",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func resourceTemplateErrorSanitized() async throws {
+    func `Resource template provider error is sanitized`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         _ = try await mcpServer.registerResourceTemplate(
             uriTemplate: "db://tables/{table}",
-            name: "database_table"
+            name: "database_table",
         ) { _, variables in
             let table = variables["table"] ?? "unknown"
             throw MCPError.internalError("Access denied to table '\(table)' for user admin@prod-db.internal")
@@ -161,15 +154,14 @@ struct ErrorSanitizationTests {
     // MARK: - Prompt Error Sanitization
 
     @Test(
-        "Prompt handler throwing error returns sanitized message",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func promptHandlerErrorSanitized() async throws {
+    func `Prompt handler throwing error returns sanitized message`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         _ = try await mcpServer.registerPrompt(
             name: "sensitive_prompt",
-            description: "A prompt that fails"
+            description: "A prompt that fails",
         ) { _, _ in
             throw MCPError.internalError("API key sk-1234567890abcdef expired for tenant acme-corp")
         }
@@ -188,15 +180,14 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Prompt handler throwing non-MCPError returns sanitized message",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func promptNonMCPErrorSanitized() async throws {
+    func `Prompt handler throwing non-MCPError returns sanitized message`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         _ = try await mcpServer.registerPrompt(
             name: "failing_prompt",
-            description: "A prompt that fails"
+            description: "A prompt that fails",
         ) { _, _ in
             throw URLError(.notConnectedToInternet)
         }
@@ -213,15 +204,14 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Unknown prompt returns invalidParams unchanged",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func unknownPromptForwardedUnchanged() async throws {
+    func `Unknown prompt returns invalidParams unchanged`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         // Register a prompt so the server has prompt capability
         _ = try await mcpServer.registerPrompt(
-            name: "existing_prompt"
+            name: "existing_prompt",
         ) {
             [.user(.text("Hello"))]
         }
@@ -238,14 +228,13 @@ struct ErrorSanitizationTests {
     }
 
     @Test(
-        "Disabled prompt returns invalidParams unchanged",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func disabledPromptForwardedUnchanged() async throws {
+    func `Disabled prompt returns invalidParams unchanged`() async throws {
         let (mcpServer, client) = try await makeConnectedPair()
 
         let prompt = try await mcpServer.registerPrompt(
-            name: "disabled_prompt"
+            name: "disabled_prompt",
         ) {
             [.user(.text("Hello"))]
         }

@@ -12,13 +12,12 @@ import System
 
 @testable import MCP
 
-@Suite("Resource Subscription Tests")
 struct ResourceSubscriptionTests {
     // MARK: - End-to-End Subscribe Tests
 
-    @Test("Client can subscribe to a resource when server supports subscriptions")
+    @Test
     @available(macOS 14.0, *)
-    func subscribeToResourceWorks() async throws {
+    func `Client can subscribe to a resource when server supports subscriptions`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -28,12 +27,12 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let subscriptionTracker = SubscriptionTracker()
@@ -41,7 +40,7 @@ struct ResourceSubscriptionTests {
         let server = Server(
             name: "SubscriptionServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: true))
+            capabilities: .init(resources: .init(subscribe: true)),
         )
 
         // Handle resource subscription requests
@@ -71,9 +70,9 @@ struct ResourceSubscriptionTests {
         #expect(subscriptions.first == "file:///test.txt")
     }
 
-    @Test("Client can unsubscribe from a resource when server supports subscriptions")
+    @Test
     @available(macOS 14.0, *)
-    func unsubscribeFromResourceWorks() async throws {
+    func `Client can unsubscribe from a resource when server supports subscriptions`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -83,12 +82,12 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let subscriptionTracker = SubscriptionTracker()
@@ -96,7 +95,7 @@ struct ResourceSubscriptionTests {
         let server = Server(
             name: "UnsubscriptionServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: true))
+            capabilities: .init(resources: .init(subscribe: true)),
         )
 
         // Handle resource unsubscription requests
@@ -126,9 +125,9 @@ struct ResourceSubscriptionTests {
         #expect(unsubscriptions.first == "file:///test.txt")
     }
 
-    @Test("Subscribe and unsubscribe cycle works correctly")
+    @Test
     @available(macOS 14.0, *)
-    func subscribeUnsubscribeCycleWorks() async throws {
+    func `Subscribe and unsubscribe cycle works correctly`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -138,12 +137,12 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let subscriptionTracker = SubscriptionTracker()
@@ -151,7 +150,7 @@ struct ResourceSubscriptionTests {
         let server = Server(
             name: "SubscriptionCycleServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: true))
+            capabilities: .init(resources: .init(subscribe: true)),
         )
 
         await server.withRequestHandler(ResourceSubscribe.self) { request, _ in
@@ -196,9 +195,9 @@ struct ResourceSubscriptionTests {
 
     // MARK: - Capability Validation Tests
 
-    @Test("Subscribe throws when server does not support subscriptions")
+    @Test
     @available(macOS 14.0, *)
-    func subscribeThrowsWithoutCapability() async throws {
+    func `Subscribe throws when server does not support subscriptions`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -208,19 +207,19 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         // Server with resources capability but WITHOUT subscribe
         let server = Server(
             name: "NoSubscribeServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: false))
+            capabilities: .init(resources: .init(subscribe: false)),
         )
 
         await server.withRequestHandler(ListResources.self) { _, _ in
@@ -233,7 +232,7 @@ struct ResourceSubscriptionTests {
         let client = Client(
             name: "StrictClient",
             version: "1.0",
-            configuration: .init(strict: true)
+            configuration: .init(strict: true),
         )
 
         try await server.start(transport: serverTransport)
@@ -245,9 +244,9 @@ struct ResourceSubscriptionTests {
         }
     }
 
-    @Test("Unsubscribe throws when server does not support subscriptions")
+    @Test
     @available(macOS 14.0, *)
-    func unsubscribeThrowsWithoutCapability() async throws {
+    func `Unsubscribe throws when server does not support subscriptions`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -257,19 +256,19 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         // Server with resources capability but WITHOUT subscribe
         let server = Server(
             name: "NoUnsubscribeServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: false))
+            capabilities: .init(resources: .init(subscribe: false)),
         )
 
         await server.withRequestHandler(ListResources.self) { _, _ in
@@ -282,7 +281,7 @@ struct ResourceSubscriptionTests {
         let client = Client(
             name: "StrictClient",
             version: "1.0",
-            configuration: .init(strict: true)
+            configuration: .init(strict: true),
         )
 
         try await server.start(transport: serverTransport)
@@ -294,9 +293,9 @@ struct ResourceSubscriptionTests {
         }
     }
 
-    @Test("Subscribe throws when server has no resources capability at all")
+    @Test
     @available(macOS 14.0, *)
-    func subscribeThrowsWithNoResourcesCapability() async throws {
+    func `Subscribe throws when server has no resources capability at all`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -306,19 +305,19 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         // Server with NO resources capability
         let server = Server(
             name: "NoResourcesServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init()) // Only tools, no resources
+            capabilities: .init(tools: .init()), // Only tools, no resources
         )
 
         await server.withRequestHandler(ListTools.self) { _, _ in
@@ -329,7 +328,7 @@ struct ResourceSubscriptionTests {
         let client = Client(
             name: "StrictClient",
             version: "1.0",
-            configuration: .init(strict: true)
+            configuration: .init(strict: true),
         )
 
         try await server.start(transport: serverTransport)
@@ -343,9 +342,9 @@ struct ResourceSubscriptionTests {
 
     // MARK: - Notification Flow Tests
 
-    @Test("Server can send resource updated notification after subscription")
+    @Test
     @available(macOS 14.0, *)
-    func resourceUpdatedNotificationAfterSubscribe() async throws {
+    func `Server can send resource updated notification after subscription`() async throws {
         let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
         let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -355,12 +354,12 @@ struct ResourceSubscriptionTests {
         let serverTransport = StdioTransport(
             input: clientToServerRead,
             output: serverToClientWrite,
-            logger: logger
+            logger: logger,
         )
         let clientTransport = StdioTransport(
             input: serverToClientRead,
             output: clientToServerWrite,
-            logger: logger
+            logger: logger,
         )
 
         let notificationTracker = NotificationTracker()
@@ -368,7 +367,7 @@ struct ResourceSubscriptionTests {
         let server = Server(
             name: "NotifyingServer",
             version: "1.0.0",
-            capabilities: .init(resources: .init(subscribe: true), tools: .init())
+            capabilities: .init(resources: .init(subscribe: true), tools: .init()),
         )
 
         await server.withRequestHandler(ResourceSubscribe.self) { _, _ in

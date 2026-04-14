@@ -1,13 +1,11 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests that the client fails pending requests when receiving malformed/unparseable messages,
 /// rather than hanging indefinitely.
-@Suite("Malformed Response Tests")
 struct MalformedResponseTests {
     /// Set up a connected client-server pair and return the client plus the raw
     /// server-side transport for injecting malformed data.
@@ -24,10 +22,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Invalid JSON fails pending request with parse error",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func invalidJsonFailsPendingRequest() async throws {
+    func `Invalid JSON fails pending request with parse error`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         // Register a pending request on the client
@@ -38,7 +35,7 @@ struct MalformedResponseTests {
         // because the entire string is not parseable JSON, so the client
         // fails all pending requests.
         let garbage = "this is not json at all"
-        try await serverTransport.send(garbage.data(using: .utf8)!)
+        try await serverTransport.send(#require(garbage.data(using: .utf8)))
 
         // The pending request should fail with a parse error
         do {
@@ -54,10 +51,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Valid JSON but not JSON-RPC fails pending request",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func validJsonNotJsonRpcFailsPendingRequest() async throws {
+    func `Valid JSON but not JSON-RPC fails pending request`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         let requestId: RequestId = .string("test-req-2")
@@ -67,7 +63,7 @@ struct MalformedResponseTests {
         let notJsonRpc = """
         {"id":"test-req-2","foo":"bar"}
         """
-        try await serverTransport.send(notJsonRpc.data(using: .utf8)!)
+        try await serverTransport.send(#require(notJsonRpc.data(using: .utf8)))
 
         do {
             for try await _ in stream {
@@ -82,10 +78,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Completely unparseable data fails all pending requests",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func unparseableDataFailsAllPendingRequests() async throws {
+    func `Completely unparseable data fails all pending requests`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         // Register two pending requests
@@ -119,10 +114,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Malformed response with numeric ID fails pending request",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func numericIdFailsPendingRequest() async throws {
+    func `Malformed response with numeric ID fails pending request`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         let requestId: RequestId = .number(42)
@@ -132,7 +126,7 @@ struct MalformedResponseTests {
         let malformed = """
         {"id":42,"not_a_response":true}
         """
-        try await serverTransport.send(malformed.data(using: .utf8)!)
+        try await serverTransport.send(#require(malformed.data(using: .utf8)))
 
         do {
             for try await _ in stream {
@@ -147,10 +141,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Malformed response with non-matching ID fails all pending requests",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func nonMatchingIdFailsAllPendingRequests() async throws {
+    func `Malformed response with non-matching ID fails all pending requests`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         let stream1 = await client.registerProtocolPendingRequest(id: .string("req-a"))
@@ -160,7 +153,7 @@ struct MalformedResponseTests {
         let malformed = """
         {"id":"unknown-req","foo":"bar"}
         """
-        try await serverTransport.send(malformed.data(using: .utf8)!)
+        try await serverTransport.send(#require(malformed.data(using: .utf8)))
 
         // Both should fail since the non-matching ID triggers fail-all
         do {
@@ -185,10 +178,9 @@ struct MalformedResponseTests {
     }
 
     @Test(
-        "Malformed response with extractable ID only fails that specific request",
-        .timeLimit(.minutes(1))
+        .timeLimit(.minutes(1)),
     )
-    func malformedResponseFailsOnlyMatchingRequest() async throws {
+    func `Malformed response with extractable ID only fails that specific request`() async throws {
         let (client, serverTransport) = try await makeConnectedClient()
 
         // Register two pending requests
@@ -201,7 +193,7 @@ struct MalformedResponseTests {
         let malformed = """
         {"id":"req-1","not_a_response":true}
         """
-        try await serverTransport.send(malformed.data(using: .utf8)!)
+        try await serverTransport.send(#require(malformed.data(using: .utf8)))
 
         // req-1 should fail
         do {

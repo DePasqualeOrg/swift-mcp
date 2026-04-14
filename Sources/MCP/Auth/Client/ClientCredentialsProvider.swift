@@ -75,7 +75,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
         clientSecret: String,
         storage: any TokenStorage,
         scopes: String? = nil,
-        httpClient: HTTPRequestHandler? = nil
+        httpClient: HTTPRequestHandler? = nil,
     ) {
         self.serverURL = serverURL
         self.clientId = clientId
@@ -108,7 +108,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
     }
 
     public func handleUnauthorized(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         do {
             return try await performTokenRequest(context: context)
@@ -136,17 +136,17 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
         let authMethod = selectClientAuthenticationMethod(
             serverSupported: cachedASMetadata?.tokenEndpointAuthMethodsSupported,
             clientPreferred: nil,
-            hasClientSecret: true
+            hasClientSecret: true,
         )
 
         let tokenURL = tokenEndpoint(
             from: cachedASMetadata,
-            authServerURL: cachedAuthServerURL ?? serverURL
+            authServerURL: cachedAuthServerURL ?? serverURL,
         )
 
         let resource = ResourceURL.selectResourceURL(
             serverURL: serverURL,
-            protectedResourceMetadata: cachedPRM
+            protectedResourceMetadata: cachedPRM,
         )
 
         do {
@@ -157,7 +157,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
                 clientAuthMethod: authMethod,
                 tokenEndpoint: tokenURL,
                 resource: resource,
-                httpClient: httpClient
+                httpClient: httpClient,
             )
             try await storeTokens(newTokens)
             return newTokens
@@ -178,7 +178,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
     // MARK: - Token Request
 
     private func performTokenRequest(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> OAuthTokens {
         // 1. Discovery
         let (_, asMetadata) = try await performDiscovery(context: context)
@@ -187,19 +187,19 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
         let authMethod = selectClientAuthenticationMethod(
             serverSupported: asMetadata?.tokenEndpointAuthMethodsSupported,
             clientPreferred: nil,
-            hasClientSecret: true
+            hasClientSecret: true,
         )
 
         // 3. Token endpoint
         let tokenURL = tokenEndpoint(
             from: asMetadata,
-            authServerURL: cachedAuthServerURL ?? serverURL
+            authServerURL: cachedAuthServerURL ?? serverURL,
         )
 
         // 4. Resource (always included per MCP spec 2025-11-25)
         let resource = ResourceURL.selectResourceURL(
             serverURL: serverURL,
-            protectedResourceMetadata: cachedPRM
+            protectedResourceMetadata: cachedPRM,
         )
 
         // 5. Scope: use 403 step-up scope if provided, otherwise configured scopes
@@ -213,7 +213,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
             tokenEndpoint: tokenURL,
             scope: scope,
             resource: resource,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
 
         // 7. Store tokens
@@ -224,7 +224,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
     // MARK: - Discovery
 
     private func performDiscovery(
-        context: UnauthorizedContext
+        context: UnauthorizedContext,
     ) async throws -> (URL, OAuthMetadata?) {
         if let authServerURL = cachedAuthServerURL {
             return (authServerURL, cachedASMetadata)
@@ -233,7 +233,7 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
         let prm = await discoverProtectedResourceMetadata(
             serverURL: serverURL,
             wwwAuthenticateResourceMetadataURL: context.resourceMetadataURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         cachedPRM = prm
 
@@ -251,14 +251,15 @@ public actor ClientCredentialsProvider: OAuthClientProvider {
         // validation impossible and enabling metadata injection attacks.
         guard let authServerURL = prm?.authorizationServers?.first else {
             throw OAuthError.discoveryFailed(
-                "Protected Resource Metadata did not provide an authorization server URL")
+                "Protected Resource Metadata did not provide an authorization server URL",
+            )
         }
         try validateEndpointURL(authServerURL)
         cachedAuthServerURL = authServerURL
 
         let asMetadata = await discoverAuthorizationServerMetadata(
             authServerURL: authServerURL,
-            httpClient: httpClient
+            httpClient: httpClient,
         )
         if let asMetadata {
             try validateIssuer(asMetadata, authServerURL: authServerURL)

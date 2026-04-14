@@ -1,13 +1,11 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for MCPClient, the high-level client that provides automatic reconnection,
 /// health monitoring, and transparent retry on recoverable errors.
-@Suite("MCPClient Tests")
 struct MCPClientTests {
     // MARK: - Helpers
 
@@ -42,26 +40,36 @@ struct MCPClientTests {
     /// Collects state transitions for verification.
     actor StateCollector {
         var states: [MCPClient.ConnectionState] = []
-        func append(_ state: MCPClient.ConnectionState) { states.append(state) }
-        func get() -> [MCPClient.ConnectionState] { states }
+        func append(_ state: MCPClient.ConnectionState) {
+            states.append(state)
+        }
+
+        func get() -> [MCPClient.ConnectionState] {
+            states
+        }
     }
 
     /// Collects tool lists from onToolsChanged callbacks.
     actor ToolCollector {
         var toolLists: [[Tool]] = []
-        func append(_ tools: [Tool]) { toolLists.append(tools) }
-        func get() -> [[Tool]] { toolLists }
+        func append(_ tools: [Tool]) {
+            toolLists.append(tools)
+        }
+
+        func get() -> [[Tool]] {
+            toolLists
+        }
     }
 
     // MARK: - State Transition Tests
 
-    @Test("State transitions during successful connect")
-    func stateTransitionsDuringConnect() async throws {
+    @Test
+    func `State transitions during successful connect`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
             name: "echo",
-            description: "Echo tool"
+            description: "Echo tool",
         ) { (_: HandlerContext) in "hello" }
 
         let collector = StateCollector()
@@ -69,7 +77,7 @@ struct MCPClientTests {
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -87,14 +95,14 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("State transitions during failed connect")
-    func stateTransitionsDuringFailedConnect() async throws {
+    @Test
+    func `State transitions during failed connect`() async throws {
         let collector = StateCollector()
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -113,18 +121,18 @@ struct MCPClientTests {
         #expect(await mcpClient.state == .disconnected)
     }
 
-    @Test("Disconnect transitions to disconnected state")
-    func disconnectTransitionsToDisconnected() async throws {
+    @Test
+    func `Disconnect transitions to disconnected state`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         try await mcpClient.connect {
@@ -139,12 +147,12 @@ struct MCPClientTests {
 
     // MARK: - onStateChanged Callback Tests
 
-    @Test("onStateChanged fires on each transition with correct value")
-    func onStateChangedFiresCorrectly() async throws {
+    @Test
+    func `onStateChanged fires on each transition with correct value`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let collector = StateCollector()
@@ -152,7 +160,7 @@ struct MCPClientTests {
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -173,13 +181,13 @@ struct MCPClientTests {
 
     // MARK: - Transparent Retry Tests
 
-    @Test("Non-recoverable errors propagate immediately without reconnection")
-    func nonRecoverableErrorsPropagateImmediately() async throws {
+    @Test
+    func `Non-recoverable errors propagate immediately without reconnection`() async throws {
         let manager = TestServerManager()
 
         // Register a tool that returns an error
         _ = try await manager.mcpServer.register(
-            name: "failing_tool"
+            name: "failing_tool",
         ) { (_: HandlerContext) -> String in
             throw MCPError.invalidParams("Bad input")
         }
@@ -187,7 +195,7 @@ struct MCPClientTests {
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         try await mcpClient.connect {
@@ -204,12 +212,12 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("Calling tool when not connected throws connectionClosed")
-    func callingToolWhenNotConnectedThrows() async throws {
+    @Test
+    func `Calling tool when not connected throws connectionClosed`() async throws {
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await #expect(throws: MCPError.self) {
@@ -219,9 +227,10 @@ struct MCPClientTests {
 
     // MARK: - Reconnection Tests
 
-    @Test("Reconnection on connection loss via pending request",
-          .timeLimit(.minutes(1)))
-    func reconnectionOnConnectionLoss() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Reconnection on connection loss via pending request`() async throws {
         let callCount = CallCounter()
         let firstCallStarted = AsyncEvent()
 
@@ -229,7 +238,7 @@ struct MCPClientTests {
 
         // Register a tool that blocks on first call, responds immediately on subsequent calls
         _ = try await manager.mcpServer.register(
-            name: "smart_tool"
+            name: "smart_tool",
         ) { (_: HandlerContext) -> String in
             let n = await callCount.increment()
             if n == 1 {
@@ -252,8 +261,8 @@ struct MCPClientTests {
                 initialDelay: .milliseconds(10),
                 maxDelay: .milliseconds(100),
                 delayGrowFactor: 2.0,
-                healthCheckInterval: nil
-            )
+                healthCheckInterval: nil,
+            ),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -299,14 +308,15 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("Max retries exceeded leads to disconnected state",
-          .timeLimit(.minutes(1)))
-    func maxRetriesExceeded() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Max retries exceeded leads to disconnected state`() async throws {
         let manager = TestServerManager()
 
         // Register a tool so the server is functional for initial connection
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let collector = StateCollector()
@@ -321,8 +331,8 @@ struct MCPClientTests {
                 initialDelay: .milliseconds(10),
                 maxDelay: .milliseconds(50),
                 delayGrowFactor: 1.5,
-                healthCheckInterval: nil
-            )
+                healthCheckInterval: nil,
+            ),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -341,7 +351,7 @@ struct MCPClientTests {
 
         // Register a blocking tool
         _ = try await manager.mcpServer.register(
-            name: "blocking_tool"
+            name: "blocking_tool",
         ) { (_: HandlerContext) -> String in
             await firstCallStarted.signal()
             try? await Task.sleep(for: .seconds(30))
@@ -375,9 +385,10 @@ struct MCPClientTests {
 
     // MARK: - Deduplication Tests
 
-    @Test("Multiple concurrent failures trigger only one reconnection",
-          .timeLimit(.minutes(1)))
-    func deduplicationOfReconnection() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Multiple concurrent failures trigger only one reconnection`() async throws {
         let toolCallCount = CallCounter()
         let allToolsStarted = AsyncEvent()
 
@@ -388,7 +399,7 @@ struct MCPClientTests {
 
         // Register a tool that blocks on all initial calls, then succeeds after reconnection
         _ = try await manager.mcpServer.register(
-            name: "blocking_tool"
+            name: "blocking_tool",
         ) { (_: HandlerContext) -> String in
             let n = await toolCallCount.increment()
             if n <= 3 {
@@ -414,8 +425,8 @@ struct MCPClientTests {
                 initialDelay: .milliseconds(10),
                 maxDelay: .milliseconds(100),
                 delayGrowFactor: 2.0,
-                healthCheckInterval: nil
-            )
+                healthCheckInterval: nil,
+            ),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -453,10 +464,10 @@ struct MCPClientTests {
         // Each sequence starts with .reconnecting(attempt: 1).
         // With deduplication, there should be exactly one sequence.
         let states = await collector.get()
-        let reconnectingAttempt1Count = states.filter { $0 == .reconnecting(attempt: 1) }.count
+        let reconnectingAttempt1Count = states.count(where: { $0 == .reconnecting(attempt: 1) })
         #expect(
             reconnectingAttempt1Count == 1,
-            "Multiple concurrent failures should trigger only one reconnection, but got \(reconnectingAttempt1Count) sequences"
+            "Multiple concurrent failures should trigger only one reconnection, but got \(reconnectingAttempt1Count) sequences",
         )
 
         // The transport factory should have been called exactly twice:
@@ -464,7 +475,7 @@ struct MCPClientTests {
         let totalFactoryCalls = await factoryCallCount.value
         #expect(
             totalFactoryCalls == 2,
-            "Transport factory should be called twice (initial + one reconnection), but was called \(totalFactoryCalls) times"
+            "Transport factory should be called twice (initial + one reconnection), but was called \(totalFactoryCalls) times",
         )
 
         await mcpClient.disconnect()
@@ -472,9 +483,10 @@ struct MCPClientTests {
 
     // MARK: - onToolsChanged Callback Tests
 
-    @Test("onToolsChanged fires after reconnection",
-          .timeLimit(.minutes(1)))
-    func onToolsChangedAfterReconnection() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `onToolsChanged fires after reconnection`() async throws {
         let callCount = CallCounter()
         let firstCallStarted = AsyncEvent()
         let toolCollector = ToolCollector()
@@ -483,7 +495,7 @@ struct MCPClientTests {
 
         _ = try await manager.mcpServer.register(
             name: "persistent_tool",
-            description: "A tool that persists across reconnections"
+            description: "A tool that persists across reconnections",
         ) { (_: HandlerContext) -> String in
             let n = await callCount.increment()
             if n == 1 {
@@ -503,8 +515,8 @@ struct MCPClientTests {
                 initialDelay: .milliseconds(10),
                 maxDelay: .milliseconds(100),
                 delayGrowFactor: 2.0,
-                healthCheckInterval: nil
-            )
+                healthCheckInterval: nil,
+            ),
         )
 
         await mcpClient.setOnToolsChanged { tools in
@@ -538,19 +550,19 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("onToolsChanged fires on ToolListChangedNotification")
-    func onToolsChangedOnNotification() async throws {
+    @Test
+    func `onToolsChanged fires on ToolListChangedNotification`() async throws {
         let toolCollector = ToolCollector()
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "initial_tool"
+            name: "initial_tool",
         ) { (_: HandlerContext) in "hello" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await mcpClient.setOnToolsChanged { tools in
@@ -563,7 +575,7 @@ struct MCPClientTests {
 
         // Register another tool on the server (this triggers ToolListChangedNotification)
         _ = try await manager.mcpServer.register(
-            name: "new_tool"
+            name: "new_tool",
         ) { (_: HandlerContext) in "world" }
 
         // Wait for the notification to be delivered and processed
@@ -575,18 +587,18 @@ struct MCPClientTests {
 
     // MARK: - Health Check Tests
 
-    @Test("Health check disabled when interval is nil")
-    func healthCheckDisabledWhenNil() async throws {
+    @Test
+    func `Health check disabled when interval is nil`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         try await mcpClient.connect {
@@ -604,9 +616,10 @@ struct MCPClientTests {
 
     // MARK: - Handler Persistence Tests
 
-    @Test("Handlers registered on client survive reconnection",
-          .timeLimit(.minutes(1)))
-    func handlersPersistAcrossReconnections() async throws {
+    @Test(
+        .timeLimit(.minutes(1)),
+    )
+    func `Handlers registered on client survive reconnection`() async throws {
         let callCount = CallCounter()
         let firstCallStarted = AsyncEvent()
         let notificationReceived = AsyncEvent()
@@ -614,7 +627,7 @@ struct MCPClientTests {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "smart_tool"
+            name: "smart_tool",
         ) { (_: HandlerContext) -> String in
             let n = await callCount.increment()
             if n == 1 {
@@ -634,8 +647,8 @@ struct MCPClientTests {
                 initialDelay: .milliseconds(10),
                 maxDelay: .milliseconds(100),
                 delayGrowFactor: 2.0,
-                healthCheckInterval: nil
-            )
+                healthCheckInterval: nil,
+            ),
         )
 
         // Register a notification handler BEFORE connecting
@@ -660,7 +673,7 @@ struct MCPClientTests {
 
         // After reconnection, register a new tool to trigger ToolListChangedNotification
         _ = try await manager.mcpServer.register(
-            name: "post_reconnect_tool"
+            name: "post_reconnect_tool",
         ) { (_: HandlerContext) in "new" }
 
         // Wait for the notification handler (registered before first connection) to fire
@@ -679,20 +692,20 @@ struct MCPClientTests {
 
     // MARK: - Disconnect Tests
 
-    @Test("Disconnect cancels health checks and reconnection tasks")
-    func disconnectCancelsEverything() async throws {
+    @Test
+    func `Disconnect cancels health checks and reconnection tasks`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
             reconnectionOptions: .init(
-                healthCheckInterval: .milliseconds(50)
-            )
+                healthCheckInterval: .milliseconds(50),
+            ),
         )
 
         try await mcpClient.connect {
@@ -711,18 +724,18 @@ struct MCPClientTests {
         #expect(await mcpClient.state == .disconnected)
     }
 
-    @Test("Can reconnect after disconnect")
-    func canReconnectAfterDisconnect() async throws {
+    @Test
+    func `Can reconnect after disconnect`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         // First connect
@@ -754,24 +767,24 @@ struct MCPClientTests {
 
     // MARK: - Protocol Method Forwarding Tests
 
-    @Test("listTools forwards to underlying client")
-    func listToolsForwards() async throws {
+    @Test
+    func `listTools forwards to underlying client`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
             name: "tool_a",
-            description: "First tool"
+            description: "First tool",
         ) { (_: HandlerContext) in "a" }
 
         _ = try await manager.mcpServer.register(
             name: "tool_b",
-            description: "Second tool"
+            description: "Second tool",
         ) { (_: HandlerContext) in "b" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         try await mcpClient.connect {
@@ -785,18 +798,18 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("callTool executes tool and returns result")
-    func callToolReturnsResult() async throws {
+    @Test
+    func `callTool executes tool and returns result`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "greet"
+            name: "greet",
         ) { (_: HandlerContext) in "Hello, World!" }
 
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         try await mcpClient.connect {
@@ -813,12 +826,12 @@ struct MCPClientTests {
         await mcpClient.disconnect()
     }
 
-    @Test("ping does not trigger reconnection on failure")
-    func pingDoesNotTriggerReconnection() async throws {
+    @Test
+    func `ping does not trigger reconnection on failure`() async throws {
         let manager = TestServerManager()
 
         _ = try await manager.mcpServer.register(
-            name: "echo"
+            name: "echo",
         ) { (_: HandlerContext) in "hello" }
 
         let collector = StateCollector()
@@ -826,7 +839,7 @@ struct MCPClientTests {
         let mcpClient = MCPClient(
             name: "test-client",
             version: "1.0",
-            reconnectionOptions: .init(healthCheckInterval: nil)
+            reconnectionOptions: .init(healthCheckInterval: nil),
         )
 
         await mcpClient.setOnStateChanged { state in
@@ -868,8 +881,8 @@ struct MCPClientTests {
 
     // MARK: - ReconnectionOptions Tests
 
-    @Test("Default reconnection options")
-    func defaultReconnectionOptions() {
+    @Test
+    func `Default reconnection options`() {
         let options = MCPClient.ReconnectionOptions.default
         #expect(options.maxRetries == 3)
         #expect(options.initialDelay == .seconds(1))
@@ -878,14 +891,14 @@ struct MCPClientTests {
         #expect(options.healthCheckInterval == .seconds(60))
     }
 
-    @Test("Custom reconnection options")
-    func customReconnectionOptions() {
+    @Test
+    func `Custom reconnection options`() {
         let options = MCPClient.ReconnectionOptions(
             maxRetries: 5,
             initialDelay: .milliseconds(500),
             maxDelay: .seconds(10),
             delayGrowFactor: 3.0,
-            healthCheckInterval: .seconds(30)
+            healthCheckInterval: .seconds(30),
         )
         #expect(options.maxRetries == 5)
         #expect(options.initialDelay == .milliseconds(500))
@@ -894,8 +907,8 @@ struct MCPClientTests {
         #expect(options.healthCheckInterval == .seconds(30))
     }
 
-    @Test("ConnectionState equatable conformance")
-    func connectionStateEquatable() {
+    @Test
+    func `ConnectionState equatable conformance`() {
         #expect(MCPClient.ConnectionState.disconnected == .disconnected)
         #expect(MCPClient.ConnectionState.connecting == .connecting)
         #expect(MCPClient.ConnectionState.connected == .connected)

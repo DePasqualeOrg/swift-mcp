@@ -33,7 +33,7 @@ public struct Annotations: Hashable, Codable, Sendable {
     public init(
         audience: [Role]? = nil,
         priority: Double? = nil,
-        lastModified: String? = nil
+        lastModified: String? = nil,
     ) {
         self.audience = audience
         self.priority = priority

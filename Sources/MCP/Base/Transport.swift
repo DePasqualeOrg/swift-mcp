@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-
 import struct Foundation.Data
+import Logging
 
 // MARK: - Message Context Types
 
@@ -91,7 +90,7 @@ public struct MessageMetadata: Sendable {
         authInfo: AuthInfo? = nil,
         requestInfo: RequestInfo? = nil,
         closeResponseStream: (@Sendable () async -> Void)? = nil,
-        closeNotificationStream: (@Sendable () async -> Void)? = nil
+        closeNotificationStream: (@Sendable () async -> Void)? = nil,
     ) {
         self.authInfo = authInfo
         self.requestInfo = requestInfo
@@ -220,11 +219,15 @@ public extension Transport {
     /// Default implementation returns `nil` for simple transports.
     ///
     /// HTTP transports override this to return their session identifier.
-    var sessionId: String? { nil }
+    var sessionId: String? {
+        nil
+    }
 
     /// Default implementation returns `true` since most transports support
     /// bidirectional communication. Stateless HTTP transports override this.
-    var supportsServerToClientRequests: Bool { true }
+    var supportsServerToClientRequests: Bool {
+        true
+    }
 
     /// Convenience method for sending data without options.
     ///

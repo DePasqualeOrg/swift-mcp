@@ -1,12 +1,10 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
 /// Tests for MCPServer session broadcasting behavior.
-@Suite("MCPServer Broadcast Tests")
 struct MCPServerBroadcastTests {
     // MARK: - Helpers
 
@@ -31,26 +29,31 @@ struct MCPServerBroadcastTests {
             client: client,
             session: session,
             clientTransport: clientTransport,
-            serverTransport: serverTransport
+            serverTransport: serverTransport,
         )
     }
 
     /// Actor for collecting notifications received by clients.
     actor NotificationCollector {
         var count = 0
-        func increment() { count += 1 }
-        func get() -> Int { count }
+        func increment() {
+            count += 1
+        }
+
+        func get() -> Int {
+            count
+        }
     }
 
     // MARK: - Tool List Changed Broadcast
 
-    @Test("Broadcast ToolListChangedNotification to multiple sessions")
-    func broadcastToolListChangedToMultipleSessions() async throws {
+    @Test
+    func `Broadcast ToolListChangedNotification to multiple sessions`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register initial tool so sessions have tools capability
         _ = try await mcpServer.register(
-            name: "initial_tool"
+            name: "initial_tool",
         ) { (_: HandlerContext) in "hello" }
 
         // Create three sessions
@@ -75,7 +78,7 @@ struct MCPServerBroadcastTests {
 
         // Register a new tool (triggers broadcast)
         _ = try await mcpServer.register(
-            name: "new_tool"
+            name: "new_tool",
         ) { (_: HandlerContext) in "world" }
 
         // Wait for all three clients to receive the notification
@@ -103,14 +106,14 @@ struct MCPServerBroadcastTests {
 
     // MARK: - Resource List Changed Broadcast
 
-    @Test("Broadcast ResourceListChangedNotification on resource registration")
-    func broadcastResourceListChanged() async throws {
+    @Test
+    func `Broadcast ResourceListChangedNotification on resource registration`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register an initial resource so sessions have resource capability
         _ = try await mcpServer.registerResource(
             uri: "config://initial",
-            name: "initial"
+            name: "initial",
         ) { .text("{}", uri: "config://initial") }
 
         let pair1 = try await createSessionPair(from: mcpServer)
@@ -129,7 +132,7 @@ struct MCPServerBroadcastTests {
         // Register a new resource (triggers broadcast)
         _ = try await mcpServer.registerResource(
             uri: "config://app",
-            name: "app_config"
+            name: "app_config",
         ) { .text("{\"debug\": true}", uri: "config://app") }
 
         let bothReceived = await pollUntil {
@@ -151,13 +154,13 @@ struct MCPServerBroadcastTests {
 
     // MARK: - Prompt List Changed Broadcast
 
-    @Test("Broadcast PromptListChangedNotification on prompt registration")
-    func broadcastPromptListChanged() async throws {
+    @Test
+    func `Broadcast PromptListChangedNotification on prompt registration`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register an initial prompt so sessions have prompt capability
         _ = try await mcpServer.registerPrompt(
-            name: "initial_prompt"
+            name: "initial_prompt",
         ) { [Prompt.Message.user(.text("initial"))] }
 
         let pair1 = try await createSessionPair(from: mcpServer)
@@ -175,7 +178,7 @@ struct MCPServerBroadcastTests {
 
         // Register a new prompt (triggers broadcast)
         _ = try await mcpServer.registerPrompt(
-            name: "new_prompt"
+            name: "new_prompt",
         ) { [Prompt.Message.user(.text("hello"))] }
 
         let bothReceived = await pollUntil {
@@ -197,12 +200,12 @@ struct MCPServerBroadcastTests {
 
     // MARK: - Failed Session Cleanup
 
-    @Test("Failed session removed during broadcast")
-    func failedSessionCleanedUpDuringBroadcast() async throws {
+    @Test
+    func `Failed session removed during broadcast`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         _ = try await mcpServer.register(
-            name: "initial_tool"
+            name: "initial_tool",
         ) { (_: HandlerContext) in "hello" }
 
         // Create two sessions
@@ -224,7 +227,7 @@ struct MCPServerBroadcastTests {
         // Register a new tool (triggers broadcast to all sessions)
         // Session 1's send should fail, and it should be cleaned up
         _ = try await mcpServer.register(
-            name: "another_tool"
+            name: "another_tool",
         ) { (_: HandlerContext) in "world" }
 
         // Session 2 should still get the notification
@@ -240,12 +243,12 @@ struct MCPServerBroadcastTests {
 
     // MARK: - removeSession on Disconnect
 
-    @Test("Session removed from MCPServer when transport disconnects")
-    func sessionRemovedOnDisconnect() async throws {
+    @Test
+    func `Session removed from MCPServer when transport disconnects`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         _ = try await mcpServer.register(
-            name: "tool"
+            name: "tool",
         ) { (_: HandlerContext) in "hello" }
 
         let pair = try await createSessionPair(from: mcpServer)
@@ -266,7 +269,7 @@ struct MCPServerBroadcastTests {
         }
 
         _ = try await mcpServer.register(
-            name: "tool_2"
+            name: "tool_2",
         ) { (_: HandlerContext) in "world" }
 
         let received = await pollUntil { await collector.get() >= 1 }
@@ -280,13 +283,13 @@ struct MCPServerBroadcastTests {
 
     // MARK: - Concurrent Broadcast
 
-    @Test("Concurrent tool registration and session creation")
-    func concurrentBroadcastAndSessionCreation() async throws {
+    @Test
+    func `Concurrent tool registration and session creation`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register initial tool
         _ = try await mcpServer.register(
-            name: "base_tool"
+            name: "base_tool",
         ) { (_: HandlerContext) in "base" }
 
         // Create some initial sessions
@@ -302,7 +305,7 @@ struct MCPServerBroadcastTests {
             for i in 0 ..< 5 {
                 group.addTask {
                     _ = try? await mcpServer.register(
-                        name: "concurrent_tool_\(i)"
+                        name: "concurrent_tool_\(i)",
                     ) { (_: HandlerContext) in "result_\(i)" }
                 }
             }
@@ -328,7 +331,7 @@ struct MCPServerBroadcastTests {
             let result = try await pair.client.listTools()
             #expect(
                 result.tools.count == 6,
-                "All 6 tools (1 base + 5 concurrent) should be visible, but got \(result.tools.count)"
+                "All 6 tools (1 base + 5 concurrent) should be visible, but got \(result.tools.count)",
             )
         }
 

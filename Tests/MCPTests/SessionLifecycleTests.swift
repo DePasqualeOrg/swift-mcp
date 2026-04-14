@@ -26,11 +26,9 @@ import System
 /// - tests/client/test_session.py
 /// - tests/server/test_session.py
 /// - tests/server/test_session_race_condition.py
-@Suite("Session Lifecycle Tests")
-struct SessionLifecycleTests {
+enum SessionLifecycleTests {
     // MARK: - Request Immediately After Initialize Response Tests
 
-    @Suite("Request immediately after initialize response (race condition)")
     struct InitializeRaceConditionTests {
         /// Test that requests are accepted immediately after initialize response.
         ///
@@ -46,7 +44,7 @@ struct SessionLifecycleTests {
         ///
         /// Based on Python SDK: tests/server/test_session_race_condition.py
         @Test(.timeLimit(.minutes(1)))
-        func requestImmediatelyAfterInitializeResponse() async throws {
+        func `request immediately after initialize response`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (_, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -56,7 +54,7 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
 
             let toolsListSuccess = ToolsListSuccessTracker()
@@ -65,7 +63,7 @@ struct SessionLifecycleTests {
             let server = Server(
                 name: "RaceConditionTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -74,7 +72,7 @@ struct SessionLifecycleTests {
                     Tool(
                         name: "example_tool",
                         description: "An example tool",
-                        inputSchema: ["type": "object"]
+                        inputSchema: ["type": "object"],
                     ),
                 ])
             }
@@ -95,13 +93,13 @@ struct SessionLifecycleTests {
                 params: Initialize.Parameters(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "race-condition-client", version: "1.0")
-                )
+                    clientInfo: .init(name: "race-condition-client", version: "1.0"),
+                ),
             )
 
             let initData = try encoder.encode(initRequest)
             _ = try clientToServerWrite.writeAll(initData)
-            _ = try clientToServerWrite.writeAll("\n".data(using: .utf8)!)
+            _ = try clientToServerWrite.writeAll(#require("\n".data(using: .utf8)))
 
             // Wait for and read the initialize response
             try await Task.sleep(for: .milliseconds(100))
@@ -111,12 +109,12 @@ struct SessionLifecycleTests {
             let toolsListRequest = Request<ListTools>(
                 id: .number(2),
                 method: ListTools.name,
-                params: ListTools.Parameters()
+                params: ListTools.Parameters(),
             )
 
             let toolsData = try encoder.encode(toolsListRequest)
             _ = try clientToServerWrite.writeAll(toolsData)
-            _ = try clientToServerWrite.writeAll("\n".data(using: .utf8)!)
+            _ = try clientToServerWrite.writeAll(#require("\n".data(using: .utf8)))
 
             // Wait for tools/list to be processed
             try await Task.sleep(for: .milliseconds(200))
@@ -125,7 +123,7 @@ struct SessionLifecycleTests {
             let initializedNotification = InitializedNotification.message(.init())
             let notifData = try encoder.encode(initializedNotification)
             _ = try clientToServerWrite.writeAll(notifData)
-            _ = try clientToServerWrite.writeAll("\n".data(using: .utf8)!)
+            _ = try clientToServerWrite.writeAll(#require("\n".data(using: .utf8)))
 
             // Give time for all messages to be processed
             try await Task.sleep(for: .milliseconds(100))
@@ -143,7 +141,7 @@ struct SessionLifecycleTests {
         /// In lenient mode, the server should accept any request after receiving
         /// the initialize request, without waiting for InitializedNotification.
         @Test(.timeLimit(.minutes(1)))
-        func lenientModeAcceptsEarlyRequests() async throws {
+        func `lenient mode accepts early requests`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -153,19 +151,19 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Set up server in lenient mode (default)
             let server = Server(
                 name: "LenientModeServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -191,13 +189,12 @@ struct SessionLifecycleTests {
 
     // MARK: - Client Info Tests
 
-    @Suite("Client info handling")
     struct ClientInfoTests {
         /// Test that custom client info is properly sent during initialization.
         ///
         /// Based on Python SDK: test_client_session_custom_client_info
         @Test(.timeLimit(.minutes(1)))
-        func customClientInfoSentDuringInitialization() async throws {
+        func `custom client info sent during initialization`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -207,12 +204,12 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedClientInfo = ReceivedClientInfoTracker()
@@ -220,7 +217,7 @@ struct SessionLifecycleTests {
             let server = Server(
                 name: "ClientInfoTestServer",
                 version: "1.0.0",
-                capabilities: .init()
+                capabilities: .init(),
             )
 
             // Use custom client info
@@ -251,7 +248,7 @@ struct SessionLifecycleTests {
         ///
         /// Based on Python SDK: test_client_session_default_client_info
         @Test(.timeLimit(.minutes(1)))
-        func defaultClientInfoSentDuringInitialization() async throws {
+        func `default client info sent during initialization`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -261,12 +258,12 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let receivedClientInfo = ReceivedClientInfoTracker()
@@ -274,7 +271,7 @@ struct SessionLifecycleTests {
             let server = Server(
                 name: "DefaultClientInfoServer",
                 version: "1.0.0",
-                capabilities: .init()
+                capabilities: .init(),
             )
 
             // Use minimal client (name and version are required in Swift)
@@ -302,13 +299,12 @@ struct SessionLifecycleTests {
 
     // MARK: - Server Capabilities Tests
 
-    @Suite("Server capabilities")
     struct ServerCapabilitiesTests {
         /// Test that serverCapabilities returns nil before init and capabilities after.
         ///
         /// Based on Python SDK: test_get_server_capabilities
         @Test(.timeLimit(.minutes(1)))
-        func serverCapabilitiesBeforeAndAfterInit() async throws {
+        func `server capabilities before and after init`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -318,12 +314,12 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             // Server with various capabilities enabled
@@ -334,8 +330,8 @@ struct SessionLifecycleTests {
                     logging: .init(),
                     prompts: .init(listChanged: true),
                     resources: .init(subscribe: true, listChanged: true),
-                    tools: .init(listChanged: false)
-                )
+                    tools: .init(listChanged: false),
+                ),
             )
 
             // Register minimal handlers so capabilities are advertised
@@ -391,7 +387,6 @@ struct SessionLifecycleTests {
 
     // MARK: - In-Flight Request Tracking Tests
 
-    @Suite("In-flight request tracking")
     struct InFlightRequestTrackingTests {
         /// Test that in-flight request tracking is cleared after request completes.
         ///
@@ -400,7 +395,7 @@ struct SessionLifecycleTests {
         ///
         /// Based on Python SDK: test_in_flight_requests_cleared_after_completion
         @Test(.timeLimit(.minutes(1)))
-        func inFlightRequestsClearedAfterCompletion() async throws {
+        func `in flight requests cleared after completion`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -410,18 +405,18 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let server = Server(
                 name: "InFlightTestServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             await server.withRequestHandler(ListTools.self) { _, _ in
@@ -452,7 +447,7 @@ struct SessionLifecycleTests {
 
         /// Test that multiple concurrent requests are properly tracked and cleaned up.
         @Test(.timeLimit(.minutes(1)))
-        func concurrentRequestsTrackedAndCleanedUp() async throws {
+        func `concurrent requests tracked and cleaned up`() async throws {
             let (clientToServerRead, clientToServerWrite) = try FileDescriptor.pipe()
             let (serverToClientRead, serverToClientWrite) = try FileDescriptor.pipe()
 
@@ -462,18 +457,18 @@ struct SessionLifecycleTests {
             let serverTransport = StdioTransport(
                 input: clientToServerRead,
                 output: serverToClientWrite,
-                logger: logger
+                logger: logger,
             )
             let clientTransport = StdioTransport(
                 input: serverToClientRead,
                 output: clientToServerWrite,
-                logger: logger
+                logger: logger,
             )
 
             let server = Server(
                 name: "ConcurrentInFlightServer",
                 version: "1.0.0",
-                capabilities: .init(tools: .init())
+                capabilities: .init(tools: .init()),
             )
 
             let callCount = CallCountTracker()
@@ -503,8 +498,8 @@ struct SessionLifecycleTests {
                         _ = try? await client.send(
                             CallTool.request(.init(
                                 name: "test",
-                                arguments: ["delay": .double(delay)]
-                            ))
+                                arguments: ["delay": .double(delay)],
+                            )),
                         )
                     }
                 }
@@ -533,7 +528,9 @@ private actor ToolsListSuccessTracker {
         _success = true
     }
 
-    var wasSuccessful: Bool { _success }
+    var wasSuccessful: Bool {
+        _success
+    }
 }
 
 private actor ReceivedClientInfoTracker {
@@ -543,7 +540,9 @@ private actor ReceivedClientInfoTracker {
         _info = info
     }
 
-    var info: Client.Info? { _info }
+    var info: Client.Info? {
+        _info
+    }
 }
 
 private actor CallCountTracker {
@@ -553,5 +552,7 @@ private actor CallCountTracker {
         _count += 1
     }
 
-    var count: Int { _count }
+    var count: Int {
+        _count
+    }
 }

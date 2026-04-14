@@ -10,10 +10,9 @@ import HTTPTypes
 import Hummingbird
 import HummingbirdTesting
 import Logging
+@testable import MCP
 import NIOCore
 import ServiceLifecycle
-
-@testable import MCP
 
 /// A minimal HTTP server for integration testing.
 /// Uses Hummingbird to accept connections and routes requests to HTTPServerTransport.
@@ -45,15 +44,15 @@ actor TestHTTPServer {
     static func create(
         sessionIdGenerator: (@Sendable () -> String)? = nil,
         onSessionInitialized: (@Sendable (String) async -> Void)? = nil,
-        onSessionClosed: (@Sendable (String) async -> Void)? = nil
+        onSessionClosed: (@Sendable (String) async -> Void)? = nil,
     ) async throws -> TestHTTPServer {
         let transport = HTTPServerTransport(
             options: .init(
                 sessionIdGenerator: sessionIdGenerator,
                 onSessionInitialized: onSessionInitialized,
                 onSessionClosed: onSessionClosed,
-                dnsRebindingProtection: .localhost() // URLSession sets Host header automatically
-            )
+                dnsRebindingProtection: .localhost(), // URLSession sets Host header automatically
+            ),
         )
         try await transport.connect()
 
@@ -111,7 +110,7 @@ actor TestHTTPServer {
             onServerRunning: { channel in
                 await portPromise.fulfill(with: channel.localAddress?.port ?? 0)
             },
-            logger: logger
+            logger: logger,
         )
 
         // Create service group for graceful shutdown
@@ -119,8 +118,8 @@ actor TestHTTPServer {
             configuration: .init(
                 services: [app],
                 gracefulShutdownSignals: [],
-                logger: logger
-            )
+                logger: logger,
+            ),
         )
 
         // Start server in background task
@@ -139,7 +138,7 @@ actor TestHTTPServer {
             transport: transport,
             serviceGroup: serviceGroup,
             port: port,
-            serverTask: serverTask
+            serverTask: serverTask,
         )
     }
 
@@ -175,7 +174,7 @@ actor TestHTTPServer {
         return MCP.HTTPRequest(
             method: request.method.rawValue,
             headers: headers,
-            body: body
+            body: body,
         )
     }
 
@@ -234,7 +233,7 @@ extension TestHTTPServer {
     func post(
         body: String,
         sessionId: String? = nil,
-        protocolVersion: String = Version.v2024_11_05
+        protocolVersion: String = Version.v2024_11_05,
     ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "POST"
@@ -259,7 +258,7 @@ extension TestHTTPServer {
     /// Makes a GET request to this test server using URLSession.
     func get(
         sessionId: String,
-        protocolVersion: String = Version.v2024_11_05
+        protocolVersion: String = Version.v2024_11_05,
     ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "GET"
@@ -278,7 +277,7 @@ extension TestHTTPServer {
     /// Makes a DELETE request to this test server using URLSession.
     func delete(
         sessionId: String,
-        protocolVersion: String = Version.v2024_11_05
+        protocolVersion: String = Version.v2024_11_05,
     ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "DELETE"
@@ -308,7 +307,7 @@ extension TestHTTPServer {
         _ method: String,
         body: String? = nil,
         sessionId: String? = nil,
-        protocolVersion: String = Version.v2024_11_05
+        protocolVersion: String = Version.v2024_11_05,
     ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: baseURL)
         request.httpMethod = method

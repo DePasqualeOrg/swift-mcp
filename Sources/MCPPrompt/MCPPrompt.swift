@@ -42,7 +42,9 @@ public protocol ArgumentValue: Sendable {
 }
 
 extension String: ArgumentValue {
-    public static var isOptional: Bool { false }
+    public static var isOptional: Bool {
+        false
+    }
 
     public init?(argumentString: String?) {
         guard let value = argumentString else { return nil }
@@ -51,7 +53,9 @@ extension String: ArgumentValue {
 }
 
 extension String?: ArgumentValue {
-    public static var isOptional: Bool { true }
+    public static var isOptional: Bool {
+        true
+    }
 
     public init?(argumentString: String?) {
         self = argumentString
@@ -123,7 +127,7 @@ public struct Argument<Value: ArgumentValue>: Sendable {
         key: String? = nil,
         title: String? = nil,
         description: String? = nil,
-        required: Bool? = nil
+        required: Bool? = nil,
     ) {
         self.wrappedValue = wrappedValue
         self.key = key
@@ -148,7 +152,7 @@ public extension Argument where Value == String {
         key: String? = nil,
         title: String? = nil,
         description: String? = nil,
-        required: Bool? = nil
+        required: Bool? = nil,
     ) {
         wrappedValue = ""
         self.key = key
@@ -172,7 +176,7 @@ public extension Argument where Value: ExpressibleByNilLiteral {
         key: String? = nil,
         title: String? = nil,
         description: String? = nil,
-        required: Bool? = nil
+        required: Bool? = nil,
     ) {
         wrappedValue = nil
         self.key = key

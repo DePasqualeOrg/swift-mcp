@@ -1,16 +1,14 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("MCPServer Tests")
 struct MCPServerTests {
     // MARK: - Tool Registration Tests
 
-    @Test("Register closure-based tool and list it")
-    func registerClosureTool() async throws {
+    @Test
+    func `Register closure-based tool and list it`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         struct EchoArgs: Codable, Sendable {
@@ -28,7 +26,7 @@ struct MCPServerTests {
         let tool = try await server.register(
             name: "echo",
             description: "Echo a message",
-            inputSchema: inputSchema
+            inputSchema: inputSchema,
         ) { (args: EchoArgs, _: HandlerContext) in
             args.message
         }
@@ -41,13 +39,13 @@ struct MCPServerTests {
         #expect(definitions.first?.description == "Echo a message")
     }
 
-    @Test("Register tool with no input parameters")
-    func registerNoInputTool() async throws {
+    @Test
+    func `Register tool with no input parameters`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let tool = try await server.register(
             name: "get_time",
-            description: "Get current time"
+            description: "Get current time",
         ) { (_: HandlerContext) in
             "2024-01-01T00:00:00Z"
         }
@@ -58,13 +56,13 @@ struct MCPServerTests {
         #expect(definitions.count == 1)
     }
 
-    @Test("Enable and disable tool")
-    func enableDisableTool() async throws {
+    @Test
+    func `Enable and disable tool`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let tool = try await server.register(
             name: "test_tool",
-            description: "Test tool"
+            description: "Test tool",
         ) { (_: HandlerContext) in
             "result"
         }
@@ -86,13 +84,13 @@ struct MCPServerTests {
         #expect(definitionsAfter.count == 1)
     }
 
-    @Test("Remove tool")
-    func removeTool() async throws {
+    @Test
+    func `Remove tool`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let tool = try await server.register(
             name: "temp_tool",
-            description: "Temporary tool"
+            description: "Temporary tool",
         ) { (_: HandlerContext) in
             "result"
         }
@@ -104,13 +102,13 @@ struct MCPServerTests {
         #expect(await server.toolRegistry.hasTool("temp_tool") == false)
     }
 
-    @Test("Re-register tool after removal")
-    func reRegisterToolAfterRemoval() async throws {
+    @Test
+    func `Re-register tool after removal`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let tool = try await server.register(
             name: "reusable_tool",
-            description: "First registration"
+            description: "First registration",
         ) { (_: HandlerContext) in
             "result 1"
         }
@@ -122,7 +120,7 @@ struct MCPServerTests {
         // Re-register with same name should succeed
         let tool2 = try await server.register(
             name: "reusable_tool",
-            description: "Second registration"
+            description: "Second registration",
         ) { (_: HandlerContext) in
             "result 2"
         }
@@ -136,14 +134,14 @@ struct MCPServerTests {
 
     // MARK: - Resource Registration Tests
 
-    @Test("Register resource and read it")
-    func registerResource() async throws {
+    @Test
+    func `Register resource and read it`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let resource = try await server.registerResource(
             uri: "config://app",
             name: "app_config",
-            description: "Application configuration"
+            description: "Application configuration",
         ) {
             .text("{\"debug\": true}", uri: "config://app")
         }
@@ -159,14 +157,14 @@ struct MCPServerTests {
         #expect(contents.text == "{\"debug\": true}")
     }
 
-    @Test("Register resource template with URI matching")
-    func registerResourceTemplate() async throws {
+    @Test
+    func `Register resource template with URI matching`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let template = try await server.registerResourceTemplate(
             uriTemplate: "file:///{path}",
             name: "file",
-            description: "Read a file by path"
+            description: "Read a file by path",
         ) { uri, variables in
             let path = variables["path"] ?? "unknown"
             return .text("Contents of \(path)", uri: uri)
@@ -183,13 +181,13 @@ struct MCPServerTests {
         #expect(contents.text == "Contents of test.txt")
     }
 
-    @Test("Enable and disable resource")
-    func enableDisableResource() async throws {
+    @Test
+    func `Enable and disable resource`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let resource = try await server.registerResource(
             uri: "test://resource",
-            name: "test_resource"
+            name: "test_resource",
         ) {
             .text("data", uri: "test://resource")
         }
@@ -208,14 +206,14 @@ struct MCPServerTests {
         #expect(resourcesAfter.count == 1)
     }
 
-    @Test("Read unknown resource throws error")
-    func readUnknownResourceThrows() async throws {
+    @Test
+    func `Read unknown resource throws error`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register one resource
         _ = try await server.registerResource(
             uri: "test://exists",
-            name: "existing_resource"
+            name: "existing_resource",
         ) {
             .text("data", uri: "test://exists")
         }
@@ -230,13 +228,13 @@ struct MCPServerTests {
         }
     }
 
-    @Test("Read disabled resource throws error")
-    func readDisabledResourceThrows() async throws {
+    @Test
+    func `Read disabled resource throws error`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let resource = try await server.registerResource(
             uri: "test://resource",
-            name: "test_resource"
+            name: "test_resource",
         ) {
             .text("secret data", uri: "test://resource")
         }
@@ -258,14 +256,14 @@ struct MCPServerTests {
         #expect(contentsAfter.text == "secret data")
     }
 
-    @Test("Enable and disable resource template")
-    func enableDisableResourceTemplate() async throws {
+    @Test
+    func `Enable and disable resource template`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let template = try await server.registerResourceTemplate(
             uriTemplate: "users://{userId}/profile",
             name: "user_profile",
-            description: "User profile data"
+            description: "User profile data",
         ) { uri, variables in
             let userId = variables["userId"] ?? "unknown"
             return .text("Profile for user \(userId)", uri: uri)
@@ -299,14 +297,14 @@ struct MCPServerTests {
         #expect(contentsAfter.text == "Profile for user 789")
     }
 
-    @Test("Remove resource template")
-    func removeResourceTemplate() async throws {
+    @Test
+    func `Remove resource template`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let template = try await server.registerResourceTemplate(
             uriTemplate: "docs://{docId}",
             name: "document",
-            description: "Document reader"
+            description: "Document reader",
         ) { uri, variables in
             let docId = variables["docId"] ?? "unknown"
             return .text("Document \(docId)", uri: uri)
@@ -332,13 +330,13 @@ struct MCPServerTests {
         }
     }
 
-    @Test("Re-register resource after removal")
-    func reRegisterResourceAfterRemoval() async throws {
+    @Test
+    func `Re-register resource after removal`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let resource = try await server.registerResource(
             uri: "config://app",
-            name: "app_config"
+            name: "app_config",
         ) {
             .text("version 1", uri: "config://app")
         }
@@ -358,7 +356,7 @@ struct MCPServerTests {
         // Re-register with same URI
         let resource2 = try await server.registerResource(
             uri: "config://app",
-            name: "app_config_v2"
+            name: "app_config_v2",
         ) {
             .text("version 2", uri: "config://app")
         }
@@ -389,18 +387,18 @@ struct MCPServerTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
 
-    @Test("Register prompt with no arguments")
-    func registerPromptNoArgs() async throws {
+    @Test
+    func `Register prompt with no arguments`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let prompt = try await server.registerPrompt(
             name: "greeting",
-            description: "A friendly greeting"
+            description: "A friendly greeting",
         ) {
             [.user(.text("Hello! How can I help you?"))]
         }
@@ -417,8 +415,8 @@ struct MCPServerTests {
         #expect(result.messages.count == 1)
     }
 
-    @Test("Register prompt with arguments")
-    func registerPromptWithArgs() async throws {
+    @Test
+    func `Register prompt with arguments`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let prompt = try await server.registerPrompt(
@@ -426,7 +424,7 @@ struct MCPServerTests {
             description: "A personalized greeting",
             arguments: [
                 Prompt.Argument(name: "name", description: "Person's name", required: true),
-            ]
+            ],
         ) { args, _ in
             let name = args?["name"] ?? "Guest"
             return [.user(.text("Hello, \(name)!"))]
@@ -439,17 +437,17 @@ struct MCPServerTests {
         let result = try await server.promptRegistry.getPrompt(
             "personal_greeting",
             arguments: ["name": "Alice"],
-            context: context
+            context: context,
         )
         #expect(result.messages.count == 1)
     }
 
-    @Test("Enable and disable prompt")
-    func enableDisablePrompt() async throws {
+    @Test
+    func `Enable and disable prompt`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         let prompt = try await server.registerPrompt(
-            name: "test_prompt"
+            name: "test_prompt",
         ) {
             [.user(.text("Test"))]
         }
@@ -470,8 +468,8 @@ struct MCPServerTests {
 
     // MARK: - Server Capabilities Tests
 
-    @Test("Capabilities are set when registering tools")
-    func capabilitiesSetOnToolRegistration() async throws {
+    @Test
+    func `Capabilities are set when registering tools`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         // Session without tools has no tools capability
@@ -482,7 +480,7 @@ struct MCPServerTests {
         // Register a tool
         _ = try await mcpServer.register(
             name: "test",
-            description: "Test"
+            description: "Test",
         ) { (_: HandlerContext) in
             "result"
         }
@@ -493,13 +491,13 @@ struct MCPServerTests {
         #expect(caps.tools?.listChanged == true)
     }
 
-    @Test("Capabilities are set when registering resources")
-    func capabilitiesSetOnResourceRegistration() async throws {
+    @Test
+    func `Capabilities are set when registering resources`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         _ = try await mcpServer.registerResource(
             uri: "test://resource",
-            name: "test"
+            name: "test",
         ) {
             .text("data", uri: "test://resource")
         }
@@ -509,8 +507,8 @@ struct MCPServerTests {
         #expect(caps.resources?.listChanged == true)
     }
 
-    @Test("Capabilities are set when registering prompts")
-    func capabilitiesSetOnPromptRegistration() async throws {
+    @Test
+    func `Capabilities are set when registering prompts`() async throws {
         let mcpServer = MCPServer(name: "test-server", version: "1.0.0")
 
         _ = try await mcpServer.registerPrompt(name: "test") {
@@ -524,14 +522,14 @@ struct MCPServerTests {
 
     // MARK: - Duplicate Registration Tests
 
-    @Test("Duplicate tool registration throws error")
-    func duplicateToolRegistrationThrows() async throws {
+    @Test
+    func `Duplicate tool registration throws error`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register first tool
         _ = try await server.register(
             name: "duplicate_tool",
-            description: "First"
+            description: "First",
         ) { (_: HandlerContext) in
             "first"
         }
@@ -540,21 +538,21 @@ struct MCPServerTests {
         await #expect(throws: MCPError.self) {
             _ = try await server.register(
                 name: "duplicate_tool",
-                description: "Second"
+                description: "Second",
             ) { (_: HandlerContext) in
                 "second"
             }
         }
     }
 
-    @Test("Duplicate resource registration throws error")
-    func duplicateResourceRegistrationThrows() async throws {
+    @Test
+    func `Duplicate resource registration throws error`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register first resource
         _ = try await server.registerResource(
             uri: "test://duplicate",
-            name: "first"
+            name: "first",
         ) {
             .text("first", uri: "test://duplicate")
         }
@@ -563,15 +561,15 @@ struct MCPServerTests {
         await #expect(throws: MCPError.self) {
             _ = try await server.registerResource(
                 uri: "test://duplicate",
-                name: "second"
+                name: "second",
             ) {
                 .text("second", uri: "test://duplicate")
             }
         }
     }
 
-    @Test("Duplicate prompt registration throws error")
-    func duplicatePromptRegistrationThrows() async throws {
+    @Test
+    func `Duplicate prompt registration throws error`() async throws {
         let server = MCPServer(name: "test-server", version: "1.0.0")
 
         // Register first prompt
@@ -590,13 +588,12 @@ struct MCPServerTests {
 
 // MARK: - Resource Template Matching Tests
 
-@Suite("Resource Template Matching Tests")
 struct ResourceTemplateMatchingTests {
-    @Test("Match simple template")
-    func matchSimpleTemplate() {
+    @Test
+    func `Match simple template`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
-            name: "file"
+            name: "file",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -605,11 +602,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["path"] == "test.txt")
     }
 
-    @Test("Match template with multiple variables")
-    func matchMultipleVariables() {
+    @Test
+    func `Match template with multiple variables`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "user://{userId}/posts/{postId}",
-            name: "user_post"
+            name: "user_post",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -619,11 +616,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["postId"] == "456")
     }
 
-    @Test("Non-matching URI returns nil")
-    func nonMatchingUri() {
+    @Test
+    func `Non-matching URI returns nil`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
-            name: "file"
+            name: "file",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -632,11 +629,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars == nil)
     }
 
-    @Test("Percent-encoded space (%20) is decoded in template variables")
-    func percentEncodedSpace() {
+    @Test
+    func `Percent-encoded space (%20) is decoded in template variables`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
-            name: "file"
+            name: "file",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -645,14 +642,14 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["path"] == "hello world.txt")
     }
 
-    @Test("Percent-encoded slash (%2F) is decoded in template variables")
-    func percentEncodedSlash() {
+    @Test
+    func `Percent-encoded slash (%2F) is decoded in template variables`() {
         // %2F matches within a single path segment because the literal characters
         // '%', '2', 'F' are not '/', so [^/]+ accepts them. After extraction the
         // handler receives the decoded '/'.
         let template = ManagedResourceTemplate(
             uriTemplate: "repo://{owner}/{name}",
-            name: "repo"
+            name: "repo",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -662,11 +659,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["owner"] == "acme")
     }
 
-    @Test("Unicode percent-encoded characters are decoded in template variables")
-    func unicodePercentEncoded() {
+    @Test
+    func `Unicode percent-encoded characters are decoded in template variables`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
-            name: "file"
+            name: "file",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -676,11 +673,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["path"] == "café.txt")
     }
 
-    @Test("Multiple percent-encoded variables are each decoded independently")
-    func multiplePercentEncodedVariables() {
+    @Test
+    func `Multiple percent-encoded variables are each decoded independently`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "doc://{author}/{title}",
-            name: "doc"
+            name: "doc",
         ) { uri, _ in
             .text("content", uri: uri)
         }
@@ -690,11 +687,11 @@ struct ResourceTemplateMatchingTests {
         #expect(vars?["title"] == "My Book")
     }
 
-    @Test("Variables without percent-encoding are unchanged")
-    func noPercentEncoding() {
+    @Test
+    func `Variables without percent-encoding are unchanged`() {
         let template = ManagedResourceTemplate(
             uriTemplate: "file:///{path}",
-            name: "file"
+            name: "file",
         ) { uri, _ in
             .text("content", uri: uri)
         }

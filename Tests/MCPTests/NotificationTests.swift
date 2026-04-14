@@ -1,17 +1,14 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
-
 @testable import MCP
+import Testing
 
-@Suite("Notification Tests")
 struct NotificationTests {
     struct TestNotification: Notification {
-        struct Parameters: Codable, Hashable, Sendable {
+        struct Parameters: Codable, Hashable {
             let event: String
         }
 
@@ -22,8 +19,8 @@ struct NotificationTests {
         static let name = "notifications/initialized"
     }
 
-    @Test("Notification initialization with parameters")
-    func testNotificationWithParameters() throws {
+    @Test
+    func `Notification initialization with parameters`() throws {
         let params = TestNotification.Parameters(event: "test-event")
         let notification = TestNotification.message(params)
 
@@ -40,8 +37,8 @@ struct NotificationTests {
         #expect(decoded.params.event == notification.params.event)
     }
 
-    @Test("Empty parameters notification")
-    func testEmptyParametersNotification() throws {
+    @Test
+    func `Empty parameters notification`() throws {
         struct EmptyNotification: Notification {
             static let name = "empty.notification"
         }
@@ -57,8 +54,8 @@ struct NotificationTests {
         #expect(decoded.method == notification.method)
     }
 
-    @Test("Initialized notification encoding")
-    func testInitializedNotificationEncoding() throws {
+    @Test
+    func `Initialized notification encoding`() throws {
         let notification = InitializedNotification.message()
 
         let encoder = JSONEncoder()
@@ -77,13 +74,13 @@ struct NotificationTests {
         #expect(decoded.method == InitializedNotification.name)
     }
 
-    @Test("Initialized notification decoding")
-    func testInitializedNotificationDecoding() throws {
+    @Test
+    func `Initialized notification decoding`() throws {
         // Create a minimal JSON string
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/initialized"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<InitializedNotification>.self, from: data)
@@ -91,8 +88,8 @@ struct NotificationTests {
         #expect(decoded.method == InitializedNotification.name)
     }
 
-    @Test("Resource updated notification with parameters")
-    func testResourceUpdatedNotification() throws {
+    @Test
+    func `Resource updated notification with parameters`() throws {
         let params = ResourceUpdatedNotification.Parameters(uri: "test://resource")
         let notification = ResourceUpdatedNotification.message(params)
 
@@ -117,13 +114,13 @@ struct NotificationTests {
         #expect(decoded.params.uri == "test://resource")
     }
 
-    @Test("AnyNotification decoding - without params")
-    func testAnyNotificationDecodingWithoutParams() throws {
+    @Test
+    func `AnyNotification decoding - without params`() throws {
         // Test decoding when params field is missing
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/initialized"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(AnyMessage.self, from: data)
@@ -131,13 +128,13 @@ struct NotificationTests {
         #expect(decoded.method == InitializedNotification.name)
     }
 
-    @Test("AnyNotification decoding - with null params")
-    func testAnyNotificationDecodingWithNullParams() throws {
+    @Test
+    func `AnyNotification decoding - with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/initialized","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(AnyMessage.self, from: data)
@@ -145,13 +142,13 @@ struct NotificationTests {
         #expect(decoded.method == InitializedNotification.name)
     }
 
-    @Test("AnyNotification decoding - with empty params")
-    func testAnyNotificationDecodingWithEmptyParams() throws {
+    @Test
+    func `AnyNotification decoding - with empty params`() throws {
         // Test decoding when params field is empty
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(AnyMessage.self, from: data)
@@ -159,13 +156,13 @@ struct NotificationTests {
         #expect(decoded.method == InitializedNotification.name)
     }
 
-    @Test("AnyNotification decoding - with non-empty params")
-    func testAnyNotificationDecodingWithNonEmptyParams() throws {
+    @Test
+    func `AnyNotification decoding - with non-empty params`() throws {
         // Test decoding when params field has values
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/resources/updated","params":{"uri":"test://resource"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(AnyMessage.self, from: data)
@@ -176,12 +173,12 @@ struct NotificationTests {
 
     // MARK: - LogMessageNotification Tests
 
-    @Test("LogMessageNotification encoding with all fields")
-    func testLogMessageNotificationEncodingAllFields() throws {
+    @Test
+    func `LogMessageNotification encoding with all fields`() throws {
         let params = LogMessageNotification.Parameters(
             level: .info,
             logger: "test-logger",
-            data: .string("Test log message")
+            data: .string("Test log message"),
         )
         let notification = LogMessageNotification.message(params)
 
@@ -202,11 +199,11 @@ struct NotificationTests {
         #expect(json["params"]?.objectValue?["data"] == "Test log message")
     }
 
-    @Test("LogMessageNotification encoding with minimal fields")
-    func testLogMessageNotificationEncodingMinimal() throws {
+    @Test
+    func `LogMessageNotification encoding with minimal fields`() throws {
         let params = LogMessageNotification.Parameters(
             level: .warning,
-            data: .string("Warning message")
+            data: .string("Warning message"),
         )
         let notification = LogMessageNotification.message(params)
 
@@ -221,12 +218,12 @@ struct NotificationTests {
         #expect(json["params"]?.objectValue?["data"] == "Warning message")
     }
 
-    @Test("LogMessageNotification decoding")
-    func testLogMessageNotificationDecoding() throws {
+    @Test
+    func `LogMessageNotification decoding`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"error","logger":"app","data":"Error occurred"}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<LogMessageNotification>.self, from: data)
@@ -237,11 +234,11 @@ struct NotificationTests {
         #expect(decoded.params.data == .string("Error occurred"))
     }
 
-    @Test("LogMessageNotification with object data")
-    func testLogMessageNotificationWithObjectData() throws {
+    @Test
+    func `LogMessageNotification with object data`() throws {
         let params = LogMessageNotification.Parameters(
             level: .debug,
-            data: .object(["key": .string("value"), "count": .int(42)])
+            data: .object(["key": .string("value"), "count": .int(42)]),
         )
         let notification = LogMessageNotification.message(params)
 
@@ -254,8 +251,8 @@ struct NotificationTests {
         #expect(decoded.params.data.objectValue?["count"] == .int(42))
     }
 
-    @Test("LogMessageNotification all log levels")
-    func testLogMessageNotificationAllLogLevels() throws {
+    @Test
+    func `LogMessageNotification all log levels`() throws {
         let levels: [LoggingLevel] = [
             .debug, .info, .notice, .warning, .error, .critical, .alert, .emergency,
         ]
@@ -274,8 +271,8 @@ struct NotificationTests {
 
     // MARK: - ToolListChangedNotification Tests
 
-    @Test("ToolListChangedNotification encoding")
-    func testToolListChangedNotificationEncoding() throws {
+    @Test
+    func `ToolListChangedNotification encoding`() throws {
         let notification = ToolListChangedNotification.message()
 
         #expect(notification.method == ToolListChangedNotification.name)
@@ -293,12 +290,12 @@ struct NotificationTests {
         }
     }
 
-    @Test("ToolListChangedNotification decoding")
-    func testToolListChangedNotificationDecoding() throws {
+    @Test
+    func `ToolListChangedNotification decoding`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/tools/list_changed"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<ToolListChangedNotification>.self, from: data)
@@ -306,12 +303,12 @@ struct NotificationTests {
         #expect(decoded.method == ToolListChangedNotification.name)
     }
 
-    @Test("ToolListChangedNotification decoding with empty params")
-    func testToolListChangedNotificationDecodingWithEmptyParams() throws {
+    @Test
+    func `ToolListChangedNotification decoding with empty params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/tools/list_changed","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<ToolListChangedNotification>.self, from: data)
@@ -321,8 +318,8 @@ struct NotificationTests {
 
     // MARK: - PromptListChangedNotification Tests
 
-    @Test("PromptListChangedNotification encoding")
-    func testPromptListChangedNotificationEncoding() throws {
+    @Test
+    func `PromptListChangedNotification encoding`() throws {
         let notification = PromptListChangedNotification.message()
 
         #expect(notification.method == PromptListChangedNotification.name)
@@ -340,12 +337,12 @@ struct NotificationTests {
         }
     }
 
-    @Test("PromptListChangedNotification decoding")
-    func testPromptListChangedNotificationDecoding() throws {
+    @Test
+    func `PromptListChangedNotification decoding`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/prompts/list_changed"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<PromptListChangedNotification>.self, from: data)
@@ -353,12 +350,12 @@ struct NotificationTests {
         #expect(decoded.method == PromptListChangedNotification.name)
     }
 
-    @Test("PromptListChangedNotification decoding with empty params")
-    func testPromptListChangedNotificationDecodingWithEmptyParams() throws {
+    @Test
+    func `PromptListChangedNotification decoding with empty params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/prompts/list_changed","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<PromptListChangedNotification>.self, from: data)
@@ -368,8 +365,8 @@ struct NotificationTests {
 
     // MARK: - ResourceListChangedNotification Tests
 
-    @Test("ResourceListChangedNotification encoding")
-    func testResourceListChangedNotificationEncoding() throws {
+    @Test
+    func `ResourceListChangedNotification encoding`() throws {
         let notification = ResourceListChangedNotification.message()
 
         #expect(notification.method == ResourceListChangedNotification.name)
@@ -387,12 +384,12 @@ struct NotificationTests {
         }
     }
 
-    @Test("ResourceListChangedNotification decoding")
-    func testResourceListChangedNotificationDecoding() throws {
+    @Test
+    func `ResourceListChangedNotification decoding`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/resources/list_changed"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<ResourceListChangedNotification>.self, from: data)
@@ -400,12 +397,12 @@ struct NotificationTests {
         #expect(decoded.method == ResourceListChangedNotification.name)
     }
 
-    @Test("ResourceListChangedNotification decoding with empty params")
-    func testResourceListChangedNotificationDecodingWithEmptyParams() throws {
+    @Test
+    func `ResourceListChangedNotification decoding with empty params`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","method":"notifications/resources/list_changed","params":{}}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Message<ResourceListChangedNotification>.self, from: data)

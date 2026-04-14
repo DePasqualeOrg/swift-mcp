@@ -45,7 +45,7 @@ public extension Server {
         level: LoggingLevel,
         logger: String? = nil,
         data: Value,
-        sessionId: String? = nil
+        sessionId: String? = nil,
     ) async throws {
         // Check if logging capability is declared (matching TypeScript SDK behavior)
         guard capabilities.logging != nil else { return }
@@ -56,7 +56,7 @@ public extension Server {
         try await notify(LogMessageNotification.message(.init(
             level: level,
             logger: logger,
-            data: data
+            data: data,
         )))
     }
 

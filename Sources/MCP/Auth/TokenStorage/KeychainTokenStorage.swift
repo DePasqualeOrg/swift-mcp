@@ -101,7 +101,7 @@ public actor KeychainTokenStorage: TokenStorage {
         // delete-then-add sequence.
         let updateStatus = SecItemUpdate(
             baseQuery(account: account) as CFDictionary,
-            attributes as CFDictionary
+            attributes as CFDictionary,
         )
 
         if updateStatus == errSecItemNotFound {

@@ -180,7 +180,7 @@ public extension StructuredOutput {
 
         return CallTool.Result(
             content: [.text(json)],
-            structuredContent: structured
+            structuredContent: structured,
         )
     }
 }

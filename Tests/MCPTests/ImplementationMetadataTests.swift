@@ -1,21 +1,19 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Server.Info Metadata Tests
 
-@Suite("Server.Info Metadata Tests")
 struct ServerInfoMetadataTests {
-    @Test("Server.Info with all fields encodes correctly")
-    func testServerInfoWithAllFields() throws {
+    @Test
+    func `Server.Info with all fields encodes correctly`() throws {
         let icons = [
             Icon(
                 src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
                 mimeType: "image/png",
-                sizes: ["1x1"]
+                sizes: ["1x1"],
             ),
         ]
 
@@ -25,7 +23,7 @@ struct ServerInfoMetadataTests {
             title: "Test Server Display Name",
             description: "A test server for unit testing",
             icons: icons,
-            websiteUrl: "https://example.com"
+            websiteUrl: "https://example.com",
         )
 
         let encoder = JSONEncoder()
@@ -46,15 +44,15 @@ struct ServerInfoMetadataTests {
         #expect(decoded.icons?[0].mimeType == "image/png")
     }
 
-    @Test("Server.Info with only required fields encodes correctly")
-    func testServerInfoWithRequiredFieldsOnly() throws {
+    @Test
+    func `Server.Info with only required fields encodes correctly`() throws {
         let info = Server.Info(name: "basic-server", version: "0.1.0")
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(info)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"name\":\"basic-server\""))
         #expect(json.contains("\"version\":\"0.1.0\""))
@@ -65,8 +63,8 @@ struct ServerInfoMetadataTests {
         #expect(!json.contains("\"websiteUrl\""))
     }
 
-    @Test("Server.Info roundtrips correctly with all fields")
-    func testServerInfoRoundtrip() throws {
+    @Test
+    func `Server.Info roundtrips correctly with all fields`() throws {
         let original = Server.Info(
             name: "roundtrip-server",
             version: "2.0.0",
@@ -76,7 +74,7 @@ struct ServerInfoMetadataTests {
                 Icon(src: "https://example.com/icon.png", mimeType: "image/png", sizes: ["48x48"], theme: .light),
                 Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark),
             ],
-            websiteUrl: "https://example.com/server"
+            websiteUrl: "https://example.com/server",
         )
 
         let encoder = JSONEncoder()
@@ -95,8 +93,8 @@ struct ServerInfoMetadataTests {
         #expect(decoded.icons?[1].theme == .dark)
     }
 
-    @Test("Server.Info decodes from TypeScript SDK format")
-    func testServerInfoDecodesFromTypeScriptFormat() throws {
+    @Test
+    func `Server.Info decodes from TypeScript SDK format`() throws {
         // Format matching TypeScript SDK title.test.ts
         let json = """
         {
@@ -107,15 +105,15 @@ struct ServerInfoMetadataTests {
         """
 
         let decoder = JSONDecoder()
-        let info = try decoder.decode(Server.Info.self, from: json.data(using: .utf8)!)
+        let info = try decoder.decode(Server.Info.self, from: #require(json.data(using: .utf8)))
 
         #expect(info.name == "test-server")
         #expect(info.version == "1.0.0")
         #expect(info.title == "Test Server Display Name")
     }
 
-    @Test("Server.Info decodes from Python SDK format with icons")
-    func testServerInfoDecodesFromPythonFormat() throws {
+    @Test
+    func `Server.Info decodes from Python SDK format with icons`() throws {
         // Format matching Python SDK test_1338_icons_and_metadata.py
         let json = """
         {
@@ -133,7 +131,7 @@ struct ServerInfoMetadataTests {
         """
 
         let decoder = JSONDecoder()
-        let info = try decoder.decode(Server.Info.self, from: json.data(using: .utf8)!)
+        let info = try decoder.decode(Server.Info.self, from: #require(json.data(using: .utf8)))
 
         #expect(info.name == "TestServer")
         #expect(info.version == "1.0.0")
@@ -146,17 +144,16 @@ struct ServerInfoMetadataTests {
 
 // MARK: - Client.Info Metadata Tests
 
-@Suite("Client.Info Metadata Tests")
 struct ClientInfoMetadataTests {
-    @Test("Client.Info with all fields encodes correctly")
-    func testClientInfoWithAllFields() throws {
+    @Test
+    func `Client.Info with all fields encodes correctly`() throws {
         let info = Client.Info(
             name: "test-client",
             version: "1.0.0",
             title: "Test Client Display Name",
             description: "A test client for unit testing",
             icons: [Icon(src: "https://example.com/client-icon.png", mimeType: "image/png")],
-            websiteUrl: "https://example.com/client"
+            websiteUrl: "https://example.com/client",
         )
 
         let encoder = JSONEncoder()
@@ -175,15 +172,15 @@ struct ClientInfoMetadataTests {
         #expect(decoded.icons?.count == 1)
     }
 
-    @Test("Client.Info with only required fields encodes correctly")
-    func testClientInfoWithRequiredFieldsOnly() throws {
+    @Test
+    func `Client.Info with only required fields encodes correctly`() throws {
         let info = Client.Info(name: "basic-client", version: "0.1.0")
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(info)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"name\":\"basic-client\""))
         #expect(json.contains("\"version\":\"0.1.0\""))
@@ -193,8 +190,8 @@ struct ClientInfoMetadataTests {
         #expect(!json.contains("\"websiteUrl\""))
     }
 
-    @Test("Client.Info decodes from Python SDK format")
-    func testClientInfoDecodesFromPythonFormat() throws {
+    @Test
+    func `Client.Info decodes from Python SDK format`() throws {
         // Format matching Python SDK test_session.py custom_client_info
         let json = """
         {
@@ -204,7 +201,7 @@ struct ClientInfoMetadataTests {
         """
 
         let decoder = JSONDecoder()
-        let info = try decoder.decode(Client.Info.self, from: json.data(using: .utf8)!)
+        let info = try decoder.decode(Client.Info.self, from: #require(json.data(using: .utf8)))
 
         #expect(info.name == "test-client")
         #expect(info.version == "1.2.3")
@@ -213,15 +210,14 @@ struct ClientInfoMetadataTests {
 
 // MARK: - Icon Type Tests
 
-@Suite("Icon Type Tests")
 struct IconTypeTests {
-    @Test("Icon with all fields encodes correctly")
-    func testIconWithAllFields() throws {
+    @Test
+    func `Icon with all fields encodes correctly`() throws {
         let icon = Icon(
             src: "https://example.com/icon.png",
             mimeType: "image/png",
             sizes: ["48x48", "96x96"],
-            theme: .light
+            theme: .light,
         )
 
         let encoder = JSONEncoder()
@@ -238,8 +234,8 @@ struct IconTypeTests {
         #expect(decoded.theme == .light)
     }
 
-    @Test("Icon with only src encodes correctly")
-    func testIconWithOnlySrc() throws {
+    @Test
+    func `Icon with only src encodes correctly`() throws {
         let icon = Icon(src: "https://example.com/icon.svg")
 
         let encoder = JSONEncoder()
@@ -256,8 +252,8 @@ struct IconTypeTests {
         #expect(decoded.theme == nil)
     }
 
-    @Test("Icon with data URI encodes correctly")
-    func testIconWithDataUri() throws {
+    @Test
+    func `Icon with data URI encodes correctly`() throws {
         let dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
         let icon = Icon(src: dataUri, mimeType: "image/png", sizes: ["1x1"])
 
@@ -272,21 +268,21 @@ struct IconTypeTests {
         #expect(decoded.sizes == ["1x1"])
     }
 
-    @Test("Icon dark theme encodes correctly")
-    func testIconDarkTheme() throws {
+    @Test
+    func `Icon dark theme encodes correctly`() throws {
         let icon = Icon(src: "https://example.com/dark-icon.png", theme: .dark)
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(icon)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"theme\":\"dark\""))
     }
 
-    @Test("Multiple icons roundtrip correctly")
-    func testMultipleIconsRoundtrip() throws {
+    @Test
+    func `Multiple icons roundtrip correctly`() throws {
         // Based on Python SDK test_multiple_icons test
         let icons = [
             Icon(src: "data:image/png;base64,icon1", mimeType: "image/png", sizes: ["16x16"]),
@@ -309,15 +305,14 @@ struct IconTypeTests {
 
 // MARK: - Server Initialization with Metadata Tests
 
-@Suite("Server Initialization with Metadata Tests")
 struct ServerInitializationMetadataTests {
-    @Test("Server can be initialized with all metadata fields")
-    func testServerInitWithAllMetadata() async throws {
+    @Test
+    func `Server can be initialized with all metadata fields`() async {
         let icons = [
             Icon(
                 src: "https://example.com/server-icon.png",
                 mimeType: "image/png",
-                sizes: ["48x48"]
+                sizes: ["48x48"],
             ),
         ]
 
@@ -327,7 +322,7 @@ struct ServerInitializationMetadataTests {
             title: "Metadata Test Server",
             description: "A server with full metadata",
             icons: icons,
-            websiteUrl: "https://example.com"
+            websiteUrl: "https://example.com",
         )
 
         // Verify the server info has all the fields
@@ -343,12 +338,12 @@ struct ServerInitializationMetadataTests {
         #expect(serverInfo.icons?[0].src == "https://example.com/server-icon.png")
     }
 
-    @Test("Server without optional metadata fields")
-    func testServerInitWithoutOptionalMetadata() async throws {
+    @Test
+    func `Server without optional metadata fields`() async {
         // Based on Python SDK test_no_icons_or_website test
         let server = Server(
             name: "basic-server",
-            version: "0.1.0"
+            version: "0.1.0",
         )
 
         #expect(server.name == "basic-server")
@@ -364,17 +359,16 @@ struct ServerInitializationMetadataTests {
 
 // MARK: - Client Initialization with Metadata Tests
 
-@Suite("Client Initialization with Metadata Tests")
 struct ClientInitializationMetadataTests {
-    @Test("Client can be initialized with all metadata fields")
-    func testClientInitWithAllMetadata() async throws {
+    @Test
+    func `Client can be initialized with all metadata fields`() async {
         let client = Client(
             name: "metadata-client",
             version: "1.0.0",
             title: "Metadata Test Client",
             description: "A client with full metadata",
             icons: [Icon(src: "https://example.com/client-icon.png")],
-            websiteUrl: "https://example.com/client"
+            websiteUrl: "https://example.com/client",
         )
 
         #expect(client.name == "metadata-client")
@@ -388,11 +382,11 @@ struct ClientInitializationMetadataTests {
         #expect(clientInfo.icons?.count == 1)
     }
 
-    @Test("Client without optional metadata fields")
-    func testClientInitWithoutOptionalMetadata() async throws {
+    @Test
+    func `Client without optional metadata fields`() async {
         let client = Client(
             name: "basic-client",
-            version: "0.1.0"
+            version: "0.1.0",
         )
 
         #expect(client.name == "basic-client")
@@ -408,10 +402,9 @@ struct ClientInitializationMetadataTests {
 
 // MARK: - Initialize Result with Metadata Tests
 
-@Suite("Initialize Result Metadata Tests")
 struct InitializeResultMetadataTests {
-    @Test("Initialize result with server title in serverInfo")
-    func testInitializeResultWithServerTitle() throws {
+    @Test
+    func `Initialize result with server title in serverInfo`() throws {
         // Based on TypeScript SDK title.test.ts "should support serverInfo with title"
         let result = Initialize.Result(
             protocolVersion: Version.latest,
@@ -419,23 +412,23 @@ struct InitializeResultMetadataTests {
             serverInfo: Server.Info(
                 name: "test-server",
                 version: "1.0.0",
-                title: "Test Server Display Name"
-            )
+                title: "Test Server Display Name",
+            ),
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 
         let data = try encoder.encode(result)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try #require(String(data: data, encoding: .utf8))
 
         #expect(json.contains("\"name\":\"test-server\""))
         #expect(json.contains("\"version\":\"1.0.0\""))
         #expect(json.contains("\"title\":\"Test Server Display Name\""))
     }
 
-    @Test("Initialize result with all metadata fields decodes correctly")
-    func testInitializeResultWithAllMetadata() throws {
+    @Test
+    func `Initialize result with all metadata fields decodes correctly`() throws {
         let json = """
         {
             "protocolVersion": "2025-11-25",
@@ -460,7 +453,7 @@ struct InitializeResultMetadataTests {
         """
 
         let decoder = JSONDecoder()
-        let result = try decoder.decode(Initialize.Result.self, from: json.data(using: .utf8)!)
+        let result = try decoder.decode(Initialize.Result.self, from: #require(json.data(using: .utf8)))
 
         #expect(result.protocolVersion == Version.v2025_11_25)
         #expect(result.serverInfo.name == "full-metadata-server")
@@ -473,8 +466,8 @@ struct InitializeResultMetadataTests {
         #expect(result.instructions == "Use this server for testing.")
     }
 
-    @Test("Initialize result from Python SDK format")
-    func testInitializeResultFromPythonFormat() throws {
+    @Test
+    func `Initialize result from Python SDK format`() throws {
         // Based on Python SDK test_session.py test_client_session_initialize
         let json = """
         {
@@ -495,7 +488,7 @@ struct InitializeResultMetadataTests {
         """
 
         let decoder = JSONDecoder()
-        let result = try decoder.decode(Initialize.Result.self, from: json.data(using: .utf8)!)
+        let result = try decoder.decode(Initialize.Result.self, from: #require(json.data(using: .utf8)))
 
         #expect(result.serverInfo.name == "mock-server")
         #expect(result.serverInfo.version == "0.1.0")
@@ -505,10 +498,9 @@ struct InitializeResultMetadataTests {
 
 // MARK: - Integration: Metadata in Initialize Flow
 
-@Suite("Metadata in Initialize Integration Tests")
 struct MetadataInitializeIntegrationTests {
-    @Test("Server metadata is returned in initialize result")
-    func testServerMetadataInInitializeResult() async throws {
+    @Test
+    func `Server metadata is returned in initialize result`() async throws {
         // Based on TypeScript SDK title.test.ts "should support serverInfo with title"
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
@@ -517,7 +509,7 @@ struct MetadataInitializeIntegrationTests {
             version: "1.0.0",
             title: "Test Server Display Name",
             description: "A server for integration testing",
-            websiteUrl: "https://example.com"
+            websiteUrl: "https://example.com",
         )
 
         try await server.start(transport: serverTransport)
@@ -536,13 +528,13 @@ struct MetadataInitializeIntegrationTests {
         await server.stop()
     }
 
-    @Test("Server with icons metadata is returned correctly")
-    func testServerWithIconsMetadataInInitializeResult() async throws {
+    @Test
+    func `Server with icons metadata is returned correctly`() async throws {
         // Based on Python SDK test_1338_icons_and_metadata.py
         let testIcon = Icon(
             src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
             mimeType: "image/png",
-            sizes: ["1x1"]
+            sizes: ["1x1"],
         )
 
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
@@ -551,7 +543,7 @@ struct MetadataInitializeIntegrationTests {
             name: "icon-server",
             version: "1.0.0",
             icons: [testIcon],
-            websiteUrl: "https://example.com"
+            websiteUrl: "https://example.com",
         )
 
         try await server.start(transport: serverTransport)
@@ -570,8 +562,8 @@ struct MetadataInitializeIntegrationTests {
         await server.stop()
     }
 
-    @Test("Server instructions are included in initialize result")
-    func testServerInstructionsInInitializeResult() async throws {
+    @Test
+    func `Server instructions are included in initialize result`() async throws {
         // Based on Python SDK test_client_session_initialize
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
@@ -579,7 +571,7 @@ struct MetadataInitializeIntegrationTests {
         let server = Server(
             name: "instructions-server",
             version: "1.0.0",
-            instructions: instructions
+            instructions: instructions,
         )
 
         try await server.start(transport: serverTransport)
@@ -593,14 +585,14 @@ struct MetadataInitializeIntegrationTests {
         await server.stop()
     }
 
-    @Test("Server without optional metadata still initializes correctly")
-    func testServerWithoutOptionalMetadata() async throws {
+    @Test
+    func `Server without optional metadata still initializes correctly`() async throws {
         // Based on Python SDK test_no_icons_or_website
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "basic-server",
-            version: "1.0.0"
+            version: "1.0.0",
         )
 
         try await server.start(transport: serverTransport)

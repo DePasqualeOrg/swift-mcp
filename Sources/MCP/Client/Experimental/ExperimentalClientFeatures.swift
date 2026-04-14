@@ -224,7 +224,7 @@ public struct ExperimentalClientTasks: Sendable {
     public func callToolAsTask(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> CreateTaskResult {
         try await client.callToolAsTask(name: name, arguments: arguments, ttl: ttl)
     }
@@ -284,7 +284,7 @@ public struct ExperimentalClientTasks: Sendable {
     public func callToolAsTaskAndWait(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async throws -> CallTool.Result {
         try await client.callToolAsTaskAndWait(name: name, arguments: arguments, ttl: ttl)
     }
@@ -325,7 +325,7 @@ public struct ExperimentalClientTasks: Sendable {
     public func callToolStream(
         name: String,
         arguments: [String: Value]? = nil,
-        ttl: Int? = nil
+        ttl: Int? = nil,
     ) async -> AsyncThrowingStream<TaskStreamMessage, Error> {
         await client.callToolStream(name: name, arguments: arguments, ttl: ttl)
     }

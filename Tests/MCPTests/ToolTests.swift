@@ -2,14 +2,12 @@
 // Copyright © Matt Zmuda
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Tool Tests")
 struct ToolTests {
-    @Test("Tool initialization with valid parameters")
-    func testToolInitialization() throws {
+    @Test
+    func `Tool initialization with valid parameters`() {
         let tool = Tool(
             name: "test_tool",
             description: "A test tool",
@@ -18,7 +16,7 @@ struct ToolTests {
                 "properties": .object([
                     "param1": .string("Test parameter"),
                 ]),
-            ])
+            ]),
         )
 
         #expect(tool.name == "test_tool")
@@ -26,8 +24,8 @@ struct ToolTests {
         #expect(tool.inputSchema != nil)
     }
 
-    @Test("Tool Annotations initialization and properties")
-    func testToolAnnotationsInitialization() throws {
+    @Test
+    func `Tool Annotations initialization and properties`() {
         // Empty annotations
         let emptyAnnotations = Tool.Annotations()
         #expect(emptyAnnotations.isEmpty)
@@ -43,7 +41,7 @@ struct ToolTests {
             readOnlyHint: true,
             destructiveHint: false,
             idempotentHint: true,
-            openWorldHint: false
+            openWorldHint: false,
         )
 
         #expect(!fullAnnotations.isEmpty)
@@ -63,14 +61,14 @@ struct ToolTests {
         #expect(nilAnnotations.isEmpty)
     }
 
-    @Test("Tool Annotations encoding and decoding")
-    func testToolAnnotationsEncodingDecoding() throws {
+    @Test
+    func `Tool Annotations encoding and decoding`() throws {
         let annotations = Tool.Annotations(
             title: "Test Tool",
             readOnlyHint: true,
             destructiveHint: false,
             idempotentHint: true,
-            openWorldHint: false
+            openWorldHint: false,
         )
 
         #expect(!annotations.isEmpty)
@@ -95,11 +93,11 @@ struct ToolTests {
         #expect(decodedEmpty.isEmpty)
     }
 
-    @Test("Tool with annotations encoding and decoding")
-    func testToolWithAnnotationsEncodingDecoding() throws {
+    @Test
+    func `Tool with annotations encoding and decoding`() throws {
         let annotations = Tool.Annotations(
             title: "Calculator",
-            destructiveHint: false
+            destructiveHint: false,
         )
 
         let tool = Tool(
@@ -111,7 +109,7 @@ struct ToolTests {
                     "expression": .string("Mathematical expression to evaluate"),
                 ]),
             ]),
-            annotations: annotations
+            annotations: annotations,
         )
 
         let encoder = JSONEncoder()
@@ -126,17 +124,17 @@ struct ToolTests {
         #expect(decoded.annotations.destructiveHint == annotations.destructiveHint)
 
         // Verify that the annotations field is properly included in the JSON
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"annotations\""))
         #expect(jsonString.contains("\"title\":\"Calculator\""))
     }
 
-    @Test("Tool with empty annotations")
-    func testToolWithEmptyAnnotations() throws {
+    @Test
+    func `Tool with empty annotations`() throws {
         var tool = Tool(
             name: "test_tool",
             description: "Test tool description",
-            inputSchema: ["type": "object"]
+            inputSchema: ["type": "object"],
         )
 
         do {
@@ -146,7 +144,7 @@ struct ToolTests {
             let data = try encoder.encode(tool)
 
             // Verify that empty annotations are not included in the JSON
-            let jsonString = String(data: data, encoding: .utf8)!
+            let jsonString = try #require(String(data: data, encoding: .utf8))
             #expect(!jsonString.contains("\"annotations\""))
         }
 
@@ -159,18 +157,18 @@ struct ToolTests {
             let data = try encoder.encode(tool)
 
             // Verify that empty annotations are not included in the JSON
-            let jsonString = String(data: data, encoding: .utf8)!
+            let jsonString = try #require(String(data: data, encoding: .utf8))
             #expect(jsonString.contains("\"annotations\""))
         }
     }
 
-    @Test("Tool with nil literal annotations")
-    func testToolWithNilLiteralAnnotations() throws {
+    @Test
+    func `Tool with nil literal annotations`() throws {
         let tool = Tool(
             name: "test_tool",
             description: "Test tool description",
             inputSchema: ["type": "object"],
-            annotations: nil
+            annotations: nil,
         )
 
         #expect(tool.annotations.isEmpty)
@@ -179,12 +177,12 @@ struct ToolTests {
         let data = try encoder.encode(tool)
 
         // Verify that nil literal annotations are not included in the JSON
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(!jsonString.contains("\"annotations\""))
     }
 
-    @Test("Tool encoding and decoding")
-    func testToolEncodingDecoding() throws {
+    @Test
+    func `Tool encoding and decoding`() throws {
         let tool = Tool(
             name: "test_tool",
             description: "Test tool description",
@@ -194,7 +192,7 @@ struct ToolTests {
                     "param1": .string("String parameter"),
                     "param2": .int(42),
                 ]),
-            ])
+            ]),
         )
 
         let encoder = JSONEncoder()
@@ -208,8 +206,8 @@ struct ToolTests {
         #expect(decoded.inputSchema == tool.inputSchema)
     }
 
-    @Test("Text content encoding and decoding")
-    func testToolContentTextEncoding() throws {
+    @Test
+    func `Text content encoding and decoding`() throws {
         let content = Tool.Content.text("Hello, world!")
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -224,8 +222,8 @@ struct ToolTests {
         }
     }
 
-    @Test("Image content encoding and decoding")
-    func testToolContentImageEncoding() throws {
+    @Test
+    func `Image content encoding and decoding`() throws {
         let content = Tool.Content.image(data: "base64data", mimeType: "image/png")
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -241,12 +239,12 @@ struct ToolTests {
         }
     }
 
-    @Test("Resource content encoding and decoding")
-    func testToolContentResourceEncoding() throws {
+    @Test
+    func `Resource content encoding and decoding`() throws {
         let content = Tool.Content.resource(
             uri: "file://test.txt",
             mimeType: "text/plain",
-            text: "Sample text"
+            text: "Sample text",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -263,11 +261,11 @@ struct ToolTests {
         }
     }
 
-    @Test("Audio content encoding and decoding")
-    func testToolContentAudioEncoding() throws {
+    @Test
+    func `Audio content encoding and decoding`() throws {
         let content = Tool.Content.audio(
             data: "base64audiodata",
-            mimeType: "audio/wav"
+            mimeType: "audio/wav",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
@@ -283,8 +281,8 @@ struct ToolTests {
         }
     }
 
-    @Test("ListTools parameters validation")
-    func testListToolsParameters() throws {
+    @Test
+    func `ListTools parameters validation`() {
         let params = ListTools.Parameters(cursor: "next_page")
         #expect(params.cursor == "next_page")
 
@@ -292,13 +290,13 @@ struct ToolTests {
         #expect(emptyParams.cursor == nil)
     }
 
-    @Test("ListTools request decoding with omitted params")
-    func testListToolsRequestDecodingWithOmittedParams() throws {
+    @Test
+    func `ListTools request decoding with omitted params`() throws {
         // Test decoding when params field is omitted
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"tools/list"}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListTools>.self, from: data)
@@ -307,13 +305,13 @@ struct ToolTests {
         #expect(decoded.method == ListTools.name)
     }
 
-    @Test("ListTools request decoding with null params")
-    func testListToolsRequestDecodingWithNullParams() throws {
+    @Test
+    func `ListTools request decoding with null params`() throws {
         // Test decoding when params field is null
         let jsonString = """
         {"jsonrpc":"2.0","id":"test-id","method":"tools/list","params":null}
         """
-        let data = jsonString.data(using: .utf8)!
+        let data = try #require(jsonString.data(using: .utf8))
 
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Request<ListTools>.self, from: data)
@@ -322,8 +320,8 @@ struct ToolTests {
         #expect(decoded.method == ListTools.name)
     }
 
-    @Test("ListTools result validation")
-    func testListToolsResult() throws {
+    @Test
+    func `ListTools result validation`() {
         let tools = [
             Tool(name: "tool1", description: "First tool", inputSchema: ["type": "object"]),
             Tool(name: "tool2", description: "Second tool", inputSchema: ["type": "object"]),
@@ -336,8 +334,8 @@ struct ToolTests {
         #expect(result.nextCursor == "next_page")
     }
 
-    @Test("CallTool parameters validation")
-    func testCallToolParameters() throws {
+    @Test
+    func `CallTool parameters validation`() {
         let arguments: [String: Value] = [
             "param1": .string("value1"),
             "param2": .int(42),
@@ -349,8 +347,8 @@ struct ToolTests {
         #expect(params.arguments?["param2"] == .int(42))
     }
 
-    @Test("CallTool success result validation")
-    func testCallToolResult() throws {
+    @Test
+    func `CallTool success result validation`() {
         let content = [
             Tool.Content.text("Result 1"),
             Tool.Content.text("Result 2"),
@@ -367,8 +365,8 @@ struct ToolTests {
         }
     }
 
-    @Test("CallTool error result validation")
-    func testCallToolErrorResult() throws {
+    @Test
+    func `CallTool error result validation`() {
         let errorContent = [Tool.Content.text("Error message")]
         let errorResult = CallTool.Result(content: errorContent, isError: true)
         #expect(errorResult.content.count == 1)
@@ -381,17 +379,17 @@ struct ToolTests {
         }
     }
 
-    @Test("ToolListChanged notification name validation")
-    func testToolListChangedNotification() throws {
+    @Test
+    func `ToolListChanged notification name validation`() {
         #expect(ToolListChangedNotification.name == "notifications/tools/list_changed")
     }
 
-    @Test("ListTools handler invocation without params")
-    func testListToolsHandlerWithoutParams() async throws {
+    @Test
+    func `ListTools handler invocation without params`() async throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":1,"method":"tools/list"}
         """
-        let jsonData = jsonString.data(using: .utf8)!
+        let jsonData = try #require(jsonString.data(using: .utf8))
 
         let anyRequest = try JSONDecoder().decode(AnyRequest.self, from: jsonData)
 
@@ -403,7 +401,7 @@ struct ToolTests {
             let testTool = Tool(
                 name: "test_tool",
                 description: "Test tool for verification",
-                inputSchema: ["type": "object"]
+                inputSchema: ["type": "object"],
             )
             return ListTools.response(id: request.id, result: ListTools.Result(tools: [testTool]))
         }
@@ -421,7 +419,7 @@ struct ToolTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         let response = try await handler(anyRequest, context: dummyContext)
 
@@ -438,15 +436,15 @@ struct ToolTests {
         }
     }
 
-    @Test("Tool with missing description")
-    func testToolWithMissingDescription() throws {
+    @Test
+    func `Tool with missing description`() throws {
         let jsonString = """
         {
             "name": "test_tool",
             "inputSchema": {"type": "object"}
         }
         """
-        let jsonData = jsonString.data(using: .utf8)!
+        let jsonData = try #require(jsonString.data(using: .utf8))
 
         let tool = try JSONDecoder().decode(Tool.self, from: jsonData)
 
@@ -457,8 +455,8 @@ struct ToolTests {
 
     // MARK: - Tool with outputSchema
 
-    @Test("Tool with outputSchema encoding and decoding")
-    func testToolWithOutputSchema() throws {
+    @Test
+    func `Tool with outputSchema encoding and decoding`() throws {
         let outputSchema: Value = [
             "type": "object",
             "properties": [
@@ -471,7 +469,7 @@ struct ToolTests {
             name: "calculate",
             description: "Performs calculations",
             inputSchema: ["type": "object"],
-            outputSchema: outputSchema
+            outputSchema: outputSchema,
         )
 
         #expect(tool.outputSchema != nil)
@@ -485,12 +483,12 @@ struct ToolTests {
         #expect(decoded.outputSchema == outputSchema)
 
         // Verify JSON contains outputSchema
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"outputSchema\""))
     }
 
-    @Test("CallTool result with structuredContent")
-    func testCallToolResultWithStructuredContent() throws {
+    @Test
+    func `CallTool result with structuredContent`() throws {
         let structuredContent: Value = [
             "name": "John",
             "age": 30,
@@ -498,7 +496,7 @@ struct ToolTests {
 
         let result = CallTool.Result(
             content: [.text("User data")],
-            structuredContent: structuredContent
+            structuredContent: structuredContent,
         )
 
         #expect(result.structuredContent == structuredContent)
@@ -515,8 +513,8 @@ struct ToolTests {
 
     // MARK: - Tool.Execution Tests
 
-    @Test("Tool.Execution with taskSupport encoding and decoding")
-    func testToolExecutionWithTaskSupport() throws {
+    @Test
+    func `Tool.Execution with taskSupport encoding and decoding`() throws {
         let execution = Tool.Execution(taskSupport: .required)
         #expect(execution.taskSupport == .required)
 
@@ -528,17 +526,17 @@ struct ToolTests {
 
         #expect(decoded.taskSupport == .required)
 
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"taskSupport\":\"required\""))
     }
 
-    @Test("Tool with execution property encoding and decoding")
-    func testToolWithExecution() throws {
+    @Test
+    func `Tool with execution property encoding and decoding`() throws {
         let tool = Tool(
             name: "long_running_task",
             description: "A task that takes a long time",
             inputSchema: ["type": "object"],
-            execution: Tool.Execution(taskSupport: .optional)
+            execution: Tool.Execution(taskSupport: .optional),
         )
 
         #expect(tool.execution?.taskSupport == .optional)
@@ -551,32 +549,31 @@ struct ToolTests {
 
         #expect(decoded.execution?.taskSupport == .optional)
 
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"execution\""))
         #expect(jsonString.contains("\"taskSupport\":\"optional\""))
     }
 
     @Test(
-        "Tool.Execution.TaskSupport enum values",
         arguments: [
             (Tool.Execution.TaskSupport.forbidden, "forbidden"),
             (Tool.Execution.TaskSupport.optional, "optional"),
             (Tool.Execution.TaskSupport.required, "required"),
-        ]
+        ],
     )
-    func testTaskSupportEnumValues(testCase: (value: Tool.Execution.TaskSupport, rawValue: String)) throws {
+    func `Tool.Execution.TaskSupport enum values`(testCase: (value: Tool.Execution.TaskSupport, rawValue: String)) throws {
         #expect(testCase.value.rawValue == testCase.rawValue)
 
         let execution = Tool.Execution(taskSupport: testCase.value)
         let encoder = JSONEncoder()
         let data = try encoder.encode(execution)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonString.contains("\"\(testCase.rawValue)\""))
     }
 
-    @Test("Tool.Execution with nil taskSupport")
-    func testToolExecutionWithNilTaskSupport() throws {
+    @Test
+    func `Tool.Execution with nil taskSupport`() throws {
         let execution = Tool.Execution(taskSupport: nil)
         #expect(execution.taskSupport == nil)
 
@@ -584,19 +581,19 @@ struct ToolTests {
         let data = try encoder.encode(execution)
 
         // Empty execution should encode as empty object
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString == "{}")
     }
 
     // MARK: - Tool with Title, Icons, _meta Tests
 
-    @Test("Tool with top-level title property")
-    func testToolWithTitle() throws {
+    @Test
+    func `Tool with top-level title property`() throws {
         let tool = Tool(
             name: "calculate",
             title: "Calculator Tool",
             description: "Performs calculations",
-            inputSchema: ["type": "object"]
+            inputSchema: ["type": "object"],
         )
 
         #expect(tool.title == "Calculator Tool")
@@ -609,12 +606,12 @@ struct ToolTests {
 
         #expect(decoded.title == "Calculator Tool")
 
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"title\":\"Calculator Tool\""))
     }
 
-    @Test("Tool with icons")
-    func testToolWithIcons() throws {
+    @Test
+    func `Tool with icons`() throws {
         let icons = [
             Icon(src: "https://example.com/icon.png", mimeType: "image/png", sizes: ["48x48"], theme: .light),
             Icon(src: "https://example.com/icon-dark.png", mimeType: "image/png", sizes: ["48x48"], theme: .dark),
@@ -624,7 +621,7 @@ struct ToolTests {
             name: "visual_tool",
             description: "A tool with icons",
             inputSchema: ["type": "object"],
-            icons: icons
+            icons: icons,
         )
 
         #expect(tool.icons?.count == 2)
@@ -642,8 +639,8 @@ struct ToolTests {
         #expect(decoded.icons?[1].src == "https://example.com/icon-dark.png")
     }
 
-    @Test("Tool with _meta")
-    func testToolWithMeta() throws {
+    @Test
+    func `Tool with _meta`() throws {
         let meta: [String: Value] = [
             "vendor": .string("example"),
             "version": .int(1),
@@ -654,7 +651,7 @@ struct ToolTests {
             name: "meta_tool",
             description: "A tool with metadata",
             inputSchema: ["type": "object"],
-            _meta: meta
+            _meta: meta,
         )
 
         #expect(tool._meta?["vendor"]?.stringValue == "example")
@@ -671,8 +668,8 @@ struct ToolTests {
         #expect(decoded._meta?["version"]?.intValue == 1)
     }
 
-    @Test("Tool with all properties")
-    func testToolWithAllProperties() throws {
+    @Test
+    func `Tool with all properties`() throws {
         let tool = Tool(
             name: "full_tool",
             title: "Full Featured Tool",
@@ -697,8 +694,8 @@ struct ToolTests {
                 readOnlyHint: true,
                 destructiveHint: false,
                 idempotentHint: true,
-                openWorldHint: false
-            )
+                openWorldHint: false,
+            ),
         )
 
         let encoder = JSONEncoder()
@@ -720,15 +717,15 @@ struct ToolTests {
 
     // MARK: - ResourceLink Content Tests
 
-    @Test("ResourceLink content encoding and decoding")
-    func testResourceLinkContent() throws {
+    @Test
+    func `ResourceLink content encoding and decoding`() throws {
         let resourceLink = ResourceLink(
             name: "data.json",
             title: "Data File",
             uri: "file:///data/output.json",
             description: "Output data file",
             mimeType: "application/json",
-            size: 1024
+            size: 1024,
         )
 
         let content = Tool.Content.resourceLink(resourceLink)
@@ -750,18 +747,18 @@ struct ToolTests {
             #expect(Bool(false), "Expected resourceLink content")
         }
 
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(jsonString.contains("\"type\":\"resource_link\""))
     }
 
-    @Test("ResourceLink with icons and annotations")
-    func testResourceLinkWithIconsAndAnnotations() throws {
+    @Test
+    func `ResourceLink with icons and annotations`() throws {
         let resourceLink = ResourceLink(
             name: "report.pdf",
             uri: "file:///reports/report.pdf",
             mimeType: "application/pdf",
             annotations: Annotations(audience: [.assistant], priority: 0.8),
-            icons: [Icon(src: "https://example.com/pdf.png", mimeType: "image/png")]
+            icons: [Icon(src: "https://example.com/pdf.png", mimeType: "image/png")],
         )
 
         let content = Tool.Content.resourceLink(resourceLink)
@@ -783,8 +780,8 @@ struct ToolTests {
 
     // MARK: - Content with Annotations and _meta Tests
 
-    @Test("Text content with annotations and _meta")
-    func testTextContentWithAnnotationsAndMeta() throws {
+    @Test
+    func `Text content with annotations and _meta`() throws {
         let annotations = Annotations(audience: [.user, .assistant], priority: 0.9)
         let meta: [String: Value] = ["source": .string("calculation")]
 
@@ -806,15 +803,15 @@ struct ToolTests {
         }
     }
 
-    @Test("Image content with annotations")
-    func testImageContentWithAnnotations() throws {
+    @Test
+    func `Image content with annotations`() throws {
         let annotations = Annotations(audience: [.user])
 
         let content = Tool.Content.image(
             data: "base64imagedata",
             mimeType: "image/png",
             annotations: annotations,
-            _meta: nil
+            _meta: nil,
         )
 
         let encoder = JSONEncoder()
@@ -830,8 +827,8 @@ struct ToolTests {
         }
     }
 
-    @Test("Resource content with annotations")
-    func testResourceContentWithAnnotations() throws {
+    @Test
+    func `Resource content with annotations`() throws {
         let annotations = Annotations(priority: 0.5)
         let resourceContent = Resource.Content.text("File contents", uri: "file:///test.txt", mimeType: "text/plain")
 
@@ -853,12 +850,10 @@ struct ToolTests {
 
 // MARK: - Tool Name Validation Tests
 
-@Suite("Tool Name Validation Tests")
 struct ToolNameValidationTests {
     // MARK: - Valid Names
 
     @Test(
-        "Accepts valid tool names",
         arguments: [
             "getUser",
             "get_user_profile",
@@ -867,9 +862,9 @@ struct ToolNameValidationTests {
             "DATA_EXPORT_v2.1",
             "a",
             String(repeating: "a", count: 128),
-        ]
+        ],
     )
-    func acceptsValidNames(toolName: String) throws {
+    func `Accepts valid tool names`(toolName: String) {
         let result = validateToolName(toolName)
         #expect(result.isValid == true)
         #expect(result.warnings.isEmpty)
@@ -877,15 +872,15 @@ struct ToolNameValidationTests {
 
     // MARK: - Invalid Names
 
-    @Test("Rejects empty name")
-    func rejectsEmptyName() throws {
+    @Test
+    func `Rejects empty name`() {
         let result = validateToolName("")
         #expect(result.isValid == false)
         #expect(result.warnings.contains { $0.contains("cannot be empty") })
     }
 
-    @Test("Rejects name exceeding max length")
-    func rejectsNameExceedingMaxLength() throws {
+    @Test
+    func `Rejects name exceeding max length`() {
         let longName = String(repeating: "a", count: 129)
         let result = validateToolName(longName)
         #expect(result.isValid == false)
@@ -894,59 +889,58 @@ struct ToolNameValidationTests {
     }
 
     @Test(
-        "Rejects names with invalid characters",
         arguments: [
             ("get user profile", " "),
             ("get,user,profile", ","),
             ("user/profile/update", "/"),
             ("user@domain.com", "@"),
-        ]
+        ],
     )
-    func rejectsInvalidCharacters(testCase: (toolName: String, invalidChar: String)) throws {
+    func `Rejects names with invalid characters`(testCase: (toolName: String, invalidChar: String)) {
         let result = validateToolName(testCase.toolName)
         #expect(result.isValid == false)
         #expect(result.warnings.contains { $0.contains("invalid characters") })
     }
 
-    @Test("Rejects multiple invalid characters")
-    func rejectsMultipleInvalidChars() throws {
+    @Test
+    func `Rejects multiple invalid characters`() {
         let result = validateToolName("user name@domain,com")
         #expect(result.isValid == false)
         let warningWithChars = result.warnings.first { $0.contains("invalid characters") }
         #expect(warningWithChars != nil)
     }
 
-    @Test("Rejects unicode characters")
-    func rejectsUnicodeCharacters() throws {
+    @Test
+    func `Rejects unicode characters`() {
         let result = validateToolName("user-ñame") // n with tilde
         #expect(result.isValid == false)
     }
 
     // MARK: - Warnings for Problematic Patterns
 
-    @Test("Warns on leading dash")
-    func warnsOnLeadingDash() throws {
+    @Test
+    func `Warns on leading dash`() {
         let result = validateToolName("-get-user")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dash") })
     }
 
-    @Test("Warns on trailing dash")
-    func warnsOnTrailingDash() throws {
+    @Test
+    func `Warns on trailing dash`() {
         let result = validateToolName("get-user-")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dash") })
     }
 
-    @Test("Warns on leading dot")
-    func warnsOnLeadingDot() throws {
+    @Test
+    func `Warns on leading dot`() {
         let result = validateToolName(".get.user")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dot") })
     }
 
-    @Test("Warns on trailing dot")
-    func warnsOnTrailingDot() throws {
+    @Test
+    func `Warns on trailing dot`() {
         let result = validateToolName("get.user.")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dot") })
@@ -954,29 +948,29 @@ struct ToolNameValidationTests {
 
     // MARK: - Edge Cases
 
-    @Test("Handles only dots")
-    func handlesOnlyDots() throws {
+    @Test
+    func `Handles only dots`() {
         let result = validateToolName("...")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dot") })
     }
 
-    @Test("Handles only dashes")
-    func handlesOnlyDashes() throws {
+    @Test
+    func `Handles only dashes`() {
         let result = validateToolName("---")
         #expect(result.isValid == true)
         #expect(result.warnings.contains { $0.contains("starts or ends with a dash") })
     }
 
-    @Test("Rejects only slashes")
-    func rejectsOnlySlashes() throws {
+    @Test
+    func `Rejects only slashes`() {
         let result = validateToolName("///")
         #expect(result.isValid == false)
         #expect(result.warnings.contains { $0.contains("invalid characters") })
     }
 
-    @Test("Rejects mixed valid and invalid characters")
-    func rejectsMixedValidInvalid() throws {
+    @Test
+    func `Rejects mixed valid and invalid characters`() {
         let result = validateToolName("user@name123")
         #expect(result.isValid == false)
         #expect(result.warnings.contains { $0.contains("invalid characters") })
@@ -984,14 +978,14 @@ struct ToolNameValidationTests {
 
     // MARK: - validateAndWarnToolName
 
-    @Test("validateAndWarnToolName returns true for valid name")
-    func validateAndWarnReturnsTrue() throws {
+    @Test
+    func `validateAndWarnToolName returns true for valid name`() {
         let isValid = validateAndWarnToolName("valid-tool-name")
         #expect(isValid == true)
     }
 
-    @Test("validateAndWarnToolName returns false for invalid name")
-    func validateAndWarnReturnsFalse() throws {
+    @Test
+    func `validateAndWarnToolName returns false for invalid name`() {
         #expect(validateAndWarnToolName("") == false)
         #expect(validateAndWarnToolName(String(repeating: "a", count: 129)) == false)
         #expect(validateAndWarnToolName("invalid name") == false)
@@ -1000,7 +994,6 @@ struct ToolNameValidationTests {
 
 // MARK: - Unicode Tool Tests
 
-@Suite("Unicode Tool Tests")
 struct UnicodeToolTests {
     /// Test strings with various Unicode characters (matching Python SDK)
     static let unicodeTestStrings: [String: String] = [
@@ -1021,12 +1014,12 @@ struct UnicodeToolTests {
         "currency": "€100 £50 ¥1000 ₹500 ₽200 ¢99",
     ]
 
-    @Test("Tool with Unicode description encodes and decodes correctly")
-    func unicodeDescriptionEncodingDecoding() throws {
+    @Test
+    func `Tool with Unicode description encodes and decodes correctly`() throws {
         let tool = Tool(
             name: "echo_unicode",
             description: "🔤 Echo Unicode text - Hello 👋 World 🌍 - Testing 🧪 Unicode ✨",
-            inputSchema: ["type": "object"]
+            inputSchema: ["type": "object"],
         )
 
         let encoder = JSONEncoder()
@@ -1041,15 +1034,14 @@ struct UnicodeToolTests {
     }
 
     @Test(
-        "Unicode text in tool call arguments roundtrips correctly",
-        arguments: Array(unicodeTestStrings.keys)
+        arguments: Array(unicodeTestStrings.keys),
     )
-    func unicodeArgumentsRoundtrip(testKey: String) throws {
-        let testString = Self.unicodeTestStrings[testKey]!
+    func `Unicode text in tool call arguments roundtrips correctly`(testKey: String) throws {
+        let testString = try #require(Self.unicodeTestStrings[testKey])
 
         let params = CallTool.Parameters(
             name: "echo_unicode",
-            arguments: ["text": .string(testString)]
+            arguments: ["text": .string(testString)],
         )
 
         let encoder = JSONEncoder()
@@ -1061,11 +1053,11 @@ struct UnicodeToolTests {
         #expect(decoded.arguments?["text"]?.stringValue == testString)
     }
 
-    @Test("Unicode text in tool result content roundtrips correctly")
-    func unicodeResultContentRoundtrip() throws {
+    @Test
+    func `Unicode text in tool result content roundtrips correctly`() throws {
         for (testName, testString) in Self.unicodeTestStrings {
             let result = CallTool.Result(
-                content: [.text("Echo: \(testString)")]
+                content: [.text("Echo: \(testString)")],
             )
 
             let encoder = JSONEncoder()
@@ -1082,10 +1074,10 @@ struct UnicodeToolTests {
         }
     }
 
-    @Test("Mixed Unicode content types roundtrip correctly")
-    func mixedUnicodeContentRoundtrip() throws {
-        let cyrillic = Self.unicodeTestStrings["cyrillic"]!
-        let mixed = Self.unicodeTestStrings["mixed"]!
+    @Test
+    func `Mixed Unicode content types roundtrip correctly`() throws {
+        let cyrillic = try #require(Self.unicodeTestStrings["cyrillic"])
+        let mixed = try #require(Self.unicodeTestStrings["mixed"])
 
         let result = CallTool.Result(
             content: [
@@ -1097,7 +1089,7 @@ struct UnicodeToolTests {
                 "data": .object([
                     "text": .string(cyrillic),
                 ]),
-            ]
+            ],
         )
 
         let encoder = JSONEncoder()
@@ -1122,22 +1114,21 @@ struct UnicodeToolTests {
 
 // MARK: - Tool Pagination Tests
 
-@Suite("Tool Pagination Tests")
 struct ToolPaginationTests {
-    @Test("ListTools cursor parameter encodes correctly")
-    func cursorParameterEncoding() throws {
+    @Test
+    func `ListTools cursor parameter encodes correctly`() throws {
         let testCursor = "test-cursor-123"
         let params = ListTools.Parameters(cursor: testCursor)
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(params)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonString.contains("\"cursor\":\"test-cursor-123\""))
     }
 
-    @Test("ListTools result with nextCursor encodes correctly")
-    func resultWithNextCursor() throws {
+    @Test
+    func `ListTools result with nextCursor encodes correctly`() throws {
         let tools = [
             Tool(name: "tool1", inputSchema: ["type": "object"]),
             Tool(name: "tool2", inputSchema: ["type": "object"]),
@@ -1154,8 +1145,8 @@ struct ToolPaginationTests {
         #expect(decoded.nextCursor == "next-page-token")
     }
 
-    @Test("ListTools result without nextCursor indicates end of pagination")
-    func resultWithoutNextCursor() throws {
+    @Test
+    func `ListTools result without nextCursor indicates end of pagination`() throws {
         let tools = [
             Tool(name: "final_tool", inputSchema: ["type": "object"]),
         ]
@@ -1170,16 +1161,16 @@ struct ToolPaginationTests {
         #expect(decoded.nextCursor == nil)
 
         // Verify null cursor is not included in JSON
-        let jsonString = String(data: data, encoding: .utf8)!
+        let jsonString = try #require(String(data: data, encoding: .utf8))
         #expect(!jsonString.contains("nextCursor"))
     }
 
-    @Test("ListTools request with cursor decodes correctly")
-    func requestWithCursorDecoding() throws {
+    @Test
+    func `ListTools request with cursor decodes correctly`() throws {
         let jsonString = """
         {"jsonrpc":"2.0","id":"page-2","method":"tools/list","params":{"cursor":"page-1-token"}}
         """
-        let jsonData = jsonString.data(using: .utf8)!
+        let jsonData = try #require(jsonString.data(using: .utf8))
 
         let decoded = try JSONDecoder().decode(Request<ListTools>.self, from: jsonData)
 
@@ -1187,8 +1178,8 @@ struct ToolPaginationTests {
         #expect(decoded.params.cursor == "page-1-token")
     }
 
-    @Test("Simulated multi-page tool listing")
-    func simulatedMultiPageToolListing() throws {
+    @Test
+    func `Simulated multi-page tool listing`() throws {
         // Simulate a server that returns 100 tools across multiple pages
         let allTools = (0 ..< 100).map { i in
             Tool(name: "tool_\(i)", inputSchema: ["type": "object"])

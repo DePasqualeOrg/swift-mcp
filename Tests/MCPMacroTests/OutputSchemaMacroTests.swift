@@ -12,7 +12,7 @@ final class OutputSchemaMacroTests: XCTestCase {
         "OutputSchema": OutputSchemaMacro.self,
     ]
 
-    func testBasicOutputSchemaExpansion() throws {
+    func testBasicOutputSchemaExpansion() {
         assertMacroExpansion(
             """
             @OutputSchema
@@ -40,11 +40,11 @@ final class OutputSchemaMacroTests: XCTestCase {
             extension SearchResult: MCP.StructuredOutput {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testOutputSchemaWithOptionalProperty() throws {
+    func testOutputSchemaWithOptionalProperty() {
         assertMacroExpansion(
             """
             @OutputSchema
@@ -72,11 +72,11 @@ final class OutputSchemaMacroTests: XCTestCase {
             extension UserProfile: MCP.StructuredOutput {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testOutputSchemaWithMultipleTypes() throws {
+    func testOutputSchemaWithMultipleTypes() {
         assertMacroExpansion(
             """
             @OutputSchema
@@ -106,11 +106,11 @@ final class OutputSchemaMacroTests: XCTestCase {
             extension AnalysisResult: MCP.StructuredOutput {
             }
             """,
-            macros: testMacros
+            macros: testMacros,
         )
     }
 
-    func testOutputSchemaNotAStructError() throws {
+    func testOutputSchemaNotAStructError() {
         assertMacroExpansion(
             """
             @OutputSchema
@@ -126,7 +126,7 @@ final class OutputSchemaMacroTests: XCTestCase {
             diagnostics: [
                 DiagnosticSpec(message: "@OutputSchema can only be applied to structs", line: 1, column: 1),
             ],
-            macros: testMacros
+            macros: testMacros,
         )
     }
 }

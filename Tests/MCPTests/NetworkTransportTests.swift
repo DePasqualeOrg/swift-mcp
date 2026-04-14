@@ -3,9 +3,8 @@
 
 import Foundation
 import Logging
-import Testing
-
 @testable import MCP
+import Testing
 
 #if canImport(Network)
 import Network
@@ -23,7 +22,7 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
     private var sentData: [Data] = []
 
     /// The state update handler
-    public var stateUpdateHandler: (@Sendable (NWConnection.State) -> Void)?
+    var stateUpdateHandler: (@Sendable (NWConnection.State) -> Void)?
 
     /// Current state
     var state: NWConnection.State {
@@ -54,7 +53,7 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
         content: Data?,
         contentContext _: NWConnection.ContentContext,
         isComplete _: Bool,
-        completion: NWConnection.SendCompletion
+        completion: NWConnection.SendCompletion,
     ) {
         if let content {
             sentData.append(content)
@@ -75,14 +74,14 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
         minimumIncompleteLength _: Int,
         maximumLength _: Int,
         completion: @escaping @Sendable (
-            Data?, NWConnection.ContentContext?, Bool, NWError?
-        ) -> Void
+            Data?, NWConnection.ContentContext?, Bool, NWError?,
+        ) -> Void,
     ) {
         Task { @MainActor in
             if self.mockState == .cancelled {
                 completion(
                     nil, nil, true,
-                    NWError.posix(POSIXErrorCode.ECANCELED)
+                    NWError.posix(POSIXErrorCode.ECANCELED),
                 )
                 return
             }
@@ -121,7 +120,7 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
 
     /// Simulate a connection failure
     func simulateFailure(
-        error: Swift.Error? = nil
+        error: Swift.Error? = nil,
     ) {
         mockError = error
         if let nwError = error as? NWError {
@@ -178,10 +177,10 @@ final class MockNetworkConnection: NetworkConnectionProtocol, @unchecked Sendabl
     }
 }
 
-@Suite("Network Transport Tests", .serialized)
+@Suite(.serialized)
 struct NetworkTransportTests {
-    @Test("Heartbeat Creation And Parsing")
-    func testHeartbeatCreationAndParsing() {
+    @Test
+    func `Heartbeat Creation And Parsing`() {
         // Create a heartbeat
         let heartbeat = NetworkTransport.Heartbeat()
 
@@ -204,13 +203,13 @@ struct NetworkTransportTests {
         #expect(NetworkTransport.Heartbeat.isHeartbeat(data) == true)
     }
 
-    @Test("Reconnection Configuration")
-    func testReconnectionConfiguration() {
+    @Test
+    func `Reconnection Configuration`() {
         // Create custom config
         let config = NetworkTransport.ReconnectionConfiguration(
             enabled: true,
             maxAttempts: 3,
-            backoffMultiplier: 2.0
+            backoffMultiplier: 2.0,
         )
 
         #expect(config.enabled == true)
@@ -232,12 +231,12 @@ struct NetworkTransportTests {
         #expect(disabledConfig.enabled == false)
     }
 
-    @Test("Heartbeat Configuration")
-    func testHeartbeatConfiguration() {
+    @Test
+    func `Heartbeat Configuration`() {
         // Create custom config
         let config = NetworkTransport.HeartbeatConfiguration(
             enabled: true,
-            interval: 5.0
+            interval: 5.0,
         )
 
         #expect(config.enabled == true)
@@ -253,12 +252,12 @@ struct NetworkTransportTests {
         #expect(disabledConfig.enabled == false)
     }
 
-    @Test("Connect Success")
-    func testNetworkTransportConnectSuccess() async throws {
+    @Test
+    func `Connect Success`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled // Disable heartbeats for simplified testing
+            heartbeatConfig: .disabled, // Disable heartbeats for simplified testing
         )
 
         try await transport.connect()
@@ -269,12 +268,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Connect Failure")
-    func testNetworkTransportConnectFailure() async {
+    @Test
+    func `Connect Failure`() async {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            reconnectionConfig: .disabled // Disable reconnection for this test
+            reconnectionConfig: .disabled, // Disable reconnection for this test
         )
 
         // Simulate failure before connecting
@@ -296,12 +295,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Send Message")
-    func testNetworkTransportSendMessage() async throws {
+    @Test
+    func `Send Message`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         try await transport.connect()
@@ -322,12 +321,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Receive Message")
-    func testNetworkTransportReceiveMessage() async throws {
+    @Test
+    func `Receive Message`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         // Queue a message to be received
@@ -352,19 +351,19 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Heartbeat Send and Receive")
-    func testNetworkTransportHeartbeat() async throws {
+    @Test
+    func `Heartbeat Send and Receive`() async throws {
         let mockConnection = MockNetworkConnection()
 
         // Create transport with rapid heartbeats
         let heartbeatConfig = NetworkTransport.HeartbeatConfiguration(
             enabled: true,
-            interval: 0.1 // Short interval for testing
+            interval: 0.1, // Short interval for testing
         )
 
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: heartbeatConfig
+            heartbeatConfig: heartbeatConfig,
         )
 
         try await transport.connect()
@@ -382,7 +381,7 @@ struct NetworkTransportTests {
         if let firstSent = sentData.first {
             #expect(
                 NetworkTransport.Heartbeat.isHeartbeat(firstSent),
-                "Sent data is not a heartbeat"
+                "Sent data is not a heartbeat",
             )
         }
 
@@ -395,21 +394,21 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Reconnection")
-    func testNetworkTransportReconnection() async throws {
+    @Test
+    func reconnection() async throws {
         let mockConnection = MockNetworkConnection()
 
         // Configure for quick reconnection
         let reconnectionConfig = NetworkTransport.ReconnectionConfiguration(
             enabled: true,
             maxAttempts: 2,
-            backoffMultiplier: 1.0
+            backoffMultiplier: 1.0,
         )
 
         let transport = NetworkTransport(
             mockConnection,
             heartbeatConfig: .disabled,
-            reconnectionConfig: reconnectionConfig
+            reconnectionConfig: reconnectionConfig,
         )
 
         try await transport.connect()
@@ -437,12 +436,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Multiple Messages")
-    func testNetworkTransportMultipleMessages() async throws {
+    @Test
+    func `Multiple Messages`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         // Queue multiple messages
@@ -476,12 +475,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Disconnect During Receive")
-    func testNetworkTransportDisconnectDuringReceive() async throws {
+    @Test
+    func `Disconnect During Receive`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         try await transport.connect()
@@ -508,12 +507,12 @@ struct NetworkTransportTests {
         _ = await receiveTask.result
     }
 
-    @Test("Connection State Transitions")
-    func testConnectionStateTransitions() async throws {
+    @Test
+    func `Connection State Transitions`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         // Test setup -> preparing -> ready transition
@@ -535,22 +534,22 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Partial Message Reception")
-    func testPartialMessageReception() async throws {
+    @Test
+    func `Partial Message Reception`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         try await transport.connect()
 
         // Split a message into multiple parts
         let message = #"{"key":"value"}"#
-        let parts = [
-            message.prefix(5).data(using: .utf8)!,
-            message.dropFirst(5).data(using: .utf8)!,
-            "\n".data(using: .utf8)!,
+        let parts = try [
+            #require(message.prefix(5).data(using: .utf8)),
+            #require(message.dropFirst(5).data(using: .utf8)),
+            #require("\n".data(using: .utf8)),
         ]
 
         // Queue the parts
@@ -572,12 +571,12 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Large Message Handling")
-    func testLargeMessageHandling() async throws {
+    @Test
+    func `Large Message Handling`() async throws {
         let mockConnection = MockNetworkConnection()
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: .disabled
+            heartbeatConfig: .disabled,
         )
 
         try await transport.connect()
@@ -601,8 +600,8 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Reconnection Backoff")
-    func testReconnectionBackoff() async throws {
+    @Test
+    func `Reconnection Backoff`() async throws {
         let mockConnection = MockNetworkConnection()
         let startTime = Date()
 
@@ -610,13 +609,13 @@ struct NetworkTransportTests {
         let reconnectionConfig = NetworkTransport.ReconnectionConfiguration(
             enabled: true,
             maxAttempts: 3,
-            backoffMultiplier: 2.0
+            backoffMultiplier: 2.0,
         )
 
         let transport = NetworkTransport(
             mockConnection,
             heartbeatConfig: .disabled,
-            reconnectionConfig: reconnectionConfig
+            reconnectionConfig: reconnectionConfig,
         )
 
         try await transport.connect()
@@ -636,19 +635,19 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Heartbeat Failure Handling")
-    func testHeartbeatFailureHandling() async throws {
+    @Test
+    func `Heartbeat Failure Handling`() async throws {
         let mockConnection = MockNetworkConnection()
 
         // Create transport with rapid heartbeats
         let heartbeatConfig = NetworkTransport.HeartbeatConfiguration(
             enabled: true,
-            interval: 0.1
+            interval: 0.1,
         )
 
         let transport = NetworkTransport(
             mockConnection,
-            heartbeatConfig: heartbeatConfig
+            heartbeatConfig: heartbeatConfig,
         )
 
         try await transport.connect()
@@ -672,8 +671,8 @@ struct NetworkTransportTests {
         await transport.disconnect()
     }
 
-    @Test("Resource Cleanup")
-    func testResourceCleanup() async throws {
+    @Test
+    func `Resource Cleanup`() async throws {
         weak var weakConnection: MockNetworkConnection?
 
         do {
@@ -683,7 +682,7 @@ struct NetworkTransportTests {
             // Create and use transport in a separate scope
             let transport = NetworkTransport(
                 mockConnection,
-                heartbeatConfig: .disabled
+                heartbeatConfig: .disabled,
             )
 
             try await transport.connect()

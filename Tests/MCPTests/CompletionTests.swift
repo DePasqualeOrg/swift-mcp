@@ -1,9 +1,8 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 /// Tests for completion (autocomplete) functionality.
 ///
@@ -11,12 +10,11 @@ import Testing
 /// - Python SDK: `tests/server/test_completion_with_context.py`
 /// - TypeScript SDK: `packages/core/test/types.test.ts` (CompleteRequest tests)
 /// - TypeScript SDK: `test/integration/test/server/mcp.test.ts` (completion integration tests)
-@Suite("Completion Tests")
 struct CompletionTests {
     // MARK: - Type Encoding/Decoding Tests
 
-    @Test("PromptReference encoding and decoding")
-    func testPromptReferenceEncodingDecoding() throws {
+    @Test
+    func `PromptReference encoding and decoding`() throws {
         let reference = PromptReference(name: "greeting")
 
         #expect(reference.type == "ref/prompt")
@@ -34,8 +32,8 @@ struct CompletionTests {
         #expect(decoded.title == nil)
     }
 
-    @Test("PromptReference with title encoding and decoding")
-    func testPromptReferenceWithTitleEncodingDecoding() throws {
+    @Test
+    func `PromptReference with title encoding and decoding`() throws {
         let reference = PromptReference(name: "greeting", title: "Send Greeting")
 
         #expect(reference.type == "ref/prompt")
@@ -53,14 +51,14 @@ struct CompletionTests {
         #expect(decoded.title == "Send Greeting")
 
         // Verify JSON structure includes title
-        let jsonObject = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let jsonObject = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
         #expect(jsonObject["type"] as? String == "ref/prompt")
         #expect(jsonObject["name"] as? String == "greeting")
         #expect(jsonObject["title"] as? String == "Send Greeting")
     }
 
-    @Test("ResourceTemplateReference encoding and decoding")
-    func testResourceTemplateReferenceEncodingDecoding() throws {
+    @Test
+    func `ResourceTemplateReference encoding and decoding`() throws {
         let reference = ResourceTemplateReference(uri: "github://repos/{owner}/{repo}")
 
         #expect(reference.type == "ref/resource")
@@ -76,8 +74,8 @@ struct CompletionTests {
         #expect(decoded.uri == "github://repos/{owner}/{repo}")
     }
 
-    @Test("CompletionReference prompt case encoding and decoding")
-    func testCompletionReferencePromptCase() throws {
+    @Test
+    func `CompletionReference prompt case encoding and decoding`() throws {
         let reference = CompletionReference.prompt(PromptReference(name: "test-prompt"))
 
         let encoder = JSONEncoder()
@@ -94,10 +92,10 @@ struct CompletionTests {
         }
     }
 
-    @Test("CompletionReference resource case encoding and decoding")
-    func testCompletionReferenceResourceCase() throws {
+    @Test
+    func `CompletionReference resource case encoding and decoding`() throws {
         let reference = CompletionReference.resource(
-            ResourceTemplateReference(uri: "file:///{path}")
+            ResourceTemplateReference(uri: "file:///{path}"),
         )
 
         let encoder = JSONEncoder()
@@ -114,12 +112,12 @@ struct CompletionTests {
         }
     }
 
-    @Test("CompletionReference decoding unknown type throws error")
-    func testCompletionReferenceUnknownTypeThrows() throws {
+    @Test
+    func `CompletionReference decoding unknown type throws error`() throws {
         let json = """
         {"type":"ref/unknown","name":"test"}
         """
-        let data = json.data(using: .utf8)!
+        let data = try #require(json.data(using: .utf8))
         let decoder = JSONDecoder()
 
         #expect(throws: DecodingError.self) {
@@ -127,8 +125,8 @@ struct CompletionTests {
         }
     }
 
-    @Test("CompletionArgument encoding and decoding")
-    func testCompletionArgumentEncodingDecoding() throws {
+    @Test
+    func `CompletionArgument encoding and decoding`() throws {
         let argument = CompletionArgument(name: "language", value: "py")
 
         #expect(argument.name == "language")
@@ -144,8 +142,8 @@ struct CompletionTests {
         #expect(decoded.value == "py")
     }
 
-    @Test("CompletionContext encoding and decoding with arguments")
-    func testCompletionContextWithArguments() throws {
+    @Test
+    func `CompletionContext encoding and decoding with arguments`() throws {
         let context = CompletionContext(arguments: [
             "owner": "modelcontextprotocol",
             "database": "users_db",
@@ -164,8 +162,8 @@ struct CompletionTests {
         #expect(decoded.arguments?["database"] == "users_db")
     }
 
-    @Test("CompletionContext encoding and decoding without arguments")
-    func testCompletionContextWithoutArguments() throws {
+    @Test
+    func `CompletionContext encoding and decoding without arguments`() throws {
         let context = CompletionContext(arguments: nil)
 
         #expect(context.arguments == nil)
@@ -179,8 +177,8 @@ struct CompletionTests {
         #expect(decoded.arguments == nil)
     }
 
-    @Test("CompletionContext with empty arguments")
-    func testCompletionContextWithEmptyArguments() throws {
+    @Test
+    func `CompletionContext with empty arguments`() throws {
         let context = CompletionContext(arguments: [:])
 
         #expect(context.arguments?.isEmpty == true)
@@ -194,12 +192,12 @@ struct CompletionTests {
         #expect(decoded.arguments?.isEmpty == true)
     }
 
-    @Test("CompletionSuggestions encoding and decoding")
-    func testCompletionSuggestionsEncodingDecoding() throws {
+    @Test
+    func `CompletionSuggestions encoding and decoding`() throws {
         let suggestions = CompletionSuggestions(
             values: ["python", "javascript", "typescript"],
             total: 10,
-            hasMore: true
+            hasMore: true,
         )
 
         #expect(suggestions.values == ["python", "javascript", "typescript"])
@@ -217,8 +215,8 @@ struct CompletionTests {
         #expect(decoded.hasMore == true)
     }
 
-    @Test("CompletionSuggestions with minimal fields")
-    func testCompletionSuggestionsMinimal() throws {
+    @Test
+    func `CompletionSuggestions with minimal fields`() throws {
         let suggestions = CompletionSuggestions(values: ["a", "b"])
 
         #expect(suggestions.values == ["a", "b"])
@@ -238,13 +236,13 @@ struct CompletionTests {
 
     // MARK: - Spec Compliance Tests (100-item limit)
 
-    @Test("CompletionSuggestions maxValues constant is 100")
-    func testMaxValuesConstant() {
+    @Test
+    func `CompletionSuggestions maxValues constant is 100`() {
         #expect(CompletionSuggestions.maxValues == 100)
     }
 
-    @Test("CompletionSuggestions.empty returns empty result")
-    func testEmptySuggestions() {
+    @Test
+    func `CompletionSuggestions.empty returns empty result`() {
         let empty = CompletionSuggestions.empty
 
         #expect(empty.values.isEmpty)
@@ -252,8 +250,8 @@ struct CompletionTests {
         #expect(empty.hasMore == false)
     }
 
-    @Test("CompletionSuggestions init truncates values over 100")
-    func testInitTruncatesOverMaxValues() {
+    @Test
+    func `CompletionSuggestions init truncates values over 100`() {
         // Create 150 values
         let allValues = (1 ... 150).map { "value\($0)" }
         let suggestions = CompletionSuggestions(values: allValues, total: 150, hasMore: true)
@@ -267,8 +265,8 @@ struct CompletionTests {
         #expect(suggestions.hasMore == true)
     }
 
-    @Test("CompletionSuggestions init(from:) with few values")
-    func testInitFromFewValues() {
+    @Test
+    func `CompletionSuggestions init(from:) with few values`() {
         let values = ["python", "javascript", "typescript"]
         let suggestions = CompletionSuggestions(from: values)
 
@@ -277,8 +275,8 @@ struct CompletionTests {
         #expect(suggestions.hasMore == false)
     }
 
-    @Test("CompletionSuggestions init(from:) with exactly 100 values")
-    func testInitFromExactly100Values() {
+    @Test
+    func `CompletionSuggestions init(from:) with exactly 100 values`() {
         let values = (1 ... 100).map { "value\($0)" }
         let suggestions = CompletionSuggestions(from: values)
 
@@ -287,8 +285,8 @@ struct CompletionTests {
         #expect(suggestions.hasMore == false)
     }
 
-    @Test("CompletionSuggestions init(from:) with over 100 values")
-    func testInitFromOver100Values() {
+    @Test
+    func `CompletionSuggestions init(from:) with over 100 values`() {
         let values = (1 ... 250).map { "value\($0)" }
         let suggestions = CompletionSuggestions(from: values)
 
@@ -299,8 +297,8 @@ struct CompletionTests {
         #expect(suggestions.hasMore == true)
     }
 
-    @Test("CompletionSuggestions init(from:) with empty array")
-    func testInitFromEmptyArray() {
+    @Test
+    func `CompletionSuggestions init(from:) with empty array`() {
         let suggestions = CompletionSuggestions(from: [])
 
         #expect(suggestions.values.isEmpty)
@@ -308,8 +306,8 @@ struct CompletionTests {
         #expect(suggestions.hasMore == false)
     }
 
-    @Test("Complete.Result.empty returns empty result")
-    func testCompleteResultEmpty() {
+    @Test
+    func `Complete.Result.empty returns empty result`() {
         let empty = Complete.Result.empty
 
         #expect(empty.completion.values.isEmpty)
@@ -318,8 +316,8 @@ struct CompletionTests {
         #expect(empty.extraFields == nil)
     }
 
-    @Test("Complete.Result init(from:) convenience initializer")
-    func testCompleteResultInitFrom() {
+    @Test
+    func `Complete.Result init(from:) convenience initializer`() {
         let values = ["alice", "bob", "charlie"]
         let result = Complete.Result(from: values)
 
@@ -330,8 +328,8 @@ struct CompletionTests {
         #expect(result.extraFields == nil)
     }
 
-    @Test("Complete.Result init(from:) with over 100 values")
-    func testCompleteResultInitFromOver100() {
+    @Test
+    func `Complete.Result init(from:) with over 100 values`() {
         let values = (1 ... 200).map { "item\($0)" }
         let result = Complete.Result(from: values)
 
@@ -342,11 +340,11 @@ struct CompletionTests {
 
     // MARK: - Complete Request/Result Tests
 
-    @Test("Complete.Parameters encoding without context")
-    func testCompleteParametersWithoutContext() throws {
+    @Test
+    func `Complete.Parameters encoding without context`() throws {
         let params = Complete.Parameters(
             ref: .prompt(PromptReference(name: "greeting")),
-            argument: CompletionArgument(name: "name", value: "A")
+            argument: CompletionArgument(name: "name", value: "A"),
         )
 
         let encoder = JSONEncoder()
@@ -366,12 +364,12 @@ struct CompletionTests {
         #expect(decoded.context == nil)
     }
 
-    @Test("Complete.Parameters encoding with context")
-    func testCompleteParametersWithContext() throws {
+    @Test
+    func `Complete.Parameters encoding with context`() throws {
         let params = Complete.Parameters(
             ref: .resource(ResourceTemplateReference(uri: "github://repos/{owner}/{repo}")),
             argument: CompletionArgument(name: "repo", value: "t"),
-            context: CompletionContext(arguments: ["{owner}": "microsoft"])
+            context: CompletionContext(arguments: ["{owner}": "microsoft"]),
         )
 
         let encoder = JSONEncoder()
@@ -390,15 +388,15 @@ struct CompletionTests {
         #expect(decoded.context?.arguments?["{owner}"] == "microsoft")
     }
 
-    @Test("Complete.Parameters with multiple resolved variables")
-    func testCompleteParametersWithMultipleResolvedVariables() throws {
+    @Test
+    func `Complete.Parameters with multiple resolved variables`() throws {
         let params = Complete.Parameters(
             ref: .resource(ResourceTemplateReference(uri: "api://v1/{tenant}/{resource}/{id}")),
             argument: CompletionArgument(name: "id", value: "123"),
             context: CompletionContext(arguments: [
                 "{tenant}": "acme-corp",
                 "{resource}": "users",
-            ])
+            ]),
         )
 
         let encoder = JSONEncoder()
@@ -411,14 +409,14 @@ struct CompletionTests {
         #expect(decoded.context?.arguments?["{resource}"] == "users")
     }
 
-    @Test("Complete.Result encoding and decoding")
-    func testCompleteResultEncodingDecoding() throws {
+    @Test
+    func `Complete.Result encoding and decoding`() throws {
         let result = Complete.Result(
             completion: CompletionSuggestions(
                 values: ["typescript-sdk", "python-sdk", "specification"],
                 total: 3,
-                hasMore: false
-            )
+                hasMore: false,
+            ),
         )
 
         let encoder = JSONEncoder()
@@ -432,11 +430,11 @@ struct CompletionTests {
         #expect(decoded.completion.hasMore == false)
     }
 
-    @Test("Complete request JSON-RPC format")
-    func testCompleteRequestJsonRpcFormat() throws {
+    @Test
+    func `Complete request JSON-RPC format`() throws {
         let request = Complete.request(.init(
             ref: .prompt(PromptReference(name: "review_code")),
-            argument: CompletionArgument(name: "language", value: "py")
+            argument: CompletionArgument(name: "language", value: "py"),
         ))
 
         #expect(request.method == Complete.name)
@@ -473,14 +471,25 @@ struct CompletionTests {
             contextWasNil = context == nil
         }
 
-        func getRef() -> CompletionReference? { ref }
-        func getArgument() -> CompletionArgument? { argument }
-        func getContext() -> CompletionContext? { context }
-        func wasContextNil() -> Bool { contextWasNil }
+        func getRef() -> CompletionReference? {
+            ref
+        }
+
+        func getArgument() -> CompletionArgument? {
+            argument
+        }
+
+        func getContext() -> CompletionContext? {
+            context
+        }
+
+        func wasContextNil() -> Bool {
+            contextWasNil
+        }
     }
 
-    @Test("Completion handler receives context correctly")
-    func testCompletionHandlerReceivesContext() async throws {
+    @Test
+    func `Completion handler receives context correctly`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Track what the handler receives
@@ -489,7 +498,7 @@ struct CompletionTests {
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         await server.withRequestHandler(Complete.self) { [received] params, _ in
@@ -498,8 +507,8 @@ struct CompletionTests {
                 completion: CompletionSuggestions(
                     values: ["test-completion"],
                     total: 1,
-                    hasMore: false
-                )
+                    hasMore: false,
+                ),
             )
         }
 
@@ -512,7 +521,7 @@ struct CompletionTests {
         let result = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "test://resource/{param}")),
             argument: CompletionArgument(name: "param", value: "test"),
-            context: CompletionContext(arguments: ["previous": "value"])
+            context: CompletionContext(arguments: ["previous": "value"]),
         )
 
         // Verify handler received the context
@@ -536,8 +545,8 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Completion works without context (backward compatibility)")
-    func testCompletionBackwardCompatibility() async throws {
+    @Test
+    func `Completion works without context (backward compatibility)`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let received = ReceivedParams()
@@ -545,7 +554,7 @@ struct CompletionTests {
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         await server.withRequestHandler(Complete.self) { [received] params, _ in
@@ -554,8 +563,8 @@ struct CompletionTests {
                 completion: CompletionSuggestions(
                     values: ["no-context-completion"],
                     total: 1,
-                    hasMore: false
-                )
+                    hasMore: false,
+                ),
             )
         }
 
@@ -567,7 +576,7 @@ struct CompletionTests {
         // Request completion without context
         let result = try await client.complete(
             ref: .prompt(PromptReference(name: "test-prompt")),
-            argument: CompletionArgument(name: "arg", value: "val")
+            argument: CompletionArgument(name: "arg", value: "val"),
         )
 
         #expect(await received.wasContextNil())
@@ -577,14 +586,14 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Dependent completion scenario (database/table)")
-    func testDependentCompletionScenario() async throws {
+    @Test
+    func `Dependent completion scenario (database/table)`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         // Handler that returns different completions based on context
@@ -597,8 +606,8 @@ struct CompletionTests {
                             completion: CompletionSuggestions(
                                 values: ["users_db", "products_db", "analytics_db"],
                                 total: 3,
-                                hasMore: false
-                            )
+                                hasMore: false,
+                            ),
                         )
                     } else if params.argument.name == "table" {
                         // Complete table names based on selected database
@@ -615,14 +624,14 @@ struct CompletionTests {
                             completion: CompletionSuggestions(
                                 values: tables,
                                 total: tables.count,
-                                hasMore: false
-                            )
+                                hasMore: false,
+                            ),
                         )
                     }
                 }
             }
             return Complete.Result(
-                completion: CompletionSuggestions(values: [], total: 0, hasMore: false)
+                completion: CompletionSuggestions(values: [], total: 0, hasMore: false),
             )
         }
 
@@ -634,7 +643,7 @@ struct CompletionTests {
         // First, complete database
         let dbResult = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "db://{database}/{table}")),
-            argument: CompletionArgument(name: "database", value: "")
+            argument: CompletionArgument(name: "database", value: ""),
         )
         #expect(dbResult.completion.values.contains("users_db"))
         #expect(dbResult.completion.values.contains("products_db"))
@@ -643,7 +652,7 @@ struct CompletionTests {
         let tableResult = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "db://{database}/{table}")),
             argument: CompletionArgument(name: "table", value: ""),
-            context: CompletionContext(arguments: ["database": "users_db"])
+            context: CompletionContext(arguments: ["database": "users_db"]),
         )
         #expect(tableResult.completion.values == ["users", "sessions", "permissions"])
 
@@ -651,7 +660,7 @@ struct CompletionTests {
         let tableResult2 = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "db://{database}/{table}")),
             argument: CompletionArgument(name: "table", value: ""),
-            context: CompletionContext(arguments: ["database": "products_db"])
+            context: CompletionContext(arguments: ["database": "products_db"]),
         )
         #expect(tableResult2.completion.values == ["products", "categories", "inventory"])
 
@@ -659,14 +668,14 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Completion error handling when context is required")
-    func testCompletionErrorOnMissingContext() async throws {
+    @Test
+    func `Completion error handling when context is required`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         await server.withRequestHandler(Complete.self) { params, _ in
@@ -677,20 +686,21 @@ struct CompletionTests {
                           arguments["database"] != nil
                     else {
                         throw MCPError.invalidParams(
-                            "Please select a database first to see available tables")
+                            "Please select a database first to see available tables",
+                        )
                     }
                     // Return completions if context is provided
                     return Complete.Result(
                         completion: CompletionSuggestions(
                             values: ["users", "orders", "products"],
                             total: 3,
-                            hasMore: false
-                        )
+                            hasMore: false,
+                        ),
                     )
                 }
             }
             return Complete.Result(
-                completion: CompletionSuggestions(values: [], total: 0, hasMore: false)
+                completion: CompletionSuggestions(values: [], total: 0, hasMore: false),
             )
         }
 
@@ -703,7 +713,7 @@ struct CompletionTests {
         do {
             _ = try await client.complete(
                 ref: .resource(ResourceTemplateReference(uri: "db://{database}/{table}")),
-                argument: CompletionArgument(name: "table", value: "")
+                argument: CompletionArgument(name: "table", value: ""),
             )
             Issue.record("Expected error for missing context")
         } catch {
@@ -715,7 +725,7 @@ struct CompletionTests {
         let result = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "db://{database}/{table}")),
             argument: CompletionArgument(name: "table", value: ""),
-            context: CompletionContext(arguments: ["database": "test_db"])
+            context: CompletionContext(arguments: ["database": "test_db"]),
         )
         #expect(result.completion.values == ["users", "orders", "products"])
 
@@ -723,14 +733,14 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Prompt completion with filtered results")
-    func testPromptCompletionWithFilteredResults() async throws {
+    @Test
+    func `Prompt completion with filtered results`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         await server.withRequestHandler(Complete.self) { params, _ in
@@ -742,13 +752,13 @@ struct CompletionTests {
                         completion: CompletionSuggestions(
                             values: filtered,
                             total: filtered.count,
-                            hasMore: false
-                        )
+                            hasMore: false,
+                        ),
                     )
                 }
             }
             return Complete.Result(
-                completion: CompletionSuggestions(values: [], total: 0, hasMore: false)
+                completion: CompletionSuggestions(values: [], total: 0, hasMore: false),
             )
         }
 
@@ -760,7 +770,7 @@ struct CompletionTests {
         // Request completion with "py" prefix
         let result = try await client.complete(
             ref: .prompt(PromptReference(name: "review_code")),
-            argument: CompletionArgument(name: "language", value: "py")
+            argument: CompletionArgument(name: "language", value: "py"),
         )
 
         #expect(result.completion.values == ["python"])
@@ -768,7 +778,7 @@ struct CompletionTests {
         // Request completion with "j" prefix
         let result2 = try await client.complete(
             ref: .prompt(PromptReference(name: "review_code")),
-            argument: CompletionArgument(name: "language", value: "j")
+            argument: CompletionArgument(name: "language", value: "j"),
         )
 
         #expect(result2.completion.values.contains("javascript"))
@@ -781,14 +791,14 @@ struct CompletionTests {
 
     // MARK: - Capability Tests
 
-    @Test("Server advertises completions capability")
-    func testServerAdvertisesCompletionsCapability() async throws {
+    @Test
+    func `Server advertises completions capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         await server.withRequestHandler(Complete.self) { _, _ in
@@ -806,15 +816,15 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Server without completions capability does not advertise it")
-    func testServerWithoutCompletionsCapability() async throws {
+    @Test
+    func `Server without completions capability does not advertise it`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server without completions capability
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init()) // Only tools, no completions
+            capabilities: .init(tools: .init()), // Only tools, no completions
         )
 
         try await server.start(transport: serverTransport)
@@ -828,15 +838,15 @@ struct CompletionTests {
         await server.stop()
     }
 
-    @Test("Client in strict mode rejects completion when server lacks capability")
-    func testStrictClientRejectsCompletionWithoutCapability() async throws {
+    @Test
+    func `Client in strict mode rejects completion when server lacks capability`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server without completions capability
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         try await server.start(transport: serverTransport)
@@ -844,7 +854,7 @@ struct CompletionTests {
         let client = Client(
             name: "test-client",
             version: "1.0.0",
-            configuration: .init(strict: true)
+            configuration: .init(strict: true),
         )
         try await client.connect(transport: clientTransport)
 
@@ -852,7 +862,7 @@ struct CompletionTests {
         do {
             _ = try await client.complete(
                 ref: .prompt(PromptReference(name: "test")),
-                argument: CompletionArgument(name: "arg", value: "")
+                argument: CompletionArgument(name: "arg", value: ""),
             )
             Issue.record("Expected error when server lacks completions capability")
         } catch let error as MCPError {
@@ -870,14 +880,14 @@ struct CompletionTests {
 
     // MARK: - Resource Template Completion Tests
 
-    @Test("Resource template completion with context")
-    func testResourceTemplateCompletionWithContext() async throws {
+    @Test
+    func `Resource template completion with context`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         // Simulate GitHub repos completion based on owner
@@ -900,12 +910,12 @@ struct CompletionTests {
                     completion: CompletionSuggestions(
                         values: repos,
                         total: repos.count,
-                        hasMore: false
-                    )
+                        hasMore: false,
+                    ),
                 )
             }
             return Complete.Result(
-                completion: CompletionSuggestions(values: [], total: 0, hasMore: false)
+                completion: CompletionSuggestions(values: [], total: 0, hasMore: false),
             )
         }
 
@@ -918,7 +928,7 @@ struct CompletionTests {
         let result1 = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "github://repos/{owner}/{repo}")),
             argument: CompletionArgument(name: "repo", value: ""),
-            context: CompletionContext(arguments: ["owner": "modelcontextprotocol"])
+            context: CompletionContext(arguments: ["owner": "modelcontextprotocol"]),
         )
         #expect(result1.completion.values.contains("python-sdk"))
         #expect(result1.completion.values.contains("typescript-sdk"))
@@ -929,7 +939,7 @@ struct CompletionTests {
         let result2 = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "github://repos/{owner}/{repo}")),
             argument: CompletionArgument(name: "repo", value: ""),
-            context: CompletionContext(arguments: ["owner": "microsoft"])
+            context: CompletionContext(arguments: ["owner": "microsoft"]),
         )
         #expect(result2.completion.values.contains("vscode"))
         #expect(result2.completion.values.contains("typescript"))
@@ -938,7 +948,7 @@ struct CompletionTests {
         // Test with no context
         let result3 = try await client.complete(
             ref: .resource(ResourceTemplateReference(uri: "github://repos/{owner}/{repo}")),
-            argument: CompletionArgument(name: "repo", value: "")
+            argument: CompletionArgument(name: "repo", value: ""),
         )
         #expect(result3.completion.values == ["repo1", "repo2", "repo3"])
 
@@ -948,14 +958,14 @@ struct CompletionTests {
 
     // MARK: - Prompt Completion with Context Tests
 
-    @Test("Prompt argument completion with resolved context")
-    func testPromptArgumentCompletionWithResolvedContext() async throws {
+    @Test
+    func `Prompt argument completion with resolved context`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "test-server",
             version: "1.0.0",
-            capabilities: .init(completions: .init())
+            capabilities: .init(completions: .init()),
         )
 
         // Simulate team member completion based on department
@@ -981,12 +991,12 @@ struct CompletionTests {
                     completion: CompletionSuggestions(
                         values: filtered,
                         total: filtered.count,
-                        hasMore: false
-                    )
+                        hasMore: false,
+                    ),
                 )
             }
             return Complete.Result(
-                completion: CompletionSuggestions(values: [], total: 0, hasMore: false)
+                completion: CompletionSuggestions(values: [], total: 0, hasMore: false),
             )
         }
 
@@ -999,7 +1009,7 @@ struct CompletionTests {
         let result1 = try await client.complete(
             ref: .prompt(PromptReference(name: "team-greeting")),
             argument: CompletionArgument(name: "name", value: "A"),
-            context: CompletionContext(arguments: ["department": "engineering"])
+            context: CompletionContext(arguments: ["department": "engineering"]),
         )
         #expect(result1.completion.values == ["Alice"])
 
@@ -1007,7 +1017,7 @@ struct CompletionTests {
         let result2 = try await client.complete(
             ref: .prompt(PromptReference(name: "team-greeting")),
             argument: CompletionArgument(name: "name", value: "D"),
-            context: CompletionContext(arguments: ["department": "sales"])
+            context: CompletionContext(arguments: ["department": "sales"]),
         )
         #expect(result2.completion.values == ["David"])
 
@@ -1015,14 +1025,14 @@ struct CompletionTests {
         let result3 = try await client.complete(
             ref: .prompt(PromptReference(name: "team-greeting")),
             argument: CompletionArgument(name: "name", value: "G"),
-            context: CompletionContext(arguments: ["department": "marketing"])
+            context: CompletionContext(arguments: ["department": "marketing"]),
         )
         #expect(result3.completion.values == ["Grace"])
 
         // Test with no context
         let result4 = try await client.complete(
             ref: .prompt(PromptReference(name: "team-greeting")),
-            argument: CompletionArgument(name: "name", value: "U")
+            argument: CompletionArgument(name: "name", value: "U"),
         )
         #expect(result4.completion.values.contains("Unknown1"))
         #expect(result4.completion.values.contains("Unknown2"))

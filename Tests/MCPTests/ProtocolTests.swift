@@ -2,16 +2,15 @@
 
 import Foundation
 import Logging
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Test Protocol Actor
 
 /// A minimal conformer to ProtocolLayer for testing protocol-level behavior.
 actor TestProtocolActor: ProtocolLayer {
     package var protocolState = ProtocolState()
-    package var protocolLogger: Logger? = nil
+    package var protocolLogger: Logger?
 
     /// Track received requests.
     var receivedRequests: [AnyRequest] = []
@@ -47,12 +46,11 @@ actor TestProtocolActor: ProtocolLayer {
 ///
 /// These tests verify the core JSON-RPC mechanics that Client and Server
 /// delegate to through protocol conformance.
-@Suite("ProtocolLayer Tests")
 struct ProtocolTests {
     // MARK: - Connection Lifecycle Tests
 
-    @Test("Protocol connects to transport")
-    func testConnect() async throws {
+    @Test
+    func `Protocol connects to transport`() async throws {
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -62,8 +60,8 @@ struct ProtocolTests {
         await proto.stopProtocol()
     }
 
-    @Test("Protocol disconnect cancels pending requests")
-    func testDisconnectCancelsPendingRequests() async throws {
+    @Test
+    func `Protocol disconnect cancels pending requests`() async throws {
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -93,8 +91,8 @@ struct ProtocolTests {
 
     // MARK: - Handler Registration Tests
 
-    @Test("Protocol routes incoming requests through handleIncomingRequest")
-    func testRequestHandlerRegistration() async throws {
+    @Test
+    func `Protocol routes incoming requests through handleIncomingRequest`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -118,8 +116,8 @@ struct ProtocolTests {
         await proto.stopProtocol()
     }
 
-    @Test("Protocol routes notifications through handleIncomingNotification")
-    func testNotificationHandlerRegistration() async throws {
+    @Test
+    func `Protocol routes notifications through handleIncomingNotification`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -145,8 +143,8 @@ struct ProtocolTests {
 
     // MARK: - Null/Missing ID Error Response Tests
 
-    @Test("Error response with null id reaches handleNullIdError")
-    func nullIdErrorReachesHandler() async throws {
+    @Test
+    func `Error response with null id reaches handleNullIdError`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -157,7 +155,7 @@ struct ProtocolTests {
         let jsonString = """
         {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
         """
-        try await clientTransport.send(jsonString.data(using: .utf8)!)
+        try await clientTransport.send(#require(jsonString.data(using: .utf8)))
 
         _ = await pollUntil { await proto.nullIdErrors.count == 1 }
 
@@ -173,8 +171,8 @@ struct ProtocolTests {
         await proto.stopProtocol()
     }
 
-    @Test("Error response with missing id reaches handleNullIdError")
-    func missingIdErrorReachesHandler() async throws {
+    @Test
+    func `Error response with missing id reaches handleNullIdError`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -185,7 +183,7 @@ struct ProtocolTests {
         let jsonString = """
         {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"}}
         """
-        try await clientTransport.send(jsonString.data(using: .utf8)!)
+        try await clientTransport.send(#require(jsonString.data(using: .utf8)))
 
         _ = await pollUntil { await proto.nullIdErrors.count == 1 }
 
@@ -201,8 +199,8 @@ struct ProtocolTests {
         await proto.stopProtocol()
     }
 
-    @Test("Error response with valid id reaches pending request, not handleNullIdError")
-    func validIdErrorReachesPendingRequest() async throws {
+    @Test
+    func `Error response with valid id reaches pending request, not handleNullIdError`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -217,7 +215,7 @@ struct ProtocolTests {
         let jsonString = """
         {"jsonrpc":"2.0","id":"req-42","error":{"code":-32601,"message":"Method not found"}}
         """
-        try await clientTransport.send(jsonString.data(using: .utf8)!)
+        try await clientTransport.send(#require(jsonString.data(using: .utf8)))
 
         // The pending request stream should receive the error
         do {
@@ -236,8 +234,8 @@ struct ProtocolTests {
         await proto.stopProtocol()
     }
 
-    @Test("Batch with null-id error routes null-id items to handleNullIdError")
-    func batchWithNullIdError() async throws {
+    @Test
+    func `Batch with null-id error routes null-id items to handleNullIdError`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -255,7 +253,7 @@ struct ProtocolTests {
             {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}}
         ]
         """
-        try await clientTransport.send(jsonString.data(using: .utf8)!)
+        try await clientTransport.send(#require(jsonString.data(using: .utf8)))
 
         // The valid-id response should resolve the pending request
         for try await _ in stream {
@@ -273,8 +271,8 @@ struct ProtocolTests {
 
     // MARK: - Progress Callback Tests
 
-    @Test("Protocol routes progress notifications to registered callbacks")
-    func testProgressCallback() async throws {
+    @Test
+    func `Protocol routes progress notifications to registered callbacks`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -296,7 +294,7 @@ struct ProtocolTests {
             progressToken: progressToken,
             progress: 50,
             total: 100,
-            message: "Halfway there"
+            message: "Halfway there",
         ))
         let data = try encoder.encode(notification)
         try await clientTransport.send(data)
@@ -314,8 +312,8 @@ struct ProtocolTests {
 
     // MARK: - Request ID Generation Tests
 
-    @Test("Protocol generates unique request IDs")
-    func testRequestIdGeneration() async throws {
+    @Test
+    func `Protocol generates unique request IDs`() async {
         let proto = TestProtocolActor()
 
         let id1 = await proto.generateProtocolRequestId()
@@ -329,8 +327,8 @@ struct ProtocolTests {
 
     // MARK: - RequestHandlerContext Tests
 
-    @Test("RequestHandlerContext.checkCancellation throws when task is cancelled")
-    func testRequestHandlerContextCancellation() async throws {
+    @Test
+    func `RequestHandlerContext.checkCancellation throws when task is cancelled`() throws {
         let extra = RequestHandlerContext(
             sessionId: nil,
             requestId: .number(1),
@@ -341,7 +339,7 @@ struct ProtocolTests {
             closeResponseStream: nil,
             closeNotificationStream: nil,
             sendNotification: { _ in },
-            sendRequest: { _ in Data() }
+            sendRequest: { _ in Data() },
         )
 
         // In a non-cancelled context, checkCancellation should not throw
@@ -356,14 +354,13 @@ struct ProtocolTests {
 
 // MARK: - TimeoutController Tests
 
-@Suite("TimeoutController Tests")
 struct TimeoutControllerTests {
-    @Test("Timeout expires when no progress received")
-    func testTimeoutExpires() async throws {
+    @Test
+    func `Timeout expires when no progress received`() async throws {
         let controller = TimeoutController(
             timeout: .milliseconds(50),
             resetOnProgress: true,
-            maxTotalTimeout: nil
+            maxTotalTimeout: nil,
         )
 
         do {
@@ -377,12 +374,12 @@ struct TimeoutControllerTests {
         }
     }
 
-    @Test("Timeout resets when progress is signaled")
-    func testTimeoutResetsOnProgress() async throws {
+    @Test
+    func `Timeout resets when progress is signaled`() async throws {
         let controller = TimeoutController(
             timeout: .milliseconds(200),
             resetOnProgress: true,
-            maxTotalTimeout: nil
+            maxTotalTimeout: nil,
         )
 
         // Start the timeout in a separate task
@@ -404,12 +401,12 @@ struct TimeoutControllerTests {
         // If we got here without the timeoutTask throwing, the reset worked
     }
 
-    @Test("Timeout does not reset when resetOnProgress is false")
-    func testTimeoutDoesNotResetWhenDisabled() async throws {
+    @Test
+    func `Timeout does not reset when resetOnProgress is false`() async throws {
         let controller = TimeoutController(
             timeout: .milliseconds(50),
             resetOnProgress: false,
-            maxTotalTimeout: nil
+            maxTotalTimeout: nil,
         )
 
         // Start the timeout
@@ -435,14 +432,14 @@ struct TimeoutControllerTests {
         }
     }
 
-    @Test("maxTotalTimeout is respected even with progress")
-    func testMaxTotalTimeoutRespected() async throws {
+    @Test
+    func `maxTotalTimeout is respected even with progress`() async throws {
         // Per-progress timeout is much larger than maxTotalTimeout so it never fires.
         // Frequent progress signals keep the loop iterating so the maxTotal check triggers.
         let controller = TimeoutController(
             timeout: .milliseconds(500),
             resetOnProgress: true,
-            maxTotalTimeout: .milliseconds(200)
+            maxTotalTimeout: .milliseconds(200),
         )
 
         let timeoutTask = Task {
@@ -474,12 +471,12 @@ struct TimeoutControllerTests {
         }
     }
 
-    @Test("Cancel stops timeout without throwing")
-    func testCancelStopsTimeout() async throws {
+    @Test
+    func `Cancel stops timeout without throwing`() async throws {
         let controller = TimeoutController(
             timeout: .milliseconds(1000),
             resetOnProgress: true,
-            maxTotalTimeout: nil
+            maxTotalTimeout: nil,
         )
 
         let timeoutTask = Task {
@@ -505,10 +502,9 @@ struct TimeoutControllerTests {
 
 // MARK: - Debounced Notification Tests
 
-@Suite("Debounced Notification Tests")
 struct DebouncedNotificationTests {
-    @Test("Multiple synchronous notifications are coalesced")
-    func testNotificationsAreCoalesced() async throws {
+    @Test
+    func `Multiple synchronous notifications are coalesced`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
         let spyTransport = await SpyTransport(wrapping: serverTransport)
 
@@ -535,8 +531,8 @@ struct DebouncedNotificationTests {
         await proto.stopProtocol()
     }
 
-    @Test("Notifications with relatedRequestId are not debounced")
-    func testNotificationsWithRelatedRequestIdNotDebounced() async throws {
+    @Test
+    func `Notifications with relatedRequestId are not debounced`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
         let spyTransport = await SpyTransport(wrapping: serverTransport)
 
@@ -561,8 +557,8 @@ struct DebouncedNotificationTests {
         await proto.stopProtocol()
     }
 
-    @Test("Pending debounced notifications are cleared on disconnect")
-    func testPendingNotificationsClearedOnDisconnect() async throws {
+    @Test
+    func `Pending debounced notifications are cleared on disconnect`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
         let spyTransport = await SpyTransport(wrapping: serverTransport)
 
@@ -587,8 +583,8 @@ struct DebouncedNotificationTests {
         #expect(count == 0, "Pending notifications should be cleared on disconnect, got \(count)")
     }
 
-    @Test("Non-debounced notifications are sent immediately")
-    func testNonDebouncedNotificationsSentImmediately() async throws {
+    @Test
+    func `Non-debounced notifications are sent immediately`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
         let spyTransport = await SpyTransport(wrapping: serverTransport)
 
@@ -615,10 +611,9 @@ struct DebouncedNotificationTests {
 
 // MARK: - Response Router Tests
 
-@Suite("Response Router Tests")
 struct ResponseRouterTests {
-    @Test("Response router receives responses for matching request IDs")
-    func testResponseRouterReceivesResponses() async throws {
+    @Test
+    func `Response router receives responses for matching request IDs`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -649,8 +644,8 @@ struct ResponseRouterTests {
         await proto.stopProtocol()
     }
 
-    @Test("Response router can decline to handle response")
-    func testResponseRouterCanDecline() async throws {
+    @Test
+    func `Response router can decline to handle response`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -688,8 +683,8 @@ struct ResponseRouterTests {
         await proto.stopProtocol()
     }
 
-    @Test("All response routers are cleared on removeAll")
-    func testRemoveAllResponseRouters() async throws {
+    @Test
+    func `All response routers are cleared on removeAll`() async {
         let proto = TestProtocolActor()
 
         let router1 = TestResponseRouter { _, _ in true }
@@ -711,10 +706,9 @@ struct ResponseRouterTests {
 
 // MARK: - Connection State Edge Cases Tests
 
-@Suite("Connection State Edge Cases Tests")
 struct ConnectionStateEdgeCaseTests {
-    @Test("Connecting when already connected throws error")
-    func testConnectingWhenAlreadyConnectedThrows() async throws {
+    @Test
+    func `Connecting when already connected throws error`() async throws {
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -742,8 +736,8 @@ struct ConnectionStateEdgeCaseTests {
         await proto.stopProtocol()
     }
 
-    @Test("stopProtocol on disconnected protocol is a no-op")
-    func testStopOnDisconnectedIsNoOp() async throws {
+    @Test
+    func `stopProtocol on disconnected protocol is a no-op`() async {
         let proto = TestProtocolActor()
 
         // Protocol is not connected, so stop should be a no-op
@@ -757,8 +751,8 @@ struct ConnectionStateEdgeCaseTests {
         await proto.stopProtocol()
     }
 
-    @Test("stopProtocol can be called multiple times safely")
-    func testStopProtocolMultipleTimes() async throws {
+    @Test
+    func `stopProtocol can be called multiple times safely`() async throws {
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -776,10 +770,9 @@ struct ConnectionStateEdgeCaseTests {
 
 // MARK: - Unknown Message Handling Tests
 
-@Suite("Unknown Message Handling Tests")
 struct UnknownMessageHandlingTests {
-    @Test("Unknown message type calls handleUnknownMessage")
-    func testUnknownMessageCallsHandler() async throws {
+    @Test
+    func `Unknown message type calls handleUnknownMessage`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let unknownMessageReceived = UnknownMessageTracker()
@@ -805,8 +798,8 @@ struct UnknownMessageHandlingTests {
         await proto.stopProtocol()
     }
 
-    @Test("Empty JSON object triggers unknown message handler")
-    func testEmptyJsonTriggersUnknownHandler() async throws {
+    @Test
+    func `Empty JSON object triggers unknown message handler`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let unknownMessageReceived = UnknownMessageTracker()
@@ -830,10 +823,9 @@ struct UnknownMessageHandlingTests {
 
 // MARK: - Response Handling Edge Cases Tests
 
-@Suite("Response Handling Edge Cases Tests")
 struct ResponseHandlingEdgeCaseTests {
-    @Test("Response for unknown request ID is handled gracefully")
-    func testResponseForUnknownRequestId() async throws {
+    @Test
+    func `Response for unknown request ID is handled gracefully`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -861,8 +853,8 @@ struct ResponseHandlingEdgeCaseTests {
         await proto.stopProtocol()
     }
 
-    @Test("Batch responses are all processed")
-    func testBatchResponsesProcessed() async throws {
+    @Test
+    func `Batch responses are all processed`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -903,8 +895,8 @@ struct ResponseHandlingEdgeCaseTests {
         await proto.stopProtocol()
     }
 
-    @Test("Error response resumes pending request with error")
-    func testErrorResponseResumesPendingWithError() async throws {
+    @Test
+    func `Error response resumes pending request with error`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -941,10 +933,9 @@ struct ResponseHandlingEdgeCaseTests {
 
 // MARK: - onClose Callback Tests
 
-@Suite("onClose Callback Tests")
 struct OnCloseCallbackTests {
-    @Test("onClose is called exactly once on graceful disconnect")
-    func testOnCloseCalledOnceOnGracefulDisconnect() async throws {
+    @Test
+    func `onClose is called exactly once on graceful disconnect`() async throws {
         let (_, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -966,8 +957,8 @@ struct OnCloseCallbackTests {
         #expect(count == 1, "onClose should be called exactly once, was called \(count) times")
     }
 
-    @Test("onClose is called on unexpected transport closure")
-    func testOnCloseCalledOnUnexpectedTransportClosure() async throws {
+    @Test
+    func `onClose is called on unexpected transport closure`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -993,8 +984,8 @@ struct OnCloseCallbackTests {
         await proto.stopProtocol()
     }
 
-    @Test("Calling stopProtocol after unexpected closure doesn't call onClose again")
-    func testStopAfterUnexpectedClosureNoDoubleCallback() async throws {
+    @Test
+    func `Calling stopProtocol after unexpected closure doesn't call onClose again`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -1025,10 +1016,9 @@ struct OnCloseCallbackTests {
 
 // MARK: - Message Loop Error Handling Tests
 
-@Suite("Message Loop Error Handling Tests")
 struct MessageLoopErrorHandlingTests {
-    @Test("handleConnectionClosed is called when message loop ends unexpectedly")
-    func testHandleConnectionClosedCalled() async throws {
+    @Test
+    func `handleConnectionClosed is called when message loop ends unexpectedly`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let proto = TestProtocolActor()
@@ -1066,7 +1056,7 @@ private actor UnknownMessageTracker {
 /// A protocol actor that tracks unknown messages.
 private actor TestProtocolActorWithUnknownTracking: ProtocolLayer {
     package var protocolState = ProtocolState()
-    package var protocolLogger: Logger? = nil
+    package var protocolLogger: Logger?
 
     private let unknownMessageTracker: UnknownMessageTracker
 
@@ -1119,9 +1109,17 @@ private actor SpyTransport: Transport {
     private let wrappedReceiveStream: AsyncThrowingStream<TransportMessage, Swift.Error>
     private(set) var sentMessages: [Data] = []
 
-    nonisolated var logger: Logger { wrapped.logger }
-    nonisolated var sessionId: String? { nil }
-    nonisolated var supportsServerToClientRequests: Bool { true }
+    nonisolated var logger: Logger {
+        wrapped.logger
+    }
+
+    nonisolated var sessionId: String? {
+        nil
+    }
+
+    nonisolated var supportsServerToClientRequests: Bool {
+        true
+    }
 
     init(wrapping transport: InMemoryTransport) async {
         wrapped = transport

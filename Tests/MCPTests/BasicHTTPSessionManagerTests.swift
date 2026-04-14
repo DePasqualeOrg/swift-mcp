@@ -1,14 +1,12 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Basic HTTP Session Manager Tests")
 struct BasicHTTPSessionManagerTests {
-    @Test("Non-initialize request without session ID returns 400 JSON-RPC invalid request")
-    func missingSessionIdReturns400() async throws {
+    @Test
+    func `Non-initialize request without session ID returns 400 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = TestPayloads.postRequest(body: TestPayloads.listToolsRequest(id: "req-1"))
             let response = await manager.handleRequest(request)
@@ -16,30 +14,30 @@ struct BasicHTTPSessionManagerTests {
                 response,
                 statusCode: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Bad Request: Mcp-Session-Id header required"
+                message: "Bad Request: Mcp-Session-Id header required",
             )
         }
     }
 
-    @Test("Unknown session ID returns 404 JSON-RPC invalid request")
-    func unknownSessionReturns404() async throws {
+    @Test
+    func `Unknown session ID returns 404 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = TestPayloads.postRequest(
                 body: TestPayloads.listToolsRequest(id: "req-2"),
-                sessionId: "missing-session"
+                sessionId: "missing-session",
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
     }
 
-    @Test("GET request with unknown session ID returns 404 JSON-RPC invalid request")
-    func getWithUnknownSessionIdReturns404() async throws {
+    @Test
+    func `GET request with unknown session ID returns 404 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = HTTPRequest(
                 method: "GET",
@@ -48,20 +46,20 @@ struct BasicHTTPSessionManagerTests {
                     HTTPHeader.sessionId: "missing-session",
                     HTTPHeader.protocolVersion: TestPayloads.defaultVersion,
                 ],
-                body: nil
+                body: nil,
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
     }
 
-    @Test("DELETE request with unknown session ID returns 404 JSON-RPC invalid request")
-    func deleteWithUnknownSessionIdReturns404() async throws {
+    @Test
+    func `DELETE request with unknown session ID returns 404 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = HTTPRequest(
                 method: "DELETE",
@@ -69,20 +67,20 @@ struct BasicHTTPSessionManagerTests {
                     HTTPHeader.sessionId: "missing-session",
                     HTTPHeader.protocolVersion: TestPayloads.defaultVersion,
                 ],
-                body: nil
+                body: nil,
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
     }
 
-    @Test("GET request without session ID returns 400 JSON-RPC invalid request")
-    func getWithoutSessionIdReturns400() async throws {
+    @Test
+    func `GET request without session ID returns 400 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = HTTPRequest(
                 method: "GET",
@@ -90,40 +88,40 @@ struct BasicHTTPSessionManagerTests {
                     HTTPHeader.accept: "text/event-stream",
                     HTTPHeader.protocolVersion: TestPayloads.defaultVersion,
                 ],
-                body: nil
+                body: nil,
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Bad Request: Mcp-Session-Id header required"
+                message: "Bad Request: Mcp-Session-Id header required",
             )
         }
     }
 
-    @Test("DELETE request without session ID returns 400 JSON-RPC invalid request")
-    func deleteWithoutSessionIdReturns400() async throws {
+    @Test
+    func `DELETE request without session ID returns 400 JSON-RPC invalid request`() async throws {
         try await withSessionManager { manager in
             let request = HTTPRequest(
                 method: "DELETE",
                 headers: [
                     HTTPHeader.protocolVersion: TestPayloads.defaultVersion,
                 ],
-                body: nil
+                body: nil,
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Bad Request: Mcp-Session-Id header required"
+                message: "Bad Request: Mcp-Session-Id header required",
             )
         }
     }
 
-    @Test("Capacity limit returns 503 JSON-RPC internal error")
-    func capacityLimitReturns503() async throws {
+    @Test
+    func `Capacity limit returns 503 JSON-RPC internal error`() async throws {
         try await withSessionManager(maxSessions: 1) { manager in
             let init1 = TestPayloads.postRequest(body: TestPayloads.initializeRequest(id: "init-1"))
             let init1Response = await manager.handleRequest(init1)
@@ -137,13 +135,13 @@ struct BasicHTTPSessionManagerTests {
                 init2Response,
                 statusCode: 503,
                 code: ErrorCode.internalError,
-                message: "Service Unavailable: Maximum sessions reached"
+                message: "Service Unavailable: Maximum sessions reached",
             )
         }
     }
 
-    @Test("Initialize creates session and routes subsequent request")
-    func initializeAndRouteSubsequentRequest() async throws {
+    @Test
+    func `Initialize creates session and routes subsequent request`() async throws {
         try await withSessionManager(sessionIdGenerator: { "session-fixed" }) { manager in
             let initRequest = TestPayloads.postRequest(body: TestPayloads.initializeRequest(id: "init-route"))
             let initResponse = await manager.handleRequest(initRequest)
@@ -154,15 +152,15 @@ struct BasicHTTPSessionManagerTests {
 
             let notificationRequest = TestPayloads.postRequest(
                 body: TestPayloads.initializedNotification(),
-                sessionId: "session-fixed"
+                sessionId: "session-fixed",
             )
             let notificationResponse = await manager.handleRequest(notificationRequest)
             #expect(notificationResponse.statusCode == 202)
         }
     }
 
-    @Test("Removing a session rejects subsequent requests with 404 invalid request")
-    func removeSessionRejectsSubsequentRequests() async throws {
+    @Test
+    func `Removing a session rejects subsequent requests with 404 invalid request`() async throws {
         try await withSessionManager(sessionIdGenerator: { "session-fixed" }) { manager in
             let initRequest = TestPayloads.postRequest(body: TestPayloads.initializeRequest(id: "init-remove"))
             let initResponse = await manager.handleRequest(initRequest)
@@ -175,20 +173,20 @@ struct BasicHTTPSessionManagerTests {
 
             let request = TestPayloads.postRequest(
                 body: TestPayloads.listToolsRequest(id: "req-after-remove"),
-                sessionId: "session-fixed"
+                sessionId: "session-fixed",
             )
             let response = await manager.handleRequest(request)
             try assertJSONRPCError(
                 response,
                 statusCode: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
     }
 
-    @Test("closeAll removes all active sessions")
-    func closeAllRemovesAllSessions() async throws {
+    @Test
+    func `closeAll removes all active sessions`() async {
         let manager = makeSessionManager()
         let init1 = TestPayloads.postRequest(body: TestPayloads.initializeRequest(id: "init-a"))
         let init2 = TestPayloads.postRequest(body: TestPayloads.initializeRequest(id: "init-b"))
@@ -201,12 +199,12 @@ struct BasicHTTPSessionManagerTests {
         #expect(await manager.sessionCount == 0)
     }
 
-    @Test("Session is removed after idle timeout expires")
-    func sessionRemovedAfterIdleTimeout() async throws {
+    @Test
+    func `Session is removed after idle timeout expires`() async throws {
         let manager = makeSessionManager(sessionIdleTimeout: .milliseconds(100))
 
         let initRequest = TestPayloads.postRequest(
-            body: TestPayloads.initializeRequest(id: "init-idle")
+            body: TestPayloads.initializeRequest(id: "init-idle"),
         )
         let response = await manager.handleRequest(initRequest)
         #expect(response.statusCode == 200)
@@ -224,7 +222,7 @@ struct BasicHTTPSessionManagerTests {
 private func withSessionManager<T>(
     maxSessions: Int = 100,
     sessionIdGenerator: (@Sendable () -> String)? = nil,
-    _ testBody: (BasicHTTPSessionManager) async throws -> T
+    _ testBody: (BasicHTTPSessionManager) async throws -> T,
 ) async throws -> T {
     let manager = makeSessionManager(maxSessions: maxSessions, sessionIdGenerator: sessionIdGenerator)
     do {
@@ -241,7 +239,7 @@ private func assertJSONRPCError(
     _ response: HTTPResponse,
     statusCode: Int,
     code: Int,
-    message: String
+    message: String,
 ) throws {
     #expect(response.statusCode == statusCode)
     #expect(response.headers[HTTPHeader.contentType] == "application/json")
@@ -263,7 +261,7 @@ private func assertJSONRPCError(
 private func makeSessionManager(
     maxSessions: Int = 100,
     sessionIdGenerator: (@Sendable () -> String)? = nil,
-    sessionIdleTimeout: Duration? = nil
+    sessionIdleTimeout: Duration? = nil,
 ) -> BasicHTTPSessionManager {
     let server = MCPServer(name: "basic-http-session-manager-tests", version: "1.0.0")
     return BasicHTTPSessionManager(
@@ -272,6 +270,6 @@ private func makeSessionManager(
         port: 8080,
         maxSessions: maxSessions,
         sessionIdGenerator: sessionIdGenerator,
-        sessionIdleTimeout: sessionIdleTimeout
+        sessionIdleTimeout: sessionIdleTimeout,
     )
 }

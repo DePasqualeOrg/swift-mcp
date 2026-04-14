@@ -1,12 +1,11 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-
 import struct Foundation.Data
 import struct Foundation.Date
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
+import Logging
 
 /// Configuration for form-mode elicitation support.
 public enum FormModeConfig: Sendable, Hashable {
@@ -37,7 +36,7 @@ public enum URLModeConfig: Sendable, Hashable {
 ///
 /// The `inferredCapabilities` computed property derives capabilities from the registered
 /// handlers, following the Python SDK's `ExperimentalTaskHandlers.build_capability()` pattern.
-struct ClientHandlerRegistry: Sendable {
+struct ClientHandlerRegistry {
     // MARK: - Handlers
 
     /// Notification handlers keyed by method name.
@@ -55,19 +54,19 @@ struct ClientHandlerRegistry: Sendable {
     // MARK: - Handler Configuration (affects inferred capabilities)
 
     /// Configuration for sampling handler, used to build capabilities at connect time.
-    struct SamplingConfig: Sendable {
+    struct SamplingConfig {
         var supportsContext: Bool
         var supportsTools: Bool
     }
 
     /// Configuration for elicitation handler, used to build capabilities at connect time.
-    struct ElicitationConfig: Sendable {
+    struct ElicitationConfig {
         var formMode: FormModeConfig?
         var urlMode: URLModeConfig?
     }
 
     /// Configuration for roots handler, used to build capabilities at connect time.
-    struct RootsConfig: Sendable {
+    struct RootsConfig {
         var listChanged: Bool
     }
 
@@ -123,7 +122,7 @@ struct ClientHandlerRegistry: Sendable {
         if let config = samplingConfig {
             caps.sampling = .init(
                 context: config.supportsContext ? .init() : nil,
-                tools: config.supportsTools ? .init() : nil
+                tools: config.supportsTools ? .init() : nil,
             )
         }
 
@@ -136,7 +135,7 @@ struct ClientHandlerRegistry: Sendable {
                             .init(applyDefaults: applyDefaults ? true : nil)
                     }
                 },
-                url: config.urlMode.map { _ in .init() }
+                url: config.urlMode.map { _ in .init() },
             )
         }
 
@@ -155,12 +154,12 @@ struct ClientHandlerRegistry: Sendable {
             var requestsCap = Client.Capabilities.Tasks.Requests()
             if taskAugmentedSamplingHandler != nil {
                 requestsCap.sampling = Client.Capabilities.Tasks.Requests.Sampling(
-                    createMessage: Client.Capabilities.Tasks.Requests.Sampling.CreateMessage()
+                    createMessage: Client.Capabilities.Tasks.Requests.Sampling.CreateMessage(),
                 )
             }
             if taskAugmentedElicitationHandler != nil {
                 requestsCap.elicitation = Client.Capabilities.Tasks.Requests.Elicitation(
-                    create: Client.Capabilities.Tasks.Requests.Elicitation.Create()
+                    create: Client.Capabilities.Tasks.Requests.Elicitation.Create(),
                 )
             }
             caps.tasks = Client.Capabilities.Tasks(requests: requestsCap)
@@ -201,7 +200,7 @@ public actor Client: ProtocolLayer {
 
         public init(
             strict: Bool = false,
-            supportedProtocolVersions: [String] = Version.supported
+            supportedProtocolVersions: [String] = Version.supported,
         ) {
             precondition(!supportedProtocolVersions.isEmpty, "supportedProtocolVersions must not be empty")
             self.strict = strict
@@ -231,7 +230,7 @@ public actor Client: ProtocolLayer {
             title: String? = nil,
             description: String? = nil,
             icons: [Icon]? = nil,
-            websiteUrl: String? = nil
+            websiteUrl: String? = nil,
         ) {
             self.name = name
             self.version = version
@@ -325,7 +324,7 @@ public actor Client: ProtocolLayer {
             elicitation: Elicitation? = nil,
             experimental: [String: [String: Value]]? = nil,
             roots: Capabilities.Roots? = nil,
-            tasks: Tasks? = nil
+            tasks: Tasks? = nil,
         ) {
             self.sampling = sampling
             self.elicitation = elicitation
@@ -342,14 +341,21 @@ public actor Client: ProtocolLayer {
     package var protocolLogger: Logger?
 
     /// The logger for the client.
-    var logger: Logger? { protocolLogger }
+    var logger: Logger? {
+        protocolLogger
+    }
 
     /// The client information
     let clientInfo: Client.Info
     /// The client name
-    public nonisolated var name: String { clientInfo.name }
+    public nonisolated var name: String {
+        clientInfo.name
+    }
+
     /// The client version
-    public nonisolated var version: String { clientInfo.version }
+    public nonisolated var version: String {
+        clientInfo.version
+    }
 
     /// The client capabilities
     public var capabilities: Client.Capabilities
@@ -453,7 +459,7 @@ public actor Client: ProtocolLayer {
         websiteUrl: String? = nil,
         capabilities: Capabilities? = nil,
         configuration: Configuration = .default,
-        validator: (any JSONSchemaValidator)? = nil
+        validator: (any JSONSchemaValidator)? = nil,
     ) {
         clientInfo = Client.Info(
             name: name,
@@ -461,7 +467,7 @@ public actor Client: ProtocolLayer {
             title: title,
             description: description,
             icons: icons,
-            websiteUrl: websiteUrl
+            websiteUrl: websiteUrl,
         )
         explicitCapabilities = capabilities
         self.capabilities = Capabilities() // Will be built at connect time
@@ -496,7 +502,7 @@ public actor Client: ProtocolLayer {
         protocolLogger = await transport.logger
 
         logger?.debug(
-            "Client connected", metadata: ["name": "\(name)", "version": "\(version)"]
+            "Client connected", metadata: ["name": "\(name)", "version": "\(version)"],
         )
 
         // Set up notification dispatch stream.
@@ -520,7 +526,7 @@ public actor Client: ProtocolLayer {
                             metadata: [
                                 "method": "\(notification.method)",
                                 "error": "\(error)",
-                            ]
+                            ],
                         )
                     }
                 } else {
@@ -533,7 +539,7 @@ public actor Client: ProtocolLayer {
                                 metadata: [
                                     "method": "\(notification.method)",
                                     "error": "\(error)",
-                                ]
+                                ],
                             )
                         }
                     }
@@ -579,7 +585,7 @@ public actor Client: ProtocolLayer {
             handlerTask.cancel()
             logger?.debug(
                 "Cancelled in-flight server request during disconnect",
-                metadata: ["id": "\(requestId)"]
+                metadata: ["id": "\(requestId)"],
             )
         }
         inFlightServerRequestTasks.removeAll()
@@ -656,7 +662,7 @@ public actor Client: ProtocolLayer {
             if let requestId {
                 logger?.error(
                     "Received malformed response",
-                    metadata: ["requestId": "\(requestId)"]
+                    metadata: ["requestId": "\(requestId)"],
                 )
                 if cancelProtocolPendingRequest(id: requestId, error: parseError) {
                     return
@@ -705,7 +711,7 @@ public actor Client: ProtocolLayer {
                 metadata: [
                     "id": "\(requestId)",
                     "reason": "\(reason ?? "none")",
-                ]
+                ],
             )
         }
         // Per spec: MAY ignore if request is unknown - no error needed
@@ -728,7 +734,7 @@ public actor Client: ProtocolLayer {
                 "elicitation": "\(inferred.elicitation != nil)",
                 "roots": "\(inferred.roots != nil)",
                 "tasks": "\(inferred.tasks != nil)",
-            ]
+            ],
         )
 
         let merged = ClientCapabilityHelpers.merge(inferred: inferred, explicit: explicitCapabilities)
@@ -741,7 +747,7 @@ public actor Client: ProtocolLayer {
                     "elicitation": "\(merged.elicitation != nil)",
                     "roots": "\(merged.roots != nil)",
                     "tasks": "\(merged.tasks != nil)",
-                ]
+                ],
             )
         }
 
@@ -779,8 +785,9 @@ public actor Client: ProtocolLayer {
             .init(
                 protocolVersion: supportedVersions[0],
                 capabilities: capabilities,
-                clientInfo: clientInfo
-            ))
+                clientInfo: clientInfo,
+            ),
+        )
 
         let result = try await send(request)
 
@@ -790,7 +797,7 @@ public actor Client: ProtocolLayer {
             await disconnect()
             throw MCPError.invalidRequest(
                 "Server responded with unsupported protocol version: \(result.protocolVersion). "
-                    + "Supported versions: \(supportedVersions.joined(separator: ", "))"
+                    + "Supported versions: \(supportedVersions.joined(separator: ", "))",
             )
         }
 

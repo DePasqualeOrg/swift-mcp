@@ -18,7 +18,7 @@ let package = Package(
                 .product(name: "Hummingbird", package: "hummingbird"),
                 .product(name: "MCP", package: "swift-mcp"),
             ],
-            path: "Sources"
+            path: "Sources",
         ),
-    ]
+    ],
 )

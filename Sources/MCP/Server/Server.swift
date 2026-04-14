@@ -1,12 +1,11 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Logging
-
 import struct Foundation.Data
 import struct Foundation.Date
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
+import Logging
 
 // MARK: - Server Handler Registry
 
@@ -16,7 +15,7 @@ import class Foundation.JSONEncoder
 /// easier to manage and reason about. Unlike `ClientHandlerRegistry`, this struct
 /// does not include capability inference since Server capabilities are managed
 /// differently (either set explicitly or auto-detected by MCPServer).
-struct ServerHandlerRegistry: Sendable {
+struct ServerHandlerRegistry {
     /// Request handlers keyed by method name.
     var methodHandlers: [String: RequestHandlerBox] = [:]
 
@@ -155,7 +154,7 @@ public actor Server: ProtocolLayer {
 
         public init(
             strict: Bool = true,
-            supportedProtocolVersions: [String] = Version.supported
+            supportedProtocolVersions: [String] = Version.supported,
         ) {
             precondition(!supportedProtocolVersions.isEmpty, "supportedProtocolVersions must not be empty")
             self.strict = strict
@@ -185,7 +184,7 @@ public actor Server: ProtocolLayer {
             title: String? = nil,
             description: String? = nil,
             icons: [Icon]? = nil,
-            websiteUrl: String? = nil
+            websiteUrl: String? = nil,
         ) {
             self.name = name
             self.version = version
@@ -207,7 +206,7 @@ public actor Server: ProtocolLayer {
 
             public init(
                 subscribe: Bool? = nil,
-                listChanged: Bool? = nil
+                listChanged: Bool? = nil,
             ) {
                 self.subscribe = subscribe
                 self.listChanged = listChanged
@@ -266,7 +265,7 @@ public actor Server: ProtocolLayer {
             tools: Tools? = nil,
             completions: Completions? = nil,
             tasks: Tasks? = nil,
-            experimental: [String: [String: Value]]? = nil
+            experimental: [String: [String: Value]]? = nil,
         ) {
             self.logging = logging
             self.prompts = prompts
@@ -281,7 +280,10 @@ public actor Server: ProtocolLayer {
     /// Server information
     let serverInfo: Server.Info
     /// The server connection, sourced from protocol state.
-    var connection: (any Transport)? { protocolState.transport }
+    var connection: (any Transport)? {
+        protocolState.transport
+    }
+
     /// Callback invoked when the server's message loop exits (transport disconnected or stopped).
     private var onDisconnect: (@Sendable () async -> Void)?
 
@@ -291,12 +293,20 @@ public actor Server: ProtocolLayer {
     }
 
     /// The server logger
-    var logger: Logger? { protocolLogger }
+    var logger: Logger? {
+        protocolLogger
+    }
 
     /// The server name
-    public nonisolated var name: String { serverInfo.name }
+    public nonisolated var name: String {
+        serverInfo.name
+    }
+
     /// The server version
-    public nonisolated var version: String { serverInfo.version }
+    public nonisolated var version: String {
+        serverInfo.version
+    }
+
     /// Instructions describing how to use the server and its features
     ///
     /// This can be used by clients to improve the LLM's understanding of
@@ -383,7 +393,7 @@ public actor Server: ProtocolLayer {
         instructions: String? = nil,
         capabilities: Server.Capabilities = .init(),
         configuration: Configuration = .default,
-        validator: (any JSONSchemaValidator)? = nil
+        validator: (any JSONSchemaValidator)? = nil,
     ) {
         serverInfo = Server.Info(
             name: name,
@@ -391,7 +401,7 @@ public actor Server: ProtocolLayer {
             title: title,
             description: description,
             icons: icons,
-            websiteUrl: websiteUrl
+            websiteUrl: websiteUrl,
         )
         self.capabilities = capabilities
         self.configuration = configuration
@@ -405,7 +415,7 @@ public actor Server: ProtocolLayer {
     ///   - initializeHook: An optional hook that runs when the client sends an initialize request
     public func start(
         transport: any Transport,
-        initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)? = nil
+        initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)? = nil,
     ) async throws {
         registerDefaultHandlers(initializeHook: initializeHook)
         await transport.setSupportedProtocolVersions(configuration.supportedProtocolVersions)
@@ -415,7 +425,7 @@ public actor Server: ProtocolLayer {
         protocolLogger = await transport.logger
 
         protocolLogger?.debug(
-            "Server started", metadata: ["name": "\(name)", "version": "\(version)"]
+            "Server started", metadata: ["name": "\(name)", "version": "\(version)"],
         )
 
         // Configure close callback for disconnect handling.
@@ -436,7 +446,7 @@ public actor Server: ProtocolLayer {
             handlerTask.cancel()
             protocolLogger?.debug(
                 "Cancelled in-flight request during shutdown",
-                metadata: ["id": "\(requestId)"]
+                metadata: ["id": "\(requestId)"],
             )
         }
         registeredHandlers.inFlightHandlerTasks.removeAll()
@@ -463,7 +473,7 @@ public actor Server: ProtocolLayer {
     ///   - handler: The handler function receiving parameters and context
     public func withRequestHandler<M: Method>(
         _: M.Type,
-        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
+        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {
         registeredHandlers.methodHandlers[M.name] = TypedRequestHandler {
             (request: Request<M>, context: RequestHandlerContext) -> Response<M> in
@@ -484,7 +494,7 @@ public actor Server: ProtocolLayer {
     )
     public func withRequestHandler<M: Method>(
         _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result
+        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
     ) {
         withRequestHandler(type) { params, _ in
             try await handler(params)
@@ -497,7 +507,7 @@ public actor Server: ProtocolLayer {
     @available(*, deprecated, renamed: "withRequestHandler")
     public func withMethodHandler<M: Method>(
         _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result
+        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {
         withRequestHandler(type, handler: handler)
     }
@@ -506,7 +516,7 @@ public actor Server: ProtocolLayer {
     @available(*, deprecated, renamed: "withRequestHandler")
     public func withMethodHandler<M: Method>(
         _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result
+        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
     ) {
         withRequestHandler(type, handler: handler)
     }
@@ -514,7 +524,7 @@ public actor Server: ProtocolLayer {
     /// Register a notification handler.
     public func onNotification<N: Notification>(
         _: N.Type,
-        handler: @escaping @Sendable (Message<N>) async throws -> Void
+        handler: @escaping @Sendable (Message<N>) async throws -> Void,
     ) {
         registeredHandlers.notificationHandlers[N.name, default: []].append(TypedNotificationHandler(handler))
     }
@@ -542,7 +552,7 @@ public actor Server: ProtocolLayer {
     /// }
     /// ```
     public func setFallbackRequestHandler(
-        _ handler: @escaping @Sendable (Request<AnyMethod>, RequestHandlerContext) async throws -> Response<AnyMethod>
+        _ handler: @escaping @Sendable (Request<AnyMethod>, RequestHandlerContext) async throws -> Response<AnyMethod>,
     ) {
         registeredHandlers.fallbackRequestHandler = AnyRequestHandler(handler)
     }
@@ -564,7 +574,7 @@ public actor Server: ProtocolLayer {
     /// }
     /// ```
     public func setFallbackNotificationHandler(
-        _ handler: @escaping @Sendable (Message<AnyNotification>) async throws -> Void
+        _ handler: @escaping @Sendable (Message<AnyNotification>) async throws -> Void,
     ) {
         registeredHandlers.fallbackNotificationHandler = AnyNotificationHandler(handler)
     }
@@ -583,7 +593,7 @@ public actor Server: ProtocolLayer {
     }
 
     func registerDefaultHandlers(
-        initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)?
+        initializeHook: (@Sendable (Client.Info, Client.Capabilities) async throws -> Void)?,
     ) {
         // Initialize
         withRequestHandler(Initialize.self) { [weak self] params, _ in
@@ -611,14 +621,14 @@ public actor Server: ProtocolLayer {
             await setInitialState(
                 clientInfo: params.clientInfo,
                 clientCapabilities: params.capabilities,
-                protocolVersion: negotiatedProtocolVersion
+                protocolVersion: negotiatedProtocolVersion,
             )
 
             return await Initialize.Result(
                 protocolVersion: negotiatedProtocolVersion,
                 capabilities: capabilities,
                 serverInfo: serverInfo,
-                instructions: instructions
+                instructions: instructions,
             )
         }
 
@@ -686,7 +696,7 @@ public actor Server: ProtocolLayer {
     func setInitialState(
         clientInfo: Client.Info,
         clientCapabilities: Client.Capabilities,
-        protocolVersion: String
+        protocolVersion: String,
     ) async {
         self.clientInfo = clientInfo
         self.clientCapabilities = clientCapabilities
@@ -724,14 +734,14 @@ public actor Server: ProtocolLayer {
             }
             do {
                 _ = try await handleRequest(
-                    request, sendResponse: true, messageContext: messageContext
+                    request, sendResponse: true, messageContext: messageContext,
                 )
             } catch {
                 await protocolLogger?.error(
                     "Error sending response",
                     metadata: [
                         "error": "\(error)", "requestId": "\(request.id)",
-                    ]
+                    ],
                 )
             }
         }
@@ -745,7 +755,7 @@ public actor Server: ProtocolLayer {
         } catch {
             protocolLogger?.error(
                 "Error handling notification",
-                metadata: ["method": "\(notification.method)", "error": "\(error)"]
+                metadata: ["method": "\(notification.method)", "error": "\(error)"],
             )
         }
     }
@@ -759,7 +769,7 @@ public actor Server: ProtocolLayer {
             handlerTask.cancel()
             protocolLogger?.debug(
                 "Cancelled in-flight request on disconnect",
-                metadata: ["id": "\(requestId)"]
+                metadata: ["id": "\(requestId)"],
             )
         }
         registeredHandlers.inFlightHandlerTasks.removeAll()
@@ -780,11 +790,11 @@ public actor Server: ProtocolLayer {
         }
         protocolLogger?.error(
             "Error processing message",
-            metadata: ["error": "Invalid message format"]
+            metadata: ["error": "Invalid message format"],
         )
         let response = AnyMethod.response(
             id: requestID,
-            error: MCPError.parseError("Invalid message format")
+            error: MCPError.parseError("Invalid message format"),
         )
         try? await send(response)
     }
@@ -802,7 +812,7 @@ public actor Server: ProtocolLayer {
                 } catch {
                     await protocolLogger?.error(
                         "Error handling batch",
-                        metadata: ["error": "\(error)"]
+                        metadata: ["error": "\(error)"],
                     )
                 }
             }

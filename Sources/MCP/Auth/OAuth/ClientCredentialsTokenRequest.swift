@@ -30,7 +30,7 @@ public func requestClientCredentialsToken(
     tokenEndpoint: URL,
     scope: String? = nil,
     resource: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthTokens {
     var request = URLRequest(url: tokenEndpoint)
     request.httpMethod = "POST"
@@ -54,7 +54,7 @@ public func requestClientCredentialsToken(
         body: &body,
         clientId: clientId,
         clientSecret: clientSecret,
-        method: clientAuthMethod
+        method: clientAuthMethod,
     )
 
     request.httpBody = formURLEncodedBody(body)
@@ -66,14 +66,16 @@ public func requestClientCredentialsToken(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.authorizationFailed(
-            "Token endpoint returned HTTP \(response.statusCode)")
+            "Token endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
         return try JSONDecoder().decode(OAuthTokens.self, from: data)
     } catch {
         throw OAuthError.authorizationFailed(
-            "Invalid token response: \(error.localizedDescription)")
+            "Invalid token response: \(error.localizedDescription)",
+        )
     }
 }
 
@@ -101,7 +103,7 @@ public func requestTokenWithJWTAssertion(
     tokenEndpoint: URL,
     scope: String? = nil,
     resource: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthTokens {
     var request = URLRequest(url: tokenEndpoint)
     request.httpMethod = "POST"
@@ -131,14 +133,16 @@ public func requestTokenWithJWTAssertion(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.authorizationFailed(
-            "Token endpoint returned HTTP \(response.statusCode)")
+            "Token endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
         return try JSONDecoder().decode(OAuthTokens.self, from: data)
     } catch {
         throw OAuthError.authorizationFailed(
-            "Invalid token response: \(error.localizedDescription)")
+            "Invalid token response: \(error.localizedDescription)",
+        )
     }
 }
 
@@ -165,7 +169,7 @@ public func refreshAccessTokenWithJWTAssertion(
     assertion: String,
     tokenEndpoint: URL,
     resource: URL? = nil,
-    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler
+    httpClient: HTTPRequestHandler = defaultHTTPRequestHandler,
 ) async throws -> OAuthTokens {
     var request = URLRequest(url: tokenEndpoint)
     request.httpMethod = "POST"
@@ -192,7 +196,8 @@ public func refreshAccessTokenWithJWTAssertion(
             throw OAuthError(from: errorResponse)
         }
         throw OAuthError.tokenRefreshFailed(
-            "Token endpoint returned HTTP \(response.statusCode)")
+            "Token endpoint returned HTTP \(response.statusCode)",
+        )
     }
 
     do {
@@ -204,12 +209,13 @@ public func refreshAccessTokenWithJWTAssertion(
                 tokenType: tokens.tokenType,
                 expiresIn: tokens.expiresIn,
                 scope: tokens.scope,
-                refreshToken: refreshToken
+                refreshToken: refreshToken,
             )
         }
         return tokens
     } catch {
         throw OAuthError.tokenRefreshFailed(
-            "Invalid token response: \(error.localizedDescription)")
+            "Invalid token response: \(error.localizedDescription)",
+        )
     }
 }

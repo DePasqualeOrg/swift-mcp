@@ -1,31 +1,34 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
-import Testing
-
 @testable import MCP
+import Testing
 
 // MARK: - Server Fallback Handler Tests
 
-@Suite("Server Fallback Handler Tests")
 struct ServerFallbackHandlerTests {
     /// Test that fallback request handler is called for unknown methods.
-    @Test("Fallback request handler called for unknown method", .timeLimit(.minutes(1)))
-    func testFallbackRequestHandlerCalledForUnknownMethod() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Fallback request handler called for unknown method`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server advertises both tools and prompts capabilities
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init(), tools: .init())
+            capabilities: .init(prompts: .init(), tools: .init()),
         )
 
         // Track which methods the fallback handler received
         actor MethodTracker {
             var receivedMethods: [String] = []
-            func add(_ method: String) { receivedMethods.append(method) }
-            func getMethods() -> [String] { receivedMethods }
+            func add(_ method: String) {
+                receivedMethods.append(method)
+            }
+
+            func getMethods() -> [String] {
+                receivedMethods
+            }
         }
         let tracker = MethodTracker()
 
@@ -62,14 +65,14 @@ struct ServerFallbackHandlerTests {
     }
 
     /// Test that fallback notification handler is called for unknown notifications.
-    @Test("Fallback notification handler called for unknown notification", .timeLimit(.minutes(1)))
-    func testFallbackNotificationHandlerCalledForUnknownNotification() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Fallback notification handler called for unknown notification`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         // Track notifications received by fallback handler
@@ -86,7 +89,9 @@ struct ServerFallbackHandlerTests {
                 }
             }
 
-            func getMethods() -> [String] { receivedMethods }
+            func getMethods() -> [String] {
+                receivedMethods
+            }
 
             func waitForNotification(_ method: String) async {
                 if receivedMethods.contains(method) { return }
@@ -116,7 +121,7 @@ struct ServerFallbackHandlerTests {
         // Use progress notification since we haven't registered a handler for it
         try await client.sendProgressNotification(
             token: .string("test-token"),
-            progress: 50.0
+            progress: 50.0,
         )
 
         // Wait specifically for the progress notification
@@ -130,23 +135,31 @@ struct ServerFallbackHandlerTests {
     }
 
     /// Test that specific handlers take precedence over fallback handlers.
-    @Test("Specific handler takes precedence over fallback", .timeLimit(.minutes(1)))
-    func testSpecificHandlerTakesPrecedenceOverFallback() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Specific handler takes precedence over fallback`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         actor CallTracker {
             var fallbackCalled = false
             var specificCalled = false
 
-            func markFallbackCalled() { fallbackCalled = true }
-            func markSpecificCalled() { specificCalled = true }
-            func getState() -> (fallback: Bool, specific: Bool) { (fallbackCalled, specificCalled) }
+            func markFallbackCalled() {
+                fallbackCalled = true
+            }
+
+            func markSpecificCalled() {
+                specificCalled = true
+            }
+
+            func getState() -> (fallback: Bool, specific: Bool) {
+                (fallbackCalled, specificCalled)
+            }
         }
         let tracker = CallTracker()
 
@@ -184,14 +197,14 @@ struct ServerFallbackHandlerTests {
     }
 
     /// Test that specific notification handlers take precedence over fallback.
-    @Test("Specific notification handler takes precedence over fallback", .timeLimit(.minutes(1)))
-    func testSpecificNotificationHandlerTakesPrecedenceOverFallback() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Specific notification handler takes precedence over fallback`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         actor CallTracker {
@@ -221,7 +234,9 @@ struct ServerFallbackHandlerTests {
                 fallbackCalledFor.contains(ProgressNotification.name)
             }
 
-            func wasSpecificCalled() -> Bool { specificCalled }
+            func wasSpecificCalled() -> Bool {
+                specificCalled
+            }
 
             func waitForProgressHandler() async {
                 if specificCalled || fallbackCalledFor.contains(ProgressNotification.name) { return }
@@ -254,7 +269,7 @@ struct ServerFallbackHandlerTests {
         // Send progress notification which has a specific handler
         try await client.sendProgressNotification(
             token: .string("test-token"),
-            progress: 50.0
+            progress: 50.0,
         )
 
         await tracker.waitForProgressHandler()
@@ -270,14 +285,14 @@ struct ServerFallbackHandlerTests {
     }
 
     /// Test that fallback handler can return a successful response.
-    @Test("Fallback handler can return successful response", .timeLimit(.minutes(1)))
-    func testFallbackHandlerCanReturnSuccessfulResponse() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Fallback handler can return successful response`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "FallbackTestServer",
             version: "1.0.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
         )
 
         // Set up fallback handler that returns a valid response for ListPrompts
@@ -311,24 +326,28 @@ struct ServerFallbackHandlerTests {
 
 // MARK: - Client Fallback Handler Tests
 
-@Suite("Client Fallback Handler Tests")
 struct ClientFallbackHandlerTests {
     /// Test that client fallback request handler is called for unknown server requests.
-    @Test("Client fallback request handler called for unknown method", .timeLimit(.minutes(1)))
-    func testClientFallbackRequestHandlerCalledForUnknownMethod() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Client fallback request handler called for unknown method`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         // Server that will send a custom request to the client
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init())
+            capabilities: .init(tools: .init()),
         )
 
         actor MethodTracker {
             var receivedMethods: [String] = []
-            func add(_ method: String) { receivedMethods.append(method) }
-            func getMethods() -> [String] { receivedMethods }
+            func add(_ method: String) {
+                receivedMethods.append(method)
+            }
+
+            func getMethods() -> [String] {
+                receivedMethods
+            }
         }
         let tracker = MethodTracker()
 
@@ -357,14 +376,14 @@ struct ClientFallbackHandlerTests {
     }
 
     /// Test that client fallback notification handler is called for unknown server notifications.
-    @Test("Client fallback notification handler called for unknown notification", .timeLimit(.minutes(1)))
-    func testClientFallbackNotificationHandlerCalledForUnknownNotification() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Client fallback notification handler called for unknown notification`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init(listChanged: true))
+            capabilities: .init(tools: .init(listChanged: true)),
         )
 
         actor NotificationTracker {
@@ -377,7 +396,9 @@ struct ClientFallbackHandlerTests {
                 continuation = nil
             }
 
-            func getMethods() -> [String] { receivedMethods }
+            func getMethods() -> [String] {
+                receivedMethods
+            }
 
             func waitForNotification() async {
                 if !receivedMethods.isEmpty { return }
@@ -416,14 +437,14 @@ struct ClientFallbackHandlerTests {
     }
 
     /// Test that client specific notification handler takes precedence over fallback.
-    @Test("Client specific notification handler takes precedence over fallback", .timeLimit(.minutes(1)))
-    func testClientSpecificNotificationHandlerTakesPrecedenceOverFallback() async throws {
+    @Test(.timeLimit(.minutes(1)))
+    func `Client specific notification handler takes precedence over fallback`() async throws {
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
 
         let server = Server(
             name: "TestServer",
             version: "1.0.0",
-            capabilities: .init(tools: .init(listChanged: true))
+            capabilities: .init(tools: .init(listChanged: true)),
         )
 
         actor CallTracker {
@@ -446,7 +467,9 @@ struct ClientFallbackHandlerTests {
                 continuation = nil
             }
 
-            func getState() -> (fallback: Bool, specific: Bool) { (fallbackCalled, specificCalled) }
+            func getState() -> (fallback: Bool, specific: Bool) {
+                (fallbackCalled, specificCalled)
+            }
 
             func waitForHandler() async {
                 if fallbackCalled || specificCalled { return }

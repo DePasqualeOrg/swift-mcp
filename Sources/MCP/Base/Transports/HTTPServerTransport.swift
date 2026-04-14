@@ -8,7 +8,7 @@ import FoundationNetworking
 #endif
 
 /// Internal stream state for managing SSE connections
-private struct StreamState: Sendable {
+private struct StreamState {
     /// Continuation for pushing SSE data
     let continuation: AsyncThrowingStream<Data, Swift.Error>.Continuation
 
@@ -17,7 +17,7 @@ private struct StreamState: Sendable {
 }
 
 /// Internal stream state for JSON response mode
-private struct JsonStreamState: Sendable {
+private struct JsonStreamState {
     /// Continuation for yielding the HTTP response
     let continuation: AsyncThrowingStream<HTTPResponse, Swift.Error>.Continuation
 }
@@ -117,14 +117,14 @@ public actor HTTPServerTransport: Transport {
     ///   - logger: Optional logger instance
     public init(
         options: HTTPServerTransportOptions = .init(),
-        logger: Logger? = nil
+        logger: Logger? = nil,
     ) {
         self.options = options
         self.logger =
             logger
                 ?? Logger(
                     label: "mcp.transport.http.server",
-                    factory: { _ in SwiftLogNoOpLogHandler() }
+                    factory: { _ in SwiftLogNoOpLogHandler() },
                 )
 
         // Create server receive stream
@@ -253,7 +253,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 404,
                 code: ErrorCode.connectionClosed,
-                message: "Session has been terminated"
+                message: "Session has been terminated",
             )
         }
 
@@ -274,7 +274,7 @@ public actor HTTPServerTransport: Transport {
                     status: 405,
                     code: ErrorCode.invalidRequest,
                     message: "Method not allowed",
-                    extraHeaders: [HTTPHeader.allow: "GET, POST, DELETE"]
+                    extraHeaders: [HTTPHeader.allow: "GET, POST, DELETE"],
                 )
         }
     }
@@ -292,7 +292,7 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 406,
                     code: ErrorCode.invalidRequest,
-                    message: "Not Acceptable: Client must accept application/json"
+                    message: "Not Acceptable: Client must accept application/json",
                 )
             }
         } else {
@@ -301,7 +301,7 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 406,
                     code: ErrorCode.invalidRequest,
-                    message: "Not Acceptable: Client must accept both application/json and text/event-stream"
+                    message: "Not Acceptable: Client must accept both application/json and text/event-stream",
                 )
             }
         }
@@ -312,7 +312,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 415,
                 code: ErrorCode.invalidRequest,
-                message: "Unsupported Media Type: Content-Type must be application/json"
+                message: "Unsupported Media Type: Content-Type must be application/json",
             )
         }
 
@@ -321,7 +321,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 400,
                 code: ErrorCode.parseError,
-                message: "Parse error: Empty request body"
+                message: "Parse error: Empty request body",
             )
         }
 
@@ -336,14 +336,14 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.parseError,
-                    message: "Parse error: Invalid JSON-RPC message"
+                    message: "Parse error: Invalid JSON-RPC message",
                 )
             }
         } catch {
             return createJsonErrorResponse(
                 status: 400,
                 code: ErrorCode.parseError,
-                message: "Parse error: Invalid JSON"
+                message: "Parse error: Invalid JSON",
             )
         }
 
@@ -353,7 +353,7 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.invalidRequest,
-                    message: "Invalid Request: Missing or invalid jsonrpc version"
+                    message: "Invalid Request: Missing or invalid jsonrpc version",
                 )
             }
         }
@@ -370,7 +370,7 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.invalidRequest,
-                    message: "Invalid Request: Server already initialized"
+                    message: "Invalid Request: Server already initialized",
                 )
             }
 
@@ -379,7 +379,7 @@ public actor HTTPServerTransport: Transport {
                 return createJsonErrorResponse(
                     status: 400,
                     code: ErrorCode.invalidRequest,
-                    message: "Invalid Request: Only one initialization request is allowed"
+                    message: "Invalid Request: Only one initialization request is allowed",
                 )
             }
 
@@ -395,12 +395,12 @@ public actor HTTPServerTransport: Transport {
                 if !isValidSessionId(generatedId) {
                     logger.error(
                         "Generated session ID contains invalid characters",
-                        metadata: ["sessionId": "\(generatedId)"]
+                        metadata: ["sessionId": "\(generatedId)"],
                     )
                     return createJsonErrorResponse(
                         status: 500,
                         code: ErrorCode.internalError,
-                        message: "Internal error: Invalid session ID generated"
+                        message: "Internal error: Invalid session ID generated",
                     )
                 }
 
@@ -435,7 +435,7 @@ public actor HTTPServerTransport: Transport {
                     return createJsonErrorResponse(
                         status: 400,
                         code: ErrorCode.invalidRequest,
-                        message: "Invalid Request: Batch requests not supported in protocol version \(protocolVersion)"
+                        message: "Invalid Request: Batch requests not supported in protocol version \(protocolVersion)",
                     )
                 }
             }
@@ -474,7 +474,7 @@ public actor HTTPServerTransport: Transport {
             body: body,
             request: request,
             messages: messages,
-            authInfo: authInfo
+            authInfo: authInfo,
         )
     }
 
@@ -483,7 +483,7 @@ public actor HTTPServerTransport: Transport {
         requestIds _: [RequestId],
         body: Data,
         request: HTTPRequest,
-        authInfo: AuthInfo?
+        authInfo: AuthInfo?,
     ) async -> HTTPResponse {
         // Create stream for receiving the response
         let (stream, continuation) = AsyncThrowingStream<HTTPResponse, Swift.Error>.makeStream()
@@ -510,7 +510,7 @@ public actor HTTPServerTransport: Transport {
         return createJsonErrorResponse(
             status: 503,
             code: ErrorCode.internalError,
-            message: "Service Unavailable: No response received"
+            message: "Service Unavailable: No response received",
         )
     }
 
@@ -520,7 +520,7 @@ public actor HTTPServerTransport: Transport {
         body: Data,
         request: HTTPRequest,
         messages: [[String: Any]],
-        authInfo: AuthInfo?
+        authInfo: AuthInfo?,
     ) async -> HTTPResponse {
         let (stream, streamContinuation) = AsyncThrowingStream<Data, Swift.Error>.makeStream()
 
@@ -535,7 +535,7 @@ public actor HTTPServerTransport: Transport {
 
         let state = StreamState(
             continuation: streamContinuation,
-            cleanup: cleanup
+            cleanup: cleanup,
         )
 
         streamMapping[streamId] = state
@@ -567,7 +567,7 @@ public actor HTTPServerTransport: Transport {
             authInfo: authInfo,
             requestInfo: requestInfo,
             closeResponseStream: closeResponseStreamClosure,
-            closeNotificationStream: closeNotificationStreamClosure
+            closeNotificationStream: closeNotificationStreamClosure,
         )
 
         // Yield the message to the server with context
@@ -590,7 +590,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 406,
                 code: ErrorCode.invalidRequest,
-                message: "Not Acceptable: Client must accept text/event-stream"
+                message: "Not Acceptable: Client must accept text/event-stream",
             )
         }
 
@@ -616,7 +616,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 409,
                 code: ErrorCode.invalidRequest,
-                message: "Conflict: Only one SSE stream is allowed per session"
+                message: "Conflict: Only one SSE stream is allowed per session",
             )
         }
 
@@ -634,7 +634,7 @@ public actor HTTPServerTransport: Transport {
 
         streamMapping[standaloneSseStreamId] = StreamState(
             continuation: streamContinuation,
-            cleanup: cleanup
+            cleanup: cleanup,
         )
 
         // Write priming event for resumability (use negotiated version or header)
@@ -659,7 +659,7 @@ public actor HTTPServerTransport: Transport {
                 status: 405,
                 code: ErrorCode.invalidRequest,
                 message: "Method Not Allowed: Session management is not enabled",
-                extraHeaders: [HTTPHeader.allow: "GET, POST"]
+                extraHeaders: [HTTPHeader.allow: "GET, POST"],
             )
         }
 
@@ -822,7 +822,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 421,
                 code: ErrorCode.invalidRequest,
-                message: "Misdirected Request: Missing Host header"
+                message: "Misdirected Request: Missing Host header",
             )
         }
 
@@ -833,13 +833,13 @@ public actor HTTPServerTransport: Transport {
         if !hostMatches {
             logger.warning(
                 "DNS rebinding protection: Host header rejected",
-                metadata: ["host": "\(hostHeader)"]
+                metadata: ["host": "\(hostHeader)"],
             )
             // Use 421 Misdirected Request for Host header issues
             return createJsonErrorResponse(
                 status: 421,
                 code: ErrorCode.invalidRequest,
-                message: "Misdirected Request: Host header not allowed"
+                message: "Misdirected Request: Host header not allowed",
             )
         }
 
@@ -852,12 +852,12 @@ public actor HTTPServerTransport: Transport {
             if !originMatches {
                 logger.warning(
                     "DNS rebinding protection: Origin header rejected",
-                    metadata: ["origin": "\(originHeader)"]
+                    metadata: ["origin": "\(originHeader)"],
                 )
                 return createJsonErrorResponse(
                     status: 403,
                     code: ErrorCode.invalidRequest,
-                    message: "Forbidden: Origin not allowed"
+                    message: "Forbidden: Origin not allowed",
                 )
             }
         }
@@ -911,7 +911,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Bad Request: Server not initialized"
+                message: "Bad Request: Server not initialized",
             )
         }
 
@@ -925,7 +925,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 404,
                 code: ErrorCode.connectionClosed,
-                message: "Session has been terminated"
+                message: "Session has been terminated",
             )
         }
 
@@ -936,7 +936,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Bad Request: \(HTTPHeader.sessionId) header is required"
+                message: "Bad Request: \(HTTPHeader.sessionId) header is required",
             )
         }
 
@@ -945,7 +945,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 404,
                 code: ErrorCode.invalidRequest,
-                message: "Session not found"
+                message: "Session not found",
             )
         }
 
@@ -962,7 +962,7 @@ public actor HTTPServerTransport: Transport {
                     status: 400,
                     code: ErrorCode.invalidRequest,
                     message:
-                    "Bad Request: Unsupported protocol version: \(version) (supported: \(supportedProtocolVersions.joined(separator: ", ")))"
+                    "Bad Request: Unsupported protocol version: \(version) (supported: \(supportedProtocolVersions.joined(separator: ", ")))",
                 )
             }
         }
@@ -1074,7 +1074,7 @@ public actor HTTPServerTransport: Transport {
     private func writePrimingEvent(
         streamId: String,
         continuation: AsyncThrowingStream<Data, Swift.Error>.Continuation,
-        protocolVersion: String
+        protocolVersion: String,
     ) async {
         // Only write priming events if event store is configured
         guard let eventStore = options.eventStore else { return }
@@ -1104,7 +1104,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 400,
                 code: ErrorCode.invalidRequest,
-                message: "Invalid event ID format"
+                message: "Invalid event ID format",
             )
         }
 
@@ -1113,7 +1113,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 409,
                 code: ErrorCode.invalidRequest,
-                message: "Conflict: Stream already has an active connection"
+                message: "Conflict: Stream already has an active connection",
             )
         }
 
@@ -1140,7 +1140,7 @@ public actor HTTPServerTransport: Transport {
 
             streamMapping[replayedStreamId] = StreamState(
                 continuation: streamContinuation,
-                cleanup: cleanup
+                cleanup: cleanup,
             )
 
             // Write a new priming event after replay so clients can resume again
@@ -1160,7 +1160,7 @@ public actor HTTPServerTransport: Transport {
             return createJsonErrorResponse(
                 status: 500,
                 code: ErrorCode.internalError,
-                message: "Error replaying events"
+                message: "Error replaying events",
             )
         }
     }
@@ -1235,7 +1235,7 @@ public actor HTTPServerTransport: Transport {
         status: Int,
         code: Int,
         message: String,
-        extraHeaders: [String: String] = [:]
+        extraHeaders: [String: String] = [:],
     ) -> HTTPResponse {
         let body = (try? JSONRPCErrorResponse(code: code, message: message).encoded()) ?? Data()
 

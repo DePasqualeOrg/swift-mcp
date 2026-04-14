@@ -127,7 +127,7 @@ package extension ProtocolLayer {
     func handleIncomingRequest(_ request: AnyRequest, data _: Data, context _: MessageMetadata?) async {
         await sendProtocolErrorResponse(
             id: request.id,
-            error: MCPError.methodNotFound("Unknown method: \(request.method)")
+            error: MCPError.methodNotFound("Unknown method: \(request.method)"),
         )
     }
 
@@ -156,7 +156,7 @@ package extension ProtocolLayer {
             case let .failure(error):
                 protocolLogger?.error(
                     "Received error response with null/missing id",
-                    metadata: ["error": "\(error)"]
+                    metadata: ["error": "\(error)"],
                 )
             case .success:
                 protocolLogger?.warning("Received success response with null/missing id (schema violation)")
@@ -508,7 +508,7 @@ package extension ProtocolLayer {
     /// Send an error response.
     func sendProtocolErrorResponse(
         id: RequestId,
-        error: any Error
+        error: any Error,
     ) async {
         let mcpError = (error as? MCPError) ?? MCPError.internalError(String(describing: error))
         let response = AnyResponse(id: id, error: mcpError)
@@ -569,7 +569,7 @@ package extension ProtocolLayer {
         _ request: Data,
         requestId: RequestId,
         options: ProtocolRequestOptions,
-        metaValues: [String: Value]? = nil
+        metaValues: [String: Value]? = nil,
     ) async throws -> Data {
         // Inject metadata values if provided
         let requestData: Data = if let metaValues {
@@ -592,7 +592,7 @@ package extension ProtocolLayer {
             let c = TimeoutController(
                 timeout: timeout,
                 resetOnProgress: true,
-                maxTotalTimeout: options.maxTotalTimeout
+                maxTotalTimeout: options.maxTotalTimeout,
             )
             protocolState.timeoutControllers[token] = c
             controller = c
@@ -665,7 +665,7 @@ package extension ProtocolLayer {
     func sendProtocolRequestData(
         _ requestData: Data,
         relatedRequestId: RequestId? = nil,
-        sendOverride: (@Sendable (Data, RequestId?) async throws -> Void)? = nil
+        sendOverride: (@Sendable (Data, RequestId?) async throws -> Void)? = nil,
     ) async throws -> Data {
         let decoder = JSONDecoder()
         guard let requestInfo = try? decoder.decode(AnyRequest.self, from: requestData) else {
@@ -706,7 +706,7 @@ package extension ProtocolLayer {
     /// Send a notification with optional debouncing.
     func sendProtocolNotification(
         _ notification: some NotificationMessageProtocol,
-        relatedRequestId: RequestId? = nil
+        relatedRequestId: RequestId? = nil,
     ) async throws {
         let method = notification.method
 
@@ -746,7 +746,7 @@ package extension ProtocolLayer {
         } catch {
             protocolLogger?.error(
                 "Failed to send debounced notification",
-                metadata: ["method": "\(method)", "error": "\(error)"]
+                metadata: ["method": "\(method)", "error": "\(error)"],
             )
         }
     }

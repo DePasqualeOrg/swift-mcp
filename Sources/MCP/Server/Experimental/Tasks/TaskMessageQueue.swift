@@ -323,7 +323,7 @@ public actor InMemoryTaskMessageQueue: TaskMessageQueue {
         let item = QueuedItem(
             message: request.message,
             resolver: request.resolver,
-            originalRequestId: request.originalRequestId
+            originalRequestId: request.originalRequestId,
         )
         queue.append(item)
         queues[taskId] = queue
@@ -363,7 +363,7 @@ public actor InMemoryTaskMessageQueue: TaskMessageQueue {
         return QueuedRequestWithResolver(
             message: item.message,
             resolver: resolver,
-            originalRequestId: originalRequestId
+            originalRequestId: originalRequestId,
         )
     }
 

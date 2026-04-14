@@ -1,10 +1,10 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+import JSONSchemaBuilder
+@testable import MCP
 import MCPTool
 import Testing
-
-@testable import MCP
 
 // MARK: - Test Tool Definitions
 
@@ -194,18 +194,19 @@ struct ConstrainedTool {
     @Parameter(description: "Username", minLength: 3, maxLength: 20)
     var username: String
 
-    func perform(context _: HandlerContext) async throws -> String { username }
+    func perform(context _: HandlerContext) async throws -> String {
+        username
+    }
 }
 
 /// Enum for priority levels
+@Schemable
 enum Priority: String, CaseIterable {
     case low
     case medium
     case high
     case critical
 }
-
-extension Priority: ToolEnum {}
 
 /// Tool with enum parameter
 @Tool
@@ -226,7 +227,7 @@ struct CreateTaskTool {
 
 /// Structured output for search results
 @OutputSchema
-struct SearchResult: Encodable, Sendable {
+struct SearchResult: Encodable {
     let query: String
     let totalCount: Int
     let items: [String]
@@ -248,7 +249,7 @@ struct SearchTool {
         SearchResult(
             query: query,
             totalCount: 42,
-            items: ["result1", "result2", "result3"]
+            items: ["result1", "result2", "result3"],
         )
     }
 }
@@ -335,7 +336,7 @@ struct SimplePerformStructuredTool {
         SearchResult(
             query: term,
             totalCount: 5,
-            items: ["a", "b", "c"]
+            items: ["a", "b", "c"],
         )
     }
 }
@@ -385,12 +386,22 @@ struct GroupedDataTool {
     }
 }
 
+/// Tool with no parameters
+@Tool
+struct HeartbeatTool {
+    static let name = "heartbeat"
+    static let description = "Returns OK"
+
+    func perform() async throws -> String {
+        "OK"
+    }
+}
+
 // MARK: - ToolSpec Conformance Tests
 
-@Suite("Tool DSL - ToolSpec Conformance")
 struct ToolSpecConformanceTests {
-    @Test("@Tool macro generates ToolSpec conformance")
-    func toolMacroGeneratesConformance() {
+    @Test
+    func `@Tool macro generates ToolSpec conformance`() {
         // Verify that the macro-generated types conform to ToolSpec
         let _: any ToolSpec.Type = EchoTool.self
         let _: any ToolSpec.Type = CalculatorTool.self
@@ -398,23 +409,23 @@ struct ToolSpecConformanceTests {
         let _: any ToolSpec.Type = PaginatedListTool.self
     }
 
-    @Test("Tool with perform() generates ToolSpec conformance")
-    func simplePerformToolGeneratesConformance() {
+    @Test
+    func `Tool with perform() generates ToolSpec conformance`() {
         // Verify that tools with perform() (no context) also conform to ToolSpec
         let _: any ToolSpec.Type = SimplePerformTool.self
         let _: any ToolSpec.Type = SimplePerformStructuredTool.self
     }
 
-    @Test("toolDefinition contains correct name and description")
-    func toolDefinitionBasics() {
+    @Test
+    func `toolDefinition contains correct name and description`() {
         let definition = EchoTool.toolDefinition
 
         #expect(definition.name == "echo")
         #expect(definition.description == "Echo the input message")
     }
 
-    @Test("toolDefinition contains correct inputSchema structure")
-    func toolDefinitionInputSchema() throws {
+    @Test
+    func `toolDefinition contains correct inputSchema structure`() {
         let definition = EchoTool.toolDefinition
         let schema = definition.inputSchema
 
@@ -436,8 +447,8 @@ struct ToolSpecConformanceTests {
         #expect(required?.contains(.string("message")) == true)
     }
 
-    @Test("toolDefinition includes string constraints")
-    func toolDefinitionStringConstraints() throws {
+    @Test
+    func `toolDefinition includes string constraints`() {
         let definition = ConstrainedTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let usernameSchema = properties?["username"]?.objectValue
@@ -446,8 +457,8 @@ struct ToolSpecConformanceTests {
         #expect(usernameSchema?["maxLength"]?.intValue == 20)
     }
 
-    @Test("toolDefinition includes numeric constraints")
-    func toolDefinitionNumericConstraints() {
+    @Test
+    func `toolDefinition includes numeric constraints`() {
         let definition = PaginatedListTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let pageSizeSchema = properties?["pageSize"]?.objectValue
@@ -456,8 +467,8 @@ struct ToolSpecConformanceTests {
         #expect(pageSizeSchema?["maximum"]?.doubleValue == 100)
     }
 
-    @Test("toolDefinition includes default values")
-    func toolDefinitionDefaultValues() {
+    @Test
+    func `toolDefinition includes default values`() {
         let definition = PaginatedListTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
 
@@ -473,8 +484,8 @@ struct ToolSpecConformanceTests {
         #expect(!required.contains(.string("page")))
     }
 
-    @Test("toolDefinition handles optional parameters")
-    func toolDefinitionOptionalParameters() {
+    @Test
+    func `toolDefinition handles optional parameters`() {
         let definition = GreetTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let required = definition.inputSchema.objectValue?["required"]?.arrayValue ?? []
@@ -491,8 +502,8 @@ struct ToolSpecConformanceTests {
         #expect(prefixType == [.string("string"), .string("null")])
     }
 
-    @Test("toolDefinition handles array parameters")
-    func toolDefinitionArrayParameters() {
+    @Test
+    func `toolDefinition handles array parameters`() {
         let definition = ProcessItemsTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let itemsSchema = properties?["items"]?.objectValue
@@ -504,8 +515,8 @@ struct ToolSpecConformanceTests {
         #expect(itemsItemsSchema?["type"]?.stringValue == "string")
     }
 
-    @Test("toolDefinition handles dictionary parameters")
-    func toolDefinitionDictionaryParameters() {
+    @Test
+    func `toolDefinition handles dictionary parameters`() {
         let definition = HttpRequestTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let headersSchema = properties?["headers"]?.objectValue
@@ -517,47 +528,63 @@ struct ToolSpecConformanceTests {
         #expect(additionalPropsSchema?["type"]?.stringValue == "string")
     }
 
-    @Test("toolDefinition includes additionalProperties false when strictSchema is true")
-    func toolDefinitionStrictSchema() {
+    @Test
+    func `toolDefinition stores raw schema regardless of strictSchema flag`() throws {
+        // `strictSchema: true` is a capability assertion: the stored schema is
+        // the raw, provider-agnostic MCP wire form in both cases. OpenAI
+        // strict-mode transforms happen on the client side of the wire.
         let strictDefinition = StrictTool.toolDefinition
         let additionalProps = strictDefinition.inputSchema.objectValue?["additionalProperties"]
+        #expect(additionalProps == nil)
 
-        // Strict tool should have additionalProperties: false
-        #expect(additionalProps?.boolValue == false)
-
-        // Non-strict tool should not have additionalProperties
         let nonStrictDefinition = EchoTool.toolDefinition
         let nonStrictAdditionalProps = nonStrictDefinition.inputSchema.objectValue?["additionalProperties"]
         #expect(nonStrictAdditionalProps == nil)
+
+        // Normalizing the strict tool's schema still produces the OpenAI shape.
+        let strictSchema = try #require(strictDefinition.inputSchema.objectValue)
+        let normalized = try ToolSchema.normalizeForStrictMode(strictSchema)
+        #expect(normalized["additionalProperties"]?.boolValue == false)
     }
 
-    @Test("strict schema puts all parameters in required and uses nullable types for optional/default params")
-    func toolDefinitionStrictSchemaOptionals() {
+    @Test
+    func `raw schema excludes optional/default params from required regardless of strictSchema`() throws {
         let definition = StrictToolWithOptionals.toolDefinition
-        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
-        let required = definition.inputSchema.objectValue?["required"]?.arrayValue ?? []
+        let schema = try #require(definition.inputSchema.objectValue)
+        let properties = schema["properties"]?.objectValue
+        let required = schema["required"]?.arrayValue ?? []
 
-        // All parameters must be in required array for strict mode
+        // Raw: only required, non-defaulted params appear in `required`.
         #expect(required.contains(.string("input")))
-        #expect(required.contains(.string("filter")))
-        #expect(required.contains(.string("pageSize")))
+        #expect(!required.contains(.string("filter")))
+        #expect(!required.contains(.string("pageSize")))
 
         // Required param: non-nullable type
         let inputSchema = properties?["input"]?.objectValue
         #expect(inputSchema?["type"]?.stringValue == "string")
 
-        // Optional param: nullable type
+        // Optional param: nullable type (needed so the raw schema is still
+        // strict-mode-compatible — a property that's not in `required` must
+        // be either nullable or have a default).
         let filterSchema = properties?["filter"]?.objectValue
         #expect(filterSchema?["type"]?.arrayValue == [.string("string"), .string("null")])
 
-        // Default param in strict mode: nullable type (model sends null to use default)
+        // Default param: scalar type; the `default` is what satisfies strict
+        // mode's compatibility check, no nullable wrapping needed.
         let pageSizeSchema = properties?["pageSize"]?.objectValue
-        #expect(pageSizeSchema?["type"]?.arrayValue == [.string("integer"), .string("null")])
+        #expect(pageSizeSchema?["type"]?.stringValue == "integer")
         #expect(pageSizeSchema?["default"]?.intValue == 25)
+
+        // Send-time normalization puts every property into `required`.
+        let normalized = try ToolSchema.normalizeForStrictMode(schema)
+        let normalizedRequired = normalized["required"]?.arrayValue ?? []
+        #expect(normalizedRequired.contains(.string("input")))
+        #expect(normalizedRequired.contains(.string("filter")))
+        #expect(normalizedRequired.contains(.string("pageSize")))
     }
 
-    @Test("non-strict schema does not make default params nullable")
-    func toolDefinitionNonStrictDefaultParams() {
+    @Test
+    func `non-strict schema does not make default params nullable`() {
         let definition = PaginatedListTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
 
@@ -566,8 +593,81 @@ struct ToolSpecConformanceTests {
         #expect(pageSizeSchema?["type"]?.stringValue == "integer")
     }
 
-    @Test("toolDefinition handles nested array parameters")
-    func toolDefinitionNestedArrayParameters() {
+    @Test
+    func `defaulted enum parameter stays scalar in raw and normalized schemas`() throws {
+        // A non-optional enum parameter with a default emits a scalar
+        // `type: "string"` with `default: "low"` — no `null` in either
+        // the enum values or the type array. Defaults alone satisfy the
+        // strict-subset compatibility check; nullable wrapping is extra clutter.
+        let descriptor = ToolMacroSupport.SchemaParameterDescriptor(
+            name: "priority",
+            description: "Priority level",
+            jsonSchemaType: "string",
+            jsonSchemaProperties: [
+                "enum": .array([.string("low"), .string("medium"), .string("high")]),
+            ],
+            isOptional: false,
+            hasDefault: true,
+            defaultValue: .string("low"),
+        )
+        let schema = try ToolMacroSupport.buildObjectSchema(parameters: [descriptor])
+
+        let properties = schema["properties"]?.objectValue
+        let priorityProp = try #require(properties?["priority"]?.objectValue)
+        #expect(priorityProp["type"]?.stringValue == "string")
+        #expect(priorityProp["default"]?.stringValue == "low")
+        let enumValues = priorityProp["enum"]?.arrayValue?.compactMap { $0.stringValue } ?? []
+        #expect(Set(enumValues) == Set(["low", "medium", "high"]))
+        #expect(priorityProp["enum"]?.arrayValue?.contains(Value.null) == false)
+        let required = schema["required"]?.arrayValue?.compactMap { $0.stringValue } ?? []
+        #expect(!required.contains("priority"))
+
+        let normalized = try ToolSchema.normalizeForStrictMode(schema)
+        let normalizedProps = normalized["properties"]?.objectValue
+        let normalizedPriority = try #require(normalizedProps?["priority"]?.objectValue)
+        #expect(normalizedPriority["type"]?.stringValue == "string")
+        #expect(normalizedPriority["default"]?.stringValue == "low")
+        #expect(normalizedPriority["enum"]?.arrayValue?.contains(Value.null) == false)
+    }
+
+    @Test
+    func `empty-properties tool stays strict-compatible after normalization`() throws {
+        let schema = try #require(HeartbeatTool.toolDefinition.inputSchema.objectValue)
+        let normalized = try ToolSchema.normalizeForStrictMode(schema)
+
+        #expect(normalized["type"]?.stringValue == "object")
+        #expect(normalized["properties"]?.objectValue?.isEmpty == true)
+        #expect(normalized["additionalProperties"]?.boolValue == false)
+        // Current normalizer behavior: `required` is omitted when there are
+        // no properties. If that changes, update this assertion intentionally.
+        #expect(normalized["required"] == nil)
+    }
+
+    @Test
+    func `validateStrictCompatibility throws StrictSchemaAssertionFailure on incompatible schema`() throws {
+        let descriptor = ToolMacroSupport.SchemaParameterDescriptor(
+            name: "settings",
+            description: "Settings object",
+            jsonSchemaType: "object",
+            jsonSchemaProperties: [
+                "properties": .object([
+                    "mode": .object(["type": "string"]),
+                ]),
+            ],
+            isOptional: false,
+        )
+
+        // Build itself always returns raw, so no throw here.
+        let schema = try ToolMacroSupport.buildObjectSchema(parameters: [descriptor])
+
+        // Opt-in validation throws the wrapped error carrying the tool name.
+        #expect(throws: ToolMacroSupport.StrictSchemaAssertionFailure.self) {
+            try ToolMacroSupport.validateStrictCompatibility(schema, toolName: "demo_tool")
+        }
+    }
+
+    @Test
+    func `toolDefinition handles nested array parameters`() {
         let definition = MatrixTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let matrixSchema = properties?["matrix"]?.objectValue
@@ -584,8 +684,8 @@ struct ToolSpecConformanceTests {
         #expect(elementSchema?["type"]?.stringValue == "integer")
     }
 
-    @Test("toolDefinition handles array of dictionaries parameters")
-    func toolDefinitionArrayOfDictionariesParameters() {
+    @Test
+    func `toolDefinition handles array of dictionaries parameters`() {
         let definition = RecordsTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let recordsSchema = properties?["records"]?.objectValue
@@ -602,8 +702,8 @@ struct ToolSpecConformanceTests {
         #expect(valueSchema?["type"]?.stringValue == "string")
     }
 
-    @Test("toolDefinition handles dictionary of arrays parameters")
-    func toolDefinitionDictionaryOfArraysParameters() {
+    @Test
+    func `toolDefinition handles dictionary of arrays parameters`() {
         let definition = GroupedDataTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let groupsSchema = properties?["groups"]?.objectValue
@@ -620,8 +720,8 @@ struct ToolSpecConformanceTests {
         #expect(elementSchema?["type"]?.stringValue == "integer")
     }
 
-    @Test("toolDefinition handles Date parameters")
-    func toolDefinitionDateParameters() {
+    @Test
+    func `toolDefinition handles Date parameters`() {
         let definition = ScheduleTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let dateSchema = properties?["eventDate"]?.objectValue
@@ -630,8 +730,8 @@ struct ToolSpecConformanceTests {
         #expect(dateSchema?["format"]?.stringValue == "date-time")
     }
 
-    @Test("toolDefinition respects custom JSON keys")
-    func toolDefinitionCustomKeys() {
+    @Test
+    func `toolDefinition respects custom JSON keys`() {
         let definition = CustomKeyTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
 
@@ -642,16 +742,16 @@ struct ToolSpecConformanceTests {
         #expect(properties?["endDate"] == nil)
     }
 
-    @Test("toolDefinition includes annotations")
-    func toolDefinitionAnnotations() {
+    @Test
+    func `toolDefinition includes annotations`() {
         let definition = ReadOnlyTool.toolDefinition
 
         #expect(definition.annotations.readOnlyHint == true)
         #expect(definition.annotations.title == "Configuration Reader")
     }
 
-    @Test("toolDefinition handles enum parameters")
-    func toolDefinitionEnumParameters() {
+    @Test
+    func `toolDefinition handles enum parameters`() {
         let definition = CreateTaskTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
         let prioritySchema = properties?["priority"]?.objectValue
@@ -667,8 +767,8 @@ struct ToolSpecConformanceTests {
         #expect(enumValues?.contains(.string("critical")) == true)
     }
 
-    @Test("toolDefinition includes parameter titles")
-    func toolDefinitionParameterTitles() {
+    @Test
+    func `toolDefinition includes parameter titles`() {
         let definition = ParameterTitlesTool.toolDefinition
         let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
 
@@ -687,18 +787,17 @@ struct ToolSpecConformanceTests {
 
 // MARK: - Parse Tests
 
-@Suite("Tool DSL - Parse Method")
 struct ParseMethodTests {
-    @Test("parse extracts string parameter")
-    func parseStringParameter() throws {
+    @Test
+    func `parse extracts string parameter`() throws {
         let args: [String: Value] = ["message": .string("Hello, World!")]
         let tool = try EchoTool.parse(from: args)
 
         #expect(tool.message == "Hello, World!")
     }
 
-    @Test("parse extracts multiple parameters")
-    func parseMultipleParameters() throws {
+    @Test
+    func `parse extracts multiple parameters`() throws {
         let args: [String: Value] = [
             "a": .double(10.5),
             "b": .double(3.5),
@@ -711,8 +810,8 @@ struct ParseMethodTests {
         #expect(tool.operation == "add")
     }
 
-    @Test("parse handles optional parameter when present")
-    func parseOptionalParameterPresent() throws {
+    @Test
+    func `parse handles optional parameter when present`() throws {
         let args: [String: Value] = [
             "name": .string("Alice"),
             "prefix": .string("Hi"),
@@ -723,8 +822,8 @@ struct ParseMethodTests {
         #expect(tool.prefix == "Hi")
     }
 
-    @Test("parse handles optional parameter when absent")
-    func parseOptionalParameterAbsent() throws {
+    @Test
+    func `parse handles optional parameter when absent`() throws {
         let args: [String: Value] = ["name": .string("Bob")]
         let tool = try GreetTool.parse(from: args)
 
@@ -732,8 +831,8 @@ struct ParseMethodTests {
         #expect(tool.prefix == nil)
     }
 
-    @Test("parse handles optional parameter when null")
-    func parseOptionalParameterNull() throws {
+    @Test
+    func `parse handles optional parameter when null`() throws {
         let args: [String: Value] = ["name": .string("Bob"), "prefix": .null]
         let tool = try GreetTool.parse(from: args)
 
@@ -741,8 +840,8 @@ struct ParseMethodTests {
         #expect(tool.prefix == nil)
     }
 
-    @Test("parse uses default values when parameter is absent")
-    func parseDefaultValues() throws {
+    @Test
+    func `parse uses default values when parameter is absent`() throws {
         let args: [String: Value] = [:]
         let tool = try PaginatedListTool.parse(from: args)
 
@@ -751,8 +850,8 @@ struct ParseMethodTests {
         #expect(tool.page == 1)
     }
 
-    @Test("parse overrides defaults when values provided")
-    func parseOverrideDefaults() throws {
+    @Test
+    func `parse overrides defaults when values provided`() throws {
         let args: [String: Value] = [
             "pageSize": .int(50),
             "page": .int(3),
@@ -763,8 +862,8 @@ struct ParseMethodTests {
         #expect(tool.page == 3)
     }
 
-    @Test("parse uses default values when parameter is null")
-    func parseDefaultValuesNull() throws {
+    @Test
+    func `parse uses default values when parameter is null`() throws {
         let args: [String: Value] = [
             "pageSize": .null,
             "page": .null,
@@ -776,8 +875,8 @@ struct ParseMethodTests {
         #expect(tool.page == 1)
     }
 
-    @Test("parse throws error when default parameter has wrong type")
-    func parseThrowsForWrongTypeOnDefault() throws {
+    @Test
+    func `parse throws error when default parameter has wrong type`() throws {
         let args: [String: Value] = [
             "pageSize": .string("not a number"), // Wrong type - should throw, not silently use default
             "page": .int(1),
@@ -788,8 +887,8 @@ struct ParseMethodTests {
         }
     }
 
-    @Test("parse handles array parameters")
-    func parseArrayParameter() throws {
+    @Test
+    func `parse handles array parameters`() throws {
         let args: [String: Value] = [
             "items": .array([.string("one"), .string("two"), .string("three")]),
         ]
@@ -798,8 +897,8 @@ struct ParseMethodTests {
         #expect(tool.items == ["one", "two", "three"])
     }
 
-    @Test("parse handles dictionary parameters")
-    func parseDictionaryParameter() throws {
+    @Test
+    func `parse handles dictionary parameters`() throws {
         let args: [String: Value] = [
             "url": .string("https://example.com"),
             "headers": .object([
@@ -815,8 +914,8 @@ struct ParseMethodTests {
         #expect(tool.headers.count == 2)
     }
 
-    @Test("parse handles nested array parameters")
-    func parseNestedArrayParameter() throws {
+    @Test
+    func `parse handles nested array parameters`() throws {
         let args: [String: Value] = [
             "matrix": .array([
                 .array([.int(1), .int(2), .int(3)]),
@@ -830,8 +929,8 @@ struct ParseMethodTests {
         #expect(tool.matrix[1] == [4, 5, 6])
     }
 
-    @Test("parse handles array of dictionaries parameters")
-    func parseArrayOfDictionariesParameter() throws {
+    @Test
+    func `parse handles array of dictionaries parameters`() throws {
         let args: [String: Value] = [
             "records": .array([
                 .object(["name": .string("Alice"), "role": .string("admin")]),
@@ -847,8 +946,8 @@ struct ParseMethodTests {
         #expect(tool.records[1]["role"] == "user")
     }
 
-    @Test("parse handles dictionary of arrays parameters")
-    func parseDictionaryOfArraysParameter() throws {
+    @Test
+    func `parse handles dictionary of arrays parameters`() throws {
         let args: [String: Value] = [
             "groups": .object([
                 "scores": .array([.int(85), .int(90), .int(78)]),
@@ -862,8 +961,8 @@ struct ParseMethodTests {
         #expect(tool.groups["counts"] == [10, 20])
     }
 
-    @Test("parse handles Date parameters")
-    func parseDateParameter() throws {
+    @Test
+    func `parse handles Date parameters`() throws {
         let dateString = "2024-06-15T10:30:00Z"
         let args: [String: Value] = [
             "eventName": .string("Meeting"),
@@ -878,8 +977,8 @@ struct ParseMethodTests {
         #expect(tool.eventDate == expectedDate)
     }
 
-    @Test("parse respects custom JSON keys")
-    func parseCustomKeys() throws {
+    @Test
+    func `parse respects custom JSON keys`() throws {
         let args: [String: Value] = [
             "start_date": .string("2024-01-01"),
             "end_date": .string("2024-12-31"),
@@ -890,8 +989,8 @@ struct ParseMethodTests {
         #expect(tool.endDate == "2024-12-31")
     }
 
-    @Test("parse handles Bool parameters")
-    func parseBoolParameter() throws {
+    @Test
+    func `parse handles Bool parameters`() throws {
         let args: [String: Value] = [
             "includeArchived": .bool(true),
             "limit": .int(50),
@@ -902,8 +1001,8 @@ struct ParseMethodTests {
         #expect(tool.limit == 50)
     }
 
-    @Test("parse handles enum parameters")
-    func parseEnumParameter() throws {
+    @Test
+    func `parse handles enum parameters`() throws {
         let args: [String: Value] = [
             "title": .string("Fix bug"),
             "priority": .string("high"),
@@ -914,8 +1013,8 @@ struct ParseMethodTests {
         #expect(tool.priority == .high)
     }
 
-    @Test("parse throws for missing required parameter")
-    func parseMissingRequiredParameter() throws {
+    @Test
+    func `parse throws for missing required parameter`() throws {
         let args: [String: Value] = [:]
 
         #expect(throws: MCPError.self) {
@@ -923,8 +1022,8 @@ struct ParseMethodTests {
         }
     }
 
-    @Test("parse throws for invalid type")
-    func parseInvalidType() throws {
+    @Test
+    func `parse throws for invalid type`() throws {
         let args: [String: Value] = [
             "message": .int(123), // Should be string
         ]
@@ -937,7 +1036,6 @@ struct ParseMethodTests {
 
 // MARK: - Tool Execution Tests
 
-@Suite("Tool DSL - Tool Execution")
 struct ToolExecutionTests {
     /// Creates a mock HandlerContext for testing
     func createMockContext() -> HandlerContext {
@@ -953,13 +1051,13 @@ struct ToolExecutionTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
 
-    @Test("Tool execution returns expected string output")
-    func toolExecutionStringOutput() async throws {
+    @Test
+    func `Tool execution returns expected string output`() async throws {
         let args: [String: Value] = ["message": .string("Test message")]
         let tool = try EchoTool.parse(from: args)
         let context = createMockContext()
@@ -968,8 +1066,8 @@ struct ToolExecutionTests {
         #expect(result == "Echo: Test message")
     }
 
-    @Test("Tool execution with calculations")
-    func toolExecutionCalculations() async throws {
+    @Test
+    func `Tool execution with calculations`() async throws {
         let args: [String: Value] = [
             "a": .double(10),
             "b": .double(5),
@@ -982,8 +1080,8 @@ struct ToolExecutionTests {
         #expect(result == "Result: 50.0")
     }
 
-    @Test("Tool execution with optional parameter")
-    func toolExecutionOptionalParameter() async throws {
+    @Test
+    func `Tool execution with optional parameter`() async throws {
         let context = createMockContext()
 
         // Without optional
@@ -999,8 +1097,8 @@ struct ToolExecutionTests {
         #expect(result2 == "Greetings, World!")
     }
 
-    @Test("Tool execution with array processing")
-    func toolExecutionArrayProcessing() async throws {
+    @Test
+    func `Tool execution with array processing`() async throws {
         let args: [String: Value] = [
             "items": .array([.string("apple"), .string("banana"), .string("cherry")]),
         ]
@@ -1011,8 +1109,8 @@ struct ToolExecutionTests {
         #expect(result == "Processed 3 items: apple, banana, cherry")
     }
 
-    @Test("Tool execution with enum parameter")
-    func toolExecutionEnumParameter() async throws {
+    @Test
+    func `Tool execution with enum parameter`() async throws {
         let args: [String: Value] = [
             "title": .string("Important task"),
             "priority": .string("critical"),
@@ -1024,8 +1122,8 @@ struct ToolExecutionTests {
         #expect(result == "Created task 'Important task' with priority: critical")
     }
 
-    @Test("Tool with perform() returns expected output")
-    func simplePerformToolExecution() async throws {
+    @Test
+    func `Tool with perform() returns expected output`() async throws {
         let args: [String: Value] = ["value": .string("test input")]
         let tool = try SimplePerformTool.parse(from: args)
         let context = createMockContext()
@@ -1035,8 +1133,8 @@ struct ToolExecutionTests {
         #expect(result == "Processed: test input")
     }
 
-    @Test("Tool with perform() and structured output")
-    func simplePerformStructuredToolExecution() async throws {
+    @Test
+    func `Tool with perform() and structured output`() async throws {
         let args: [String: Value] = ["term": .string("search term")]
         let tool = try SimplePerformStructuredTool.parse(from: args)
         let context = createMockContext()
@@ -1050,15 +1148,14 @@ struct ToolExecutionTests {
 
 // MARK: - StructuredOutput Tests
 
-@Suite("Tool DSL - StructuredOutput")
 struct StructuredOutputTests {
-    @Test("@OutputSchema generates StructuredOutput conformance")
-    func outputSchemaConformance() {
+    @Test
+    func `@OutputSchema generates StructuredOutput conformance`() {
         let _: any StructuredOutput.Type = SearchResult.self
     }
 
-    @Test("@OutputSchema generates correct schema")
-    func outputSchemaGeneration() {
+    @Test
+    func `@OutputSchema generates correct schema`() {
         let schema = SearchResult.schema
 
         #expect(schema.objectValue?["type"]?.stringValue == "object")
@@ -1078,12 +1175,12 @@ struct StructuredOutputTests {
         #expect(itemsSchema?["type"]?.stringValue == "array")
     }
 
-    @Test("StructuredOutput encodes to CallTool.Result correctly")
-    func structuredOutputEncoding() throws {
+    @Test
+    func `StructuredOutput encodes to CallTool.Result correctly`() throws {
         let output = SearchResult(
             query: "test query",
             totalCount: 42,
-            items: ["result1", "result2"]
+            items: ["result1", "result2"],
         )
 
         let result = try output.toCallToolResult()
@@ -1102,8 +1199,8 @@ struct StructuredOutputTests {
         #expect(items?.count == 2)
     }
 
-    @Test("Tool with StructuredOutput has outputSchema in definition")
-    func toolWithOutputSchema() {
+    @Test
+    func `Tool with StructuredOutput has outputSchema in definition`() {
         let definition = SearchTool.toolDefinition
 
         #expect(definition.outputSchema != nil)
@@ -1113,10 +1210,9 @@ struct StructuredOutputTests {
 
 // MARK: - ToolRegistry Tests
 
-@Suite("Tool DSL - ToolRegistry")
 struct ToolRegistryTests {
-    @Test("ToolRegistry registers tools via result builder")
-    func registersToolsViaBuilder() async throws {
+    @Test
+    func `ToolRegistry registers tools via result builder`() async {
         let registry = ToolRegistry {
             EchoTool.self
             CalculatorTool.self
@@ -1130,8 +1226,8 @@ struct ToolRegistryTests {
         #expect(names.contains("calculator"))
     }
 
-    @Test("ToolRegistry registers tools with register method")
-    func registersToolsWithMethod() async throws {
+    @Test
+    func `ToolRegistry registers tools with register method`() async throws {
         let registry = ToolRegistry()
         try await registry.register(EchoTool.self)
         try await registry.register(GreetTool.self)
@@ -1140,8 +1236,8 @@ struct ToolRegistryTests {
         #expect(tools.count == 2)
     }
 
-    @Test("ToolRegistry hasTool returns correct value")
-    func hasToolMethod() async throws {
+    @Test
+    func `ToolRegistry hasTool returns correct value`() async {
         let registry = ToolRegistry {
             EchoTool.self
         }
@@ -1153,8 +1249,8 @@ struct ToolRegistryTests {
         #expect(hasUnknown == false)
     }
 
-    @Test("ToolRegistry definitions contain correct tool info")
-    func definitionsContainCorrectInfo() async throws {
+    @Test
+    func `ToolRegistry definitions contain correct tool info`() async {
         let registry = ToolRegistry {
             ReadOnlyTool.self
         }
@@ -1169,8 +1265,8 @@ struct ToolRegistryTests {
         #expect(tool.annotations.title == "Configuration Reader")
     }
 
-    @Test("ToolRegistry execute runs tool and returns result")
-    func executeRunsTool() async throws {
+    @Test
+    func `ToolRegistry execute runs tool and returns result`() async throws {
         let registry = ToolRegistry {
             EchoTool.self
             CalculatorTool.self
@@ -1189,8 +1285,8 @@ struct ToolRegistryTests {
         }
     }
 
-    @Test("ToolRegistry execute throws for unknown tool")
-    func executeThrowsForUnknownTool() async throws {
+    @Test
+    func `ToolRegistry execute throws for unknown tool`() async throws {
         let registry = ToolRegistry {
             EchoTool.self
         }
@@ -1202,8 +1298,8 @@ struct ToolRegistryTests {
         }
     }
 
-    @Test("ToolRegistry execute handles structured output")
-    func executeHandlesStructuredOutput() async throws {
+    @Test
+    func `ToolRegistry execute handles structured output`() async throws {
         let registry = ToolRegistry {
             SearchTool.self
         }
@@ -1236,7 +1332,7 @@ struct ToolRegistryTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }
@@ -1244,10 +1340,9 @@ struct ToolRegistryTests {
 
 // MARK: - ToolOutput Protocol Tests
 
-@Suite("Tool DSL - ToolOutput Protocol")
 struct ToolOutputProtocolTests {
-    @Test("String conforms to ToolOutput")
-    func stringToolOutput() throws {
+    @Test
+    func `String conforms to ToolOutput`() throws {
         let output: any ToolOutput = "Hello, World!"
         let result = try output.toCallToolResult()
 
@@ -1259,8 +1354,8 @@ struct ToolOutputProtocolTests {
         }
     }
 
-    @Test("ImageOutput creates correct result")
-    func imageOutputResult() throws {
+    @Test
+    func `ImageOutput creates correct result`() throws {
         let testData = Data([0x89, 0x50, 0x4E, 0x47]) // PNG magic bytes
         let output = ImageOutput(pngData: testData)
 
@@ -1275,8 +1370,8 @@ struct ToolOutputProtocolTests {
         }
     }
 
-    @Test("MultiContent creates correct result")
-    func multiContentResult() throws {
+    @Test
+    func `MultiContent creates correct result`() throws {
         let output = MultiContent([
             .text("First"),
             .text("Second"),
@@ -1289,10 +1384,9 @@ struct ToolOutputProtocolTests {
 
 // MARK: - AnnotationOption Tests
 
-@Suite("Tool DSL - AnnotationOption")
 struct AnnotationOptionTests {
-    @Test("AnnotationOption.buildAnnotations creates correct annotations")
-    func buildAnnotationsFromOptions() {
+    @Test
+    func `AnnotationOption.buildAnnotations creates correct annotations`() {
         let options: [AnnotationOption] = [
             .readOnly,
             .idempotent,
@@ -1306,16 +1400,16 @@ struct AnnotationOptionTests {
         #expect(annotations.title == "Test Tool")
     }
 
-    @Test("AnnotationOption.closedWorld sets hint")
-    func closedWorldAnnotation() {
+    @Test
+    func `AnnotationOption.closedWorld sets hint`() {
         let options: [AnnotationOption] = [.closedWorld]
         let annotations = AnnotationOption.buildAnnotations(from: options)
 
         #expect(annotations.openWorldHint == false)
     }
 
-    @Test("AnnotationOption.readOnly implies non-destructive and idempotent")
-    func readOnlyImplications() {
+    @Test
+    func `AnnotationOption.readOnly implies non-destructive and idempotent`() {
         let options: [AnnotationOption] = [.readOnly]
         let annotations = AnnotationOption.buildAnnotations(from: options)
 
@@ -1324,8 +1418,8 @@ struct AnnotationOptionTests {
         #expect(annotations.idempotentHint == true)
     }
 
-    @Test("Empty annotations array returns empty annotations")
-    func emptyAnnotations() {
+    @Test
+    func `Empty annotations array returns empty annotations`() {
         let options: [AnnotationOption] = []
         let annotations = AnnotationOption.buildAnnotations(from: options)
 
@@ -1333,143 +1427,25 @@ struct AnnotationOptionTests {
     }
 }
 
-// MARK: - ParameterValue Protocol Tests
-
-@Suite("Tool DSL - ParameterValue Protocol")
-struct ParameterValueProtocolTests {
-    @Test("String ParameterValue conversion")
-    func stringParameterValue() {
-        let value = Value.string("hello")
-        let result = String(parameterValue: value)
-        #expect(result == "hello")
-
-        #expect(String.jsonSchemaType == "string")
-    }
-
-    @Test("Int ParameterValue conversion")
-    func intParameterValue() {
-        // From int
-        let intValue = Value.int(42)
-        #expect(Int(parameterValue: intValue) == 42)
-
-        #expect(Int.jsonSchemaType == "integer")
-    }
-
-    @Test("Double ParameterValue conversion")
-    func doubleParameterValue() {
-        // From double
-        let doubleValue = Value.double(3.14)
-        #expect(Double(parameterValue: doubleValue) == 3.14)
-
-        // From int
-        let intValue = Value.int(42)
-        #expect(Double(parameterValue: intValue) == 42.0)
-
-        #expect(Double.jsonSchemaType == "number")
-    }
-
-    @Test("Bool ParameterValue conversion")
-    func boolParameterValue() {
-        let trueValue = Value.bool(true)
-        let falseValue = Value.bool(false)
-
-        #expect(Bool(parameterValue: trueValue) == true)
-        #expect(Bool(parameterValue: falseValue) == false)
-
-        #expect(Bool.jsonSchemaType == "boolean")
-    }
-
-    @Test("Date ParameterValue conversion")
-    func dateParameterValue() {
-        let dateString = "2024-06-15T10:30:00Z"
-        let value = Value.string(dateString)
-
-        let date = Date(parameterValue: value)
-        #expect(date != nil)
-
-        let formatter = ISO8601DateFormatter()
-        let expected = formatter.date(from: dateString)
-        #expect(date == expected)
-
-        #expect(Date.jsonSchemaType == "string")
-        #expect(Date.jsonSchemaProperties["format"]?.stringValue == "date-time")
-    }
-
-    @Test("Array ParameterValue conversion")
-    func arrayParameterValue() {
-        let value = Value.array([.string("a"), .string("b"), .string("c")])
-
-        let array = [String](parameterValue: value)
-        #expect(array == ["a", "b", "c"])
-
-        #expect([String].jsonSchemaType == "array")
-    }
-
-    @Test("Optional ParameterValue conversion")
-    func optionalParameterValue() {
-        // Non-nil value - init?(parameterValue:) returns Optional<String>?, so unwrap outer optional
-        let value = Value.string("present")
-        let result: String?? = Optional<String>(parameterValue: value)
-        #expect(result == .some("present"))
-
-        // Null value returns .some(nil) - the parse succeeded with a nil value
-        let nullValue = Value.null
-        let nullResult: String?? = Optional<String>(parameterValue: nullValue)
-        #expect(nullResult == .some(nil))
-
-        // Invalid type returns nil (parse failure)
-        let invalidValue = Value.int(123)
-        let invalidResult: String?? = Optional<String>(parameterValue: invalidValue)
-        #expect(invalidResult == nil)
-    }
-
-    @Test("ToolEnum ParameterValue conversion")
-    func toolEnumParameterValue() {
-        let value = Value.string("high")
-        let priority = Priority(parameterValue: value)
-
-        #expect(priority == .high)
-        #expect(Priority.jsonSchemaType == "string")
-
-        // Check enum values in schema properties
-        let enumValues = Priority.jsonSchemaProperties["enum"]?.arrayValue
-        #expect(enumValues?.count == 4)
-    }
-
-    @Test("placeholderValue provides correct defaults")
-    func placeholderValues() {
-        #expect(String.placeholderValue == "")
-        #expect(Int.placeholderValue == 0)
-        #expect(Double.placeholderValue == 0)
-        #expect(Bool.placeholderValue == false)
-        #expect(Date.placeholderValue == Date(timeIntervalSince1970: 0))
-        #expect(Data.placeholderValue == Data())
-        #expect(String?.placeholderValue == nil)
-        #expect([String].placeholderValue == [])
-        #expect(Priority.placeholderValue == .low)
-    }
-}
-
 // MARK: - Edge Cases and Error Handling
 
-@Suite("Tool DSL - Edge Cases")
 struct EdgeCaseTests {
-    @Test("Empty string parameter is valid")
-    func emptyStringParameter() throws {
+    @Test
+    func `Empty string parameter is valid`() throws {
         let args: [String: Value] = ["message": .string("")]
         let tool = try EchoTool.parse(from: args)
         #expect(tool.message == "")
     }
 
-    @Test("Empty array parameter is valid")
-    func emptyArrayParameter() throws {
+    @Test
+    func `Empty array parameter is valid`() throws {
         let args: [String: Value] = ["items": .array([])]
         let tool = try ProcessItemsTool.parse(from: args)
         #expect(tool.items.isEmpty)
     }
 
-    @Test("Large numbers are handled correctly")
-    func largeNumbers() throws {
+    @Test
+    func `Large numbers are handled correctly`() throws {
         let args: [String: Value] = [
             "a": .double(1e308),
             "b": .double(1e-308),
@@ -1480,24 +1456,24 @@ struct EdgeCaseTests {
         #expect(tool.b == 1e-308)
     }
 
-    @Test("Unicode in parameters is preserved")
-    func unicodeParameters() throws {
+    @Test
+    func `Unicode in parameters is preserved`() throws {
         let unicodeMessage = "Hello 世界 \u{1F30D} مرحبا"
         let args: [String: Value] = ["message": .string(unicodeMessage)]
         let tool = try EchoTool.parse(from: args)
         #expect(tool.message == unicodeMessage)
     }
 
-    @Test("Special characters in strings are preserved")
-    func specialCharacters() throws {
+    @Test
+    func `Special characters in strings are preserved`() throws {
         let specialMessage = "Line1\nLine2\tTabbed\"Quoted\""
         let args: [String: Value] = ["message": .string(specialMessage)]
         let tool = try EchoTool.parse(from: args)
         #expect(tool.message == specialMessage)
     }
 
-    @Test("Invalid enum value throws error")
-    func invalidEnumValue() throws {
+    @Test
+    func `Invalid enum value throws error`() throws {
         let args: [String: Value] = [
             "title": .string("Task"),
             "priority": .string("invalid_priority"),
@@ -1508,8 +1484,8 @@ struct EdgeCaseTests {
         }
     }
 
-    @Test("Negative numbers are handled")
-    func negativeNumbers() throws {
+    @Test
+    func `Negative numbers are handled`() throws {
         let args: [String: Value] = [
             "a": .double(-100.5),
             "b": .double(-50.25),
@@ -1523,10 +1499,9 @@ struct EdgeCaseTests {
 
 // MARK: - DSL Tool Lifecycle Tests
 
-@Suite("Tool DSL - Lifecycle Management")
 struct DSLToolLifecycleTests {
-    @Test("DSL tool registration returns RegisteredTool")
-    func dslToolReturnsRegisteredTool() async throws {
+    @Test
+    func `DSL tool registration returns RegisteredTool`() async throws {
         let registry = ToolRegistry()
         let registered = try await registry.register(EchoTool.self)
 
@@ -1534,8 +1509,8 @@ struct DSLToolLifecycleTests {
         #expect(await registered.isEnabled == true)
     }
 
-    @Test("DSL tool can be disabled")
-    func dslToolCanBeDisabled() async throws {
+    @Test
+    func `DSL tool can be disabled`() async throws {
         let registry = ToolRegistry()
         let registered = try await registry.register(EchoTool.self)
 
@@ -1548,8 +1523,8 @@ struct DSLToolLifecycleTests {
         #expect(definitions.isEmpty)
     }
 
-    @Test("DSL tool can be re-enabled")
-    func dslToolCanBeReEnabled() async throws {
+    @Test
+    func `DSL tool can be re-enabled`() async throws {
         let registry = ToolRegistry()
         let registered = try await registry.register(EchoTool.self)
 
@@ -1563,8 +1538,8 @@ struct DSLToolLifecycleTests {
         #expect(definitions.count == 1)
     }
 
-    @Test("DSL tool can be removed")
-    func dslToolCanBeRemoved() async throws {
+    @Test
+    func `DSL tool can be removed`() async throws {
         let registry = ToolRegistry()
         let registered = try await registry.register(EchoTool.self)
 
@@ -1577,8 +1552,8 @@ struct DSLToolLifecycleTests {
         #expect(definitions.isEmpty)
     }
 
-    @Test("Disabled DSL tool rejects execution")
-    func disabledDslToolRejectsExecution() async throws {
+    @Test
+    func `Disabled DSL tool rejects execution`() async throws {
         let registry = ToolRegistry()
         let registered = try await registry.register(EchoTool.self)
         await registered.disable()
@@ -1591,8 +1566,8 @@ struct DSLToolLifecycleTests {
         }
     }
 
-    @Test("Multiple DSL tools can have independent lifecycle")
-    func multipleDslToolsIndependentLifecycle() async throws {
+    @Test
+    func `Multiple DSL tools can have independent lifecycle`() async throws {
         let registry = ToolRegistry()
         let echo = try await registry.register(EchoTool.self)
         let calc = try await registry.register(CalculatorTool.self)
@@ -1610,8 +1585,8 @@ struct DSLToolLifecycleTests {
         #expect(definitions.first?.name == "calculator")
     }
 
-    @Test("DSL tools registered via result builder start enabled")
-    func resultBuilderToolsStartEnabled() async throws {
+    @Test
+    func `DSL tools registered via result builder start enabled`() async {
         let registry = ToolRegistry {
             EchoTool.self
             CalculatorTool.self
@@ -1638,7 +1613,7 @@ struct DSLToolLifecycleTests {
             sendNotification: { _ in },
             sendRequest: { _ in throw MCPError.internalError("Not implemented") },
             sendData: { _ in },
-            shouldSendLogMessage: { _ in true }
+            shouldSendLogMessage: { _ in true },
         )
         return HandlerContext(handlerContext: handlerContext)
     }

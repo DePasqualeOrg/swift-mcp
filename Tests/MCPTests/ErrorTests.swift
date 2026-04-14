@@ -1,19 +1,17 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("MCPError Roundtrip Tests")
 struct MCPErrorRoundtripTests {
     let encoder = JSONEncoder()
     let decoder = JSONDecoder()
 
     // MARK: - Standard JSON-RPC Errors
 
-    @Test("parseError roundtrip with nil detail")
-    func testParseErrorNilRoundtrip() throws {
+    @Test
+    func `parseError roundtrip with nil detail`() throws {
         let original = MCPError.parseError(nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -21,72 +19,72 @@ struct MCPErrorRoundtripTests {
         #expect(decoded.message == "Invalid JSON")
     }
 
-    @Test("parseError roundtrip with custom detail")
-    func testParseErrorDetailRoundtrip() throws {
+    @Test
+    func `parseError roundtrip with custom detail`() throws {
         let original = MCPError.parseError("Unexpected token at position 5")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.message == "Unexpected token at position 5")
     }
 
-    @Test("invalidRequest roundtrip with nil detail")
-    func testInvalidRequestNilRoundtrip() throws {
+    @Test
+    func `invalidRequest roundtrip with nil detail`() throws {
         let original = MCPError.invalidRequest(nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.code == ErrorCode.invalidRequest)
     }
 
-    @Test("invalidRequest roundtrip with custom detail")
-    func testInvalidRequestDetailRoundtrip() throws {
+    @Test
+    func `invalidRequest roundtrip with custom detail`() throws {
         let original = MCPError.invalidRequest("Missing id field")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.message == "Missing id field")
     }
 
-    @Test("methodNotFound roundtrip with nil detail")
-    func testMethodNotFoundNilRoundtrip() throws {
+    @Test
+    func `methodNotFound roundtrip with nil detail`() throws {
         let original = MCPError.methodNotFound(nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.code == ErrorCode.methodNotFound)
     }
 
-    @Test("methodNotFound roundtrip with custom detail")
-    func testMethodNotFoundDetailRoundtrip() throws {
+    @Test
+    func `methodNotFound roundtrip with custom detail`() throws {
         let original = MCPError.methodNotFound("tools/call")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.message == "tools/call")
     }
 
-    @Test("invalidParams roundtrip with nil detail")
-    func testInvalidParamsNilRoundtrip() throws {
+    @Test
+    func `invalidParams roundtrip with nil detail`() throws {
         let original = MCPError.invalidParams(nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.code == ErrorCode.invalidParams)
     }
 
-    @Test("invalidParams roundtrip with custom detail")
-    func testInvalidParamsDetailRoundtrip() throws {
+    @Test
+    func `invalidParams roundtrip with custom detail`() throws {
         let original = MCPError.invalidParams("name is required")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.message == "name is required")
     }
 
-    @Test("internalError roundtrip with nil detail")
-    func testInternalErrorNilRoundtrip() throws {
+    @Test
+    func `internalError roundtrip with nil detail`() throws {
         let original = MCPError.internalError(nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.code == ErrorCode.internalError)
     }
 
-    @Test("internalError roundtrip with custom detail")
-    func testInternalErrorDetailRoundtrip() throws {
+    @Test
+    func `internalError roundtrip with custom detail`() throws {
         let original = MCPError.internalError("Database connection failed")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -95,8 +93,8 @@ struct MCPErrorRoundtripTests {
 
     // MARK: - MCP-Specific Errors
 
-    @Test("resourceNotFound roundtrip with nil URI")
-    func testResourceNotFoundNilRoundtrip() throws {
+    @Test
+    func `resourceNotFound roundtrip with nil URI`() throws {
         let original = MCPError.resourceNotFound(uri: nil)
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -104,8 +102,8 @@ struct MCPErrorRoundtripTests {
         #expect(decoded.data == nil)
     }
 
-    @Test("resourceNotFound roundtrip with URI")
-    func testResourceNotFoundUriRoundtrip() throws {
+    @Test
+    func `resourceNotFound roundtrip with URI`() throws {
         let original = MCPError.resourceNotFound(uri: "file:///path/to/file.txt")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -113,18 +111,18 @@ struct MCPErrorRoundtripTests {
         #expect(decoded.data == .object(["uri": .string("file:///path/to/file.txt")]))
     }
 
-    @Test("urlElicitationRequired roundtrip")
-    func testUrlElicitationRequiredRoundtrip() throws {
+    @Test
+    func `urlElicitationRequired roundtrip`() throws {
         let elicitations = [
             ElicitRequestURLParams(
                 message: "Please authorize",
                 elicitationId: "auth-123",
-                url: "https://example.com/oauth"
+                url: "https://example.com/oauth",
             ),
         ]
         let original = MCPError.urlElicitationRequired(
             message: "Authorization required",
-            elicitations: elicitations
+            elicitations: elicitations,
         )
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -135,8 +133,8 @@ struct MCPErrorRoundtripTests {
 
     // MARK: - Server Errors
 
-    @Test("serverError roundtrip")
-    func testServerErrorRoundtrip() throws {
+    @Test
+    func `serverError roundtrip`() throws {
         let original = MCPError.serverError(code: -32050, message: "Custom server error")
         let decoded = try roundtrip(original)
         #expect(decoded == original)
@@ -144,8 +142,8 @@ struct MCPErrorRoundtripTests {
         #expect(decoded.message == "Custom server error")
     }
 
-    @Test("serverErrorWithData roundtrip")
-    func testServerErrorWithDataRoundtrip() throws {
+    @Test
+    func `serverErrorWithData roundtrip`() throws {
         let data: Value = .object(["detail": .string("Extra info"), "count": .int(42)])
         let original = MCPError.serverErrorWithData(code: -32051, message: "Error with data", data: data)
         let decoded = try roundtrip(original)
@@ -156,40 +154,40 @@ struct MCPErrorRoundtripTests {
 
     // MARK: - SDK-Specific Errors
 
-    @Test("connectionClosed roundtrip")
-    func testConnectionClosedRoundtrip() throws {
+    @Test
+    func `connectionClosed roundtrip`() throws {
         let original = MCPError.connectionClosed
         let decoded = try roundtrip(original)
         #expect(decoded == original)
         #expect(decoded.code == ErrorCode.connectionClosed)
     }
 
-    @Test("requestTimeout roundtrip")
-    func testRequestTimeoutRoundtrip() throws {
+    @Test
+    func `requestTimeout roundtrip`() throws {
         let original = MCPError.requestTimeout(timeout: .seconds(30), message: nil)
         let decoded = try roundtrip(original)
         #expect(decoded.code == ErrorCode.requestTimeout)
         // Note: Duration precision may not be exact due to ms conversion
     }
 
-    @Test("requestTimeout roundtrip with message")
-    func testRequestTimeoutMessageRoundtrip() throws {
+    @Test
+    func `requestTimeout roundtrip with message`() throws {
         let original = MCPError.requestTimeout(timeout: .seconds(60), message: "Server unresponsive")
         let decoded = try roundtrip(original)
         #expect(decoded.code == ErrorCode.requestTimeout)
         #expect(decoded.message == "Server unresponsive")
     }
 
-    @Test("requestCancelled roundtrip")
-    func testRequestCancelledRoundtrip() throws {
+    @Test
+    func `requestCancelled roundtrip`() throws {
         let original = MCPError.requestCancelled(reason: nil)
         let decoded = try roundtrip(original)
         #expect(decoded.code == ErrorCode.requestCancelled)
         #expect(decoded.message == "Request cancelled")
     }
 
-    @Test("requestCancelled roundtrip with reason")
-    func testRequestCancelledWithReasonRoundtrip() throws {
+    @Test
+    func `requestCancelled roundtrip with reason`() throws {
         let original = MCPError.requestCancelled(reason: "User cancelled the operation")
         let decoded = try roundtrip(original)
         #expect(decoded.code == ErrorCode.requestCancelled)
@@ -209,10 +207,9 @@ struct MCPErrorRoundtripTests {
     }
 }
 
-@Suite("MCPError Message and Data Properties Tests")
 struct MCPErrorPropertyTests {
-    @Test("message property returns raw message for wire format")
-    func testMessageProperty() {
+    @Test
+    func `message property returns raw message for wire format`() {
         #expect(MCPError.parseError(nil).message == "Invalid JSON")
         #expect(MCPError.parseError("custom").message == "custom")
         #expect(MCPError.invalidRequest(nil).message == "Invalid Request")
@@ -225,8 +222,8 @@ struct MCPErrorPropertyTests {
         #expect(MCPError.serverError(code: -32050, message: "Custom").message == "Custom")
     }
 
-    @Test("data property returns correct payload for wire format")
-    func testDataProperty() {
+    @Test
+    func `data property returns correct payload for wire format`() {
         // Standard errors have no data
         #expect(MCPError.parseError(nil).data == nil)
         #expect(MCPError.invalidRequest("detail").data == nil)
@@ -242,8 +239,8 @@ struct MCPErrorPropertyTests {
         #expect(MCPError.serverError(code: -32050, message: "msg").data == nil)
     }
 
-    @Test("code property returns correct error codes")
-    func testCodeProperty() {
+    @Test
+    func `code property returns correct error codes`() {
         #expect(MCPError.parseError(nil).code == ErrorCode.parseError)
         #expect(MCPError.invalidRequest(nil).code == ErrorCode.invalidRequest)
         #expect(MCPError.methodNotFound(nil).code == ErrorCode.methodNotFound)
@@ -261,10 +258,9 @@ struct MCPErrorPropertyTests {
     }
 }
 
-@Suite("MCPError fromError Factory Tests")
 struct MCPErrorFromErrorTests {
-    @Test("fromError reconstructs standard errors")
-    func testFromErrorStandardErrors() {
+    @Test
+    func `fromError reconstructs standard errors`() {
         let parseError = MCPError.fromError(code: ErrorCode.parseError, message: "Invalid JSON")
         #expect(parseError == .parseError(nil))
 
@@ -278,8 +274,8 @@ struct MCPErrorFromErrorTests {
         #expect(methodNotFound == .methodNotFound(nil))
     }
 
-    @Test("fromError reconstructs resourceNotFound with URI from data")
-    func testFromErrorResourceNotFound() {
+    @Test
+    func `fromError reconstructs resourceNotFound with URI from data`() {
         let withoutData = MCPError.fromError(code: ErrorCode.resourceNotFound, message: "Resource not found")
         if case let .resourceNotFound(uri) = withoutData {
             #expect(uri == nil)
@@ -296,8 +292,8 @@ struct MCPErrorFromErrorTests {
         }
     }
 
-    @Test("fromError reconstructs urlElicitationRequired from data")
-    func testFromErrorUrlElicitation() {
+    @Test
+    func `fromError reconstructs urlElicitationRequired from data`() {
         let data: Value = .object([
             "elicitations": .array([
                 .object([
@@ -314,8 +310,8 @@ struct MCPErrorFromErrorTests {
         #expect(error.elicitations?[0].elicitationId == "test-123")
     }
 
-    @Test("fromError falls back to serverError for unknown codes")
-    func testFromErrorUnknownCode() {
+    @Test
+    func `fromError falls back to serverError for unknown codes`() {
         let error = MCPError.fromError(code: -32099, message: "Unknown error")
         if case let .serverError(code, message) = error {
             #expect(code == -32099)
@@ -325,8 +321,8 @@ struct MCPErrorFromErrorTests {
         }
     }
 
-    @Test("fromError preserves data for unknown codes")
-    func testFromErrorUnknownCodeWithData() {
+    @Test
+    func `fromError preserves data for unknown codes`() {
         let data: Value = .object(["extra": .string("info")])
         let error = MCPError.fromError(code: -32099, message: "Error with data", data: data)
         if case let .serverErrorWithData(code, message, errorData) = error {
@@ -338,8 +334,8 @@ struct MCPErrorFromErrorTests {
         }
     }
 
-    @Test("fromError reconstructs requestCancelled")
-    func testFromErrorRequestCancelled() {
+    @Test
+    func `fromError reconstructs requestCancelled`() {
         // Without reason
         let withoutReason = MCPError.fromError(code: ErrorCode.requestCancelled, message: "Request cancelled")
         if case let .requestCancelled(reason) = withoutReason {
@@ -367,26 +363,25 @@ struct MCPErrorFromErrorTests {
     }
 }
 
-@Suite("MCPError Wire Format Tests")
 struct MCPErrorWireFormatTests {
     let encoder = JSONEncoder()
 
-    @Test("Standard errors encode without data field")
-    func testStandardErrorsNoData() throws {
+    @Test
+    func `Standard errors encode without data field`() throws {
         let error = MCPError.parseError(nil)
         let data = try encoder.encode(error)
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(json["code"] as? Int == ErrorCode.parseError)
         #expect(json["message"] as? String == "Invalid JSON")
         #expect(json["data"] == nil)
     }
 
-    @Test("resourceNotFound encodes URI in data field")
-    func testResourceNotFoundWireFormat() throws {
+    @Test
+    func `resourceNotFound encodes URI in data field`() throws {
         let error = MCPError.resourceNotFound(uri: "file:///test.txt")
         let data = try encoder.encode(error)
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(json["code"] as? Int == ErrorCode.resourceNotFound)
         #expect(json["message"] as? String == "Resource not found: file:///test.txt")
@@ -394,20 +389,20 @@ struct MCPErrorWireFormatTests {
         #expect(dataField?["uri"] as? String == "file:///test.txt")
     }
 
-    @Test("urlElicitationRequired encodes elicitations in data field")
-    func testUrlElicitationWireFormat() throws {
+    @Test
+    func `urlElicitationRequired encodes elicitations in data field`() throws {
         let error = MCPError.urlElicitationRequired(
             elicitations: [
                 ElicitRequestURLParams(
                     message: "Auth",
                     elicitationId: "e1",
-                    url: "https://auth.example.com"
+                    url: "https://auth.example.com",
                 ),
             ],
-            message: "Authorization needed"
+            message: "Authorization needed",
         )
         let data = try encoder.encode(error)
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(json["code"] as? Int == ErrorCode.urlElicitationRequired)
         #expect(json["message"] as? String == "Authorization needed")

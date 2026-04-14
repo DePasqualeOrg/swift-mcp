@@ -2,14 +2,12 @@
 // Copyright © Matt Zmuda
 
 import Foundation
+@testable import MCP
 import Testing
 
-@testable import MCP
-
-@Suite("Server Tests")
 struct ServerTests {
-    @Test("Start and stop server")
-    func testServerStartAndStop() async throws {
+    @Test
+    func `Start and stop server`() async throws {
         let transport = MockTransport()
         let server = Server(name: "TestServer", version: "1.0")
 
@@ -20,8 +18,8 @@ struct ServerTests {
         #expect(await transport.isConnected == false)
     }
 
-    @Test("Initialize request handling")
-    func testServerHandleInitialize() async throws {
+    @Test
+    func `Initialize request handling`() async throws {
         let transport = MockTransport()
 
         // Queue an initialize request
@@ -30,14 +28,15 @@ struct ServerTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         // Start the server
         let server = Server(
             name: "TestServer",
-            version: "1.0"
+            version: "1.0",
         )
         try await server.start(transport: transport)
 
@@ -57,14 +56,19 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("Initialize hook - successful")
-    func testInitializeHookSuccess() async throws {
+    @Test
+    func `Initialize hook - successful`() async throws {
         let transport = MockTransport()
 
         actor TestState {
             var hookCalled = false
-            func setHookCalled() { hookCalled = true }
-            func wasHookCalled() -> Bool { hookCalled }
+            func setHookCalled() {
+                hookCalled = true
+            }
+
+            func wasHookCalled() -> Bool {
+                hookCalled
+            }
         }
 
         let state = TestState()
@@ -83,9 +87,10 @@ struct ServerTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
+        )
 
         // Wait for response
         let received = await transport.waitForSentMessageCount(1)
@@ -102,8 +107,8 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("Initialize hook - rejection")
-    func testInitializeHookRejection() async throws {
+    @Test
+    func `Initialize hook - rejection`() async throws {
         let transport = MockTransport()
 
         let server = Server(name: "TestServer", version: "1.0")
@@ -120,9 +125,10 @@ struct ServerTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "BlockedClient", version: "1.0")
-                )
-            ))
+                    clientInfo: .init(name: "BlockedClient", version: "1.0"),
+                ),
+            ),
+        )
 
         // Wait for error response
         let received = await transport.waitForSentMessageCount(1)
@@ -138,8 +144,8 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("JSON-RPC batch processing")
-    func testJSONRPCBatchProcessing() async throws {
+    @Test
+    func `JSON-RPC batch processing`() async throws {
         let transport = MockTransport()
         let server = Server(name: "TestServer", version: "1.0")
 
@@ -152,9 +158,9 @@ struct ServerTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            )
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
         )
 
         // Wait for server to initialize and respond
@@ -171,7 +177,7 @@ struct ServerTests {
             {"jsonrpc":"2.0","id":2,"method":"ping","params":{}}
         ]
         """
-        let batch = try JSONDecoder().decode([AnyRequest].self, from: batchJSON.data(using: .utf8)!)
+        let batch = try JSONDecoder().decode([AnyRequest].self, from: #require(batchJSON.data(using: .utf8)))
 
         // Send the batch request
         try await transport.queue(batch: batch)
@@ -198,8 +204,8 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("Invalid JSON-RPC message returns error")
-    func testInvalidJsonRpcMessageReturnsError() async throws {
+    @Test
+    func `Invalid JSON-RPC message returns error`() async throws {
         let transport = MockTransport()
         let server = Server(name: "TestServer", version: "1.0")
 
@@ -211,9 +217,9 @@ struct ServerTests {
                 .init(
                     protocolVersion: Version.latest,
                     capabilities: .init(),
-                    clientInfo: .init(name: "TestClient", version: "1.0")
-                )
-            )
+                    clientInfo: .init(name: "TestClient", version: "1.0"),
+                ),
+            ),
         )
 
         // Wait for init response
@@ -248,8 +254,8 @@ struct ServerTests {
 
     // Based on Python SDK: test_ping_request_before_initialization
 
-    @Test("Ping request allowed before initialization")
-    func testPingRequestAllowedBeforeInitialization() async throws {
+    @Test
+    func `Ping request allowed before initialization`() async throws {
         // Per MCP spec, ping requests should be allowed before initialization
         // This is important for health checks and connection verification
         let transport = MockTransport()
@@ -295,8 +301,8 @@ struct ServerTests {
     //
     // We chose Python's approach for consistency across transports and better spec alignment.
 
-    @Test("Server blocks non-ping requests before initialization (default strict mode)")
-    func testServerBlocksRequestsBeforeInitialization() async throws {
+    @Test
+    func `Server blocks non-ping requests before initialization (default strict mode)`() async throws {
         // MCP spec (lifecycle.mdx) says:
         // "The client SHOULD NOT send requests other than pings before the server
         // has responded to the initialize request."
@@ -309,7 +315,7 @@ struct ServerTests {
         let server = Server(
             name: "TestServer",
             version: "1.0",
-            capabilities: .init(prompts: .init())
+            capabilities: .init(prompts: .init()),
             // Uses default configuration which has strict: true
         )
 
@@ -340,7 +346,7 @@ struct ServerTests {
             #expect(response.contains("\"error\""), "Should be an error response")
             #expect(
                 response.contains("not initialized") || response.contains("Server is not initialized"),
-                "Error should indicate initialization required: \(response)"
+                "Error should indicate initialization required: \(response)",
             )
         }
 
@@ -348,15 +354,15 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("Server allows requests before initialization in lenient mode")
-    func testServerAllowsRequestsBeforeInitializationInLenientMode() async throws {
+    @Test
+    func `Server allows requests before initialization in lenient mode`() async throws {
         // Lenient mode matches TypeScript SDK's server-level behavior
         let transport = MockTransport()
         let server = Server(
             name: "TestServer",
             version: "1.0",
             capabilities: .init(prompts: .init()),
-            configuration: .lenient
+            configuration: .lenient,
         )
 
         // Register a prompts handler
@@ -394,8 +400,8 @@ struct ServerTests {
 
     // Based on Python SDK: test_server_session_initialize_with_older_protocol_version
 
-    @Test("Server responds with client's requested protocol version when supported")
-    func testServerRespondsWithClientRequestedProtocolVersion() async throws {
+    @Test
+    func `Server responds with client's requested protocol version when supported`() async throws {
         // When a client requests an older but supported protocol version,
         // the server should respond with that version, not the latest
         let transport = MockTransport()
@@ -410,9 +416,9 @@ struct ServerTests {
                 .init(
                     protocolVersion: olderVersion,
                     capabilities: .init(),
-                    clientInfo: .init(name: "OlderClient", version: "1.0")
-                )
-            )
+                    clientInfo: .init(name: "OlderClient", version: "1.0"),
+                ),
+            ),
         )
 
         // Wait for response
@@ -429,7 +435,7 @@ struct ServerTests {
             // Server should echo back the client's requested version
             #expect(
                 response.contains("\"\(olderVersion)\""),
-                "Server should respond with client's requested version \(olderVersion), got: \(response)"
+                "Server should respond with client's requested version \(olderVersion), got: \(response)",
             )
         }
 
@@ -437,8 +443,8 @@ struct ServerTests {
         await transport.disconnect()
     }
 
-    @Test("Server defaults to latest version for unsupported client version")
-    func testServerDefaultsToLatestForUnsupportedVersion() async throws {
+    @Test
+    func `Server defaults to latest version for unsupported client version`() async throws {
         // When a client requests an unsupported version, server should use latest
         let transport = MockTransport()
         let server = Server(name: "TestServer", version: "1.0")
@@ -451,8 +457,8 @@ struct ServerTests {
             .init(
                 protocolVersion: unsupportedVersion,
                 capabilities: .init(),
-                clientInfo: .init(name: "OldClient", version: "1.0")
-            )
+                clientInfo: .init(name: "OldClient", version: "1.0"),
+            ),
         )
         try await transport.queue(request: request)
 
@@ -469,7 +475,7 @@ struct ServerTests {
             #expect(response.contains("protocolVersion"))
             #expect(
                 response.contains("\"\(Version.latest)\""),
-                "Server should fall back to latest version for unsupported client version, got: \(response)"
+                "Server should fall back to latest version for unsupported client version, got: \(response)",
             )
         }
 

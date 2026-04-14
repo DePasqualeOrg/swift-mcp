@@ -1,18 +1,15 @@
 // Copyright © Anthony DePasquale
 // Copyright © Matt Zmuda
 
-import Testing
-
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.UUID
-
 @testable import MCP
+import Testing
 
-@Suite("ID Tests")
 struct IDTests {
-    @Test("String ID initialization and encoding")
-    func testStringID() throws {
+    @Test
+    func `String ID initialization and encoding`() throws {
         let id: RequestId = "test-id"
         #expect(id.description == "test-id")
 
@@ -24,8 +21,8 @@ struct IDTests {
         #expect(decoded == id)
     }
 
-    @Test("Number ID initialization and encoding")
-    func testNumberID() throws {
+    @Test
+    func `Number ID initialization and encoding`() throws {
         let id: RequestId = 42
         #expect(id.description == "42")
 
@@ -37,8 +34,8 @@ struct IDTests {
         #expect(decoded == id)
     }
 
-    @Test("Random ID generation")
-    func testRandomID() throws {
+    @Test
+    func `Random ID generation`() {
         let id1 = RequestId.random
         let id2 = RequestId.random
         #expect(id1 != id2, "Random IDs should be unique")
