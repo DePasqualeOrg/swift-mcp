@@ -76,6 +76,23 @@ struct SchemableIntegrationRegisterContact {
     }
 }
 
+@Tool
+struct SchemableIntegrationApplyOptionalFileEdit {
+    static let name = "apply_optional_file_edit"
+    static let description = "Apply an optional edit operation to a file (composite-schema optional)"
+
+    @Parameter(description: "The edit to apply, or omit to make no changes")
+    var edit: SchemableIntegrationFileEdit?
+
+    func perform() async throws -> String {
+        switch edit {
+            case nil: "no edit"
+            case let .insert(line, text)?: "insert@\(line): \(text)"
+            case let .delete(start, end)?: "delete \(start)..\(end)"
+        }
+    }
+}
+
 // MARK: - Tests
 
 struct SchemableIntegrationTests {
@@ -257,5 +274,65 @@ struct SchemableIntegrationTests {
         let nestedProps = try #require(contactProp["properties"]?.objectValue)
         let addressProp = try #require(nestedProps["address"]?.objectValue)
         #expect(addressProp["additionalProperties"]?.boolValue == false)
+    }
+
+    // MARK: Optional composite (associated-value enum) parameter
+
+    @Test
+    func `Optional associated-value enum parameter declares null in oneOf`() {
+        // The generated parse path treats `null` as "omitted" for optional fields, so
+        // the JSON schema must accept null too — otherwise schema validation rejects
+        // the very value the parser is designed to swallow. Composite (no top-level
+        // `type`) schemas can't use the scalar `type: [T, "null"]` form, so the macro
+        // appends a `{"type": "null"}` branch to the existing `oneOf` instead.
+        let definition = SchemableIntegrationApplyOptionalFileEdit.toolDefinition
+        let properties = definition.inputSchema.objectValue?["properties"]?.objectValue
+        let editProp = properties?["edit"]?.objectValue
+        let oneOf = editProp?["oneOf"]?.arrayValue
+
+        // Two enum cases + the appended null branch.
+        #expect(oneOf?.count == 3)
+        #expect(oneOf?.contains(.object(["type": .string("null")])) == true)
+    }
+
+    @Test
+    func `Optional associated-value enum parses null as nil`() async throws {
+        // Round-trip null through the parse path to confirm the generated parser
+        // accepts it (matching the schema's null branch above).
+        let nullArgs: [String: Value] = ["edit": .null]
+        let nullInstance = try SchemableIntegrationApplyOptionalFileEdit.parse(from: nullArgs)
+        #expect(nullInstance.edit == nil)
+        #expect(try await nullInstance.perform() == "no edit")
+
+        // Sanity: a non-null variant still parses.
+        let insertArgs: [String: Value] = [
+            "edit": .object([
+                "insert": .object([
+                    "line": .int(1),
+                    "text": .string("x"),
+                ]),
+            ]),
+        ]
+        let insertInstance = try SchemableIntegrationApplyOptionalFileEdit.parse(from: insertArgs)
+        #expect(insertInstance.edit == .insert(line: 1, text: "x"))
+    }
+
+    @Test
+    func `Optional associated-value enum schema passes strict-mode validation`() throws {
+        // The null branch must not break strict-mode validation, which is what makes
+        // optional composite schemas usable with `strictSchema = true` providers.
+        let descriptor = ToolMacroSupport.makeSchemaParameterDescriptor(
+            name: "edit",
+            description: "Edit",
+            schema: SchemableIntegrationFileEdit.schema,
+            isOptional: true,
+        )
+        let schema = try ToolMacroSupport.buildObjectSchema(parameters: [descriptor])
+        try ToolMacroSupport.validateStrictCompatibility(schema, toolName: "apply_optional_file_edit")
+        let normalized = try ToolSchema.normalizeForStrictMode(schema)
+        let properties = try #require(normalized["properties"]?.objectValue)
+        let editProp = try #require(properties["edit"]?.objectValue)
+        let oneOf = try #require(editProp["oneOf"]?.arrayValue)
+        #expect(oneOf.contains(.object(["type": .string("null")])))
     }
 }
