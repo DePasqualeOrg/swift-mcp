@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-26, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
     name: Test (${{ matrix.os }})
@@ -44,7 +44,7 @@ jobs:
 
   docs:
     name: Documentation
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -55,7 +55,7 @@ jobs:
 
   conformance:
     name: Conformance Tests
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 15
     needs: test
     steps:
