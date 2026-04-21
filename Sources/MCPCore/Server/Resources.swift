@@ -91,10 +91,6 @@ public struct Resource: Hashable, Codable, Sendable {
         }
     }
 
-    // TODO: Deprecate in a future version
-    /// Backwards compatibility alias for `Contents`.
-    public typealias Content = Contents
-
     /// A resource template that can generate multiple resources via URI pattern matching.
     ///
     /// Resource templates use [RFC 6570 URI Templates](https://datatracker.ietf.org/doc/html/rfc6570)
@@ -352,14 +348,14 @@ public enum ReadResource: Method {
     public struct Result: ResultWithExtraFields {
         public typealias ResultCodingKeys = CodingKeys
 
-        public let contents: [Resource.Content]
+        public let contents: [Resource.Contents]
         /// Reserved for clients and servers to attach additional metadata.
         public var _meta: [String: Value]?
         /// Additional fields not defined in the schema (for forward compatibility).
         public var extraFields: [String: Value]?
 
         public init(
-            contents: [Resource.Content],
+            contents: [Resource.Contents],
             _meta: [String: Value]? = nil,
             extraFields: [String: Value]? = nil,
         ) {
@@ -374,7 +370,7 @@ public enum ReadResource: Method {
 
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            contents = try container.decode([Resource.Content].self, forKey: .contents)
+            contents = try container.decode([Resource.Contents].self, forKey: .contents)
             _meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
             extraFields = try Self.decodeExtraFields(from: decoder)
         }

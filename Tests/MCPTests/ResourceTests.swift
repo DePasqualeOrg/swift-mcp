@@ -47,15 +47,15 @@ struct ResourceTests {
     }
 
     @Test
-    func `Resource.Content text initialization and encoding`() throws {
-        let content = Resource.Content.text(
+    func `Resource.Contents text initialization and encoding`() throws {
+        let content = Resource.Contents.text(
             "Hello, world!", uri: "file://test.txt", mimeType: "text/plain",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Resource.Content.self, from: data)
+        let decoded = try decoder.decode(Resource.Contents.self, from: data)
 
         #expect(decoded.uri == "file://test.txt")
         #expect(decoded.mimeType == "text/plain")
@@ -64,16 +64,16 @@ struct ResourceTests {
     }
 
     @Test
-    func `Resource.Content binary initialization and encoding`() throws {
+    func `Resource.Contents binary initialization and encoding`() throws {
         let binaryData = "Test binary data".data(using: .utf8)!
-        let content = Resource.Content.binary(
+        let content = Resource.Contents.binary(
             binaryData, uri: "file://test.bin", mimeType: "application/octet-stream",
         )
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Resource.Content.self, from: data)
+        let decoded = try decoder.decode(Resource.Contents.self, from: data)
 
         #expect(decoded.uri == "file://test.bin")
         #expect(decoded.mimeType == "application/octet-stream")
@@ -143,8 +143,8 @@ struct ResourceTests {
     @Test
     func `ReadResource result validation`() {
         let contents = [
-            Resource.Content.text("Content 1", uri: "file://test1.txt"),
-            Resource.Content.text("Content 2", uri: "file://test2.txt"),
+            Resource.Contents.text("Content 1", uri: "file://test1.txt"),
+            Resource.Contents.text("Content 2", uri: "file://test2.txt"),
         ]
 
         let result = ReadResource.Result(contents: contents)
@@ -241,8 +241,8 @@ struct ResourceTests {
     }
 
     @Test
-    func `Resource.Content preserves MIME type with parameters`() throws {
-        let content = Resource.Content.text(
+    func `Resource.Contents preserves MIME type with parameters`() throws {
+        let content = Resource.Contents.text(
             "<html><body>Hello MCP-UI</body></html>",
             uri: "ui://my-widget",
             mimeType: "text/html;profile=mcp-app",
@@ -254,7 +254,7 @@ struct ResourceTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Resource.Content.self, from: data)
+        let decoded = try decoder.decode(Resource.Contents.self, from: data)
 
         #expect(decoded.mimeType == "text/html;profile=mcp-app")
     }

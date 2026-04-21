@@ -252,10 +252,10 @@ struct ToolTests {
         let data = try encoder.encode(content)
         let decoded = try decoder.decode(ContentBlock.self, from: data)
 
-        if case let .resource(resourceContent, _, _) = decoded {
-            #expect(resourceContent.uri == "file://test.txt")
-            #expect(resourceContent.mimeType == "text/plain")
-            #expect(resourceContent.text == "Sample text")
+        if case let .resource(resourceContents, _, _) = decoded {
+            #expect(resourceContents.uri == "file://test.txt")
+            #expect(resourceContents.mimeType == "text/plain")
+            #expect(resourceContents.text == "Sample text")
         } else {
             #expect(Bool(false), "Expected resource content")
         }
@@ -830,9 +830,9 @@ struct ToolTests {
     @Test
     func `Resource content with annotations`() throws {
         let annotations = Annotations(priority: 0.5)
-        let resourceContent = Resource.Content.text("File contents", uri: "file:///test.txt", mimeType: "text/plain")
+        let resourceContents = Resource.Contents.text("File contents", uri: "file:///test.txt", mimeType: "text/plain")
 
-        let content = ContentBlock.resource(resource: resourceContent, annotations: annotations, _meta: nil)
+        let content = ContentBlock.resource(resourceContents, annotations: annotations, _meta: nil)
 
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()

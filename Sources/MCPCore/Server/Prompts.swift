@@ -69,38 +69,24 @@ public struct Prompt: Hashable, Codable, Sendable {
 
     /// A message in a prompt
     public struct Message: Hashable, Codable, Sendable {
-        // TODO: Deprecate in a future version
-        /// Backwards compatibility alias for top-level `Role`.
-        public typealias Role = MCPCore.Role
-
         /// The message role
         public let role: Role
         /// The message content
         public let content: ContentBlock
 
-        /// Creates a message with the specified role and content
-        @available(
-            *, deprecated, message: "Use static factory methods .user(_:) or .assistant(_:) instead"
-        )
-        public init(role: Role, content: ContentBlock) {
-            self.role = role
-            self.content = content
-        }
-
-        /// Private initializer for convenience methods to avoid deprecation warnings
-        private init(_role role: Role, _content content: ContentBlock) {
+        private init(role: Role, content: ContentBlock) {
             self.role = role
             self.content = content
         }
 
         /// Creates a user message with the specified content
         public static func user(_ content: ContentBlock) -> Message {
-            Message(_role: .user, _content: content)
+            Message(role: .user, content: content)
         }
 
         /// Creates an assistant message with the specified content
         public static func assistant(_ content: ContentBlock) -> Message {
-            Message(_role: .assistant, _content: content)
+            Message(role: .assistant, content: content)
         }
     }
 

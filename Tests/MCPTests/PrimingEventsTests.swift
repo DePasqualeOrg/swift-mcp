@@ -13,16 +13,7 @@ import Testing
 /// These tests follow the TypeScript SDK patterns from:
 /// - `packages/server/test/server/streamableHttp.test.ts`
 ///
-/// TypeScript tests not yet implemented (require protocol version 2025-11-25):
-///
-/// Rationale: The MCP protocol requires priming events only for protocol version >= 2025-11-25.
-/// The Swift SDK currently supports ['2024-11-05', '2025-03-26'], while TypeScript supports
-/// ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05', '2024-10-07'].
-///
-/// The priming event code exists in HTTPServerTransport.writePrimingEvent() but
-/// is gated by: `guard protocolVersion >= "2025-11-25" else { return }`
-///
-/// Once the Swift SDK adds support for 2025-11-25 (see Versioning.swift TODO), implement:
+/// TypeScript-equivalent tests not yet implemented:
 /// - `should send priming event with retry field on POST SSE stream`
 /// - `should send priming event without retry field when retryInterval is not configured`
 /// - `should close POST SSE stream when extra.closeResponseStream is called`
@@ -33,8 +24,11 @@ import Testing
 /// - `should close standalone GET SSE stream when extra.closeNotificationStream is called`
 /// - `should allow client to reconnect after standalone SSE stream is closed`
 ///
-/// The current tests verify that priming events are NOT sent for the currently supported
-/// protocol versions, which is the correct behavior for backwards compatibility.
+/// The SDK supports protocol version 2025-11-25, and the priming-event emission
+/// code in `HTTPServerTransport.writePrimingEvent()` is gated by
+/// `guard protocolVersion >= "2025-11-25" else { return }`. The tests below
+/// currently verify only the negative case (priming events are not emitted for
+/// older protocol versions).
 struct PrimingEventsTests {
     // MARK: - Test Helpers
 

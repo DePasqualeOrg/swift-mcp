@@ -391,7 +391,7 @@ struct TestMultipleContentTypesResult: ToolOutput {
             throw MCPError.internalError("Failed to encode metadata")
         }
         let structured = try JSONDecoder().decode(Value.self, from: data)
-        let resourceContent = Resource.Contents.text(
+        let resourceContents = Resource.Contents.text(
             "{\"test\":\"data\",\"value\":123}",
             uri: "test://mixed-content-resource",
             mimeType: "application/json",
@@ -401,7 +401,7 @@ struct TestMultipleContentTypesResult: ToolOutput {
                 .text(json),
                 .text("Multiple content types test:"),
                 .image(data: TestData.redPixelPNGBase64, mimeType: "image/png"),
-                .resource(resource: resourceContent, annotations: nil, _meta: nil),
+                .resource(resourceContents, annotations: nil, _meta: nil),
             ],
             structuredContent: structured,
         )

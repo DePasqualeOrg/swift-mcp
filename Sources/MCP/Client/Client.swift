@@ -763,21 +763,6 @@ public actor Client: ProtocolLayer {
 
     // MARK: - Lifecycle
 
-    /// Initialize the connection with the server.
-    ///
-    /// - Important: This method is deprecated. Initialization now happens automatically
-    ///   when calling `connect(transport:)`. You should use that method instead.
-    ///
-    /// - Returns: The server's initialization response containing capabilities and server info
-    @available(
-        *, deprecated,
-        message:
-        "Initialization now happens automatically during connect. Use connect(transport:) instead."
-    )
-    public func initialize() async throws -> Initialize.Result {
-        try await _initialize()
-    }
-
     /// Internal initialization implementation
     func _initialize() async throws -> Initialize.Result {
         let supportedVersions = configuration.supportedProtocolVersions

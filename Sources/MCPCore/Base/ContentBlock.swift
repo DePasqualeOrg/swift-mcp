@@ -20,7 +20,7 @@ public enum ContentBlock: Hashable, Codable, Sendable {
     /// Audio content
     case audio(data: String, mimeType: String, annotations: Annotations?, _meta: [String: Value]?)
     /// Embedded resource content (includes actual content)
-    case resource(resource: Resource.Content, annotations: Annotations?, _meta: [String: Value]?)
+    case resource(Resource.Contents, annotations: Annotations?, _meta: [String: Value]?)
     /// Resource link (reference to a resource that can be read)
     case resourceLink(ResourceLink)
 
@@ -43,12 +43,12 @@ public enum ContentBlock: Hashable, Codable, Sendable {
 
     /// Creates embedded resource content with text
     public static func resource(uri: String, mimeType: String? = nil, text: String) -> ContentBlock {
-        .resource(resource: .text(text, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
+        .resource(.text(text, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
     }
 
     /// Creates embedded resource content with binary data
     public static func resource(uri: String, mimeType: String? = nil, blob: Data) -> ContentBlock {
-        .resource(resource: .binary(blob, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
+        .resource(.binary(blob, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
     }
 
     // MARK: - Codable
@@ -80,10 +80,10 @@ public enum ContentBlock: Hashable, Codable, Sendable {
                 let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
                 self = .audio(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
             case "resource":
-                let resourceContent = try container.decode(Resource.Content.self, forKey: .resource)
+                let resourceContents = try container.decode(Resource.Contents.self, forKey: .resource)
                 let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
                 let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                self = .resource(resource: resourceContent, annotations: annotations, _meta: meta)
+                self = .resource(resourceContents, annotations: annotations, _meta: meta)
             case "resource_link":
                 let link = try ResourceLink(from: decoder)
                 self = .resourceLink(link)
@@ -115,9 +115,9 @@ public enum ContentBlock: Hashable, Codable, Sendable {
                 try container.encode(mimeType, forKey: .mimeType)
                 try container.encodeIfPresent(annotations, forKey: .annotations)
                 try container.encodeIfPresent(meta, forKey: ._meta)
-            case let .resource(resourceContent, annotations, meta):
+            case let .resource(resourceContents, annotations, meta):
                 try container.encode("resource", forKey: .type)
-                try container.encode(resourceContent, forKey: .resource)
+                try container.encode(resourceContents, forKey: .resource)
                 try container.encodeIfPresent(annotations, forKey: .annotations)
                 try container.encodeIfPresent(meta, forKey: ._meta)
             case let .resourceLink(link):

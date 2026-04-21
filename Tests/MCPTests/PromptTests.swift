@@ -86,12 +86,12 @@ struct PromptTests {
         }
 
         // Test resource content
-        let resourceContent = ContentBlock.resource(
+        let resourceContents = ContentBlock.resource(
             uri: "file://test.txt",
             mimeType: "text/plain",
             text: "Sample text",
         )
-        let resourceData = try encoder.encode(resourceContent)
+        let resourceData = try encoder.encode(resourceContents)
         let decodedResource = try decoder.decode(ContentBlock.self, from: resourceData)
         if case let .resource(resourceData, _, _) = decodedResource {
             #expect(resourceData.uri == "file://test.txt")
@@ -273,10 +273,10 @@ struct PromptTests {
             .resource(uri: "file://test.txt", mimeType: "text/plain", text: "Sample text"),
         )
         #expect(resourceMessage.role == .user)
-        if case let .resource(resourceContent, _, _) = resourceMessage.content {
-            #expect(resourceContent.uri == "file://test.txt")
-            #expect(resourceContent.mimeType == "text/plain")
-            #expect(resourceContent.text == "Sample text")
+        if case let .resource(resourceContents, _, _) = resourceMessage.content {
+            #expect(resourceContents.uri == "file://test.txt")
+            #expect(resourceContents.mimeType == "text/plain")
+            #expect(resourceContents.text == "Sample text")
         } else {
             #expect(Bool(false), "Expected resource content")
         }
@@ -939,10 +939,10 @@ struct PromptAdvancedFeaturesTests {
             audience: [.assistant],
             lastModified: "2025-01-01T00:00:00Z",
         )
-        let resourceContent = Resource.Content.text("File content", uri: "file:///test.txt", mimeType: "text/plain")
+        let resourceContents = Resource.Contents.text("File content", uri: "file:///test.txt", mimeType: "text/plain")
 
         let content = ContentBlock.resource(
-            resource: resourceContent,
+            resourceContents,
             annotations: annotations,
             _meta: nil,
         )

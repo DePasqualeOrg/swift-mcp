@@ -490,13 +490,6 @@ public actor MCPServer {
 ///
 /// - **Protocol errors** (unknown tool, malformed request) are returned as JSON-RPC errors.
 ///
-/// Note: Both the TypeScript and Python SDKs incorrectly return `isError: true` for
-/// unknown tools instead of a JSON-RPC protocol error. This Swift SDK correctly
-/// returns a protocol error per the MCP spec.
-/// TODO: Remove this note after these PRs are merged:
-/// - https://github.com/modelcontextprotocol/typescript-sdk/pull/1389
-/// - https://github.com/modelcontextprotocol/python-sdk/pull/1872
-///
 /// ## Providing Actionable Error Messages
 ///
 /// Two shapes cover the common cases:

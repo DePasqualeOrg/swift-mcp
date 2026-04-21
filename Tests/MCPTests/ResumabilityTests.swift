@@ -11,8 +11,9 @@ import Testing
 /// These tests follow the TypeScript SDK patterns from:
 /// - `packages/server/test/server/streamableHttp.test.ts`
 ///
-/// Note: These tests use protocol version 2024-11-05. The TypeScript SDK uses 2025-11-25.
-/// TODO: Update tests when Swift SDK adds support for protocol version 2025-11-25.
+/// Note: The tests below use protocol version 2024-11-05; TypeScript's equivalent
+/// tests use 2025-11-25. Re-running them against 2025-11-25 (which the SDK now
+/// supports) would broaden coverage but is not required for correctness.
 ///
 /// TypeScript test not yet implemented:
 ///
@@ -24,9 +25,9 @@ import Testing
 /// 3. Ability to disconnect the client mid-stream and reconnect with lastEventId
 /// 4. The `onresumptiontoken` callback on the client side
 ///
-/// The Swift SDK has all the building blocks, but testing this requires either:
-/// - A real HTTP server running in tests (like TypeScript's node http.Server)
-/// - Full client-server integration test infrastructure
+/// The Swift SDK has all the building blocks, but testing this requires either
+/// a real HTTP server running in tests (like TypeScript's node http.Server) or
+/// full client-server integration test infrastructure.
 ///
 /// The server-side resumability is tested here; client-side reconnection with
 /// resumption token is tested in HTTPClientTransportTests and ClientReconnectionTests.

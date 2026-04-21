@@ -106,13 +106,13 @@ extension Asset.Block {
         switch self {
             case let .binary(data, uri, mimeType, annotations):
                 .resource(
-                    resource: .binary(data, uri: uri, mimeType: mimeType),
+                    .binary(data, uri: uri, mimeType: mimeType),
                     annotations: annotations,
                     _meta: nil,
                 )
             case let .text(text, uri, mimeType, annotations):
                 .resource(
-                    resource: .text(text, uri: uri, mimeType: mimeType),
+                    .text(text, uri: uri, mimeType: mimeType),
                     annotations: annotations,
                     _meta: nil,
                 )

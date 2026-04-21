@@ -624,13 +624,8 @@ public actor HTTPClientTransport: Transport {
     ///
     /// This combines response detection with ID remapping for efficiency (single parse).
     /// ID remapping is used during stream resumption to ensure responses match the
-    /// original pending request, aligning with Python SDK behavior.
-    ///
-    /// Note: This implementation handles both success AND error responses, which aligns
-    /// with Python SDK but is more complete than TypeScript SDK. TypeScript's streamableHttp.ts
-    /// only checks `isJSONRPCResultResponse` (success only), missing error response handling.
-    /// TODO: Remove this note after this PR is merged:
-    /// https://github.com/modelcontextprotocol/typescript-sdk/pull/1390
+    /// original pending request, aligning with Python SDK behavior. Handles both
+    /// success and error responses.
     ///
     /// - Parameters:
     ///   - data: The raw JSON-RPC message data
