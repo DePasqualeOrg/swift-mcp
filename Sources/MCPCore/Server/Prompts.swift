@@ -71,82 +71,36 @@ public struct Prompt: Hashable, Codable, Sendable {
     public struct Message: Hashable, Codable, Sendable {
         // TODO: Deprecate in a future version
         /// Backwards compatibility alias for top-level `Role`.
-        public typealias Role = MCP.Role
+        public typealias Role = MCPCore.Role
 
         /// The message role
         public let role: Role
         /// The message content
-        public let content: Content
+        public let content: ContentBlock
 
         /// Creates a message with the specified role and content
         @available(
             *, deprecated, message: "Use static factory methods .user(_:) or .assistant(_:) instead"
         )
-        public init(role: Role, content: Content) {
+        public init(role: Role, content: ContentBlock) {
             self.role = role
             self.content = content
         }
 
         /// Private initializer for convenience methods to avoid deprecation warnings
-        private init(_role role: Role, _content content: Content) {
+        private init(_role role: Role, _content content: ContentBlock) {
             self.role = role
             self.content = content
         }
 
         /// Creates a user message with the specified content
-        public static func user(_ content: Content) -> Message {
+        public static func user(_ content: ContentBlock) -> Message {
             Message(_role: .user, _content: content)
         }
 
         /// Creates an assistant message with the specified content
-        public static func assistant(_ content: Content) -> Message {
+        public static func assistant(_ content: ContentBlock) -> Message {
             Message(_role: .assistant, _content: content)
-        }
-
-        // TODO: Consider consolidating with Tool.Content into a shared ContentBlock type
-        // in a future breaking change release. The spec uses a single ContentBlock type.
-        /// Content types for messages.
-        ///
-        /// Matches the MCP spec (2025-11-25) ContentBlock union:
-        /// - TextContent, ImageContent, AudioContent, ResourceLink, EmbeddedResource
-        public enum Content: Hashable, Sendable {
-            /// Text content
-            case text(text: String, annotations: Annotations?, _meta: [String: Value]?)
-            /// Image content
-            case image(data: String, mimeType: String, annotations: Annotations?, _meta: [String: Value]?)
-            /// Audio content
-            case audio(data: String, mimeType: String, annotations: Annotations?, _meta: [String: Value]?)
-            /// Embedded resource content (includes actual content)
-            case resource(resource: Resource.Content, annotations: Annotations?, _meta: [String: Value]?)
-            /// Resource link (reference to a resource that can be read)
-            case resourceLink(ResourceLink)
-
-            // MARK: - Convenience initializers (backwards compatibility)
-
-            /// Creates text content
-            public static func text(_ text: String) -> Content {
-                .text(text: text, annotations: nil, _meta: nil)
-            }
-
-            /// Creates image content
-            public static func image(data: String, mimeType: String) -> Content {
-                .image(data: data, mimeType: mimeType, annotations: nil, _meta: nil)
-            }
-
-            /// Creates audio content
-            public static func audio(data: String, mimeType: String) -> Content {
-                .audio(data: data, mimeType: mimeType, annotations: nil, _meta: nil)
-            }
-
-            /// Creates embedded resource content with text
-            public static func resource(uri: String, mimeType: String? = nil, text: String) -> Content {
-                .resource(resource: .text(text, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
-            }
-
-            /// Creates embedded resource content with binary data
-            public static func resource(uri: String, mimeType: String? = nil, blob: Data) -> Content {
-                .resource(resource: .binary(blob, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
-            }
         }
     }
 
@@ -180,100 +134,6 @@ public struct Prompt: Hashable, Codable, Sendable {
             name = try container.decode(String.self, forKey: .name)
             title = try container.decodeIfPresent(String.self, forKey: .title)
         }
-    }
-}
-
-// MARK: - Codable
-
-extension Prompt.Message.Content: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case type, text, data, mimeType, resource, annotations, _meta
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        switch self {
-            case let .text(text, annotations, meta):
-                try container.encode("text", forKey: .type)
-                try container.encode(text, forKey: .text)
-                try container.encodeIfPresent(annotations, forKey: .annotations)
-                try container.encodeIfPresent(meta, forKey: ._meta)
-            case let .image(data, mimeType, annotations, meta):
-                try container.encode("image", forKey: .type)
-                try container.encode(data, forKey: .data)
-                try container.encode(mimeType, forKey: .mimeType)
-                try container.encodeIfPresent(annotations, forKey: .annotations)
-                try container.encodeIfPresent(meta, forKey: ._meta)
-            case let .audio(data, mimeType, annotations, meta):
-                try container.encode("audio", forKey: .type)
-                try container.encode(data, forKey: .data)
-                try container.encode(mimeType, forKey: .mimeType)
-                try container.encodeIfPresent(annotations, forKey: .annotations)
-                try container.encodeIfPresent(meta, forKey: ._meta)
-            case let .resource(resourceContent, annotations, meta):
-                try container.encode("resource", forKey: .type)
-                try container.encode(resourceContent, forKey: .resource)
-                try container.encodeIfPresent(annotations, forKey: .annotations)
-                try container.encodeIfPresent(meta, forKey: ._meta)
-            case let .resourceLink(link):
-                try link.encode(to: encoder)
-        }
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let type = try container.decode(String.self, forKey: .type)
-
-        switch type {
-            case "text":
-                let text = try container.decode(String.self, forKey: .text)
-                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                self = .text(text: text, annotations: annotations, _meta: meta)
-            case "image":
-                let data = try container.decode(String.self, forKey: .data)
-                let mimeType = try container.decode(String.self, forKey: .mimeType)
-                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                self = .image(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-            case "audio":
-                let data = try container.decode(String.self, forKey: .data)
-                let mimeType = try container.decode(String.self, forKey: .mimeType)
-                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                self = .audio(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-            case "resource":
-                let resourceContent = try container.decode(Resource.Content.self, forKey: .resource)
-                let annotations = try container.decodeIfPresent(Annotations.self, forKey: .annotations)
-                let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                self = .resource(resource: resourceContent, annotations: annotations, _meta: meta)
-            case "resource_link":
-                let link = try ResourceLink(from: decoder)
-                self = .resourceLink(link)
-            default:
-                throw DecodingError.dataCorruptedError(
-                    forKey: .type,
-                    in: container,
-                    debugDescription: "Unknown content type",
-                )
-        }
-    }
-}
-
-// MARK: - ExpressibleByStringLiteral
-
-extension Prompt.Message.Content: ExpressibleByStringLiteral {
-    public init(stringLiteral value: String) {
-        self = .text(text: value, annotations: nil, _meta: nil)
-    }
-}
-
-// MARK: - ExpressibleByStringInterpolation
-
-extension Prompt.Message.Content: ExpressibleByStringInterpolation {
-    public init(stringInterpolation: DefaultStringInterpolation) {
-        self = .text(text: String(stringInterpolation: stringInterpolation), annotations: nil, _meta: nil)
     }
 }
 
@@ -415,4 +275,6 @@ public struct PromptListChangedNotification: Notification {
     public static let name: String = "notifications/prompts/list_changed"
 
     public typealias Parameters = NotificationParams
+
+    public init() {}
 }

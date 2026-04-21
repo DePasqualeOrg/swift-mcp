@@ -77,7 +77,7 @@ public extension Client {
     ///
     /// This method sends a request without a timeout. For timeout support,
     /// use `send(_:options:)` instead.
-    func send<M: Method>(_ request: Request<M>) async throws -> M.Result {
+    func send<M: MCPCore.Method>(_ request: Request<M>) async throws -> M.Result {
         try await send(request, options: nil)
     }
 
@@ -90,7 +90,7 @@ public extension Client {
     ///   - options: Options for this request, including timeout configuration.
     /// - Returns: The response result.
     /// - Throws: `MCPError.requestTimeout` if the timeout is exceeded.
-    func send<M: Method>(
+    func send<M: MCPCore.Method>(
         _ request: Request<M>,
         options: RequestOptions?,
     ) async throws -> M.Result {
@@ -158,7 +158,7 @@ public extension Client {
     ///   - request: The request to send
     ///   - onProgress: A callback invoked when progress notifications are received
     /// - Returns: The response result
-    func send<M: Method>(
+    func send<M: MCPCore.Method>(
         _ request: Request<M>,
         onProgress: @escaping ProgressCallback,
     ) async throws -> M.Result {
@@ -173,7 +173,7 @@ public extension Client {
     ///   - onProgress: A callback invoked when progress notifications are received.
     /// - Returns: The response result.
     /// - Throws: `MCPError.requestTimeout` if the timeout is exceeded.
-    func send<M: Method>(
+    func send<M: MCPCore.Method>(
         _ request: Request<M>,
         options: RequestOptions?,
         onProgress: @escaping ProgressCallback,
@@ -358,7 +358,7 @@ public extension Client {
         /// Adds a request to the batch and prepares its expected response task.
         /// The actual sending happens when the `withBatch` scope completes.
         /// - Returns: A `Task` that will eventually produce the result or throw an error.
-        public func addRequest<M: Method>(_ request: Request<M>) async throws -> Task<
+        public func addRequest<M: MCPCore.Method>(_ request: Request<M>) async throws -> Task<
             M.Result, Swift.Error,
         > {
             try requests.append(AnyRequest(request))

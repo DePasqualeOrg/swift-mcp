@@ -3,6 +3,7 @@
 import Foundation
 import JSONSchemaBuilder
 @testable import MCP
+@testable import MCPCore
 import MCPTool
 import Testing
 
@@ -226,8 +227,9 @@ struct CreateTaskTool {
 }
 
 /// Structured output for search results
-@OutputSchema
-struct SearchResult: Encodable {
+@Schemable
+@StructuredOutput
+struct SearchResult {
     let query: String
     let totalCount: Int
     let items: [String]
@@ -1150,13 +1152,13 @@ struct ToolExecutionTests {
 
 struct StructuredOutputTests {
     @Test
-    func `@OutputSchema generates StructuredOutput conformance`() {
+    func `@StructuredOutput generates StructuredOutput conformance`() {
         let _: any StructuredOutput.Type = SearchResult.self
     }
 
     @Test
-    func `@OutputSchema generates correct schema`() {
-        let schema = SearchResult.schema
+    func `@StructuredOutput generates correct schema`() {
+        let schema = SearchResult.outputJSONSchema
 
         #expect(schema.objectValue?["type"]?.stringValue == "object")
 
@@ -1352,33 +1354,6 @@ struct ToolOutputProtocolTests {
         } else {
             Issue.record("Expected text content")
         }
-    }
-
-    @Test
-    func `ImageOutput creates correct result`() throws {
-        let testData = Data([0x89, 0x50, 0x4E, 0x47]) // PNG magic bytes
-        let output = ImageOutput(pngData: testData)
-
-        let result = try output.toCallToolResult()
-        #expect(result.content.count == 1)
-
-        if case let .image(data, mimeType, _, _) = result.content[0] {
-            #expect(mimeType == "image/png")
-            #expect(Data(base64Encoded: data) == testData)
-        } else {
-            Issue.record("Expected image content")
-        }
-    }
-
-    @Test
-    func `MultiContent creates correct result`() throws {
-        let output = MultiContent([
-            .text("First"),
-            .text("Second"),
-        ])
-
-        let result = try output.toCallToolResult()
-        #expect(result.content.count == 2)
     }
 }
 

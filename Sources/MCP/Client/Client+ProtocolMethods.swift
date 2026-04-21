@@ -141,8 +141,8 @@ public extension Client {
     /// Call a tool by name.
     ///
     /// If the tool has an output schema, the result's `structuredContent` will be
-    /// validated against it. Output schemas are cached from `listTools()` calls.
-    /// If the tool is not in the cache, the cache is automatically refreshed.
+    /// validated against it. Output schemas are cached from `listTools()` calls;
+    /// if the tool isn't in the cache, validation is skipped.
     ///
     /// - Parameters:
     ///   - name: The name of the tool to call.

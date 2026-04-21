@@ -111,7 +111,7 @@ let result = try await client.send(
 )
 ```
 
-The ``Progress`` struct contains:
+The ``/MCPCore/Progress`` struct contains:
 
 - `value`: The current progress (increases monotonically)
 - `total`: The total value, if known

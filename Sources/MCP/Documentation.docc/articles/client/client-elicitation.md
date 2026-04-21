@@ -85,7 +85,7 @@ func handleFormElicitation(_ params: ElicitRequestFormParams) async throws -> El
 
 ### Schema Field Types
 
-The ``ElicitationSchema`` contains fields with various types:
+The ``/MCPCore/ElicitationSchema`` contains fields with various types:
 
 ```swift
 for (fieldName, fieldSchema) in params.requestedSchema.properties {
@@ -176,7 +176,7 @@ func handleURLElicitation(_ params: ElicitRequestURLParams) async throws -> Elic
 
 ## Elicitation Complete Notification
 
-For URL mode elicitation, the server sends an ``ElicitationCompleteNotification`` when the external flow finishes. Register a notification handler to react to completion:
+For URL mode elicitation, the server sends an ``/MCPCore/ElicitationCompleteNotification`` when the external flow finishes. Register a notification handler to react to completion:
 
 ```swift
 await client.onNotification(ElicitationCompleteNotification.self) { message in
@@ -187,7 +187,7 @@ await client.onNotification(ElicitationCompleteNotification.self) { message in
 
 ## User Actions
 
-The ``ElicitResult`` action indicates how the user responded:
+The ``/MCPCore/ElicitResult`` action indicates how the user responded:
 
 - `.accept`: User submitted the form or completed the flow
 - `.decline`: User explicitly declined

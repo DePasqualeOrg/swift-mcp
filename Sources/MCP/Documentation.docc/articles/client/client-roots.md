@@ -109,4 +109,4 @@ The server will then request the updated list of roots.
 - <doc:client-setup>
 - <doc:server-roots>
 - ``Client``
-- ``Root``
+- ``/MCPCore/Root``

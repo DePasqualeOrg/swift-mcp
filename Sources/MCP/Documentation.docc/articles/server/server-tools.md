@@ -41,7 +41,7 @@ struct GetWeather {
 }
 ```
 
-Most tools don't need the ``HandlerContext``, so you can write `perform()` without any parameters. If your tool needs progress reporting, logging, or request metadata, include the `context` parameter—see [Using HandlerContext](#Using-HandlerContext) below.
+Most tools don't need the ``HandlerContext``, so you can write `perform()` without any parameters. If your tool needs progress reporting, logging, or request metadata, include the `context` parameter – see [Using HandlerContext](#Using-HandlerContext) below.
 
 ### Parameter Options
 
@@ -96,7 +96,7 @@ var category: String?
 
 ### Validation Constraints
 
-Add validation constraints for strings and numbers. When using ``MCPServer``, these constraints are automatically enforced at runtime—invalid arguments are rejected with an error before your tool's `perform` method is called:
+Add validation constraints for strings and numbers. When using ``MCPServer``, these constraints are automatically enforced at runtime – invalid arguments are rejected with an error before your tool's `perform` method is called:
 
 ```swift
 @Tool
@@ -122,7 +122,7 @@ struct CreateEvent {
 }
 ```
 
-For validation beyond these constraints—such as cross-field validation, pattern matching, or business logic—validate in your `perform` method and throw `MCPError.invalidParams` with a descriptive message.
+For validation beyond these constraints – such as cross-field validation, pattern matching, or business logic – validate in your `perform` method and throw `MCPError.invalidParams` with a descriptive message.
 
 ### Custom JSON Keys
 
@@ -424,48 +424,272 @@ When the annotations array is empty (the default), MCP implicit defaults apply:
 - `idempotentHint: false` – repeated calls may have different effects
 - `openWorldHint: true` – tool interacts with external systems
 
-## Response Content Types
+## Returning Results
 
-Tool results support multiple content types. Return a `String` for simple text, or use ``ToolOutput`` conforming types for rich content.
+| Category | Return types |
+| :--- | :--- |
+| Value | `String`, `Int`, `Double`, `Bool`, `Date`, `[T]`, `T?`, `[String: V]`, `Void`, `@Schemable @StructuredOutput` struct |
+| Image / audio | ``/MCPCore/Media``, ``/MCPCore/MediaWithMetadata`` |
+| Asset (file / link) | ``/MCPCore/Asset``, ``/MCPCore/AssetWithMetadata`` |
 
-### Text
+Pick the category that matches what your tool produces. Each handles encoding automatically: value returns come with a published JSON schema and typed JSON output; media and asset returns emit content blocks the client renders directly; the `WithMetadata<T>` forms combine a media or asset block with typed JSON, so an agent can parse the result programmatically.
+
+### Value
+
+Most tools return a value. Declare the return type you want – an `Int`, a `String`, an array, a dictionary, or a typed struct – and the library encodes it for you in two forms: a text rendering for display and a typed JSON value matching a published schema.
+
+**Primitives.** `Int`, `Double`, `Bool`, `String`, and `Date` all work directly:
 
 ```swift
-func perform() async throws -> String {
-    "Hello, world!"
+func perform() async throws -> Int {
+    42
 }
 ```
 
-### Multiple Content Items
+The primitive set is deliberately narrow – no sized-int variants (`Int32`, `Int64`, `UInt`, …), `Float`, `Decimal`, or `URL`. Mapping Swift's richer numeric hierarchy onto JSON's two numeric types is a policy question better left to the author. If you need one of these, wrap the value in a `@StructuredOutput` struct whose Swift field type matches the intended JSON shape (`Int` for "JSON integer", `Double` for "JSON number").
 
-Return `CallTool.Result` for complex responses:
+**Arrays and optionals.** Nest them arbitrarily – `[Int]`, `[[String]]`, `Int?`, `[MyStruct]?`, and so on. A `nil` return encodes as JSON `null`, which agents can distinguish from a thrown error.
+
+**Dictionaries.** `-> [String: V]` emits the map as a top-level JSON object:
 
 ```swift
-func perform() async throws -> CallTool.Result {
-    CallTool.Result(content: [
-        .text("Here's the chart:"),
-        .image(data: chartData, mimeType: "image/png")
-    ])
+func perform() async throws -> [String: Int] {
+    ["alpha": 1, "beta": 2]
 }
 ```
 
-### Images and Audio
+Only `String` keys are supported. Keys are emitted in sorted order, so the output is stable across invocations and platforms. An array *of* dictionaries (`[[String: Int]]`) works too.
+
+**Void.** Action tools with no meaningful return value can omit the return clause:
 
 ```swift
-// Image
-CallTool.Result(content: [.image(data: base64Data, mimeType: "image/png")])
+@Tool
+struct Ping {
+    static let name = "ping"
+    static let description = "Side-effect-only action"
 
-// Audio
-CallTool.Result(content: [.audio(data: base64Data, mimeType: "audio/mp3")])
+    func perform() async throws {
+        // ...
+    }
+}
 ```
+
+The result encodes as JSON `null` – the same shape an `Optional<T>` returning `nil` produces – so agents don't have to special-case "tool ran, no value."
+
+**`@Schemable @StructuredOutput` struct.** The most common case for tools returning structured data. Pair `@Schemable` (from JSONSchemaBuilder) with `@StructuredOutput` (from MCPCore):
+
+```swift
+import JSONSchemaBuilder
+
+@Schemable
+@StructuredOutput
+struct WeatherData: Sendable {
+    let temperature: Double
+    let conditions: String
+    let humidity: Int?
+}
+
+@Tool
+struct GetWeatherData {
+    static let name = "get_weather_data"
+    static let description = "Get weather data"
+
+    @Parameter(description: "City name")
+    var location: String
+
+    func perform() async throws -> WeatherData {
+        WeatherData(temperature: 22.5, conditions: "Partly cloudy", humidity: 65)
+    }
+}
+```
+
+`@Schemable` derives the JSON schema from the struct's fields. `@StructuredOutput` generates an encoder that emits every declared property explicitly – `nil` optionals become JSON `null` rather than being dropped, so consumers can rely on a stable shape. The server validates every tool result against the schema before sending it, catching output bugs early. See ``/MCPCore/StructuredOutput`` for the full contract.
+
+### Media
+
+Image or audio a multimodal model should see or hear directly.
+
+```swift
+func perform() async throws -> Media {
+    let pngData = try await captureScreen()
+    return Media(.image(data: pngData, mimeType: "image/png"))
+}
+```
+
+Pass an array for multiple blocks: `Media([.image(...), .audio(...)])`. Blocks carry raw `Data`; the library handles base64 encoding.
+
+### MediaWithMetadata<T>
+
+Image or audio plus typed JSON metadata – for tools where an agent wants to reason about the result programmatically. For example, a screenshot tool that returns the image alongside its dimensions and file path:
+
+```swift
+@Schemable
+@StructuredOutput
+struct ScreenshotMetadata: Sendable {
+    let width: Int
+    let height: Int
+    let displayID: Int
+    let filePath: String?
+}
+
+@Tool
+struct TakeScreenshot {
+    static let name = "take_screenshot"
+    static let description = "Capture the screen"
+
+    func perform() async throws -> MediaWithMetadata<ScreenshotMetadata> {
+        let (pngData, metadata) = try await captureScreen()
+        return MediaWithMetadata(
+            .image(data: pngData, mimeType: "image/png"),
+            metadata: metadata,
+        )
+    }
+}
+```
+
+Pass an array for multiple blocks: `MediaWithMetadata([.image(...), .image(...)], metadata: m)`.
+
+The library publishes a schema derived from the metadata struct, so an agent can decode the typed fields directly; the media blocks are emitted alongside, so UIs still render the image or audio inline.
+
+### Asset
+
+A generated file (PDF, ZIP, video, …) or a URL reference to one.
+
+```swift
+func perform() async throws -> Asset {
+    let pdfData = try await renderReport()
+    return Asset(
+        .binary(
+            pdfData,
+            uri: "file:///tmp/report.pdf",
+            mimeType: "application/pdf",
+        )
+    )
+}
+```
+
+Pass an array for multiple blocks: `Asset([.binary(...), .link(...)])`.
+
+Three block cases:
+
+- `.binary`: inline bytes with a URI the client tracks as a resource. Pass raw `Data`.
+- `.text`: inline generated text (markdown, CSV, code) with a URI – distinct from `String`, which has no URI.
+- `.link`: a URL the client fetches lazily. Optional fields mirror `ResourceLink` (size, title, icons).
+
+Filesystem paths (`/tmp/report.pdf`) are not valid URIs – prefix with `file://`.
+
+### AssetWithMetadata<T>
+
+An asset plus typed JSON metadata, mirroring `MediaWithMetadata<T>`.
+
+```swift
+@Schemable
+@StructuredOutput
+struct PDFInfo: Sendable {
+    let uri: String
+    let pageCount: Int
+    let tableOfContents: [String]
+}
+
+@Tool
+struct GeneratePDF {
+    static let name = "generate_pdf"
+    static let description = "Render a report as PDF"
+
+    func perform() async throws -> AssetWithMetadata<PDFInfo> {
+        let (pdfData, info) = try await renderReport()
+        return AssetWithMetadata(
+            .binary(pdfData, uri: info.uri, mimeType: "application/pdf"),
+            metadata: info,
+        )
+    }
+}
+```
+
+Pass an array for multiple blocks: `AssetWithMetadata([.binary(...), .link(...)], metadata: m)`.
+
+Include the asset's URI as a field on the metadata struct, so an agent reading the typed JSON can reference the asset directly without having to inspect the attached blocks.
+
+### When to use the `WithMetadata<T>` pair
+
+Pick `Media` or `Asset` when the output is purely for display or ingestion – a multimodal model looking at an image, a user clicking a link, a client previewing a generated file.
+
+Pick `MediaWithMetadata<T>` or `AssetWithMetadata<T>` when an agent also needs to work with the result in code – extracting fields, chaining it into another tool call, matching against types. The typed metadata is published alongside a schema the agent can decode against.
+
+When in doubt, prefer the schema-bearing form. Value returns don't have this split because a value is always typed.
+
+### Choosing between Media and Asset for image / audio bytes
+
+Same bytes, different intent:
+
+- `Media` → hand the bytes directly to a multimodal model that will ingest them.
+- `Asset` with `.binary` (or `.link`) → hand a *reference* to an agent that will forward the file or decide what to do with it.
+
+A TTS tool feeding a voice-capable chat UI wants `Media`. A podcast-download tool feeding an agent that orchestrates transcription wants `Asset`.
+
+### Escape hatches
+
+Two escape hatches for cases the built-in return types don't handle.
+
+**`@ManualEncoding`** opts out of the synthesized `encode(to:)` when you need to emit something the macro can't produce – for example, an additive computed field alongside the declared properties:
+
+```swift
+@Schemable
+@StructuredOutput
+@ManualEncoding
+struct RepositoryInfo: Sendable {
+    let owner: String
+    let name: String
+    let description: String?
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(owner, forKey: .owner)
+        try container.encode(name, forKey: .name)
+        // Stable-shape contract: every declared optional emits as
+        // explicit `null`. Use `encode`, not `encodeIfPresent`.
+        try container.encode(description, forKey: .description)
+        // Additive computed field. The output validator accepts keys
+        // beyond those declared in the schema.
+        try container.encode("\(owner)/\(name)", forKey: .fullPath)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case owner, name, description, fullPath
+    }
+}
+```
+
+Whatever the hand-rolled encoder emits is still validated against the schema `@Schemable` generates from the Swift struct. Safe divergences are narrow: byte-level reformatting within a declared type, or adding extra keys not declared on the schema. Changing a declared property's wire type (emitting a number where the schema declares a string, for example Unix seconds for a `Date` field) fails validation – to emit Unix seconds, declare the Swift field as `Int` instead. To rename a key, add a `CodingKeys` enum; `@Schemable` honors it for the schema too.
+
+**Custom return types** cover the rare case where none of the built-in categories fits – for example, a tool that genuinely needs image and PDF in one result. Conform a custom type to ``/MCPCore/ToolOutput`` and build the `CallTool.Result` by hand:
+
+```swift
+struct MixedMediaReport: ToolOutput, Sendable {
+    let summary: String
+    let chartPNG: Data
+    let pdfData: Data
+    let pdfURI: String
+
+    func toCallToolResult() throws -> CallTool.Result {
+        CallTool.Result(content: [
+            .text(summary),
+            .image(data: chartPNG.base64EncodedString(), mimeType: "image/png"),
+            .resource(uri: pdfURI, mimeType: "application/pdf", blob: pdfData),
+        ])
+    }
+}
+```
+
+Use this only after the built-in return types have been ruled out – constructing `CallTool.Result` bypasses the typed-return surface on purpose.
 
 ## Error Handling
 
-Errors during tool execution are returned with `isError: true`, providing actionable feedback that language models can use to self-correct and retry.
+Errors during tool execution are returned with `isError: true`, providing actionable feedback that language models can use to self-correct and retry. Throw errors from your `perform` method; the SDK catches and surfaces them.
 
-### Simple Errors
+### Simple errors
 
-For simple error messages, throw from your `perform` method:
+For simple error messages, throw from `perform`:
 
 ```swift
 func perform() async throws -> String {
@@ -476,7 +700,7 @@ func perform() async throws -> String {
 }
 ```
 
-You can throw any `Error` type. For clear, actionable error messages, use types conforming to `LocalizedError`:
+Any `Error` works. Errors conforming to `LocalizedError` surface their `errorDescription` as a single `.text` block:
 
 ```swift
 enum MyToolError: LocalizedError {
@@ -497,67 +721,34 @@ enum MyToolError: LocalizedError {
 throw MyToolError.invalidDate(date)
 ```
 
-Errors conforming to `LocalizedError` use their `errorDescription` for the message. Other errors fall back to `String(describing:)`, which produces output like `notFound("file.txt")`. For clear, actionable messages that help LLMs self-correct, use `LocalizedError`.
+Plain errors (not `LocalizedError` conformers) fall back to `String(describing:)`, which produces output like `invalidDate("2020-01-01")`. Prefer `LocalizedError` for user-facing messages.
 
-Thrown errors are caught and returned as `CallTool.Result(content: [.text(errorMessage)], isError: true)`.
+### Rich errors with ToolError
 
-### Custom Error Content
-
-When you need richer error responses (multiple content items, images, specific formatting), return `CallTool.Result` explicitly:
+For errors that need multiple content blocks – a text explanation plus an image of the failing chart, a diagnostic plus a resource link, etc. – conform to ``/MCPCore/ToolError``:
 
 ```swift
-func perform() async throws -> CallTool.Result {
-    guard isValidDate(date) else {
-        return CallTool.Result(
-            content: [
-                .text("Invalid date: must be in the future"),
-                .text("Current time: \(ISO8601DateFormatter().string(from: Date()))")
-            ],
-            isError: true
-        )
+struct RenderFailure: ToolError {
+    let message: String
+    let failingChart: Data
+
+    var content: [ContentBlock] {
+        [
+            .text(message),
+            .image(data: failingChart.base64EncodedString(), mimeType: "image/png"),
+        ]
     }
-    // ...
 }
+
+// In your tool:
+throw RenderFailure(message: "Render failed at step 3", failingChart: chartBytes)
 ```
 
-### Protocol Errors
+`ToolError` refines `LocalizedError`, so `Error.localizedDescription` bridging still works: the default `errorDescription` joins the `.text` blocks. Thrown `ToolError` conformers pass `content` through verbatim with `isError: true`.
+
+### Protocol errors
 
 Protocol-level errors (unknown tool, disabled tool, malformed request) are handled automatically by the SDK before your tool executes. You don't need to handle these cases in your `perform` method.
-
-## Output Schema and Structured Content
-
-For validated structured results, use `@OutputSchema` to generate a schema from a Swift type:
-
-```swift
-@OutputSchema
-struct WeatherData: Sendable {
-    let temperature: Double
-    let conditions: String
-    let humidity: Int?
-}
-
-@Tool
-struct GetWeatherData {
-    static let name = "get_weather_data"
-    static let description = "Get weather data"
-
-    @Parameter(description: "City name")
-    var location: String
-
-    func perform() async throws -> WeatherData {
-        WeatherData(
-            temperature: 22.5,
-            conditions: "Partly cloudy",
-            humidity: 65
-        )
-    }
-}
-```
-
-Types conforming to `StructuredOutput` (via `@OutputSchema`) automatically:
-
-- Include `outputSchema` in the tool definition
-- Serialize to both human-readable text and structured JSON content
 
 ## Notifying Tool Changes
 
@@ -593,5 +784,12 @@ For advanced use cases like custom request handling or mixing with other handler
 - <doc:server-setup>
 - <doc:client-tools>
 - ``MCPServer``
-- ``Tool``
+- ``/MCPCore/Tool``
 - ``ToolSpec``
+- ``/MCPCore/StructuredOutput``
+- ``/MCPCore/Media``
+- ``/MCPCore/MediaWithMetadata``
+- ``/MCPCore/Asset``
+- ``/MCPCore/AssetWithMetadata``
+- ``/MCPCore/ToolError``
+- ``/MCPCore/ToolOutput``

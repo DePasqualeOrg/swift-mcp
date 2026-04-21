@@ -461,6 +461,8 @@ public struct ResourceListChangedNotification: Notification {
     public static let name: String = "notifications/resources/list_changed"
 
     public typealias Parameters = NotificationParams
+
+    public init() {}
 }
 
 /// Clients can subscribe to specific resources and receive notifications when they change.

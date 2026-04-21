@@ -138,6 +138,8 @@ public actor ToolRegistry {
     /// - Parameters:
     ///   - name: The tool name.
     ///   - description: Optional description.
+    ///   - outputSchema: Optional output schema for structured output. Typically
+    ///     passed in by `MCPServer.register(...)` from `MCPSchema.outputSchema(for: Output.self)`.
     ///   - annotations: Tool annotations.
     ///   - onListChanged: Optional callback for list change notifications.
     ///   - handler: The handler closure.
@@ -147,6 +149,7 @@ public actor ToolRegistry {
     public func registerClosure(
         name: String,
         description: String? = nil,
+        outputSchema: Value? = nil,
         annotations: [AnnotationOption] = [],
         onListChanged: (@Sendable () async -> Void)? = nil,
         handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput,
@@ -159,6 +162,7 @@ public actor ToolRegistry {
             name: name,
             description: description,
             inputSchema: .object(["type": .string("object")]),
+            outputSchema: outputSchema,
             annotations: AnnotationOption.buildAnnotations(from: annotations),
         )
 
@@ -188,6 +192,55 @@ public actor ToolRegistry {
     /// - Returns: `true` if the registry contains the tool.
     public func hasTool(_ name: String) -> Bool {
         tools[name] != nil
+    }
+
+    // MARK: - Schema Verification
+
+    /// Audits a set of expected tool names against the registry, reporting
+    /// tools that lack an output schema and tools that aren't registered at
+    /// all — two separate failure modes that would otherwise be conflated
+    /// in a single list.
+    ///
+    /// The library does not enforce output-schema presence at registration
+    /// time — that would break consumers whose tools aren't all migrated
+    /// yet. This helper is opt-in: pass the names you expect to be covered
+    /// and inspect the result. Typical usage guards the call with
+    /// `#if DEBUG` and `fatalError`s on `hasIssues`, so the check runs
+    /// during local builds but isn't responsible for crashing release
+    /// binaries on a tool-migration mistake.
+    ///
+    /// The check uses the registry's stored `Tool.outputSchema`, populated
+    /// at DSL-tool registration time via `MCPSchema.outputSchema(for: Output.self)`:
+    /// 1. `StructuredOutput` types via `outputJSONSchema`.
+    /// 2. `MediaWithMetadata<Metadata>` / `AssetWithMetadata<Metadata>`
+    ///    instantiations via `StructuredMetadataCarrier`.
+    ///
+    /// A migrated media tool returning `MediaWithMetadata<ScreenshotMetadata>`
+    /// therefore passes the check even though `MediaWithMetadata` itself
+    /// does not conform to `StructuredOutput`.
+    ///
+    /// - Parameter expected: Tool names the caller expects to be migrated.
+    ///   A tool not in `expected` is never reported here — the helper is
+    ///   opt-in.
+    /// - Returns: A `SchemaAudit` splitting the findings into
+    ///   `missingSchema` (registered, but `outputSchema == nil`) and
+    ///   `missingRegistration` (not in the registry at all).
+    public func schemaAudit(expected: Set<String>) -> SchemaAudit {
+        var missingSchema: [String] = []
+        var missingRegistration: [String] = []
+        for name in expected {
+            guard let entry = tools[name] else {
+                missingRegistration.append(name)
+                continue
+            }
+            if entry.definition.outputSchema == nil {
+                missingSchema.append(name)
+            }
+        }
+        return SchemaAudit(
+            missingSchema: missingSchema.sorted(),
+            missingRegistration: missingRegistration.sorted(),
+        )
     }
 
     /// Executes a tool.
@@ -276,6 +329,50 @@ public actor ToolRegistry {
         let encoder = JSONEncoder()
         let data = try encoder.encode(value)
         return try JSONDecoder().decode(T.self, from: data)
+    }
+}
+
+// MARK: - Schema Audit
+
+/// Result of `ToolRegistry.schemaAudit(expected:)`. Splits the two failure
+/// modes — registered-but-missing-a-schema vs. not-registered-at-all — that
+/// a single `[String]` result would conflate.
+///
+/// Consumers typically call the audit behind `#if DEBUG` and fatal-error
+/// on `hasIssues`, using `diagnosticMessage` for a ready-made multi-line
+/// description of both lists.
+public struct SchemaAudit: Sendable, Equatable {
+    /// Names from the expected set that are registered but whose
+    /// `outputSchema` is `nil`.
+    public let missingSchema: [String]
+
+    /// Names from the expected set that aren't registered at all.
+    public let missingRegistration: [String]
+
+    /// `true` when either list is non-empty — the "nothing to report" check.
+    public var hasIssues: Bool {
+        !missingSchema.isEmpty || !missingRegistration.isEmpty
+    }
+
+    /// Human-readable description of the non-empty lists, or `nil` when
+    /// the audit is clean. Intended for `fatalError` / debug-assertion
+    /// messages so consumers don't have to hand-roll the same branching
+    /// format string across projects.
+    public var diagnosticMessage: String? {
+        guard hasIssues else { return nil }
+        var lines: [String] = []
+        if !missingRegistration.isEmpty {
+            lines.append("Tools not registered: \(missingRegistration.joined(separator: ", "))")
+        }
+        if !missingSchema.isEmpty {
+            lines.append("Tools without output schemas: \(missingSchema.joined(separator: ", "))")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    public init(missingSchema: [String], missingRegistration: [String]) {
+        self.missingSchema = missingSchema
+        self.missingRegistration = missingRegistration
     }
 }
 

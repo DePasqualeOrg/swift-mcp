@@ -19,7 +19,16 @@ var dependencies: [Package.Dependency] = [
     .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
 ]
 
-// Target dependencies needed on all platforms
+// Dependencies for MCPCore (types and protocols only — no transport/I/O)
+var mcpCoreTargetDependencies: [Target.Dependency] = [
+    .product(name: "SystemPackage", package: "swift-system"),
+    .product(name: "Logging", package: "swift-log"),
+    .product(name: "JSONSchema", package: "swift-json-schema"),
+    .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
+]
+
+// Target dependencies needed on all platforms (for MCP runtime, which depends
+// on MCPCore for shared types and protocols)
 var targetDependencies: [Target.Dependency] = [
     .product(name: "SystemPackage", package: "swift-system"),
     .product(name: "Logging", package: "swift-log"),
@@ -32,6 +41,9 @@ var targetDependencies: [Target.Dependency] = [
     ),
 ]
 
+// MCP runtime target depends on MCPCore plus the base target dependencies.
+var mcpRuntimeTargetDependencies: [Target.Dependency] = ["MCPCore"] + targetDependencies
+
 // Macro dependencies
 let macroDependencies: [Target.Dependency] = [
     .product(name: "SwiftSyntax", package: "swift-syntax"),
@@ -39,10 +51,8 @@ let macroDependencies: [Target.Dependency] = [
     .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
 ]
 
-// MCP target dependencies (core types, no macros)
-var mcpTargetDependencies: [Target.Dependency] = targetDependencies
-
-// MCPTests target dependencies (MCP + MCPTool + MCPPrompt + Hummingbird for HTTP testing)
+// MCPTests target dependencies (MCP + MCPTool + MCPPrompt + Hummingbird for HTTP testing).
+// MCPCore is available transitively via MCP.
 var testTargetDependencies: [Target.Dependency] = ["MCP", "MCPTool", "MCPPrompt"]
 testTargetDependencies.append(contentsOf: targetDependencies)
 testTargetDependencies.append(.product(name: "Hummingbird", package: "hummingbird"))
@@ -59,6 +69,10 @@ let package = Package(
         .visionOS("1.0"),
     ],
     products: [
+        .library(
+            name: "MCPCore",
+            targets: ["MCPCore"],
+        ),
         .library(
             name: "MCP",
             targets: ["MCP"],
@@ -82,8 +96,15 @@ let package = Package(
             ],
         ),
         .target(
+            name: "MCPCore",
+            dependencies: mcpCoreTargetDependencies + ["MCPMacros"],
+            swiftSettings: [
+                .enableUpcomingFeature("StrictConcurrency"),
+            ],
+        ),
+        .target(
             name: "MCP",
-            dependencies: mcpTargetDependencies,
+            dependencies: mcpRuntimeTargetDependencies,
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency"),
             ],

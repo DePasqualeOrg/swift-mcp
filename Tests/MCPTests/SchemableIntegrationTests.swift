@@ -3,6 +3,7 @@
 import Foundation
 import JSONSchemaBuilder
 @testable import MCP
+@testable import MCPCore
 import MCPTool
 import Testing
 

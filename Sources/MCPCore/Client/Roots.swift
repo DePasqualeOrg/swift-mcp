@@ -134,4 +134,6 @@ public struct RootsListChangedNotification: Notification {
     public static let name: String = "notifications/roots/list_changed"
 
     public typealias Parameters = NotificationParams
+
+    public init() {}
 }

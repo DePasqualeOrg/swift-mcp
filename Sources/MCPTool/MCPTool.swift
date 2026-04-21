@@ -225,10 +225,3 @@ public extension Parameter {
 @attached(member, names: named(toolDefinition), named(parse), named(init), named(_perform), named(annotations))
 @attached(extension, conformances: ToolSpec, Sendable)
 public macro Tool() = #externalMacro(module: "MCPMacros", type: "ToolMacro")
-
-// MARK: - OutputSchema Macro
-
-/// Macro that generates a JSON Schema for a tool's output type.
-@attached(member, names: named(schema))
-@attached(extension, conformances: StructuredOutput)
-public macro OutputSchema() = #externalMacro(module: "MCPMacros", type: "OutputSchemaMacro")

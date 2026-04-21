@@ -98,13 +98,17 @@ extension Value: Codable {
         } else if let value = try? container.decode(Double.self) {
             self = .double(value)
         } else if let value = try? container.decode(String.self) {
-            if Data.isDataURL(string: value),
-               case let (mimeType, data)? = Data.parseDataURL(value)
-            {
-                self = .data(mimeType: mimeType, data)
-            } else {
-                self = .string(value)
-            }
+            // Decode JSON strings as `.string`, including strings that look
+            // like data URIs. Auto-coercing `data:...` to `.data` would
+            // corrupt legal String payloads (e.g., `Icon.src` values, which
+            // the schema documents as either HTTP URLs or data URIs) —
+            // a consumer pattern-matching `.string` would silently miss
+            // them. Callers who want to parse a decoded data URI can do so
+            // explicitly via `Data.parseDataURL(_:)`. The `.data` case is
+            // still meaningful on the encode side: constructing
+            // `Value.data(mimeType:, data:)` in Swift still serializes as
+            // a data URI on the wire.
+            self = .string(value)
         } else if let value = try? container.decode([Value].self) {
             self = .array(value)
         } else if let value = try? container.decode([String: Value].self) {

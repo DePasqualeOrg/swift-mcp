@@ -208,12 +208,12 @@ struct ToolTests {
 
     @Test
     func `Text content encoding and decoding`() throws {
-        let content = Tool.Content.text("Hello, world!")
+        let content = ContentBlock.text("Hello, world!")
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .text(text, _, _) = decoded {
             #expect(text == "Hello, world!")
@@ -224,12 +224,12 @@ struct ToolTests {
 
     @Test
     func `Image content encoding and decoding`() throws {
-        let content = Tool.Content.image(data: "base64data", mimeType: "image/png")
+        let content = ContentBlock.image(data: "base64data", mimeType: "image/png")
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .image(data, mimeType, _, _) = decoded {
             #expect(data == "base64data")
@@ -241,7 +241,7 @@ struct ToolTests {
 
     @Test
     func `Resource content encoding and decoding`() throws {
-        let content = Tool.Content.resource(
+        let content = ContentBlock.resource(
             uri: "file://test.txt",
             mimeType: "text/plain",
             text: "Sample text",
@@ -250,7 +250,7 @@ struct ToolTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .resource(resourceContent, _, _) = decoded {
             #expect(resourceContent.uri == "file://test.txt")
@@ -263,7 +263,7 @@ struct ToolTests {
 
     @Test
     func `Audio content encoding and decoding`() throws {
-        let content = Tool.Content.audio(
+        let content = ContentBlock.audio(
             data: "base64audiodata",
             mimeType: "audio/wav",
         )
@@ -271,7 +271,7 @@ struct ToolTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .audio(data, mimeType, _, _) = decoded {
             #expect(data == "base64audiodata")
@@ -350,8 +350,8 @@ struct ToolTests {
     @Test
     func `CallTool success result validation`() {
         let content = [
-            Tool.Content.text("Result 1"),
-            Tool.Content.text("Result 2"),
+            ContentBlock.text("Result 1"),
+            ContentBlock.text("Result 2"),
         ]
 
         let result = CallTool.Result(content: content)
@@ -367,7 +367,7 @@ struct ToolTests {
 
     @Test
     func `CallTool error result validation`() {
-        let errorContent = [Tool.Content.text("Error message")]
+        let errorContent = [ContentBlock.text("Error message")]
         let errorResult = CallTool.Result(content: errorContent, isError: true)
         #expect(errorResult.content.count == 1)
         #expect(errorResult.isError == true)
@@ -728,13 +728,13 @@ struct ToolTests {
             size: 1024,
         )
 
-        let content = Tool.Content.resourceLink(resourceLink)
+        let content = ContentBlock.resourceLink(resourceLink)
 
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .resourceLink(link) = decoded {
             #expect(link.name == "data.json")
@@ -761,13 +761,13 @@ struct ToolTests {
             icons: [Icon(src: "https://example.com/pdf.png", mimeType: "image/png")],
         )
 
-        let content = Tool.Content.resourceLink(resourceLink)
+        let content = ContentBlock.resourceLink(resourceLink)
 
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .resourceLink(link) = decoded {
             #expect(link.annotations?.audience == [.assistant])
@@ -785,13 +785,13 @@ struct ToolTests {
         let annotations = Annotations(audience: [.user, .assistant], priority: 0.9)
         let meta: [String: Value] = ["source": .string("calculation")]
 
-        let content = Tool.Content.text("Result: 42", annotations: annotations, _meta: meta)
+        let content = ContentBlock.text("Result: 42", annotations: annotations, _meta: meta)
 
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .text(text, decodedAnnotations, decodedMeta) = decoded {
             #expect(text == "Result: 42")
@@ -807,7 +807,7 @@ struct ToolTests {
     func `Image content with annotations`() throws {
         let annotations = Annotations(audience: [.user])
 
-        let content = Tool.Content.image(
+        let content = ContentBlock.image(
             data: "base64imagedata",
             mimeType: "image/png",
             annotations: annotations,
@@ -818,7 +818,7 @@ struct ToolTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .image(_, _, decodedAnnotations, _) = decoded {
             #expect(decodedAnnotations?.audience == [.user])
@@ -832,13 +832,13 @@ struct ToolTests {
         let annotations = Annotations(priority: 0.5)
         let resourceContent = Resource.Content.text("File contents", uri: "file:///test.txt", mimeType: "text/plain")
 
-        let content = Tool.Content.resource(resource: resourceContent, annotations: annotations, _meta: nil)
+        let content = ContentBlock.resource(resource: resourceContent, annotations: annotations, _meta: nil)
 
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Tool.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .resource(_, decodedAnnotations, _) = decoded {
             #expect(decodedAnnotations?.priority == 0.5)

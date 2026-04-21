@@ -358,7 +358,7 @@ let result = try await client.connect(transport: transport)
 print("Negotiated version: \(result.protocolVersion)")  // e.g. "2025-11-25"
 ```
 
-The SDK supports all protocol versions from `2024-11-05` through `2025-11-25`. See ``Version/supported`` for the full list.
+The SDK supports all protocol versions from `2024-11-05` through `2025-11-25`. See ``/MCPCore/Version/supported`` for the full list.
 
 ## Error Handling
 

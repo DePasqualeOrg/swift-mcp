@@ -59,10 +59,18 @@
 /// `perform()` can throw errors for validation beyond JSON Schema constraints
 /// (e.g., semantic validation, business rules, or format checks).
 ///
-/// For clear, actionable error messages that help models self-correct, use types
-/// conforming to `LocalizedError`. Without it, the model sees generic messages like
-/// `"The operation couldn't be completed."` which aren't helpful for recovery. The
-/// error's `localizedDescription` is returned to the client with `isError: true`.
+/// Two shapes:
+///
+/// - **Single-text errors**: conform to `LocalizedError` and provide
+///   `errorDescription`. The SDK surfaces it as a single `.text` block on a
+///   result with `isError: true`. Without `LocalizedError`, the model sees
+///   the fallback `String(describing:)` output – meaningful but less
+///   actionable.
+/// - **Rich multi-block errors**: conform to ``/MCPCore/ToolError`` when the
+///   error needs to carry more than a single text block (for example a
+///   `.text` explanation plus an `.image`). `ToolError` refines
+///   `LocalizedError`, so `Error.localizedDescription` bridging still works
+///   for non-MCP consumers.
 public protocol ToolSpec: Sendable {
     /// The result type returned by `perform(context:)`.
     associatedtype Output: ToolOutput

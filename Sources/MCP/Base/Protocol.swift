@@ -105,12 +105,12 @@ public struct RequestHandlerContext: Sendable {
     ///
     /// For notifications with `Empty` or `NotificationParams` parameters,
     /// this creates the message automatically.
-    public func sendNotification<N: Notification>(_: N) async throws where N.Parameters == Empty {
+    public func sendNotification<N: MCPCore.Notification>(_: N) async throws where N.Parameters == Empty {
         try await _sendNotification(N.message())
     }
 
     /// Send a parameterless notification to the peer (NotificationParams variant).
-    public func sendNotification<N: Notification>(_: N) async throws where N.Parameters == NotificationParams {
+    public func sendNotification<N: MCPCore.Notification>(_: N) async throws where N.Parameters == NotificationParams {
         try await _sendNotification(N.message())
     }
 

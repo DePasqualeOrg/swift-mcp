@@ -64,7 +64,7 @@ await client.withSamplingHandler { params, context in
 
 ## Request Parameters
 
-The handler receives ``ClientSamplingParameters`` with:
+The handler receives ``/MCPCore/ClientSamplingParameters`` with:
 
 - `messages`: The conversation history as `[Sampling.Message]`
 - `systemPrompt`: Optional system prompt
@@ -91,7 +91,7 @@ await client.withSamplingHandler { params, context in
 
 ## Result Types
 
-Return a ``ClientSamplingRequest/Result`` with:
+Return a ``/MCPCore/ClientSamplingRequest/Result`` with:
 
 - `model`: The name of the model used
 - `stopReason`: Why generation stopped (`.endTurn`, `.stopSequence`, `.maxTokens`, `.toolUse`)

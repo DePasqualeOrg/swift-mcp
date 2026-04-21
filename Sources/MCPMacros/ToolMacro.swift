@@ -82,20 +82,19 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         \(raw: accessPrefix)init() {}
         """)
 
-        // Generate _perform(context:) bridging to the user's perform() or perform(context:)
-        if toolInfo.hasContextParameter {
-            members.append("""
-            \(raw: accessPrefix)func _perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
-                try await perform(context: context)
-            }
-            """)
-        } else {
-            members.append("""
-            \(raw: accessPrefix)func _perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
-                try await perform()
-            }
-            """)
+        // Generate _perform(context:) bridging to the user's perform() or perform(context:).
+        // For Void returns, run the handler, discard the empty tuple, and emit
+        // the `VoidOutput` sentinel so the wire shape matches an `Optional<T>`
+        // returning `nil`.
+        let callExpression = toolInfo.hasContextParameter ? "perform(context: context)" : "perform()"
+        let bridgeBody = toolInfo.returnsVoid
+            ? "try await \(callExpression)\n    return MCPCore.VoidOutput()"
+            : "try await \(callExpression)"
+        members.append("""
+        \(raw: accessPrefix)func _perform(context: HandlerContext) async throws -> \(raw: toolInfo.outputType) {
+            \(raw: bridgeBody)
         }
+        """)
 
         // Generate toolDefinition
         let toolDefinitionDecl = generateToolDefinition(
@@ -312,7 +311,20 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var annotations: [String] // Annotation case names for validation
         var strictSchema: Bool
         var hasContextParameter: Bool // Whether perform() takes a context parameter
+
+        /// `true` when the user's `perform()` returns `Void` (or has no
+        /// return clause). The synthesized `_perform(context:)` runs the
+        /// user's handler, discards the empty tuple, and returns
+        /// `VoidOutput()` so the wire shape matches `Optional<T>` returning
+        /// `nil`. Derived from `outputType` so the two can't drift.
+        var returnsVoid: Bool {
+            outputType == voidOutputType
+        }
     }
+
+    /// Sentinel `outputType` string that stands in for `Void` returns.
+    /// Also the target of the macro's `return MCPCore.VoidOutput()` bridge.
+    private static let voidOutputType = "MCPCore.VoidOutput"
 
     private static func extractToolInfo(
         from structDecl: StructDeclSyntax,
@@ -322,7 +334,8 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         var nameSyntax: SyntaxProtocol?
         var description: String?
         var parameters: [ParameterInfo] = []
-        var outputType = "String"
+        // Default when `perform()` has no return clause: treat as Void.
+        var outputType = voidOutputType
         var annotations: [String] = []
         var annotationsSyntax: SyntaxProtocol?
         var strictSchema = false
@@ -457,7 +470,23 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
         }
 
         if let returnClause = performDecl.signature.returnClause {
-            outputType = returnClause.type.trimmedDescription
+            let declaredType = returnClause.type.trimmedDescription
+            // Normalize explicit `Void` / `()` to the `VoidOutput` sentinel
+            // so the schema dispatch and `_perform` wrapping paths don't
+            // need a second Void-detection branch.
+            //
+            // Limitation: this is a syntactic string match. Type aliases
+            // for `Void` (e.g. `typealias Nothing = Void` declared
+            // elsewhere and used as `-> Nothing`) aren't detected — macros
+            // can't resolve types at expansion time. A tool author who
+            // does this sees `outputSchema = nil` on the wire; the
+            // workaround is to drop the return clause entirely or use
+            // `-> Void` directly.
+            if declaredType == "Void" || declaredType == "()" || declaredType == "Swift.Void" {
+                outputType = voidOutputType
+            } else {
+                outputType = declaredType
+            }
         }
 
         // Validate perform() signature using the shared validator so MemberMacro and
@@ -665,7 +694,7 @@ public struct ToolMacro: MemberMacro, ExtensionMacro {
                 name: name,
                 description: description,
                 inputSchema: .object(_schema),
-                outputSchema: outputSchema(for: Output.self),
+                outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                 annotations: AnnotationOption.buildAnnotations(from: annotations)
             )
         }
@@ -855,12 +884,11 @@ extension ToolMacro {
                 blameNode: decl.name,
             )
         }
-        if decl.signature.returnClause == nil {
-            return .invalid(
-                message: "@Tool requires 'perform()' to return a value conforming to 'ToolOutput'",
-                blameNode: decl.name,
-            )
-        }
+        // `perform()` with no return clause is treated as Void — the macro
+        // substitutes `VoidOutput` at `outputType` derivation and the
+        // synthesized `_perform` bridge discards `()` and returns
+        // `VoidOutput()`. Declaring `-> Void` / `-> ()` explicitly is also
+        // accepted and normalized the same way.
         return .valid(hasContext: !contextParams.isEmpty)
     }
 }

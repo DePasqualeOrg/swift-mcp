@@ -145,7 +145,7 @@ extension Server {
     /// This ensures responses are routed to the correct client by:
     /// 1. Using the connection that was active when the request was received
     /// 2. Passing the request ID so multiplexing transports can route correctly
-    func send(_ response: Response<some Method>, using context: RequestContext) async throws {
+    func send(_ response: Response<some MCPCore.Method>, using context: RequestContext) async throws {
         guard let connection = context.capturedConnection else {
             logger?.warning(
                 "Cannot send response - connection was nil at request time",

@@ -307,7 +307,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -372,7 +372,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -437,7 +437,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -502,7 +502,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -567,7 +567,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -646,30 +646,70 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformMissingReturnTypeError() {
+    func testPerformMissingReturnTypeExpandsAsVoid() {
+        // A `perform()` with no return clause is treated as `Void`. The
+        // synthesized `_perform(context:)` bridge runs the handler, discards
+        // the empty tuple, and emits the `VoidOutput` sentinel so the wire
+        // shape matches `Optional<T>` returning `nil`.
         assertMacroExpansion(
             """
             @Tool
-            struct BadTool {
-                static let name = "bad_tool"
-                static let description = "Missing return"
+            struct ActionTool {
+                static let name = "action_tool"
+                static let description = "Runs an action with no return value"
 
                 func perform() async throws {
                 }
             }
             """,
             expandedSource: """
-            struct BadTool {
-                static let name = "bad_tool"
-                static let description = "Missing return"
+            struct ActionTool {
+                static let name = "action_tool"
+                static let description = "Runs an action with no return value"
 
                 func perform() async throws {
                 }
+
+                static let annotations: [AnnotationOption] = []
+
+                init() {
+                }
+
+                func _perform(context: HandlerContext) async throws -> MCPCore.VoidOutput {
+                    try await perform()
+                    return MCPCore.VoidOutput()
+                }
+
+                static var toolDefinition: MCP.Tool {
+                    // Schema-build failures here (e.g. duplicate parameter names) are programmer
+                    // errors that must trap at registration rather than silently shipping an empty
+                    // schema to clients. We trap with a tool-named precondition for a readable
+                    // crash log instead of a bare `try!` trap.
+                    let _schema: [String: MCP.Value]
+                    do {
+                        _schema = try MCPTool.ToolMacroSupport.buildObjectSchema(
+                            parameters: []
+                        )
+                    } catch {
+                        preconditionFailure("Failed to build schema for tool '\\(name)': \\(error)")
+                    }
+                    return MCP.Tool(
+                        name: name,
+                        description: description,
+                        inputSchema: .object(_schema),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
+                        annotations: AnnotationOption.buildAnnotations(from: annotations)
+                    )
+                }
+
+                static func parse(from arguments: [String: MCP.Value]?) throws -> Self {
+                    Self()
+                }
+            }
+
+            extension ActionTool: MCP.ToolSpec, Sendable {
             }
             """,
-            diagnostics: [
-                DiagnosticSpec(message: "@Tool requires 'perform()' to return a value conforming to 'ToolOutput'", line: 6, column: 10),
-            ],
             macros: testMacros,
         )
     }
@@ -891,7 +931,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -994,7 +1034,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1164,7 +1204,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1256,7 +1296,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1352,7 +1392,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1492,7 +1532,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1586,7 +1626,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1660,7 +1700,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }
@@ -1736,7 +1776,7 @@ final class ToolMacroTests: XCTestCase {
                         name: name,
                         description: description,
                         inputSchema: .object(_schema),
-                        outputSchema: outputSchema(for: Output.self),
+                        outputSchema: MCP.MCPSchema.outputSchema(for: Output.self),
                         annotations: AnnotationOption.buildAnnotations(from: annotations)
                     )
                 }

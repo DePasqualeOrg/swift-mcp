@@ -291,5 +291,5 @@ For advanced use cases like custom request handling, see <doc:server-advanced> f
 - <doc:server-completions>
 - <doc:client-prompts>
 - ``MCPServer``
-- ``Prompt``
+- ``/MCPCore/Prompt``
 - ``PromptSpec``

@@ -144,128 +144,6 @@ public struct Tool: Hashable, Codable, Sendable {
         self.annotations = annotations
     }
 
-    // TODO: Consider consolidating with Prompt.Message.Content into a shared ContentBlock type
-    // in a future breaking change release. The spec uses a single ContentBlock type.
-    /// Content types that can be returned by a tool.
-    ///
-    /// Matches the MCP spec (2025-11-25) ContentBlock union:
-    /// - TextContent, ImageContent, AudioContent, ResourceLink, EmbeddedResource
-    public enum Content: Hashable, Codable, Sendable {
-        /// Type alias for content-level annotations (with audience, priority, lastModified).
-        /// Not to be confused with `Tool.Annotations` which are tool-specific hints.
-        public typealias ContentAnnotations = MCP.Annotations
-
-        /// Text content
-        case text(String, annotations: ContentAnnotations?, _meta: [String: Value]?)
-        /// Image content
-        case image(data: String, mimeType: String, annotations: ContentAnnotations?, _meta: [String: Value]?)
-        /// Audio content
-        case audio(data: String, mimeType: String, annotations: ContentAnnotations?, _meta: [String: Value]?)
-        /// Embedded resource content (includes actual content)
-        case resource(resource: Resource.Content, annotations: ContentAnnotations?, _meta: [String: Value]?)
-        /// Resource link (reference to a resource that can be read)
-        case resourceLink(ResourceLink)
-
-        // MARK: - Convenience initializers (backwards compatibility)
-
-        /// Creates text content
-        public static func text(_ text: String) -> Content {
-            .text(text, annotations: nil, _meta: nil)
-        }
-
-        /// Creates image content
-        public static func image(data: String, mimeType: String) -> Content {
-            .image(data: data, mimeType: mimeType, annotations: nil, _meta: nil)
-        }
-
-        /// Creates audio content
-        public static func audio(data: String, mimeType: String) -> Content {
-            .audio(data: data, mimeType: mimeType, annotations: nil, _meta: nil)
-        }
-
-        /// Creates embedded resource content with text
-        public static func resource(uri: String, mimeType: String? = nil, text: String) -> Content {
-            .resource(resource: .text(text, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
-        }
-
-        /// Creates embedded resource content with binary data
-        public static func resource(uri: String, mimeType: String? = nil, blob: Data) -> Content {
-            .resource(resource: .binary(blob, uri: uri, mimeType: mimeType), annotations: nil, _meta: nil)
-        }
-
-        private enum CodingKeys: String, CodingKey {
-            case type, text, data, mimeType, resource, annotations, _meta
-        }
-
-        public init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            let type = try container.decode(String.self, forKey: .type)
-
-            switch type {
-                case "text":
-                    let text = try container.decode(String.self, forKey: .text)
-                    let annotations = try container.decodeIfPresent(ContentAnnotations.self, forKey: .annotations)
-                    let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                    self = .text(text, annotations: annotations, _meta: meta)
-                case "image":
-                    let data = try container.decode(String.self, forKey: .data)
-                    let mimeType = try container.decode(String.self, forKey: .mimeType)
-                    let annotations = try container.decodeIfPresent(ContentAnnotations.self, forKey: .annotations)
-                    let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                    self = .image(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-                case "audio":
-                    let data = try container.decode(String.self, forKey: .data)
-                    let mimeType = try container.decode(String.self, forKey: .mimeType)
-                    let annotations = try container.decodeIfPresent(ContentAnnotations.self, forKey: .annotations)
-                    let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                    self = .audio(data: data, mimeType: mimeType, annotations: annotations, _meta: meta)
-                case "resource":
-                    let resourceContent = try container.decode(Resource.Content.self, forKey: .resource)
-                    let annotations = try container.decodeIfPresent(ContentAnnotations.self, forKey: .annotations)
-                    let meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
-                    self = .resource(resource: resourceContent, annotations: annotations, _meta: meta)
-                case "resource_link":
-                    let link = try ResourceLink(from: decoder)
-                    self = .resourceLink(link)
-                default:
-                    throw DecodingError.dataCorruptedError(
-                        forKey: .type, in: container, debugDescription: "Unknown tool content type",
-                    )
-            }
-        }
-
-        public func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-
-            switch self {
-                case let .text(text, annotations, meta):
-                    try container.encode("text", forKey: .type)
-                    try container.encode(text, forKey: .text)
-                    try container.encodeIfPresent(annotations, forKey: .annotations)
-                    try container.encodeIfPresent(meta, forKey: ._meta)
-                case let .image(data, mimeType, annotations, meta):
-                    try container.encode("image", forKey: .type)
-                    try container.encode(data, forKey: .data)
-                    try container.encode(mimeType, forKey: .mimeType)
-                    try container.encodeIfPresent(annotations, forKey: .annotations)
-                    try container.encodeIfPresent(meta, forKey: ._meta)
-                case let .audio(data, mimeType, annotations, meta):
-                    try container.encode("audio", forKey: .type)
-                    try container.encode(data, forKey: .data)
-                    try container.encode(mimeType, forKey: .mimeType)
-                    try container.encodeIfPresent(annotations, forKey: .annotations)
-                    try container.encodeIfPresent(meta, forKey: ._meta)
-                case let .resource(resourceContent, annotations, meta):
-                    try container.encode("resource", forKey: .type)
-                    try container.encode(resourceContent, forKey: .resource)
-                    try container.encodeIfPresent(annotations, forKey: .annotations)
-                    try container.encodeIfPresent(meta, forKey: ._meta)
-                case let .resourceLink(link):
-                    try link.encode(to: encoder)
-            }
-        }
-    }
-
     private enum CodingKeys: String, CodingKey {
         case name
         case title
@@ -406,11 +284,23 @@ public enum CallTool: Method {
         }
     }
 
+    /// On-the-wire shape of a tool result.
+    ///
+    /// `CallTool.Result` is the transport representation of a tool
+    /// invocation's response and the return type of `ToolOutput.toCallToolResult()`.
+    /// It is **not** a built-in tool return type – tool authors should return
+    /// a value (primitive, array, optional, dictionary, `Void`, or
+    /// `@Schemable @StructuredOutput` struct), `Media` /
+    /// `MediaWithMetadata<T>`, or `Asset` / `AssetWithMetadata<T>` instead.
+    /// Conform a custom type to `ToolOutput` when none of the built-in
+    /// categories (Value, Media, Asset) fits and produce a
+    /// `CallTool.Result` from there; constructing this type directly at a
+    /// tool-body site bypasses the typed-return surface on purpose.
     public struct Result: ResultWithExtraFields {
         public typealias ResultCodingKeys = CodingKeys
 
         /// A list of content objects that represent the unstructured result of the tool call.
-        public let content: [Tool.Content]
+        public let content: [ContentBlock]
         /// An optional JSON object that represents the structured result of the tool call.
         /// If the tool defined an `outputSchema`, this should conform to that schema.
         /// When using `MCPServer`, this is automatically validated against
@@ -424,7 +314,7 @@ public enum CallTool: Method {
         public var extraFields: [String: Value]?
 
         public init(
-            content: [Tool.Content],
+            content: [ContentBlock],
             structuredContent: Value? = nil,
             isError: Bool? = nil,
             _meta: [String: Value]? = nil,
@@ -443,7 +333,7 @@ public enum CallTool: Method {
 
         public init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            content = try container.decode([Tool.Content].self, forKey: .content)
+            content = try container.decode([ContentBlock].self, forKey: .content)
             structuredContent = try container.decodeIfPresent(Value.self, forKey: .structuredContent)
             isError = try container.decodeIfPresent(Bool.self, forKey: .isError)
             _meta = try container.decodeIfPresent([String: Value].self, forKey: ._meta)
@@ -467,4 +357,6 @@ public struct ToolListChangedNotification: Notification {
     public static let name: String = "notifications/tools/list_changed"
 
     public typealias Parameters = NotificationParams
+
+    public init() {}
 }
