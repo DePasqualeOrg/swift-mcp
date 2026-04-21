@@ -468,22 +468,6 @@ struct SamplingTests {
     }
 
     @Test
-    func `Backwards compatibility: Sampling.Message.Content alias`() {
-        // Test that the deprecated Content type alias still works
-        let content: Sampling.Message.ContentBlock = .text("Hello")
-
-        if case let .text(text, _, _) = content {
-            #expect(text == "Hello")
-        } else {
-            #expect(Bool(false), "Expected text content")
-        }
-
-        // Verify it's the same type as ContentBlock
-        let block: Sampling.Message.ContentBlock = content
-        #expect(block == content)
-    }
-
-    @Test
     func `UnitInterval in Sampling.ModelPreferences`() throws {
         // Test that UnitInterval validation works in Sampling.ModelPreferences
         let validPreferences = Sampling.ModelPreferences(

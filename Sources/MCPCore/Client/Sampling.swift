@@ -322,12 +322,6 @@ extension Sampling.Message.ContentBlock: ExpressibleByStringInterpolation {
     }
 }
 
-public extension Sampling.Message {
-    /// Type alias for backwards compatibility.
-    @available(*, deprecated, renamed: "ContentBlock")
-    typealias Content = ContentBlock
-}
-
 // MARK: - Sampling Request Parameters (Shared Base)
 
 /// Common parameters for sampling requests.

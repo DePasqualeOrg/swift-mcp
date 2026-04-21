@@ -482,45 +482,6 @@ public actor Server: ProtocolLayer {
         }
     }
 
-    /// Register a method handler without context.
-    ///
-    /// - Parameters:
-    ///   - type: The method type to handle
-    ///   - handler: The handler function receiving only parameters
-    @available(
-        *, deprecated,
-        message:
-        "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
-    )
-    public func withRequestHandler<M: MCPCore.Method>(
-        _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
-    ) {
-        withRequestHandler(type) { params, _ in
-            try await handler(params)
-        }
-    }
-
-    // MARK: - Deprecated Method Handler Registration
-
-    /// Register a request handler for a method (deprecated, use withRequestHandler instead)
-    @available(*, deprecated, renamed: "withRequestHandler")
-    public func withMethodHandler<M: MCPCore.Method>(
-        _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
-    ) {
-        withRequestHandler(type, handler: handler)
-    }
-
-    /// Register a request handler for a method (deprecated, use withRequestHandler instead)
-    @available(*, deprecated, renamed: "withRequestHandler")
-    public func withMethodHandler<M: MCPCore.Method>(
-        _ type: M.Type,
-        handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
-    ) {
-        withRequestHandler(type, handler: handler)
-    }
-
     /// Register a notification handler.
     public func onNotification<N: MCPCore.Notification>(
         _: N.Type,

@@ -16,10 +16,6 @@ public enum RequestId: Hashable, Sendable {
     }
 }
 
-/// Backwards compatibility alias for `RequestId`.
-@available(*, deprecated, renamed: "RequestId")
-public typealias ID = RequestId
-
 // MARK: - ExpressibleByStringLiteral
 
 extension RequestId: ExpressibleByStringLiteral {

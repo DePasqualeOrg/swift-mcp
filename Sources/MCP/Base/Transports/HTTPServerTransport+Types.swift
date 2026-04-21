@@ -393,11 +393,6 @@ public enum DNSRebindingProtection: Sendable, Equatable {
     }
 }
 
-// MARK: - Legacy Type Alias
-
-@available(*, deprecated, renamed: "DNSRebindingProtection")
-public typealias TransportSecuritySettings = DNSRebindingProtection
-
 /// Protocol for storing and replaying SSE events for resumability support.
 ///
 /// Implementations should store events durably and support replaying them

@@ -764,18 +764,6 @@ public struct ElicitationCompleteNotification: Notification {
     }
 }
 
-// MARK: - Error Codes
-
-/// Error code indicating URL elicitation is required.
-///
-/// This error is returned when a server requires the client to perform
-/// URL-mode elicitation but the client doesn't support it.
-///
-/// - Note: Prefer using `ErrorCode.urlElicitationRequired` or
-///   throwing `MCPError.urlElicitationRequired(elicitations:)` directly.
-@available(*, deprecated, renamed: "ErrorCode.urlElicitationRequired")
-public let URLElicitationRequiredErrorCode: Int = ErrorCode.urlElicitationRequired
-
 /// Error data for `URLElicitationRequiredError`.
 ///
 /// Servers return this when a request cannot be processed until one or more
