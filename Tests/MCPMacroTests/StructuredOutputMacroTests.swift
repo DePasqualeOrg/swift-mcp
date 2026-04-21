@@ -1,13 +1,13 @@
 // Copyright © Anthony DePasquale
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
-import XCTest
+import SwiftSyntaxMacrosGenericTestSupport
+import Testing
 
 #if canImport(MCPMacros)
 import MCPMacros
 
-final class StructuredOutputMacroTests: XCTestCase {
+struct StructuredOutputMacroTests {
     let testMacros: [String: Macro.Type] = [
         "StructuredOutput": StructuredOutputMacro.self,
         "ManualEncoding": ManualEncodingMacro.self,
@@ -16,7 +16,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         // that the user has applied `@Schemable` at the call site.
     ]
 
-    func testBasicExpansion() {
+    @Test
+    func `basic expansion`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -63,7 +64,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testUserProvidedCodingKeysWins() {
+    @Test
+    func `user provided coding keys wins`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -113,7 +115,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testPublicStructPublicEncode() {
+    @Test
+    func `public struct public encode`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -154,7 +157,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testFileprivateStructMatchesAccessLevel() {
+    @Test
+    func `fileprivate struct matches access level`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -195,7 +199,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testPrivateStructMatchesAccessLevel() {
+    @Test
+    func `private struct matches access level`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -236,7 +241,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testGenericStructDiagnostic() {
+    @Test
+    func `generic struct diagnostic`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -262,7 +268,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testMissingSchemableDiagnostic() {
+    @Test
+    func `missing schemable diagnostic`() {
         assertMacroExpansion(
             """
             @StructuredOutput
@@ -286,7 +293,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testCustomEncodeWithoutManualEncodingDiagnostic() {
+    @Test
+    func `custom encode without manual encoding diagnostic`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -339,7 +347,8 @@ final class StructuredOutputMacroTests: XCTestCase {
     /// `encode` (here `encode(_:)`) must not trip the custom-encoder
     /// diagnostic. Swift overload resolution allows it to coexist with the
     /// synthesized `encode(to:)`, so the macro should still synthesize.
-    func testUnrelatedEncodeOverloadDoesNotBlockSynthesis() {
+    @Test
+    func `unrelated encode overload does not block synthesis`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -392,7 +401,8 @@ final class StructuredOutputMacroTests: XCTestCase {
     /// helper uses the same external label as the `Encodable` witness but a
     /// different parameter type, so it doesn't collide with synthesis and
     /// must not trip the custom-encoder diagnostic.
-    func testLabeledEncodeOverloadWithNonEncoderTypeDoesNotBlockSynthesis() {
+    @Test
+    func `labeled encode overload with non encoder type does not block synthesis`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -446,7 +456,8 @@ final class StructuredOutputMacroTests: XCTestCase {
     /// `encode(to:)` body that references a non-existent `CodingKeys.self`.
     /// Swift's default Codable synthesis produces `{}` on the wire, matching
     /// the stable-shape contract vacuously (no optionals to preserve).
-    func testEmptyStructSkipsCodingKeysAndEncodeSynthesis() {
+    @Test
+    func `empty struct skips coding keys and encode synthesis`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -476,7 +487,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testManualEncodingOptOut() {
+    @Test
+    func `manual encoding opt out`() {
         // `@ManualEncoding` also keeps the user's CodingKeys as-is (if any).
         // The expanded form here has none; the user's hand-rolled encoder uses
         // string-based lookup, which the compiler resolves from the Swift
@@ -524,7 +536,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testManualEncodingWithoutUserEncodeWarns() {
+    @Test
+    func `manual encoding without user encode warns`() {
         // `@ManualEncoding` means "I'm hand-rolling the encoder" — if the
         // type doesn't actually define `encode(to:)`, Swift falls back to
         // the default Codable synthesis, which uses `encodeIfPresent` and
@@ -569,7 +582,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testSkipsStaticAndComputedProperties() {
+    @Test
+    func `skips static and computed properties`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -614,7 +628,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testUserCodingKeysMissingCaseDiagnostic() {
+    @Test
+    func `user coding keys missing case diagnostic`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -672,7 +687,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testUserCodingKeysMissingMultipleCasesDiagnostic() {
+    @Test
+    func `user coding keys missing multiple cases diagnostic`() {
         assertMacroExpansion(
             """
             @Schemable
@@ -726,7 +742,8 @@ final class StructuredOutputMacroTests: XCTestCase {
         )
     }
 
-    func testNotAStructDiagnostic() {
+    @Test
+    func `not A struct diagnostic`() {
         assertMacroExpansion(
             """
             @Schemable

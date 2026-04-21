@@ -1,20 +1,21 @@
 // Copyright © Anthony DePasquale
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
-import XCTest
+import SwiftSyntaxMacrosGenericTestSupport
+import Testing
 
 #if canImport(MCPMacros)
 import MCPMacros
 
-final class ToolMacroTests: XCTestCase {
+struct ToolMacroTests {
     let testMacros: [String: Macro.Type] = [
         "Tool": ToolMacro.self,
     ]
 
     // MARK: - Compile-Time Validation Tests
 
-    func testMissingNameError() {
+    @Test
+    func `missing name error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -42,7 +43,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testMissingDescriptionError() {
+    @Test
+    func `missing description error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -70,7 +72,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNotAStructError() {
+    @Test
+    func `not A struct error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -92,7 +95,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testInvalidToolNameWithSpaces() {
+    @Test
+    func `invalid tool name with spaces`() {
         assertMacroExpansion(
             """
             @Tool
@@ -122,7 +126,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testInvalidToolNameTooLong() {
+    @Test
+    func `invalid tool name too long`() {
         let longName = String(repeating: "a", count: 129)
         assertMacroExpansion(
             """
@@ -153,7 +158,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testDuplicateAnnotationError() {
+    @Test
+    func `duplicate annotation error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -185,7 +191,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNonLiteralDefaultValueError() {
+    @Test
+    func `non literal default value error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -221,7 +228,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testInterpolatedStringDefaultValueError() {
+    @Test
+    func `interpolated string default value error`() {
         assertMacroExpansion(
             #"""
             @Tool
@@ -259,7 +267,8 @@ final class ToolMacroTests: XCTestCase {
 
     // MARK: - Access Level Propagation Tests
 
-    func testPublicStructGeneratesPublicMembers() {
+    @Test
+    func `public struct generates public members`() {
         assertMacroExpansion(
             """
             @Tool
@@ -324,7 +333,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPublicStructWithAnnotations() {
+    @Test
+    func `public struct with annotations`() {
         assertMacroExpansion(
             """
             @Tool
@@ -389,7 +399,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testInternalStructGeneratesInternalMembers() {
+    @Test
+    func `internal struct generates internal members`() {
         assertMacroExpansion(
             """
             @Tool
@@ -454,7 +465,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPackageStructGeneratesPackageMembers() {
+    @Test
+    func `package struct generates package members`() {
         assertMacroExpansion(
             """
             @Tool
@@ -519,7 +531,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPublicStructWithPerformContext() {
+    @Test
+    func `public struct with perform context`() {
         assertMacroExpansion(
             """
             @Tool
@@ -586,7 +599,8 @@ final class ToolMacroTests: XCTestCase {
 
     // MARK: - Signature Validation Tests
 
-    func testPerformMissingAsyncError() {
+    @Test
+    func `perform missing async error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -616,7 +630,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformMissingThrowsError() {
+    @Test
+    func `perform missing throws error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -646,7 +661,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformMissingReturnTypeExpandsAsVoid() {
+    @Test
+    func `perform missing return type expands as void`() {
         // A `perform()` with no return clause is treated as `Void`. The
         // synthesized `_perform(context:)` bridge runs the handler, discards
         // the empty tuple, and emits the `VoidOutput` sentinel so the wire
@@ -714,7 +730,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformHasUnexpectedParametersError() {
+    @Test
+    func `perform has unexpected parameters error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -744,7 +761,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformContextWrongTypeError() {
+    @Test
+    func `perform context wrong type error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -774,7 +792,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testStaticPerformMethodError() {
+    @Test
+    func `static perform method error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -804,7 +823,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testParameterOnStaticPropertyError() {
+    @Test
+    func `parameter on static property error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -840,7 +860,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testDuplicateParameterKeyError() {
+    @Test
+    func `duplicate parameter key error`() {
         assertMacroExpansion(
             """
             @Tool
@@ -883,7 +904,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformAccessLevelWarningWhenMoreRestrictive() {
+    @Test
+    func `perform access level warning when more restrictive`() {
         assertMacroExpansion(
             """
             @Tool
@@ -956,7 +978,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testMissingPerformDoesNotCascadeConformanceError() {
+    @Test
+    func `missing perform does not cascade conformance error`() {
         // Regression test: when perform() is missing, the ExtensionMacro must NOT add the
         // ToolSpec conformance — otherwise the user sees both the attribute-level
         // missingPerformMethod error AND a generated "does not conform to ToolSpec" error.
@@ -985,7 +1008,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testMCPQualifiedHandlerContextAccepted() {
+    @Test
+    func `MCP qualified handler context accepted`() {
         // Regression test: `MCP.HandlerContext` should be accepted as the context type.
         assertMacroExpansion(
             """
@@ -1051,7 +1075,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testParameterMissingTypeAnnotationError() {
+    @Test
+    func `parameter missing type annotation error`() {
         // `@Parameter var count = 1` relies on type inference from the default value.
         // The macro needs an explicit annotation to pick the schema and parse code,
         // so it must reject this up front — otherwise it would emit String.schema
@@ -1095,7 +1120,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testPerformWithTwoContextParametersError() {
+    @Test
+    func `perform with two context parameters error`() {
         // Swift allows duplicate parameter labels at declaration time, so
         // `perform(context:, context:)` would otherwise pass macro validation
         // and fail later with a misleading compiler error from the generated
@@ -1133,7 +1159,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNegativeLiteralDefault() {
+    @Test
+    func `negative literal default`() {
         // Covers PrefixOperatorExpr('-') in both isLiteralExpression (accept) and
         // convertToValueLiteral (map to .int/.double). If the two drift, the second
         // now traps via preconditionFailure rather than silently emitting .null.
@@ -1226,7 +1253,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testExplicitOptionalParameterType() {
+    @Test
+    func `explicit optional parameter type`() {
         // Covers `unwrapExplicitOptional` — the non-sugared `Optional<T>` form
         // must be treated the same as `T?` (isOptional: true, typeName: T).
         assertMacroExpansion(
@@ -1318,7 +1346,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testParameterWithDidSetObserverAccepted() {
+    @Test
+    func `parameter with did set observer accepted`() {
         // Stored properties with observers remain assignable by the generated
         // parser, so they must not be rejected as computed.
         assertMacroExpansion(
@@ -1414,7 +1443,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testComputedParameterPropertyError() {
+    @Test
+    func `computed parameter property error`() {
         // Getter-backed properties cannot be assigned by the generated parser.
         assertMacroExpansion(
             """
@@ -1459,7 +1489,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testSpecialCharsInParameterDescription() {
+    @Test
+    func `special chars in parameter description`() {
         // Covers swiftStringLiteral's escape path for backslash + quote. Without the
         // re-escaping, the generated source would contain a raw `"` that closes the
         // enclosing string literal and fails to compile. (This test avoids `\n` / `\t`
@@ -1555,7 +1586,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testQualifiedMCPParameterAttribute() {
+    @Test
+    func `qualified MCP parameter attribute`() {
         // Covers isParameterAttribute's qualified-attribute branch: `@MCP.Parameter`
         // must be recognized the same as the bare `@Parameter`. Used when a file
         // imports both MCP and AI and needs to disambiguate.
@@ -1649,7 +1681,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testToolNameStyleWarningForTrailingDash() {
+    @Test
+    func `tool name style warning for trailing dash`() {
         // Tool name "foo-" has valid characters but ends with '-', which some
         // downstream hosts reject. The macro emits a warning but still generates
         // members so the user sees the warning in context of a working tool.
@@ -1725,7 +1758,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testUnmarkedPerformInPublicStructDoesNotWarn() {
+    @Test
+    func `unmarked perform in public struct does not warn`() {
         // Regression test: the canonical `public struct` + unmarked `func perform()`
         // pattern must NOT trigger the access-level warning. That warning only fires
         // for explicit more-restrictive modifiers.
@@ -1793,7 +1827,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNegativeNonNumericLiteralDefaultRejected() {
+    @Test
+    func `negative non numeric literal default rejected`() {
         // `isLiteralExpression` used to accept any `PrefixOperatorExpr('-')` wrapping a
         // literal (including Bool/String/nil), but `convertToValueLiteral` only knows how
         // to emit `.int`/`.double` for negative numerics — anything else hit
@@ -1835,7 +1870,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNonLiteralParameterDescriptionRejected() {
+    @Test
+    func `non literal parameter description rejected`() {
         // `@Parameter(key:/title:/description:)` values are baked into generated Swift
         // source, so the macro used to silently drop non-literal expressions and fall
         // back to nil metadata — producing a silent divergence between the declared tool
@@ -1880,7 +1916,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNonLiteralToolNameDoesNotAddConformance() {
+    @Test
+    func `non literal tool name does not add conformance`() {
         // When `static let name` isn't a plain string literal the member macro refuses to
         // generate the required members. The diagnostic points at the offending
         // expression (matching the `@Parameter` treatment), not at the attribute — a
@@ -1919,7 +1956,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNonLiteralStrictSchemaDiagnostic() {
+    @Test
+    func `non literal strict schema diagnostic`() {
         // `strictSchema` is read at macro expansion time to decide whether to insert
         // the strict-mode validation call. A non-literal initializer would have been
         // silently treated as `false` and disabled the assertion without warning.
@@ -1958,7 +1996,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testNonArrayLiteralAnnotationsDiagnostic() {
+    @Test
+    func `non array literal annotations diagnostic`() {
         // `annotations` is inspected at macro expansion time for duplicate detection
         // and to decide whether to synthesize an empty default. A non-array
         // initializer (e.g. `static let annotations = 1`) used to bypass both checks
@@ -1998,7 +2037,8 @@ final class ToolMacroTests: XCTestCase {
         )
     }
 
-    func testInterpolatedToolDescriptionDiagnostic() {
+    @Test
+    func `interpolated tool description diagnostic`() {
         // Interpolated `static let description = "prefix \\(suffix)"` used to silently
         // fall through to the generic `missingDescription` error. It now gets a targeted
         // diagnostic explaining that interpolation isn't supported.

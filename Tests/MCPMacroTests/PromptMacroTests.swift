@@ -1,20 +1,21 @@
 // Copyright © Anthony DePasquale
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
-import XCTest
+import SwiftSyntaxMacrosGenericTestSupport
+import Testing
 
 #if canImport(MCPMacros)
 import MCPMacros
 
-final class PromptMacroTests: XCTestCase {
+struct PromptMacroTests {
     let testMacros: [String: Macro.Type] = [
         "Prompt": PromptMacro.self,
     ]
 
     // MARK: - Compile-Time Validation Tests
 
-    func testMissingNameError() {
+    @Test
+    func `missing name error`() {
         assertMacroExpansion(
             """
             @Prompt
@@ -42,7 +43,8 @@ final class PromptMacroTests: XCTestCase {
         )
     }
 
-    func testMissingDescriptionError() {
+    @Test
+    func `missing description error`() {
         assertMacroExpansion(
             """
             @Prompt
@@ -70,7 +72,8 @@ final class PromptMacroTests: XCTestCase {
         )
     }
 
-    func testNotAStructError() {
+    @Test
+    func `not A struct error`() {
         assertMacroExpansion(
             """
             @Prompt
