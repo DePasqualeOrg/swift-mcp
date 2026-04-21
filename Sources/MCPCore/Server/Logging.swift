@@ -5,7 +5,7 @@
 /// Servers can send log messages to clients, and clients can control
 /// the minimum log level they wish to receive.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/utilities/logging/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging
 
 /// Log severity levels following RFC 5424 syslog conventions.
 ///
@@ -46,7 +46,7 @@ public enum LoggingLevel: String, Hashable, Codable, Sendable, CaseIterable {
 /// After receiving this request, servers should only send log messages
 /// at the specified level or higher (more severe).
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/utilities/logging/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging
 public enum SetLoggingLevel: Method {
     public static let name: String = "logging/setLevel"
 
@@ -70,7 +70,7 @@ public enum SetLoggingLevel: Method {
 /// Servers should respect the log level set by the client via `SetLoggingLevel`,
 /// only sending messages at or above that severity.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/utilities/logging/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/logging
 public struct LogMessageNotification: Notification {
     public static let name: String = "notifications/message"
 

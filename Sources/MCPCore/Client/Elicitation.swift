@@ -6,7 +6,7 @@ import Foundation
 /// through the client. This enables interactive workflows where the server
 /// needs user input during an operation.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/client/elicitation/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation/
 
 // MARK: - Schema Types
 
@@ -747,7 +747,7 @@ extension ElicitRequestParams: Codable {
 /// Notification from the server to the client, informing it of completion
 /// of an out-of-band (URL mode) elicitation request.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/
 public struct ElicitationCompleteNotification: Notification {
     public static let name = "notifications/elicitation/complete"
 
@@ -804,7 +804,7 @@ public struct ElicitationRequiredErrorData: Hashable, Codable, Sendable {
 
 /// Server requests additional information from the user via the client.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/client/elicitation/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation/
 public enum Elicit: Method {
     public static let name = "elicitation/create"
 

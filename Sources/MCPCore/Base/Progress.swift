@@ -5,7 +5,7 @@
 /// Clients can include a `progressToken` in request metadata (`_meta.progressToken`)
 /// to receive progress notifications during operation execution.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/utilities/progress/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress
 
 /// Metadata that can be attached to any request via the `_meta` field.
 ///
@@ -162,7 +162,7 @@ extension ProgressToken: ExpressibleByIntegerLiteral {
 /// Servers send progress notifications to inform clients about the status
 /// of operations that may take significant time to complete.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/utilities/progress/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/progress
 public struct ProgressNotification: Notification {
     public static let name: String = "notifications/progress"
 

@@ -5,7 +5,7 @@ import Foundation
 /// Autocomplete functionality allows servers to provide argument completion
 /// suggestions for prompts and resource templates.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/server/utilities/completion/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/completion/
 
 /// A reference to a prompt for completion requests.
 ///
@@ -237,7 +237,7 @@ public struct CompletionSuggestions: Hashable, Codable, Sendable {
 
 /// A request from the client to the server, to ask for completion options.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/server/utilities/completion/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/utilities/completion/
 public enum Complete: Method {
     public static let name = "completion/complete"
 

@@ -5,7 +5,7 @@ import Foundation
 /// Tasks provide a way to track the progress of long-running operations.
 /// This is an experimental feature in MCP protocol version 2025-11-25.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/
 
 // MARK: - Task Metadata Keys
 

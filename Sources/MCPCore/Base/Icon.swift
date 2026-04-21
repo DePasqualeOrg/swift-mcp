@@ -6,7 +6,7 @@ import Foundation
 ///
 /// Icons can be provided as HTTP/HTTPS URLs or data URIs (base64-encoded images).
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/
 public struct Icon: Hashable, Codable, Sendable {
     /// URL or data URI for the icon.
     ///

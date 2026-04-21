@@ -7,7 +7,7 @@
 /// - Exchange and negotiate capabilities
 /// - Share implementation details
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2024-11-05/basic/lifecycle/#initialization
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle/#initialization
 public enum Initialize: Method {
     public static let name: String = "initialize"
 
@@ -104,7 +104,7 @@ public enum Initialize: Method {
 }
 
 /// After successful initialization, the client MUST send an initialized notification to indicate it is ready to begin normal operations.
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2024-11-05/basic/lifecycle/#initialization
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle/#initialization
 public struct InitializedNotification: Notification {
     public static let name: String = "notifications/initialized"
 
@@ -116,7 +116,7 @@ public struct InitializedNotification: Notification {
 /// This can be used by either client or server to indicate that an
 /// ongoing operation should be terminated.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/
 public struct CancelledNotification: Notification {
     public static let name: String = "notifications/cancelled"
 

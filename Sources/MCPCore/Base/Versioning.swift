@@ -7,7 +7,7 @@ import Foundation
 /// following the format YYYY-MM-DD, to indicate
 /// the last date backwards incompatible changes were made.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/
 public enum Version {
     // MARK: - Version Constants
 

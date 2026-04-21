@@ -10,7 +10,7 @@ import Foundation
 /// Clients can discover available prompts, retrieve their contents,
 /// and provide arguments to customize them.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/server/prompts/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/prompts/
 public struct Prompt: Hashable, Codable, Sendable {
     /// The prompt name (intended for programmatic or logical use)
     public let name: String
@@ -126,7 +126,7 @@ public struct Prompt: Hashable, Codable, Sendable {
 // MARK: -
 
 /// To retrieve available prompts, clients send a `prompts/list` request.
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2024-11-05/server/prompts/#listing-prompts
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/prompts/#listing-prompts
 public enum ListPrompts: Method {
     public static let name: String = "prompts/list"
 
@@ -192,7 +192,7 @@ public enum ListPrompts: Method {
 
 /// To retrieve a specific prompt, clients send a `prompts/get` request.
 /// Arguments may be auto-completed through the completion API.
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2024-11-05/server/prompts/#getting-a-prompt
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/prompts/#getting-a-prompt
 public enum GetPrompt: Method {
     public static let name: String = "prompts/get"
 
@@ -256,7 +256,7 @@ public enum GetPrompt: Method {
 }
 
 /// When the list of available prompts changes, servers that declared the listChanged capability SHOULD send a notification.
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2024-11-05/server/prompts/#list-changed-notification
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/server/prompts/#list-changed-notification
 public struct PromptListChangedNotification: Notification {
     public static let name: String = "notifications/prompts/list_changed"
 

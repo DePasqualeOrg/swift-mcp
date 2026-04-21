@@ -5,7 +5,7 @@
 /// Servers can request the list of roots from clients to understand
 /// the scope of files they can work with.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/client/roots/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/client/roots/
 
 /// A root directory that the client has access to.
 ///
@@ -67,7 +67,7 @@ public struct Root: Hashable, Codable, Sendable {
 
 /// Request from server to client to list available filesystem roots.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/client/roots/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/client/roots/
 public enum ListRoots: Method {
     public static let name: String = "roots/list"
 
@@ -129,7 +129,7 @@ public enum ListRoots: Method {
 /// Servers that receive this notification should request an updated
 /// list of roots via `ListRoots`.
 ///
-/// - SeeAlso: https://spec.modelcontextprotocol.io/specification/2025-11-25/client/roots/
+/// - SeeAlso: https://modelcontextprotocol.io/specification/2025-11-25/client/roots/
 public struct RootsListChangedNotification: Notification {
     public static let name: String = "notifications/roots/list_changed"
 
