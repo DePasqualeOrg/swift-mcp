@@ -170,7 +170,7 @@ Use this for OAuth flows or any process that requires visiting an external websi
 
 ### Signaling Completion
 
-After the external flow finishes (e.g., the user completes OAuth), send an ``ElicitationCompleteNotification`` so the client can dismiss the browser or update its UI:
+After the external flow finishes (e.g., the user completes OAuth), send an ``/MCPCore/ElicitationCompleteNotification`` so the client can dismiss the browser or update its UI:
 
 ```swift
 try await context.sendElicitationComplete(elicitationId: elicitationId)
@@ -232,4 +232,4 @@ if let content = result.content {
 - <doc:server-setup>
 - <doc:client-elicitation>
 - ``Server``
-- ``ElicitationSchema``
+- ``/MCPCore/ElicitationSchema``

@@ -471,7 +471,7 @@ public actor Server: ProtocolLayer {
     /// - Parameters:
     ///   - type: The method type to handle
     ///   - handler: The handler function receiving parameters and context
-    public func withRequestHandler<M: Method>(
+    public func withRequestHandler<M: MCPCore.Method>(
         _: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {
@@ -492,7 +492,7 @@ public actor Server: ProtocolLayer {
         message:
         "Use withRequestHandler(_:handler:) with RequestHandlerContext for correct notification routing"
     )
-    public func withRequestHandler<M: Method>(
+    public func withRequestHandler<M: MCPCore.Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
     ) {
@@ -505,7 +505,7 @@ public actor Server: ProtocolLayer {
 
     /// Register a request handler for a method (deprecated, use withRequestHandler instead)
     @available(*, deprecated, renamed: "withRequestHandler")
-    public func withMethodHandler<M: Method>(
+    public func withMethodHandler<M: MCPCore.Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {
@@ -514,7 +514,7 @@ public actor Server: ProtocolLayer {
 
     /// Register a request handler for a method (deprecated, use withRequestHandler instead)
     @available(*, deprecated, renamed: "withRequestHandler")
-    public func withMethodHandler<M: Method>(
+    public func withMethodHandler<M: MCPCore.Method>(
         _ type: M.Type,
         handler: @escaping @Sendable (M.Parameters) async throws -> M.Result,
     ) {
@@ -522,7 +522,7 @@ public actor Server: ProtocolLayer {
     }
 
     /// Register a notification handler.
-    public func onNotification<N: Notification>(
+    public func onNotification<N: MCPCore.Notification>(
         _: N.Type,
         handler: @escaping @Sendable (Message<N>) async throws -> Void,
     ) {

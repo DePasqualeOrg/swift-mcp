@@ -7,7 +7,8 @@ import SwiftSyntaxMacros
 struct MCPMacrosPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         ToolMacro.self,
-        OutputSchemaMacro.self,
+        StructuredOutputMacro.self,
+        ManualEncodingMacro.self,
         PromptMacro.self,
     ]
 }

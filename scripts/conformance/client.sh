@@ -14,5 +14,6 @@ echo "Running all client conformance tests..."
 npx @modelcontextprotocol/conformance client \
     --command "$CLIENT_BIN" \
     --suite all \
+    --spec-version 2025-11-25 \
     --timeout 60000 \
     --expected-failures conformance-baseline.yml

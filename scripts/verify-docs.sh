@@ -20,17 +20,19 @@ if [ -z "$TARGETS" ]; then
     exit 1
 fi
 
-FAILED=0
-
+# Build all library targets together with combined documentation so that
+# articles can use absolute symbol links (e.g. ``/MCPCore/MCPError``) to
+# reference symbols in sibling targets.
+TARGET_ARGS=()
 while IFS= read -r TARGET; do
-    echo "Building documentation for $TARGET..."
-    if ! swift package generate-documentation --target "$TARGET" --warnings-as-errors; then
-        FAILED=1
-    fi
-    echo ""
+    TARGET_ARGS+=(--target "$TARGET")
 done <<< "$TARGETS"
 
-if [ "$FAILED" -ne 0 ]; then
+echo "Building combined documentation for: $(echo "$TARGETS" | tr '\n' ' ')"
+if ! swift package generate-documentation \
+    --enable-experimental-combined-documentation \
+    "${TARGET_ARGS[@]}" \
+    --warnings-as-errors; then
     echo "Documentation build failed with warnings."
     exit 1
 fi

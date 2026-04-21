@@ -1,5 +1,5 @@
 {
-  "originHash" : "eda8b19e6bc09f53608d3ab40e1d5408dab487730e5218caefddfae04d97b6f7",
+  "originHash" : "b6d00ea2b7ea3aade084fb3058e582f03bc50dd97e826131011c9919b685b16f",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -227,12 +227,21 @@
       }
     },
     {
+      "identity" : "swift-sse",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DePasqualeOrg/swift-sse",
+      "state" : {
+        "revision" : "c8e3f1a5d4cdf708c891bae1f2a975519627b65c",
+        "version" : "0.1.0"
+      }
+    },
+    {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax",
       "state" : {
-        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
-        "version" : "602.0.0"
+        "revision" : "2b59c0c741e9184ab057fd22950b491076d42e91",
+        "version" : "603.0.0"
       }
     },
     {

@@ -52,9 +52,9 @@ struct PromptTests {
         let decoder = JSONDecoder()
 
         // Test text content
-        let textContent = Prompt.Message.Content.text("Test text")
+        let textContent = ContentBlock.text("Test text")
         let textData = try encoder.encode(textContent)
-        let decodedText = try decoder.decode(Prompt.Message.Content.self, from: textData)
+        let decodedText = try decoder.decode(ContentBlock.self, from: textData)
         if case let .text(text, _, _) = decodedText {
             #expect(text == "Test text")
         } else {
@@ -62,11 +62,11 @@ struct PromptTests {
         }
 
         // Test audio content
-        let audioContent = Prompt.Message.Content.audio(
+        let audioContent = ContentBlock.audio(
             data: "base64audiodata", mimeType: "audio/wav",
         )
         let audioData = try encoder.encode(audioContent)
-        let decodedAudio = try decoder.decode(Prompt.Message.Content.self, from: audioData)
+        let decodedAudio = try decoder.decode(ContentBlock.self, from: audioData)
         if case let .audio(data, mimeType, _, _) = decodedAudio {
             #expect(data == "base64audiodata")
             #expect(mimeType == "audio/wav")
@@ -75,9 +75,9 @@ struct PromptTests {
         }
 
         // Test image content
-        let imageContent = Prompt.Message.Content.image(data: "base64data", mimeType: "image/png")
+        let imageContent = ContentBlock.image(data: "base64data", mimeType: "image/png")
         let imageData = try encoder.encode(imageContent)
-        let decodedImage = try decoder.decode(Prompt.Message.Content.self, from: imageData)
+        let decodedImage = try decoder.decode(ContentBlock.self, from: imageData)
         if case let .image(data, mimeType, _, _) = decodedImage {
             #expect(data == "base64data")
             #expect(mimeType == "image/png")
@@ -86,13 +86,13 @@ struct PromptTests {
         }
 
         // Test resource content
-        let resourceContent = Prompt.Message.Content.resource(
+        let resourceContent = ContentBlock.resource(
             uri: "file://test.txt",
             mimeType: "text/plain",
             text: "Sample text",
         )
         let resourceData = try encoder.encode(resourceContent)
-        let decodedResource = try decoder.decode(Prompt.Message.Content.self, from: resourceData)
+        let decodedResource = try decoder.decode(ContentBlock.self, from: resourceData)
         if case let .resource(resourceData, _, _) = decodedResource {
             #expect(resourceData.uri == "file://test.txt")
             #expect(resourceData.mimeType == "text/plain")
@@ -285,7 +285,7 @@ struct PromptTests {
     @Test
     func `Prompt Content ExpressibleByStringLiteral`() {
         // Test string literal assignment
-        let content: Prompt.Message.Content = "Hello from string literal"
+        let content: ContentBlock = "Hello from string literal"
 
         if case let .text(text, _, _) = content {
             #expect(text == "Hello from string literal")
@@ -321,7 +321,7 @@ struct PromptTests {
         let company = "TechCorp"
 
         // Test string interpolation
-        let content: Prompt.Message.Content =
+        let content: ContentBlock =
             "Hello \(userName), welcome to your \(position) interview at \(company)"
 
         if case let .text(text, _, _) = content {
@@ -856,8 +856,8 @@ struct PromptAdvancedFeaturesTests {
             lastModified: "2025-01-03T12:00:00Z",
         )
 
-        let content = Prompt.Message.Content.text(
-            text: "Important message",
+        let content = ContentBlock.text(
+            "Important message",
             annotations: annotations,
             _meta: ["source": "test"],
         )
@@ -866,7 +866,7 @@ struct PromptAdvancedFeaturesTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .text(text, decodedAnnotations, meta) = decoded {
             #expect(text == "Important message")
@@ -883,7 +883,7 @@ struct PromptAdvancedFeaturesTests {
     func `Image content with annotations`() throws {
         let annotations = Annotations(audience: [.user], priority: 0.5)
 
-        let content = Prompt.Message.Content.image(
+        let content = ContentBlock.image(
             data: "base64imagedata",
             mimeType: "image/png",
             annotations: annotations,
@@ -894,7 +894,7 @@ struct PromptAdvancedFeaturesTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .image(imageData, mimeType, decodedAnnotations, _) = decoded {
             #expect(imageData == "base64imagedata")
@@ -910,7 +910,7 @@ struct PromptAdvancedFeaturesTests {
     func `Audio content with annotations`() throws {
         let annotations = Annotations(priority: 1.0)
 
-        let content = Prompt.Message.Content.audio(
+        let content = ContentBlock.audio(
             data: "base64audiodata",
             mimeType: "audio/wav",
             annotations: annotations,
@@ -921,7 +921,7 @@ struct PromptAdvancedFeaturesTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .audio(audioData, mimeType, decodedAnnotations, meta) = decoded {
             #expect(audioData == "base64audiodata")
@@ -941,7 +941,7 @@ struct PromptAdvancedFeaturesTests {
         )
         let resourceContent = Resource.Content.text("File content", uri: "file:///test.txt", mimeType: "text/plain")
 
-        let content = Prompt.Message.Content.resource(
+        let content = ContentBlock.resource(
             resource: resourceContent,
             annotations: annotations,
             _meta: nil,
@@ -951,7 +951,7 @@ struct PromptAdvancedFeaturesTests {
         let decoder = JSONDecoder()
 
         let data = try encoder.encode(content)
-        let decoded = try decoder.decode(Prompt.Message.Content.self, from: data)
+        let decoded = try decoder.decode(ContentBlock.self, from: data)
 
         if case let .resource(resource, decodedAnnotations, _) = decoded {
             #expect(resource.uri == "file:///test.txt")

@@ -102,4 +102,4 @@ await client.onNotification(PromptListChangedNotification.self) { _ in
 - <doc:client-completions>
 - <doc:server-prompts>
 - ``Client``
-- ``Prompt``
+- ``/MCPCore/Prompt``

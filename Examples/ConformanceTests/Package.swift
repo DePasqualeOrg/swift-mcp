@@ -10,6 +10,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+        .package(url: "https://github.com/ajevans99/swift-json-schema", .upToNextMinor(from: "0.11.2")),
         .package(path: "../.."), // MCP Swift SDK
     ],
     targets: [
@@ -28,6 +29,7 @@ let package = Package(
                 .product(name: "MCP", package: "swift-mcp"),
                 .product(name: "MCPTool", package: "swift-mcp"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
             ],
             path: "Sources/ConformanceServer",
         ),

@@ -16,7 +16,7 @@ public enum Role: String, Hashable, Codable, Sendable {
 public struct Annotations: Hashable, Codable, Sendable {
     // TODO: Deprecate in a future version
     /// Backwards compatibility alias for top-level `Role`.
-    public typealias Role = MCP.Role
+    public typealias Role = MCPCore.Role
 
     /// Describes who the intended audience of this object or data is.
     /// It can include multiple entries to indicate content useful for multiple audiences.

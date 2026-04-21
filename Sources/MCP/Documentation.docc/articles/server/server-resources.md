@@ -132,7 +132,7 @@ try await server.registerResource(
 
 ## Resource Annotations
 
-Resources can include annotations to indicate audience (`user`, `assistant`, or both), priority (0.0 to 1.0), and last modified timestamp. For setting annotations, use the low-level API with the ``Resource`` type directly. See <doc:server-advanced>.
+Resources can include annotations to indicate audience (`user`, `assistant`, or both), priority (0.0 to 1.0), and last modified timestamp. For setting annotations, use the low-level API with the ``/MCPCore/Resource`` type directly. See <doc:server-advanced>.
 
 ## Notifying Changes
 
@@ -196,5 +196,5 @@ For advanced use cases like resource subscriptions or custom request handling, s
 - <doc:server-setup>
 - <doc:client-resources>
 - ``MCPServer``
-- ``Resource``
+- ``/MCPCore/Resource``
 - ``FileResource``

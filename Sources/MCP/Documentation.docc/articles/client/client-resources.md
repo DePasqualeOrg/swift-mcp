@@ -117,4 +117,4 @@ await client.onNotification(ResourceListChangedNotification.self) { _ in
 - <doc:client-setup>
 - <doc:server-resources>
 - ``Client``
-- ``Resource``
+- ``/MCPCore/Resource``

@@ -6,7 +6,7 @@ public extension Server {
     // MARK: - Sending
 
     /// Send a response to a request
-    func send(_ response: Response<some Method>) async throws {
+    func send(_ response: Response<some MCPCore.Method>) async throws {
         guard let connection else {
             throw MCPError.internalError("Server connection not initialized")
         }
@@ -16,7 +16,7 @@ public extension Server {
     }
 
     /// Send a notification to connected clients
-    func notify(_ notification: Message<some Notification>) async throws {
+    func notify(_ notification: Message<some MCPCore.Notification>) async throws {
         guard let connection else {
             throw MCPError.internalError("Server connection not initialized")
         }

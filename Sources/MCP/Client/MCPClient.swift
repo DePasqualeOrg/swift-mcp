@@ -134,7 +134,7 @@ public actor MCPClient {
     /// Called when the server's tool list changes.
     ///
     /// This fires in two situations:
-    /// - The server sends a ``ToolListChangedNotification``
+    /// - The server sends a ``/MCPCore/ToolListChangedNotification``
     /// - Tools are refreshed after a successful reconnection
     ///
     /// Provides the updated tool list from the server.

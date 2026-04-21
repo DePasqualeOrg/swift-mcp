@@ -6,7 +6,7 @@ public extension Client {
     // MARK: - Handler Registration
 
     /// Register a handler for a notification.
-    func onNotification<N: Notification>(
+    func onNotification<N: MCPCore.Notification>(
         _: N.Type,
         handler: @escaping @Sendable (Message<N>) async throws -> Void,
     ) {
@@ -78,7 +78,7 @@ public extension Client {
     }
 
     /// Send a notification to the server
-    func notify(_ notification: Message<some Notification>) async throws {
+    func notify(_ notification: Message<some MCPCore.Notification>) async throws {
         guard isProtocolConnected else {
             throw MCPError.internalError("Client connection not initialized")
         }
@@ -165,7 +165,7 @@ public extension Client {
     /// - Parameters:
     ///   - type: The method type to handle
     ///   - handler: The handler function that receives parameters and context, returns a result
-    func withRequestHandler<M: Method>(
+    func withRequestHandler<M: MCPCore.Method>(
         _: M.Type,
         handler: @escaping @Sendable (M.Parameters, RequestHandlerContext) async throws -> M.Result,
     ) {

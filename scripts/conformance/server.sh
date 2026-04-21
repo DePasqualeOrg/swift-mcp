@@ -38,7 +38,7 @@ done
 echo "Server is ready"
 
 echo "Running server conformance tests..."
-if npx @modelcontextprotocol/conformance server --url http://localhost:8080/mcp; then
+if npx @modelcontextprotocol/conformance server --url http://localhost:8080/mcp --spec-version 2025-11-25; then
     echo ""
     echo "Server conformance tests: PASSED"
 else

@@ -33,7 +33,7 @@ await server.withRequestHandler(CallTool.self) { [server] params, context in
 
 ## Root Properties
 
-Each ``Root`` includes:
+Each ``/MCPCore/Root`` includes:
 
 - `uri`: The filesystem location as a `file://` URI
 - `name`: Optional human-readable name for display
@@ -127,4 +127,4 @@ await server.withRequestHandler(CallTool.self) { [server] params, context in
 - <doc:server-setup>
 - <doc:client-roots>
 - ``Server``
-- ``Root``
+- ``/MCPCore/Root``

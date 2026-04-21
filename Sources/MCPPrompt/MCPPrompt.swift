@@ -30,7 +30,9 @@ import MCP
 /// Protocol for types that can be used as prompt argument values.
 ///
 /// Per the MCP specification, prompt arguments are always strings.
-/// Only `String` and `Optional<String>` conform to this protocol.
+/// Only `String` and `Optional<String>` conform to this protocol –
+/// do not conform new types. Use `String` or `String?` as the property
+/// type in your `@Prompt` struct instead.
 public protocol ArgumentValue: Sendable {
     /// Whether this type represents an optional value.
     static var isOptional: Bool { get }

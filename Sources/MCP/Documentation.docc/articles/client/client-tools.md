@@ -43,7 +43,7 @@ repeat {
 
 ### Tool Metadata
 
-Each ``Tool`` includes metadata you can use to display or filter tools:
+Each ``/MCPCore/Tool`` includes metadata you can use to display or filter tools:
 
 ```swift
 let result = try await client.listTools()
@@ -167,4 +167,4 @@ await client.onNotification(ToolListChangedNotification.self) { _ in
 - <doc:server-tools>
 - ``MCPClient``
 - ``Client``
-- ``Tool``
+- ``/MCPCore/Tool``

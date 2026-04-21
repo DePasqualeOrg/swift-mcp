@@ -20,6 +20,7 @@ import ArgumentParser
 import Foundation
 import HTTPTypes
 import Hummingbird
+import JSONSchemaBuilder
 import Logging
 import MCP
 import MCPTool
@@ -304,6 +305,15 @@ private enum TestData {
 
 // MARK: - Test Tool Definitions
 
+/// Structured metadata accompanying the media fixtures below. `MediaWithMetadata`
+/// requires a `@Schemable @StructuredOutput` metadata type; the fixtures use
+/// this shared shape so each tool declares what content type it's exercising.
+@Schemable
+@StructuredOutput
+struct ContentTestMetadata {
+    let testDescription: String
+}
+
 /// Returns simple text content
 @Tool
 struct TestSimpleText {
@@ -321,8 +331,11 @@ struct TestImageContent {
     static let name = "test_image_content"
     static let description = "Returns image content for conformance testing"
 
-    func perform() async throws -> ImageOutput {
-        ImageOutput(pngData: TestData.redPixelPNGData)
+    func perform() async throws -> MediaWithMetadata<ContentTestMetadata> {
+        MediaWithMetadata(
+            .image(data: TestData.redPixelPNGData, mimeType: "image/png"),
+            metadata: ContentTestMetadata(testDescription: "1x1 red pixel PNG"),
+        )
     }
 }
 
@@ -332,8 +345,11 @@ struct TestAudioContent {
     static let name = "test_audio_content"
     static let description = "Returns audio content for conformance testing"
 
-    func perform() async throws -> AudioOutput {
-        AudioOutput(data: TestData.silentWAVData, mimeType: "audio/wav")
+    func perform() async throws -> MediaWithMetadata<ContentTestMetadata> {
+        MediaWithMetadata(
+            .audio(data: TestData.silentWAVData, mimeType: "audio/wav"),
+            metadata: ContentTestMetadata(testDescription: "Silent WAV, 1 sample"),
+        )
     }
 }
 
@@ -343,25 +359,64 @@ struct TestEmbeddedResource {
     static let name = "test_embedded_resource"
     static let description = "Returns embedded resource content for conformance testing"
 
-    func perform() async throws -> MultiContent {
-        let resourceContent = Resource.Contents.text("Embedded resource text content", uri: "test://static-text", mimeType: "text/plain")
-        return MultiContent([.resource(resource: resourceContent, annotations: nil, _meta: nil)])
+    func perform() async throws -> AssetWithMetadata<ContentTestMetadata> {
+        AssetWithMetadata(
+            .text(
+                "Embedded resource text content",
+                uri: "test://static-text",
+                mimeType: "text/plain",
+            ),
+
+            metadata: ContentTestMetadata(testDescription: "Embedded text resource at test://static-text"),
+        )
     }
 }
 
-/// Returns mixed content types (text, image, and resource)
+/// Returns mixed content types (text, image, and resource).
+///
+/// Mixed-category results don't fit any of the built-in return categories
+/// (Value, Media, Asset), so this tool demonstrates the intended
+/// escape hatch: a custom `ToolOutput` conformer that emits a raw
+/// `CallTool.Result`. The metadata text block is prepended and
+/// `structuredContent` is populated so code-mode consumers still see
+/// typed data. No `outputSchema` is advertised on the wire — schema
+/// auto-recovery via `StructuredMetadataCarrier` only covers
+/// `MediaWithMetadata<T>` and `AssetWithMetadata<T>`.
+struct TestMultipleContentTypesResult: ToolOutput {
+    let metadata: ContentTestMetadata
+
+    func toCallToolResult() throws -> CallTool.Result {
+        let data = try ContentTestMetadata.encoder.encode(metadata)
+        guard let json = String(data: data, encoding: .utf8) else {
+            throw MCPError.internalError("Failed to encode metadata")
+        }
+        let structured = try JSONDecoder().decode(Value.self, from: data)
+        let resourceContent = Resource.Contents.text(
+            "{\"test\":\"data\",\"value\":123}",
+            uri: "test://mixed-content-resource",
+            mimeType: "application/json",
+        )
+        return CallTool.Result(
+            content: [
+                .text(json),
+                .text("Multiple content types test:"),
+                .image(data: TestData.redPixelPNGBase64, mimeType: "image/png"),
+                .resource(resource: resourceContent, annotations: nil, _meta: nil),
+            ],
+            structuredContent: structured,
+        )
+    }
+}
+
 @Tool
 struct TestMultipleContentTypes {
     static let name = "test_multiple_content_types"
     static let description = "Returns mixed content types for conformance testing"
 
-    func perform() async throws -> MultiContent {
-        let resourceContent = Resource.Contents.text("{\"test\":\"data\",\"value\":123}", uri: "test://mixed-content-resource", mimeType: "application/json")
-        return MultiContent([
-            .text("Multiple content types test:"),
-            .image(data: TestData.redPixelPNGBase64, mimeType: "image/png"),
-            .resource(resource: resourceContent, annotations: nil, _meta: nil),
-        ])
+    func perform() async throws -> TestMultipleContentTypesResult {
+        TestMultipleContentTypesResult(
+            metadata: ContentTestMetadata(testDescription: "Mixed text, image, and resource content"),
+        )
     }
 }
 

@@ -1,8 +1,18 @@
 // Copyright © Anthony DePasquale
 
 import Foundation
+import JSONSchemaBuilder
 @testable import MCP
 import Testing
+
+/// Structured output used by the no-input register output-schema regression
+/// test below. Must be file-scoped so the `@StructuredOutput` extension macro
+/// can attach.
+@Schemable
+@StructuredOutput
+struct NoInputRegisterStructuredOutput {
+    let value: Int
+}
 
 struct MCPServerTests {
     // MARK: - Tool Registration Tests
@@ -54,6 +64,33 @@ struct MCPServerTests {
 
         let definitions = await server.toolRegistry.definitions
         #expect(definitions.count == 1)
+    }
+
+    /// Regression: a zero-input tool whose declared return type is a
+    /// `@Schemable @StructuredOutput` struct must publish its `outputSchema`.
+    ///
+    /// Before the fix, the no-input `register(...)` overload used
+    /// `handler: ... -> some ToolOutput` rather than a named generic, so
+    /// `MCPSchema.outputSchema(for: Output.self)` was never reached and the
+    /// tool silently shipped without its schema. The existing
+    /// "Register tool with no input parameters" test above doesn't assert on
+    /// the schema, which is why the regression slipped past it. This test
+    /// pins the schema down.
+    @Test
+    func `No-input register publishes outputSchema for structured output`() async throws {
+        let server = MCPServer(name: "test-server", version: "1.0.0")
+
+        try await server.register(
+            name: "compute_value",
+            description: "Returns a structured value with no input",
+        ) { (_: HandlerContext) async throws -> NoInputRegisterStructuredOutput in
+            NoInputRegisterStructuredOutput(value: 42)
+        }
+
+        let definitions = await server.toolRegistry.definitions
+        let toolDef = try #require(definitions.first { $0.name == "compute_value" })
+        let schema = try #require(toolDef.outputSchema)
+        #expect(schema == NoInputRegisterStructuredOutput.outputJSONSchema)
     }
 
     @Test

@@ -83,7 +83,7 @@ public struct ModelPreferences: Hashable, Codable, Sendable {
 public enum Sampling {
     /// A message in the conversation history.
     public struct Message: Hashable, Codable, Sendable {
-        public typealias Role = MCP.Role
+        public typealias Role = MCPCore.Role
 
         public let role: Role
         public let content: [ContentBlock]
@@ -183,7 +183,7 @@ public enum Sampling {
         }
     }
 
-    public typealias ModelPreferences = MCP.ModelPreferences
+    public typealias ModelPreferences = MCPCore.ModelPreferences
 
     public enum ContextInclusion: String, Hashable, Codable, Sendable {
         case none
@@ -191,7 +191,7 @@ public enum Sampling {
         case allServers
     }
 
-    public typealias StopReason = MCP.StopReason
+    public typealias StopReason = MCPCore.StopReason
 }
 
 // MARK: - Tool Use Content
@@ -215,14 +215,14 @@ public struct ToolUseContent: Hashable, Codable, Sendable {
 public struct ToolResultContent: Hashable, Codable, Sendable {
     public let type: String
     public var toolUseId: String
-    public var content: [Tool.Content]
+    public var content: [ContentBlock]
     public var structuredContent: Value?
     public var isError: Bool?
     public var _meta: [String: Value]?
 
     public init(
         toolUseId: String,
-        content: [Tool.Content] = [],
+        content: [ContentBlock] = [],
         structuredContent: Value? = nil,
         isError: Bool? = nil,
         _meta: [String: Value]? = nil,

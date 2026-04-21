@@ -1,5 +1,7 @@
 // Copyright © Anthony DePasquale
 
+import protocol Foundation.LocalizedError
+
 /// High-level MCP server providing ergonomic APIs for tools, resources, and prompts.
 ///
 /// `MCPServer` provides:
@@ -299,20 +301,27 @@ public actor MCPServer {
         await session.withRequestHandler(CallTool.self) { [toolRegistry, validator] request, handlerContext in
             let name = request.name
 
-            // Helper to extract error message
-            // Uses localizedDescription which works for LocalizedError types,
-            // falls back to type description for other errors
+            // Helper to extract an error message suitable for a single
+            // `.text` block on the wire.
+            //
+            // `Error.localizedDescription` is unreliable on plain Swift
+            // errors: the NSError bridge generates a locale-dependent stub
+            // ("The operation couldn't be completed …" on en-US, translated
+            // variants elsewhere). For a plain `Error`, fall back to
+            // `String(describing:)` so the agent sees the type name and
+            // stored-property values instead of the localized stub.
+            //
+            // `LocalizedError` conformers, on the other hand, populate the
+            // `localizedDescription` via Foundation's bridge using whichever
+            // slot they fill — `errorDescription`, `failureReason`, or
+            // `recoverySuggestion`. Reading only `errorDescription` would
+            // drop reason text that Foundation has already composed into
+            // `localizedDescription` for us, so prefer that directly.
             func errorMessage(_ error: Error) -> String {
-                let description = error.localizedDescription
-                // localizedDescription returns generic "operation couldn't be completed" for
-                // non-LocalizedError types, so fall back to String(describing:) in that case.
-                // Check for both straight quote (') and typographic apostrophe (U+2019)
-                if description.contains("operation couldn't be completed")
-                    || description.contains("operation couldn\u{2019}t be completed")
-                {
-                    return String(describing: error)
+                if error is LocalizedError {
+                    return error.localizedDescription
                 }
-                return description
+                return String(describing: error)
             }
 
             // Helper to create tool error result
@@ -321,6 +330,16 @@ public actor MCPServer {
                     content: [.text(message, annotations: nil, _meta: nil)],
                     isError: true,
                 )
+            }
+
+            // Rich-content overload: a `ToolError` conformer surfaces its
+            // `content` verbatim with `isError: true`. Any other `Error`
+            // delegates to the `String` overload via `errorMessage(_:)`.
+            func toolError(_ error: Error) -> CallTool.Result {
+                if let toolError = error as? any ToolError {
+                    return CallTool.Result(content: toolError.content, isError: true)
+                }
+                return toolError(errorMessage(error))
             }
 
             // Get tool definition for validation
@@ -354,7 +373,7 @@ public actor MCPServer {
                     context: context,
                 )
             } catch {
-                return toolError(errorMessage(error))
+                return toolError(error)
             }
 
             // Validate output against schema if present
@@ -480,8 +499,11 @@ public actor MCPServer {
 ///
 /// ## Providing Actionable Error Messages
 ///
-/// For the best LLM experience, make your error types conform to `LocalizedError` and
-/// provide clear, actionable `errorDescription` values:
+/// Two shapes cover the common cases:
+///
+/// - **Single-text errors**: conform to `LocalizedError` and provide a clear,
+///   actionable `errorDescription`. The SDK surfaces it as a single `.text`
+///   block:
 ///
 /// ```swift
 /// enum MyToolError: LocalizedError {
@@ -499,8 +521,17 @@ public actor MCPServer {
 /// }
 /// ```
 ///
-/// Errors conforming to `LocalizedError` will have their `errorDescription` surfaced directly
-/// to the LLM. For other error types, the server uses `String(describing:)` as a fallback.
+/// - **Rich multi-block errors**: conform to ``/MCPCore/ToolError`` when the
+///   error needs to carry multiple blocks (for example, a `.text`
+///   explanation plus an `.image` of the failing chart). `ToolError`
+///   refines `LocalizedError`, so `errorDescription` still works for
+///   `Error.localizedDescription` bridging – the default implementation
+///   joins the `.text` blocks in `content`. Thrown `ToolError` conformers
+///   pass `content` through verbatim with `isError: true`.
+///
+/// For other error types (not `LocalizedError` / `ToolError` conformers),
+/// the server falls back to `String(describing:)` to construct a single
+/// `.text` block.
 public extension MCPServer {
     // MARK: DSL-Based Tools
 
@@ -581,7 +612,7 @@ public extension MCPServer {
     /// The `inputSchema` parameter is required because dynamic tools should
     /// provide their schema from the authoritative source (config, database, etc.).
     ///
-    /// If `Output` conforms to `StructuredOutput` (via `@OutputSchema`),
+    /// If `Output` conforms to `StructuredOutput` (via `@Schemable @StructuredOutput`),
     /// the tool's `outputSchema` is automatically populated.
     ///
     /// Example:
@@ -615,7 +646,7 @@ public extension MCPServer {
             description: description,
             inputSchema: inputSchema,
             inputType: inputType,
-            outputSchema: outputSchema(for: Output.self),
+            outputSchema: MCPSchema.outputSchema(for: Output.self),
             annotations: annotations,
             onListChanged: onListChanged,
             handler: handler,
@@ -632,16 +663,17 @@ public extension MCPServer {
     ///
     /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
     @discardableResult
-    func register(
+    func register<Output: ToolOutput>(
         name: String,
         description: String? = nil,
         annotations: [AnnotationOption] = [],
-        handler: @escaping @Sendable (HandlerContext) async throws -> some ToolOutput,
+        handler: @escaping @Sendable (HandlerContext) async throws -> Output,
     ) async throws -> RegisteredTool {
         let onListChanged = toolListChangedCallback
         let registered = try await toolRegistry.registerClosure(
             name: name,
             description: description,
+            outputSchema: MCPSchema.outputSchema(for: Output.self),
             annotations: annotations,
             onListChanged: onListChanged,
             handler: handler,
@@ -649,6 +681,61 @@ public extension MCPServer {
         hasTools = true
         await notifyToolListChanged()
         return registered
+    }
+
+    /// Registers a dynamically defined tool that takes input but has no
+    /// meaningful return value.
+    ///
+    /// The handler's `Void` return is normalized to the `VoidOutput` sentinel
+    /// internally — the tool's `outputSchema` and `structuredContent` match
+    /// the `{"result": null}` shape emitted by `@Tool`-generated Void-returning
+    /// tools and by `Optional<T>` returning `nil`, so agents can treat
+    /// "ran, no value" uniformly.
+    ///
+    /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
+    @discardableResult
+    func register<Input: Codable & Sendable>(
+        name: String,
+        description: String? = nil,
+        inputSchema: Value,
+        inputType: Input.Type = Input.self,
+        annotations: [AnnotationOption] = [],
+        handler: @escaping @Sendable (Input, HandlerContext) async throws -> Void,
+    ) async throws -> RegisteredTool {
+        try await register(
+            name: name,
+            description: description,
+            inputSchema: inputSchema,
+            inputType: inputType,
+            annotations: annotations,
+        ) { (input: Input, context: HandlerContext) -> VoidOutput in
+            try await handler(input, context)
+            return VoidOutput()
+        }
+    }
+
+    /// Registers a dynamically defined tool with no input parameters and no
+    /// meaningful return value.
+    ///
+    /// See the `(Input, HandlerContext) -> Void` overload above for the wire
+    /// shape rationale.
+    ///
+    /// - Throws: `MCPError.invalidParams` if a tool with the same name is already registered.
+    @discardableResult
+    func register(
+        name: String,
+        description: String? = nil,
+        annotations: [AnnotationOption] = [],
+        handler: @escaping @Sendable (HandlerContext) async throws -> Void,
+    ) async throws -> RegisteredTool {
+        try await register(
+            name: name,
+            description: description,
+            annotations: annotations,
+        ) { (context: HandlerContext) -> VoidOutput in
+            try await handler(context)
+            return VoidOutput()
+        }
     }
 }
 
